@@ -2,6 +2,10 @@
 
 An android mobile application built with **Ionic, Angular, and Capacitor** that helps users track movies and TV series they have watched or plan to watch. The app integrates with the **TMDB API** to fetch metadata, including posters, titles, summaries, and reviews.
 
+## 📸 Screenshots
+
+<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/Screenshot_1_2025-02-10-02-59-29-29.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/Screenshot_2_2025-02-10-02-59-32-96.jpg" width="300">
+
 ## 🚀 Features
 
 - 📌 **Add & Remove** movies/TV shows from your watchlist
