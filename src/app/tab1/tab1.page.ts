@@ -8,6 +8,13 @@ import { Component } from '@angular/core';
 })
 export class Tab1Page {
 
-  constructor() {}
+  constructor() { }
 
+  movies = [
+    { title: 'Inception', poster: 'assets/inception.jpg' },
+    { title: 'Breaking Bad', poster: 'assets/breaking_bad.jpg' },
+    { title: 'Stranger Things', poster: 'assets/stranger_things.jpg' },
+    { title: 'Dark', poster: 'assets/dark.jpg' },
+    { title: 'Interstellar', poster: 'assets/interstellar.jpg' }
+  ];
 }

@@ -35,3 +35,15 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+@import '~@fortawesome/fontawesome-free/css/all.min.css';
+
+body {
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+ion-content {
+    --padding-top: calc(var(--ion-safe-area-top) + 70px);
+    /* Adjust for header height */
+    --padding-bottom: calc(var(--ion-safe-area-bottom) + 60px);
+    /* Adjust for tab bar */
+}

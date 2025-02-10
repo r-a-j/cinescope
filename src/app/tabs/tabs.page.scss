@@ -1,1 +1,49 @@
+.custom-header {
+    background: black !important;
+    // border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+}
 
+.custom-header .logo {
+    margin-top: 10px;
+    height: 40px;
+}
+
+.custom-header ion-buttons {
+    margin-right: 10px;
+    /* Space between settings icon and right edge */
+}
+
+.custom-header ion-icon {
+    color: white;
+    font-size: 24px;
+    /* Slightly larger for better visibility */
+}
+
+ion-tab-button {
+    color: rgba(255, 255, 255, 0.6);
+    /* Inactive state */
+    font-size: 14px;
+    transition: 0.3s ease-in-out;
+}
+
+ion-tab-button.active {
+    color: #db0000 !important;
+    font-weight: bold;
+}
+
+ion-tab-button.active ion-icon {
+    color: #db0000 !important;
+    /* Red icon for active tab */
+}
+
+ion-button {
+    --background-hover-opacity: 0.1;
+}
+
+.custom-black-header {
+    --background: black !important;
+    --ion-toolbar-background: black !important;
+    --ion-toolbar-border-color: rgba(255, 255, 255, 0.1);
+}

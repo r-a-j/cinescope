@@ -1,2 +1,13 @@
 // For information on how to create your own theme, please see:
 // http://ionicframework.com/docs/theming/
+:root {
+    --ion-background-color: #141414;
+    --ion-text-color: #ffffff;
+    --ion-tab-bar-background: #000000;
+    --ion-tab-bar-color: #ffffff;
+    --ion-tab-bar-color-selected: #db0000;
+}
+
+ion-content {
+    --background: #000000;
+}

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-tabs',
@@ -8,6 +9,16 @@ import { Component } from '@angular/core';
 })
 export class TabsPage {
 
-  constructor() {}
+  activeTab: string = 'tab1';
+
+  constructor(private router: Router) { }
+
+  openSettings() {
+    this.router.navigate(['/tabs/tab3']);
+  }
+
+  onTabChange(event: any) {
+    this.activeTab = event.tab;
+  }
 
 }
