@@ -1,8 +1,16 @@
-<ion-content [fullscreen]="false">  
+<ion-content [fullscreen]="false">
+  <!-- Existing Movie Grid -->
   <div class="movies-grid">
     <div *ngFor="let movie of movies" class="movie-card">
       <img [src]="movie.poster" alt="{{ movie.title }}">
       <p>{{ movie.title }}</p>
     </div>
   </div>
+
+  <!-- Floating Add Button -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openModal()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>

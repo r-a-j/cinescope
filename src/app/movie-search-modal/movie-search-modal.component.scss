@@ -1,0 +1,87 @@
+:host {
+    ion-header {
+        --background: #000000;
+        /* Dark header */
+        --color: #ffffff;
+        --ion-toolbar-background: #000000;
+    }
+
+    ion-content {
+        --background: #000000;
+        /* Dark background */
+        color: #ffffff;
+    }
+
+    .search-container {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    ion-item {
+        --background: #1a1a1a;
+        /* Dark search bar */
+        --color: #ffffff;
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+    }
+
+    ion-input {
+        --color: #ffffff;
+        /* White text inside input */
+        font-size: 1rem;
+        flex: 1;
+    }
+
+    .search-icon {
+        font-size: 20px;
+        color: #db0000;
+        /* Red search icon */
+        cursor: pointer;
+        margin-left: 10px;
+    }
+
+    .movies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .movie-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #1a1a1a;
+        padding: 6px;
+        text-align: center;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .movie-card:hover {
+        transform: scale(1.05);
+    }
+
+    .movie-card img {
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .movie-card p {
+        font-size: 14px;
+        color: white;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+
+    .no-results {
+        text-align: center;
+        color: #aaaaaa;
+        font-size: 14px;
+        margin-top: 20px;
+    }
+}

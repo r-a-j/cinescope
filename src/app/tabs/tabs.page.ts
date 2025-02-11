@@ -14,7 +14,7 @@ export class TabsPage {
   constructor(private router: Router) { }
 
   openSettings() {
-    this.router.navigate(['/tabs/tab3']);
+    this.router.navigate(['/tabs/settings']);
   }
 
   onTabChange(event: any) {

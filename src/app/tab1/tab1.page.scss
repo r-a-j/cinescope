@@ -46,3 +46,32 @@ ion-content {
         opacity: 1;
     }
 }
+
+ion-fab-button {
+    --background: #db0000;
+    /* Red button */
+    --color: #ffffff;
+    /* White icon */
+    --border-radius: 50%;
+    /* Ensure it remains circular */
+    --box-shadow: 0 4px 8px rgba(219, 0, 0, 0.4);
+    /* Subtle red glow */
+
+    width: 56px;
+    /* Adjust size if needed */
+    height: 56px;
+
+    ion-icon {
+        font-size: 24px;
+    }
+}
+
+ion-fab-button:hover {
+    --background: #b30000;
+    /* Darker red for hover effect */
+}
+
+ion-fab-button:active {
+    --background: #7a0000;
+    /* Even darker red when pressed */
+}

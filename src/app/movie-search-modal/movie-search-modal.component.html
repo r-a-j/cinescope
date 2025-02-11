@@ -1,0 +1,32 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Search Movies</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="close-button" fill="clear" (click)="dismiss()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="search-container">
+    <ion-item>
+      <ion-input placeholder="Search for a movie" [(ngModel)]="searchQuery"></ion-input>
+      <ion-icon slot="end" (click)="searchMovies()" name="search"></ion-icon>
+    </ion-item>
+
+    <!-- Movie Grid -->
+    <div *ngIf="filteredMovies.length > 0" class="movies-grid">
+      <div *ngFor="let movie of filteredMovies" class="movie-card" (click)="addMovie(movie)">
+        <img [src]="movie.poster" alt="{{ movie.title }}">
+        <p>{{ movie.title }}</p>
+      </div>
+    </div>
+
+    <!-- No Results Message -->
+    <p *ngIf="filteredMovies.length === 0 && searchQuery.trim() !== ''" class="no-results">
+      No movies found.
+    </p>
+  </div>
+</ion-content>
