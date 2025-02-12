@@ -1,0 +1,41 @@
+.container {
+    padding: 16px;
+    background-color: black;
+    color: white;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: red;
+}
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.movie-card {
+    background: #1a1a1a;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0px 4px 8px rgba(255, 0, 0, 0.2);
+}
+
+.movie-card img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.movie-card h3 {
+    font-size: 16px;
+    margin-top: 8px;
+}
+
+.movie-card p {
+    font-size: 14px;
+    color: #f5c518;
+}
