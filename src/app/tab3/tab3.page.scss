@@ -4,38 +4,38 @@
     color: white;
 }
 
-.title {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    color: red;
-}
-
 .movie-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
 }
 
 .movie-card {
-    background: #1a1a1a;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0px 4px 8px rgba(255, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(255, 0, 0, 0.15);
 }
 
 .movie-card img {
     width: 100%;
-    border-radius: 8px;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
-.movie-card h3 {
-    font-size: 16px;
-    margin-top: 8px;
+.overlay {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 6px;
+    text-align: center;
+    color: white;
 }
 
-.movie-card p {
-    font-size: 14px;
-    color: #f5c518;
+.overlay h3 {
+    font-size: 12px;
+    font-weight: 500;
+    margin: 0;
 }

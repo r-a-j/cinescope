@@ -1,0 +1,182 @@
+<ion-header>
+  <ion-toolbar class="header-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<!-- Only render content if 'movie' is loaded -->
+<ion-content *ngIf="movie" [fullscreen]="true">
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <!-- Use backdrop_path for the large hero image -->
+    <img class="hero-backdrop" [src]="'https://image.tmdb.org/t/p/original' + movie.backdrop_path" alt="Backdrop" />
+
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <img class="poster" [src]="'https://image.tmdb.org/t/p/w300/' + movie.poster_path" alt="Poster" />
+
+      <div class="hero-info">
+        <!-- Title -->
+        <h1 class="movie-title">
+          {{ movie.title }}
+        </h1>
+
+        <!-- Meta Row: Release Date, Runtime, Rating -->
+        <div class="meta-row">
+          <!-- Release Date -->
+          <ion-chip color="medium" *ngIf="movie.release_date">
+            <ion-icon name="calendar"></ion-icon>
+            {{ movie.release_date | date: 'mediumDate' }}
+          </ion-chip>
+
+          <!-- Runtime -->
+          <ion-chip color="medium" *ngIf="movie.runtime">
+            <ion-icon name="time"></ion-icon>
+            {{ getRuntimeFormatted(movie.runtime) }}
+          </ion-chip>
+
+          <!-- Rating (vote_average) -->
+          <ion-chip color="warning" *ngIf="movie.vote_average">
+            <ion-icon name="star"></ion-icon>
+            {{ movie.vote_average | number:'1.1-1' }}
+          </ion-chip>
+        </div>
+
+        <!-- Genres -->
+        <div class="genres" *ngIf="movie.genres?.length">
+          <ion-chip *ngFor="let genre of movie.genres">
+            {{ genre.name }}
+          </ion-chip>
+        </div>
+
+        <!-- Tagline -->
+        <p class="tagline" *ngIf="movie.tagline">
+          {{ movie.tagline }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERVIEW SECTION -->
+  <div class="overview-section" *ngIf="movie.overview">
+    <h2 class="section-title">Overview</h2>
+    <p>{{ movie.overview }}</p>
+  </div>
+
+  <!-- ABOUT MOVIE CARD -->
+  <ion-card class="about-movie-card">
+    <ion-card-header>
+      <ion-card-title>About movie</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="details-grid">
+        <div><strong>IMDb:</strong> {{ movie.vote_average }}</div>
+        <div><strong>Status:</strong> {{ movie.status }}</div>
+        <div><strong>Original title:</strong> {{ movie.original_title }}</div>
+        <div><strong>Original language:</strong> {{ movie.original_language }}</div>
+        <div><strong>Budget:</strong> {{ movie.budget | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div><strong>Revenue:</strong> {{ movie.revenue | currency:'USD':'symbol':'1.0-0' }}</div>
+
+        <!-- Production country/countries -->
+        <div>
+          <strong>Production country:</strong>
+          <ng-container *ngFor="let country of movie.production_countries; let i=index">
+            {{ country.name }}<span *ngIf="i < movie.production_countries.length - 1">, </span>
+          </ng-container>
+        </div>
+
+        <!-- Production companies -->
+        <div>
+          <strong>Production companies:</strong>
+          <ng-container *ngIf="movie.production_companies?.length; else noCompanies">
+            <ion-chip *ngFor="let company of movie.production_companies">
+              {{ company.name }}
+            </ion-chip>
+          </ng-container>
+          <ng-template #noCompanies>No companies listed</ng-template>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- TRAILER CARD (show only if we have a video result) -->
+  <ion-card class="trailer-card" *ngIf="movie.videos?.results?.length">
+    <ion-card-header>
+      <ion-card-title>Official Trailer</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Safely embed the first YouTube trailer -->
+      <iframe width="100%" height="200" [src]="getTrailerUrl()" frameborder="0" allowfullscreen>
+      </iframe>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- CAST SECTION -->
+  <div class="cast-section" *ngIf="topCast?.length">
+    <h2 class="section-title">Top Billed Cast</h2>
+
+    <div class="horizontal-scroll">
+      <div class="cast-card" *ngFor="let castMember of topCast">
+        <img [src]="'https://image.tmdb.org/t/p/w200' + castMember.profile_path" [alt]="castMember.name" />
+        <p>{{ castMember.name }}</p>
+        <small>{{ castMember.character }}</small>
+      </div>
+    </div>
+
+    <ion-button fill="outline" color="light" class="full-cast-btn">
+      Full Cast & Crew
+    </ion-button>
+  </div>
+
+  <!-- COLLECTION CARD (Optional) -->
+  <ion-card class="collection-card" *ngIf="movie.belongs_to_collection">
+    <ion-card-header>
+      <ion-card-title>
+        Part of the {{ movie.belongs_to_collection.name }} Collection
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-button class="collection-button">
+        View the Collection
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- RELEASE INFO CARD (simplified) -->
+  <ion-card class="release-info-card" *ngIf="movie.release_date">
+    <ion-card-header>
+      <ion-card-title>Release date</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="release-info">
+        <div>
+          <strong>{{ movie.release_date | date:'mediumDate' }}</strong>
+        </div>
+        <!-- If you had an official certification, you could show it here -->
+        <!-- <div><strong>PG-13</strong></div> -->
+        <div>Type: Premiere Theatrical</div>
+        <div>Note: Beyond Fest (Customize as needed)</div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- RECOMMENDATIONS SECTION -->
+  <div class="recommendations-section" *ngIf="topRecommendations?.length">
+    <h2 class="section-title">Recommendations</h2>
+    <div class="horizontal-scroll">
+      <div class="movie-card" *ngFor="let rec of topRecommendations">
+        <img [src]="'https://image.tmdb.org/t/p/w200' + rec.poster_path" [alt]="rec.title" />
+        <!-- <p>{{ rec.title }}</p> -->
+      </div>
+    </div>
+  </div>
+</ion-content>
+
+<!-- If for some reason 'movie' doesn't exist, we can show a fallback -->
+<ion-content *ngIf="!movie">
+  <p style="text-align: center; margin-top: 2rem;">Loading movie details...</p>
+</ion-content>

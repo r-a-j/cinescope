@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
+import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 
 @Component({
   selector: 'app-tab3',
@@ -10,7 +12,10 @@ import { Component, OnInit } from '@angular/core';
 export class Tab3Page implements OnInit {
   movies: any[] = [];
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private modalCtrl: ModalController
+  ) { }
 
   ngOnInit() {
     this.fetchMovies();
@@ -33,5 +38,13 @@ export class Tab3Page implements OnInit {
         console.error('Error fetching movies:', error);
       }
     );
+  }
+
+  async openMovieDetails(movieId: number) {
+    const modal = await this.modalCtrl.create({
+      component: MovieDetailModalComponent,
+      componentProps: { movieId }
+    });
+    return await modal.present();
   }
 }
