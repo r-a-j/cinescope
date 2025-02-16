@@ -48,3 +48,11 @@ ion-content {
     --padding-bottom: calc(var(--ion-safe-area-bottom) + 60px);
     /* Adjust for tab bar */
 }
+
+.custom-toast {
+    --background: #db0000;
+    /* your theme red */
+    --color: #ffffff;
+    /* text color */
+    /* or any other CSS variables for toast: e.g. --border-radius, etc. */
+}

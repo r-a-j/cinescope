@@ -100,7 +100,6 @@ export class MovieSearchModalComponent {
       const toast = await this.toastController.create({
         message: `${movie.title} added to Watchlist!`,
         duration: 2000,
-        color: 'success',
       });
       await toast.present();
     }

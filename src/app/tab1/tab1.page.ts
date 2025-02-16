@@ -9,14 +9,8 @@ import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-mo
   standalone: false,
 })
 export class Tab1Page {
-
-  movies = [
-    { title: 'Inception', poster: 'assets/inception.jpg' },
-    { title: 'Breaking Bad', poster: 'assets/breaking_bad.jpg' },
-    { title: 'Stranger Things', poster: 'assets/stranger_things.jpg' },
-    { title: 'Dark', poster: 'assets/dark.jpg' },
-    { title: 'Interstellar', poster: 'assets/interstellar.jpg' }
-  ];
+  // Start with some example movies, or empty
+  movies: any = [];
 
   constructor(private modalController: ModalController) { }
 
@@ -24,13 +18,14 @@ export class Tab1Page {
     const modal = await this.modalController.create({
       component: MovieSearchModalComponent,
       componentProps: {
-        watchlist: this.movies, // Pass current watchlist to prevent duplicates
+        watchlist: this.movies, // pass watchlist to modal
       },
     });
 
     modal.onDidDismiss().then((result) => {
       if (result.data) {
-        this.movies.push(result.data); // Add selected movie to watchlist
+        // Add the returned movie to the watchlist
+        this.movies.push(result.data);
       }
     });
 

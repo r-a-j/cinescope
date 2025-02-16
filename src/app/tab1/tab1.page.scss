@@ -1,40 +1,7 @@
-.movies-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    padding: 10px;
-    // margin-top: 25px;
-}
-
-.movie-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 5px;
-}
-
-.movie-card img {
-    width: 100%;
-    border-radius: 5px;
-    transition: transform 0.3s ease-in-out;
-}
-
-.movie-card p {
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
-    font-size: 14px;
-    color: white;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 3px 6px;
-    border-radius: 3px;
-}
-
-.movie-card:hover img {
-    transform: scale(1.1);
-}
-
 ion-content {
     animation: fadeIn 0.5s ease-in-out;
+    --background: #000;
+    color: #fff;
 }
 
 @keyframes fadeIn {
@@ -47,31 +14,83 @@ ion-content {
     }
 }
 
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+
+.movie-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+
+    img {
+        width: 100%;
+        border-radius: 5px;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    // p {
+    //     position: absolute;
+    //     bottom: 5px;
+    //     left: 5px;
+    //     font-size: 14px;
+    //     color: #fff;
+    //     background: rgba(0, 0, 0, 0.7);
+    //     padding: 3px 6px;
+    //     border-radius: 3px;
+    // }
+
+    &:hover img {
+        transform: scale(1.1);
+    }
+}
+
 ion-fab-button {
     --background: #db0000;
-    /* Red button */
     --color: #ffffff;
-    /* White icon */
     --border-radius: 50%;
-    /* Ensure it remains circular */
     --box-shadow: 0 4px 8px rgba(219, 0, 0, 0.4);
-    /* Subtle red glow */
 
     width: 56px;
-    /* Adjust size if needed */
     height: 56px;
 
     ion-icon {
         font-size: 24px;
     }
+
+    &:hover {
+        --background: #b30000;
+    }
+
+    &:active {
+        --background: #7a0000;
+    }
 }
 
-ion-fab-button:hover {
-    --background: #b30000;
-    /* Darker red for hover effect */
-}
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 56px);
+    padding: 16px;
+    text-align: center;
+    position: relative;
 
-ion-fab-button:active {
-    --background: #7a0000;
-    /* Even darker red when pressed */
+    p {
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .arrow-svg {
+        width: 120px;
+        transform-origin: 50% 50%;
+        position: absolute;
+        bottom: 150px;
+        right: 25px;
+    }
 }
