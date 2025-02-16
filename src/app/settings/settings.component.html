@@ -19,20 +19,26 @@
                 <ion-item>
                     <ion-input type="text" [(ngModel)]="tmdbApiKey" placeholder="Enter your API key"></ion-input>
                 </ion-item>
-                <ion-button expand="block" class="save-button" (click)="saveApiKey()">Save API Key</ion-button>
+                <ion-button expand="block" class="save-button" (click)="saveApiKey()">
+                    Save API Key
+                </ion-button>
             </ion-card-content>
         </ion-card>
 
+        <!-- Manage Lists -->
         <ion-card>
             <ion-card-header>
                 <ion-card-title>Manage Lists</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-                <ion-button expand="block" class="save-button" (click)="clearWatchlist()">Clear Watchlist</ion-button>
-                <ion-button expand="block" class="save-button" (click)="clearWatchedList()">Clear Watched List</ion-button>
+                <ion-button expand="block" class="save-button" (click)="clearWatchlist()">
+                    Clear Watchlist
+                </ion-button>
+                <ion-button expand="block" class="save-button" (click)="clearWatchedList()">
+                    Clear Watched List
+                </ion-button>
             </ion-card-content>
         </ion-card>
-
 
         <!-- About Section -->
         <ion-card>
