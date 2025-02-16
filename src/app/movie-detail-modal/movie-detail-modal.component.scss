@@ -1,9 +1,4 @@
-ion-header {
-    ion-toolbar {
-        background-color: #000;
-    }
-}
-
+/* Global overrides and dark theme */
 ion-content {
     --background: #000;
     color: #fff;
@@ -11,13 +6,16 @@ ion-content {
     padding-bottom: 16px;
 }
 
+/* HERO SECTION */
 .hero {
     position: relative;
+    /* Adjust top margin if needed */
     margin-top: -72px;
 
     .hero-backdrop {
         width: 100%;
-        height: 320px;
+        height: 60vh;
+        /* Changed from fixed 320px to a cinematic viewport height */
         object-fit: cover;
     }
 
@@ -26,7 +24,7 @@ ion-content {
         top: 0;
         left: 0;
         width: 100%;
-        height: 322px;
+        height: 60vh;
         background: linear-gradient(to bottom,
                 rgba(0, 0, 0, 0.4),
                 rgba(0, 0, 0, 1) 85%);
@@ -40,8 +38,8 @@ ion-content {
         right: 16px;
         display: flex;
         align-items: flex-end;
-        transform: none;
 
+        /* Poster image and info side-by-side */
         .poster {
             width: 110px;
             height: 165px;
@@ -53,14 +51,14 @@ ion-content {
 
         .hero-info {
             margin-left: 12px;
-            background: rgba(0, 0, 0, 0);
             padding: 8px 12px;
-            border-radius: 1px;
             display: flex;
             flex-direction: column;
 
+            /* Updated movie title with custom font */
             .movie-title {
-                font-size: 22px;
+                font-family: 'Bebas Neue', sans-serif;
+                font-size: 2.5rem;
                 font-weight: 700;
                 margin-bottom: 8px;
                 line-height: 1.2;
@@ -96,6 +94,7 @@ ion-content {
             .tagline {
                 font-style: italic;
                 color: #db0000;
+                /* Use your custom red */
                 font-size: 14px;
                 margin-bottom: 0;
             }
@@ -103,6 +102,7 @@ ion-content {
     }
 }
 
+/* Overview Section */
 .overview-section {
     margin-top: 0;
     padding: 16px;
@@ -119,6 +119,7 @@ ion-content {
     }
 }
 
+/* Card styles (About Movie, Trailer, Collection, Release Info) */
 .about-movie-card,
 .trailer-card,
 .collection-card,
@@ -133,11 +134,7 @@ ion-content {
     }
 }
 
-ion-button.collection-button {
-    background-color: var(--ion-color-custom-red) !important;
-    color: white !important;
-}
-
+/* Grid for About Movie details */
 .details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -154,6 +151,36 @@ ion-button.collection-button {
     }
 }
 
+/* 1) Back Button absolute positioning (unchanged if you had it) */
+.back-btn {
+    position: absolute;
+    top: calc(var(--ion-safe-area-top) + 8px);
+    left: 8px;
+    z-index: 10;
+    fill: clear;
+    /* already set in the HTML */
+
+    /* The SVG image inside the button */
+    .back-svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* 2) Collection link (bold red text) */
+.collection-link {
+    color: var(--ion-color-custom-red);
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    /* Optional: Add spacing, hover effect, etc. */
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+/* Cast & Recommendations Sections */
 .cast-section,
 .recommendations-section {
     padding: 16px;
@@ -188,6 +215,7 @@ ion-button.collection-button {
     }
 }
 
+/* Release Info Grid */
 .release-info {
     display: grid;
     grid-template-columns: 1fr 1fr;

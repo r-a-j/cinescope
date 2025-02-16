@@ -1,45 +1,32 @@
-<ion-header>
-  <ion-toolbar class="header-toolbar">
-    <ion-buttons slot="start">
-      <ion-button (click)="dismiss()">
-        <ion-icon name="arrow-back"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
 <!-- Only render content if 'movie' is loaded -->
 <ion-content *ngIf="movie" [fullscreen]="true">
+  <ion-button class="back-btn" fill="clear" (click)="dismiss()">
+    <!-- Custom SVG -->
+    <img src="assets/back.svg" alt="Back" class="back-svg" />
+  </ion-button>
+
   <!-- HERO SECTION -->
   <div class="hero">
-    <!-- Use backdrop_path for the large hero image -->
+    <!-- Backdrop image (full-screen cinematic height) -->
     <img class="hero-backdrop" [src]="'https://image.tmdb.org/t/p/original' + movie.backdrop_path" alt="Backdrop" />
-
     <div class="hero-overlay"></div>
     <div class="hero-content">
+      <!-- Poster image -->
       <img class="poster" [src]="'https://image.tmdb.org/t/p/w300/' + movie.poster_path" alt="Poster" />
-
       <div class="hero-info">
-        <!-- Title -->
-        <h1 class="movie-title">
-          {{ movie.title }}
-        </h1>
+        <!-- Movie Title -->
+        <h1 class="movie-title">{{ movie.title }}</h1>
 
         <!-- Meta Row: Release Date, Runtime, Rating -->
         <div class="meta-row">
-          <!-- Release Date -->
           <ion-chip color="medium" *ngIf="movie.release_date">
             <ion-icon name="calendar"></ion-icon>
             {{ movie.release_date | date: 'mediumDate' }}
           </ion-chip>
-
-          <!-- Runtime -->
           <ion-chip color="medium" *ngIf="movie.runtime">
             <ion-icon name="time"></ion-icon>
             {{ getRuntimeFormatted(movie.runtime) }}
           </ion-chip>
-
-          <!-- Rating (vote_average) -->
           <ion-chip color="warning" *ngIf="movie.vote_average">
             <ion-icon name="star"></ion-icon>
             {{ movie.vote_average | number:'1.1-1' }}
@@ -78,18 +65,20 @@
         <div><strong>Status:</strong> {{ movie.status }}</div>
         <div><strong>Original title:</strong> {{ movie.original_title }}</div>
         <div><strong>Original language:</strong> {{ movie.original_language }}</div>
-        <div><strong>Budget:</strong> {{ movie.budget | currency:'USD':'symbol':'1.0-0' }}</div>
-        <div><strong>Revenue:</strong> {{ movie.revenue | currency:'USD':'symbol':'1.0-0' }}</div>
-
-        <!-- Production country/countries -->
+        <div>
+          <strong>Budget:</strong>
+          {{ movie.budget | currency:'USD':'symbol':'1.0-0' }}
+        </div>
+        <div>
+          <strong>Revenue:</strong>
+          {{ movie.revenue | currency:'USD':'symbol':'1.0-0' }}
+        </div>
         <div>
           <strong>Production country:</strong>
           <ng-container *ngFor="let country of movie.production_countries; let i=index">
             {{ country.name }}<span *ngIf="i < movie.production_countries.length - 1">, </span>
           </ng-container>
         </div>
-
-        <!-- Production companies -->
         <div>
           <strong>Production companies:</strong>
           <ng-container *ngIf="movie.production_companies?.length; else noCompanies">
@@ -103,13 +92,12 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- TRAILER CARD (show only if we have a video result) -->
+  <!-- TRAILER CARD (if a video exists) -->
   <ion-card class="trailer-card" *ngIf="movie.videos?.results?.length">
     <ion-card-header>
       <ion-card-title>Official Trailer</ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <!-- Safely embed the first YouTube trailer -->
       <iframe width="100%" height="200" [src]="getTrailerUrl()" frameborder="0" allowfullscreen>
       </iframe>
     </ion-card-content>
@@ -118,7 +106,6 @@
   <!-- CAST SECTION -->
   <div class="cast-section" *ngIf="topCast?.length">
     <h2 class="section-title">Top Billed Cast</h2>
-
     <div class="horizontal-scroll">
       <div class="cast-card" *ngFor="let castMember of topCast">
         <img [src]="'https://image.tmdb.org/t/p/w200' + castMember.profile_path" [alt]="castMember.name" />
@@ -126,13 +113,13 @@
         <small>{{ castMember.character }}</small>
       </div>
     </div>
-
     <ion-button fill="outline" color="light" class="full-cast-btn">
-      Full Cast & Crew
+      Full Cast &amp; Crew
     </ion-button>
   </div>
 
   <!-- COLLECTION CARD (Optional) -->
+  <!-- COLLECTION CARD -->
   <ion-card class="collection-card" *ngIf="movie.belongs_to_collection">
     <ion-card-header>
       <ion-card-title>
@@ -140,13 +127,14 @@
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-button class="collection-button">
-        View the Collection
-      </ion-button>
+      <span class="collection-link">
+        VIEW THE COLLECTION
+      </span>
     </ion-card-content>
   </ion-card>
 
-  <!-- RELEASE INFO CARD (simplified) -->
+
+  <!-- RELEASE INFO CARD -->
   <ion-card class="release-info-card" *ngIf="movie.release_date">
     <ion-card-header>
       <ion-card-title>Release date</ion-card-title>
@@ -156,8 +144,6 @@
         <div>
           <strong>{{ movie.release_date | date:'mediumDate' }}</strong>
         </div>
-        <!-- If you had an official certification, you could show it here -->
-        <!-- <div><strong>PG-13</strong></div> -->
         <div>Type: Premiere Theatrical</div>
         <div>Note: Beyond Fest (Customize as needed)</div>
       </div>
@@ -170,13 +156,12 @@
     <div class="horizontal-scroll">
       <div class="movie-card" *ngFor="let rec of topRecommendations">
         <img [src]="'https://image.tmdb.org/t/p/w200' + rec.poster_path" [alt]="rec.title" />
-        <!-- <p>{{ rec.title }}</p> -->
       </div>
     </div>
   </div>
 </ion-content>
 
-<!-- If for some reason 'movie' doesn't exist, we can show a fallback -->
+<!-- Fallback if 'movie' is not loaded -->
 <ion-content *ngIf="!movie">
   <p style="text-align: center; margin-top: 2rem;">Loading movie details...</p>
 </ion-content>

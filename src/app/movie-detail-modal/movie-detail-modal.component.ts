@@ -2,7 +2,6 @@ import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
 import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar } from "@ionic/angular/standalone";
 import { HttpClient } from '@angular/common/http';
 import { Swiper } from 'swiper';
 import { MovieDetails, VideosResult } from 'src/models/movie-details.model';
@@ -12,7 +11,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   selector: 'app-movie-detail-modal',
   standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [IonicModule, IonToolbar, IonHeader, CommonModule, FormsModule],
+  imports: [IonicModule, CommonModule, FormsModule],
   templateUrl: './movie-detail-modal.component.html',
   styleUrls: ['./movie-detail-modal.component.scss'],
 })
