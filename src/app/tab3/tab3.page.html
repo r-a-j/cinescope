@@ -1,6 +1,5 @@
 <ion-content [fullscreen]="true">
     <div class="container">
-        <h1 class="title">Discover</h1>
         <div class="movie-grid">
             <div *ngFor="let movie of movies" class="movie-card" (click)="openMovieDetails(movie.id)">
                 <img [src]="'https://image.tmdb.org/t/p/w500' + movie.poster_path" alt="{{ movie.title }}">

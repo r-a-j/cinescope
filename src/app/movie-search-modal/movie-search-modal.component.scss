@@ -1,87 +1,71 @@
-:host {
-    ion-header {
-        --background: #000000;
-        /* Dark header */
-        --color: #ffffff;
-        --ion-toolbar-background: #000000;
-    }
+ion-content {
+    --background: #000;
+    color: #fff;
+}
 
-    ion-content {
-        --background: #000000;
-        /* Dark background */
-        color: #ffffff;
-    }
+.search-container {
+    padding: 16px;
+}
 
-    .search-container {
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    ion-item {
-        --background: #1a1a1a;
-        /* Dark search bar */
-        --color: #ffffff;
-        border-radius: 8px;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-    }
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 8px 12px;
 
     ion-input {
-        --color: #ffffff;
-        /* White text inside input */
-        font-size: 1rem;
         flex: 1;
+        --color: #fff;
+        --placeholder-color: #888;
+        --highlight-color: var(--ion-color-custom-red);
+        font-size: 16px;
     }
 
     .search-icon {
-        font-size: 20px;
-        color: #db0000;
-        /* Red search icon */
+        font-size: 24px;
+        color: var(--ion-color-custom-red);
+        margin-left: 8px;
         cursor: pointer;
-        margin-left: 10px;
+    }
+}
+
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.movie-card {
+    text-align: center;
+    cursor: pointer;
+    padding: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        transform: translateY(-4px) scale(1.03);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
     }
 
-    .movies-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 12px;
-        padding: 16px;
-    }
-
-    .movie-card {
-        position: relative;
-        overflow: hidden;
-        border-radius: 8px;
-        cursor: pointer;
-        background: #1a1a1a;
-        padding: 6px;
-        text-align: center;
-        transition: transform 0.3s ease-in-out;
-    }
-
-    .movie-card:hover {
-        transform: scale(1.05);
-    }
-
-    .movie-card img {
+    img {
         width: 100%;
         border-radius: 8px;
+        object-fit: cover;
     }
 
-    .movie-card p {
+    p {
+        margin-top: 8px;
         font-size: 14px;
-        color: white;
         font-weight: bold;
-        margin-top: 5px;
+        color: #fff;
+        text-transform: uppercase;
     }
+}
 
-    .no-results {
-        text-align: center;
-        color: #aaaaaa;
-        font-size: 14px;
-        margin-top: 20px;
-    }
+.no-results {
+    margin-top: 24px;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
 }
