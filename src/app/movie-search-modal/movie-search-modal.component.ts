@@ -3,6 +3,8 @@ import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecommendationsResult } from 'src/models/movie-details.model';
+import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
+import { MovieService } from 'src/services/movie.service';
 
 @Component({
   selector: 'app-movie-search-modal',
@@ -20,14 +22,14 @@ export class MovieSearchModalComponent {
 
   constructor(
     private modalController: ModalController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private movieService: MovieService
   ) { }
 
   dismiss() {
     this.modalController.dismiss();
   }
 
-  // Called on every keystroke (ionInput)
   searchMovies() {
     if (!this.searchQuery.trim()) {
       this.filteredMovies = [];
@@ -38,7 +40,6 @@ export class MovieSearchModalComponent {
       clearTimeout(this.searchTimeout);
     }
 
-    // Debounce: wait 500ms after user stops typing
     this.searchTimeout = setTimeout(() => {
       const query = encodeURIComponent(this.searchQuery.trim());
       const url = `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=true`;
@@ -87,25 +88,37 @@ export class MovieSearchModalComponent {
     }, 500);
   }
 
-  async addMovie(movie: RecommendationsResult): Promise<void> {
-    if (this.watchlist.some((w: RecommendationsResult) => w.title === movie.title)) {
-      const toast = await this.toastController.create({
-        message: `${movie.title} is already in your Watchlist.`,
-        duration: 2000,
-        color: 'warning',
-      });
-      await toast.present();
-    } else {
-      this.modalController.dismiss(movie);
-      const toast = await this.toastController.create({
-        message: `${movie.title} added to Watchlist!`,
-        duration: 2000,
-      });
-      await toast.present();
-    }
+  async openMovieDetails(movie: RecommendationsResult): Promise<void> {
+    const detailModal = await this.modalController.create({
+      component: MovieDetailModalComponent,
+      componentProps: { movieId: movie.id }
+    });
 
-    this.filteredMovies = this.filteredMovies.filter(
-      (m: RecommendationsResult) => m.title !== movie.title
-    );
+    detailModal.onDidDismiss().then(async (result) => {
+      if (result.data) {
+        if (result.data.action === 'watchlist') {
+          this.movieService.addToWatchlist(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watchlist!`,
+            duration: 2000,
+            color: 'custom-red'
+          });
+          await toast.present();
+        } else if (result.data.action === 'watched') {
+          this.movieService.moveToWatched(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watched!`,
+            duration: 2000,
+            color: 'custom-red'
+          });
+          await toast.present();
+        }
+        this.filteredMovies = this.filteredMovies.filter(
+          (m: RecommendationsResult) => m.id !== result.data.movie.id
+        );
+      }
+    });
+
+    await detailModal.present();
   }
 }

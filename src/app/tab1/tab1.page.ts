@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-modal.component';
+import { MovieService } from 'src/services/movie.service';
+import { RecommendationsResult } from 'src/models/movie-details.model';
+import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 
 @Component({
   selector: 'app-tab1',
@@ -9,23 +12,55 @@ import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-mo
   standalone: false,
 })
 export class Tab1Page {
-  // Start with some example movies, or empty
-  movies: any = [];
+  private longPressTimeout: any;
 
-  constructor(private modalController: ModalController) { }
+  constructor(
+    private modalController: ModalController,
+    private movieService: MovieService
+  ) { }
+
+  get movies(): RecommendationsResult[] {
+    return this.movieService.watchlist;
+  }
 
   async openModal() {
     const modal = await this.modalController.create({
       component: MovieSearchModalComponent,
       componentProps: {
-        watchlist: this.movies, // pass watchlist to modal
+        watchlist: this.movieService.watchlist,
       },
     });
 
     modal.onDidDismiss().then((result) => {
       if (result.data) {
-        // Add the returned movie to the watchlist
-        this.movies.push(result.data);
+        if (result.data.action === 'watchlist') {
+          this.movieService.addToWatchlist(result.data.movie);
+        } else if (result.data.action === 'watched') {
+          this.movieService.moveToWatched(result.data.movie);
+        }
+      }
+    });
+
+    await modal.present();
+  }
+
+  moveToWatched(movie: RecommendationsResult) {
+    this.movieService.moveToWatched(movie);
+  }
+
+  async openMovieDetails(movieId: number) {
+    const modal = await this.modalController.create({
+      component: MovieDetailModalComponent,
+      componentProps: { movieId }
+    });
+
+    modal.onDidDismiss().then((result) => {
+      if (result.data) {
+        if (result.data.action === 'watchlist') {
+          this.movieService.addToWatchlist(result.data.movie);
+        } else if (result.data.action === 'watched') {
+          this.movieService.moveToWatched(result.data.movie);
+        }
       }
     });
 

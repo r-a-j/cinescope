@@ -40,12 +40,10 @@ export class MovieDetailModalComponent implements OnInit {
 
     this.http.get<MovieDetails>(url, options).subscribe({
       next: (data) => {
-        // Convert string dates to Date objects
         if (data.release_date) {
           data.release_date = new Date(data.release_date);
         }
 
-        // Convert dates in reviews
         if (data.reviews?.results) {
           data.reviews.results = data.reviews.results.map(review => ({
             ...review,
@@ -54,7 +52,6 @@ export class MovieDetailModalComponent implements OnInit {
           }));
         }
 
-        // Convert dates in videos
         if (data.videos?.results) {
           data.videos.results = data.videos.results.map(video => ({
             ...video,
@@ -71,16 +68,10 @@ export class MovieDetailModalComponent implements OnInit {
     });
   }
 
-  /**
-   * Dismiss this modal
-   */
   dismiss(): void {
     this.modalCtrl.dismiss();
   }
 
-  /**
-   * Helper to format runtime in hours and minutes, e.g., "2h 30m"
-   */
   getRuntimeFormatted(runtime: number | null | undefined): string {
     if (!runtime) return '';
     const hours = Math.floor(runtime / 60);
@@ -88,15 +79,11 @@ export class MovieDetailModalComponent implements OnInit {
     return `${hours}h ${minutes}m`;
   }
 
-  /**
-   * Generate a safe URL for the first available YouTube trailer
-   */
   getTrailerUrl(): SafeResourceUrl {
     if (!this.movie?.videos?.results?.length) {
       return this.sanitizer.bypassSecurityTrustResourceUrl('about:blank');
     }
 
-    // Try to find the first official Trailer from YouTube
     const trailer: VideosResult | undefined = this.movie.videos.results.find(
       (video) => video.site === 'YouTube' && video.type === 'Trailer'
     );
@@ -107,13 +94,9 @@ export class MovieDetailModalComponent implements OnInit {
       );
     }
 
-    // Fallback if no trailer found
     return this.sanitizer.bypassSecurityTrustResourceUrl('about:blank');
   }
 
-  /**
-   * Convenience getters for recommended/similar items, slice them if you only want a few
-   */
   get topRecommendations() {
     return this.movie?.recommendations?.results?.slice(0, 6) || [];
   }
@@ -124,5 +107,13 @@ export class MovieDetailModalComponent implements OnInit {
 
   get topCast() {
     return this.movie?.credits?.cast?.slice(0, 6) || [];
+  }
+
+  addToWatchlist(): void {
+    this.modalCtrl.dismiss({ action: 'watchlist', movie: this.movie });
+  }
+
+  addToWatched(): void {
+    this.modalCtrl.dismiss({ action: 'watched', movie: this.movie });
   }
 }

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
+import { MovieService } from 'src/services/movie.service';
 
 @Component({
   selector: 'app-tab3',
@@ -14,7 +15,8 @@ export class Tab3Page implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private movieService: MovieService
   ) { }
 
   ngOnInit() {
@@ -45,6 +47,17 @@ export class Tab3Page implements OnInit {
       component: MovieDetailModalComponent,
       componentProps: { movieId }
     });
-    return await modal.present();
+
+    modal.onDidDismiss().then((result) => {
+      if (result.data) {
+        if (result.data.action === 'watchlist') {
+          this.movieService.addToWatchlist(result.data.movie);
+        } else if (result.data.action === 'watched') {
+          this.movieService.moveToWatched(result.data.movie);
+        }
+      }
+    });
+
+    await modal.present();
   }
 }

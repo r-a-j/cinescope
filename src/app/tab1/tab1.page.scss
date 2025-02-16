@@ -32,17 +32,6 @@ ion-content {
         transition: transform 0.3s ease-in-out;
     }
 
-    // p {
-    //     position: absolute;
-    //     bottom: 5px;
-    //     left: 5px;
-    //     font-size: 14px;
-    //     color: #fff;
-    //     background: rgba(0, 0, 0, 0.7);
-    //     padding: 3px 6px;
-    //     border-radius: 3px;
-    // }
-
     &:hover img {
         transform: scale(1.1);
     }
@@ -90,7 +79,7 @@ ion-fab-button {
         width: 120px;
         transform-origin: 50% 50%;
         position: absolute;
-        bottom: 150px;
+        bottom: 200px;
         right: 25px;
     }
 }

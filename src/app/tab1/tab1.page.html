@@ -1,11 +1,10 @@
 <ion-content [fullscreen]="false">
   <ng-container *ngIf="movies.length > 0; else emptyWatchlist">
     <div class="movies-grid">
-      <div *ngFor="let movie of movies" class="movie-card">
+      <div *ngFor="let movie of movies" class="movie-card" (click)="openMovieDetails(movie.id)">
         <img
           [src]="movie.poster_path !== 'assets/placeholder.png' ? 'https://image.tmdb.org/t/p/w200' + movie.poster_path : movie.poster_path"
           alt="{{ movie.title }}" />
-        <!-- <p>{{ movie.title }}</p> -->
       </div>
     </div>
   </ng-container>
@@ -13,12 +12,10 @@
   <ng-template #emptyWatchlist>
     <div class="empty-state">
       <p>Can’t wait? Start adding by clicking the button below!</p>
-      <!-- Example arrow SVG pointing to bottom-right corner -->
       <img src="assets/arrow-down-thin.svg" alt="Arrow pointing to button" class="arrow-svg" />
     </div>
   </ng-template>
 
-  <!-- Floating Add Button -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="openModal()">
       <ion-icon name="add"></ion-icon>

@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { RecommendationsResult } from 'src/models/movie-details.model';
+import { MovieService } from 'src/services/movie.service';
 
 @Component({
   selector: 'app-tab2',
@@ -8,6 +10,9 @@ import { Component } from '@angular/core';
 })
 export class Tab2Page {
 
-  constructor() {}
+  constructor(private movieService: MovieService) {}
 
+  get watchedMovies(): RecommendationsResult[] {
+    return this.movieService.watched;
+  }
 }

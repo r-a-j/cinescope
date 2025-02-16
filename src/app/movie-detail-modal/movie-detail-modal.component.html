@@ -1,23 +1,15 @@
-<!-- Only render content if 'movie' is loaded -->
 <ion-content *ngIf="movie" [fullscreen]="true">
   <ion-button class="back-btn" fill="clear" (click)="dismiss()">
-    <!-- Custom SVG -->
     <img src="assets/back.svg" alt="Back" class="back-svg" />
   </ion-button>
 
-  <!-- HERO SECTION -->
   <div class="hero">
-    <!-- Backdrop image (full-screen cinematic height) -->
     <img class="hero-backdrop" [src]="'https://image.tmdb.org/t/p/original' + movie.backdrop_path" alt="Backdrop" />
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <!-- Poster image -->
       <img class="poster" [src]="'https://image.tmdb.org/t/p/w300/' + movie.poster_path" alt="Poster" />
       <div class="hero-info">
-        <!-- Movie Title -->
         <h1 class="movie-title">{{ movie.title }}</h1>
-
-        <!-- Meta Row: Release Date, Runtime, Rating -->
         <div class="meta-row">
           <ion-chip color="medium" *ngIf="movie.release_date">
             <ion-icon name="calendar"></ion-icon>
@@ -33,14 +25,12 @@
           </ion-chip>
         </div>
 
-        <!-- Genres -->
         <div class="genres" *ngIf="movie.genres?.length">
           <ion-chip *ngFor="let genre of movie.genres">
             {{ genre.name }}
           </ion-chip>
         </div>
 
-        <!-- Tagline -->
         <p class="tagline" *ngIf="movie.tagline">
           {{ movie.tagline }}
         </p>
@@ -48,13 +38,26 @@
     </div>
   </div>
 
-  <!-- OVERVIEW SECTION -->
   <div class="overview-section" *ngIf="movie.overview">
     <h2 class="section-title">Overview</h2>
     <p>{{ movie.overview }}</p>
   </div>
 
-  <!-- ABOUT MOVIE CARD -->
+  <ion-card class="action-options-card">
+    <ion-card-content>
+      <div class="action-options">
+        <div class="action-item" (click)="addToWatchlist()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+          <span>Watchlist</span>
+        </div>
+        <div class="action-item" (click)="addToWatched()">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span>Watched</span>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
   <ion-card class="about-movie-card">
     <ion-card-header>
       <ion-card-title>About movie</ion-card-title>
@@ -92,7 +95,6 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- TRAILER CARD (if a video exists) -->
   <ion-card class="trailer-card" *ngIf="movie.videos?.results?.length">
     <ion-card-header>
       <ion-card-title>Official Trailer</ion-card-title>
@@ -103,7 +105,6 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- CAST SECTION -->
   <div class="cast-section" *ngIf="topCast?.length">
     <h2 class="section-title">Top Billed Cast</h2>
     <div class="horizontal-scroll">
@@ -118,8 +119,6 @@
     </ion-button>
   </div>
 
-  <!-- COLLECTION CARD (Optional) -->
-  <!-- COLLECTION CARD -->
   <ion-card class="collection-card" *ngIf="movie.belongs_to_collection">
     <ion-card-header>
       <ion-card-title>
@@ -134,7 +133,6 @@
   </ion-card>
 
 
-  <!-- RELEASE INFO CARD -->
   <ion-card class="release-info-card" *ngIf="movie.release_date">
     <ion-card-header>
       <ion-card-title>Release date</ion-card-title>
@@ -150,7 +148,6 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- RECOMMENDATIONS SECTION -->
   <div class="recommendations-section" *ngIf="topRecommendations?.length">
     <h2 class="section-title">Recommendations</h2>
     <div class="horizontal-scroll">
@@ -161,7 +158,6 @@
   </div>
 </ion-content>
 
-<!-- Fallback if 'movie' is not loaded -->
 <ion-content *ngIf="!movie">
   <p style="text-align: center; margin-top: 2rem;">Loading movie details...</p>
 </ion-content>

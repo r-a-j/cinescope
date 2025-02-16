@@ -1,15 +1,13 @@
 <ion-content>
   <div class="search-container">
-    <!-- Search Bar -->
     <div class="search-bar">
       <ion-input placeholder="Search for a movie" [(ngModel)]="searchQuery" clearInput
         (ionInput)="searchMovies()"></ion-input>
       <ion-icon class="search-icon" name="search-outline" (click)="searchMovies()"></ion-icon>
     </div>
 
-    <!-- Movie Grid -->
     <div *ngIf="filteredMovies.length > 0" class="movies-grid">
-      <div *ngFor="let movie of filteredMovies" class="movie-card" (click)="addMovie(movie)">
+      <div *ngFor="let movie of filteredMovies" class="movie-card" (click)="openMovieDetails(movie)">
         <img
           [src]="movie.poster_path !== 'assets/placeholder.png' ? 'https://image.tmdb.org/t/p/w200' + movie.poster_path : movie.poster_path"
           alt="{{ movie.title }}" />
@@ -17,7 +15,6 @@
       </div>
     </div>
 
-    <!-- No Results -->
     <div *ngIf="filteredMovies.length === 0 && searchQuery.trim() !== ''" class="no-results">
       No movies found.
     </div>

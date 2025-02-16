@@ -1,3 +1,16 @@
 <ion-content [fullscreen]="true">
-  
+    <ng-container *ngIf="watchedMovies.length > 0; else emptyWatched">
+        <div class="movies-grid">
+            <div *ngFor="let movie of watchedMovies" class="movie-card">
+                <img [src]="movie.poster_path !== 'assets/placeholder.png' ? 'https://image.tmdb.org/t/p/w200' + movie.poster_path : movie.poster_path"
+                    alt="{{ movie.title }}" />
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-template #emptyWatched>
+        <div class="empty-state">
+            <p>No movies have been watched yet.</p>
+        </div>
+    </ng-template>
 </ion-content>
