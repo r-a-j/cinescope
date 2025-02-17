@@ -4,7 +4,10 @@ An android mobile application built with **Ionic, Angular, and Capacitor** that 
 
 ## 📸 Screenshots
 
-<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/Screenshot_1_2025-02-10-02-59-29-29.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/Screenshot_2_2025-02-10-02-59-32-96.jpg" width="300">
+<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/1.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/2.jpg" width="300">
+<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/3.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/4.jpg" width="300">
+<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/6.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/7.jpg" width="300">
+<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/5.jpg" width="300">
 
 ## 🚀 Features
 
