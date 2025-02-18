@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA, ViewChild } from '@angular/core';
+import { IonContent, IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Swiper } from 'swiper';
-import { MovieDetails, VideosResult } from 'src/models/movie-details.model';
+import { MovieDetails, RecommendationsResult, VideosResult } from 'src/models/movie-details.model';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
@@ -17,6 +17,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class MovieDetailModalComponent implements OnInit {
   @Input() movieId!: number;
+  @ViewChild(IonContent) content!: IonContent;
+  
   movie!: MovieDetails;
   selectedSegment: string = 'overview';
   slideOpts = { slidesPerView: 2.5, spaceBetween: 10 };
@@ -61,6 +63,9 @@ export class MovieDetailModalComponent implements OnInit {
 
         this.movie = data;
         console.log('Fetched movie:', this.movie);
+        
+        // Scroll to top after new data loads.
+        this.content.scrollToTop(300);
       },
       error: (error) => {
         console.error('Error fetching movie details:', error);
@@ -115,5 +120,10 @@ export class MovieDetailModalComponent implements OnInit {
 
   addToWatched(): void {
     this.modalCtrl.dismiss({ action: 'watched', movie: this.movie });
+  }
+  
+  openRecommendedMovie(rec: RecommendationsResult): void {
+    this.movieId = rec.id;    
+    this.fetchMovieDetails();    
   }
 }
