@@ -1,4 +1,7 @@
 <ion-content>
+  <ion-button class="back-btn" fill="clear" (click)="dismiss()">
+    <img src="assets/back.svg" alt="Back" class="back-svg" />
+  </ion-button>
   <div class="search-container">
     <div class="search-bar">
       <ion-input placeholder="Search for a movie" [(ngModel)]="searchQuery" clearInput

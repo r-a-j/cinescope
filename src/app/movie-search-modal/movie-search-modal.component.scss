@@ -7,6 +7,19 @@ ion-content {
     padding: 16px;
 }
 
+.back-btn {
+    position: absolute;
+    top: calc(var(--ion-safe-area-top) + 8px);
+    left: 8px;
+    z-index: 10;
+    fill: clear;
+
+    .back-svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
 .search-bar {
     display: flex;
     align-items: center;

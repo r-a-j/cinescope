@@ -1,7 +1,7 @@
 <ion-content [fullscreen]="true">
     <ng-container *ngIf="watchedMovies.length > 0; else emptyWatched">
         <div class="movies-grid">
-            <div *ngFor="let movie of watchedMovies" class="movie-card">
+            <div *ngFor="let movie of watchedMovies" class="movie-card" (click)="openMovieDetail(movie.id)">
                 <img [src]="movie.poster_path !== 'assets/placeholder.png' ? 'https://image.tmdb.org/t/p/w200' + movie.poster_path : movie.poster_path"
                     alt="{{ movie.title }}" />
             </div>
