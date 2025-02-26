@@ -14,35 +14,33 @@ export class Tab3Page implements OnInit {
   movies: any[] = [];
 
   constructor(
-    private http: HttpClient,
     private modalCtrl: ModalController,
     private movieService: MovieService
   ) { }
 
-  ngOnInit() {
-    this.fetchMovies();
+  ngOnInit(): void {
+    this.loadMovies();
   }
 
-  fetchMovies() {
-    const url = 'https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc';
-    const options = {
-      headers: {
-        accept: 'application/json',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0M2YzZDM0N2IxNzU2YmUyMjI1MGY4MGQ1ODAyOTEwMSIsIm5iZiI6MTczNjczNDg1Ny42OTIsInN1YiI6IjY3ODQ3ODg5MjI1NjAyM2RmZDRlNjAyNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.KfGGPJNVAJfMUKgZOkZvP44qJI_Id8ZtgnK-YFz1p4Q'
-      }
-    };
-
-    this.http.get<any>(url, options).subscribe(
-      (data) => {
+  /**
+   * Loads movies by subscribing to the MovieService.
+   */
+  loadMovies(): void {
+    this.movieService.getMovies().subscribe({
+      next: (data) => {
         this.movies = data.results;
       },
-      (error) => {
+      error: (error) => {
         console.error('Error fetching movies:', error);
       }
-    );
+    });
   }
 
-  async openMovieDetails(movieId: number) {
+  /**
+   * Opens the movie details modal and handles actions from the modal.
+   * @param movieId The ID of the movie to show details for
+   */
+  async openMovieDetails(movieId: number): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: MovieDetailModalComponent,
       componentProps: { movieId }

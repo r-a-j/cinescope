@@ -12,7 +12,6 @@ import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-mo
   standalone: false,
 })
 export class Tab1Page {
-  private longPressTimeout: any;
 
   constructor(
     private modalController: ModalController,
