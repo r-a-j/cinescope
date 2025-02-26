@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { RecommendationsResult } from 'src/models/movie-details.model';
+import { RecommendationsResult } from 'src/app/models/movie-details.model';
 
 @Injectable({
     providedIn: 'root',

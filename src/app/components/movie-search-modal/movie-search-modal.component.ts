@@ -2,9 +2,9 @@ import { Component, Input } from '@angular/core';
 import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RecommendationsResult } from 'src/models/movie-details.model';
+import { RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
-import { MovieService } from 'src/services/movie.service';
+import { MovieService } from 'src/app/services/movie.service';
 
 @Component({
   selector: 'app-movie-search-modal',

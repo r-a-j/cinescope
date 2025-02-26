@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
-import { MovieService } from 'src/services/movie.service';
+import { MovieService } from 'src/app/services/movie.service';
 
 @Component({
   selector: 'app-tab3',

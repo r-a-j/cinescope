@@ -6,7 +6,7 @@ import { AlertController, IonicModule } from '@ionic/angular';
 
 import { SettingsComponent } from './settings.component';
 import { Router, RouterModule, Routes } from '@angular/router';
-import { MovieService } from 'src/services/movie.service';
+import { MovieService } from 'src/app/services/movie.service';
 
 const routes: Routes = [
   {

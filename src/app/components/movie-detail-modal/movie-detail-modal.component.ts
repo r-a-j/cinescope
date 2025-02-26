@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Swiper } from 'swiper';
-import { MovieDetails, RecommendationsResult, VideosResult } from 'src/models/movie-details.model';
+import { MovieDetails, RecommendationsResult, VideosResult } from 'src/app/models/movie-details.model';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({

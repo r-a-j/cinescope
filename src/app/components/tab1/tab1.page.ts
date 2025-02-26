@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-modal.component';
-import { MovieService } from 'src/services/movie.service';
-import { RecommendationsResult } from 'src/models/movie-details.model';
+import { MovieService } from 'src/app/services/movie.service';
+import { RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 
 @Component({
