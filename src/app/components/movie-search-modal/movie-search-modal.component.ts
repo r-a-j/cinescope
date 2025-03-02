@@ -26,11 +26,15 @@ export class MovieSearchModalComponent {
     private movieService: MovieService
   ) { }
 
-  dismiss() {
+  dismiss(): void {
     this.modalController.dismiss();
   }
 
-  searchMovies() {
+  /**
+   * Searches movies using the movie service.
+   * Implements a debounce with setTimeout.
+   */
+  searchMovies(): void {
     if (!this.searchQuery.trim()) {
       this.filteredMovies = [];
       return;
@@ -41,22 +45,10 @@ export class MovieSearchModalComponent {
     }
 
     this.searchTimeout = setTimeout(() => {
-      const query = encodeURIComponent(this.searchQuery.trim());
-      const url = `https://api.themoviedb.org/3/search/movie?query=${query}&include_adult=true`;
-
-      const options = {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          Authorization:
-            'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0M2YzZDM0N2IxNzU2YmUyMjI1MGY4MGQ1ODAyOTEwMSIsIm5iZiI6MTczNjczNDg1Ny42OTIsInN1YiI6IjY3ODQ3ODg5MjI1NjAyM2RmZDRlNjAyNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.KfGGPJNVAJfMUKgZOkZvP44qJI_Id8ZtgnK-YFz1p4Q'
-        }
-      };
-
-      fetch(url, options)
-        .then((res) => res.json())
-        .then((data) => {
+      this.movieService.searchMovies(this.searchQuery.trim()).subscribe({
+        next: (data) => {
           const results = data.results || [];
+          // Map raw results to RecommendationsResult objects
           this.filteredMovies = results
             .map((r: any): RecommendationsResult => ({
               backdrop_path: r.backdrop_path,
@@ -64,9 +56,7 @@ export class MovieSearchModalComponent {
               title: r.title,
               original_title: r.original_title,
               overview: r.overview,
-              poster_path: r.poster_path
-                ? r.poster_path
-                : 'assets/placeholder.png',
+              poster_path: r.poster_path ? r.poster_path : 'assets/placeholder.png',
               media_type: r.media_type,
               adult: r.adult,
               original_language: r.original_language,
@@ -80,14 +70,19 @@ export class MovieSearchModalComponent {
             .filter((movie: RecommendationsResult) =>
               !this.watchlist.some((w: RecommendationsResult) => w.title === movie.title)
             );
-        })
-        .catch((err) => {
+        },
+        error: (err) => {
           console.error(err);
           this.filteredMovies = [];
-        });
+        }
+      });
     }, 500);
   }
 
+  /**
+   * Opens the movie details modal for a selected movie.
+   * @param movie The movie for which to display details.
+   */
   async openMovieDetails(movie: RecommendationsResult): Promise<void> {
     const detailModal = await this.modalController.create({
       component: MovieDetailModalComponent,
@@ -113,6 +108,7 @@ export class MovieSearchModalComponent {
           });
           await toast.present();
         }
+        // Remove the movie from the filtered list after adding it to a list.
         this.filteredMovies = this.filteredMovies.filter(
           (m: RecommendationsResult) => m.id !== result.data.movie.id
         );

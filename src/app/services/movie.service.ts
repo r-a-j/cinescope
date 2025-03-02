@@ -9,6 +9,8 @@ import { RecommendationsResult } from 'src/app/models/movie-details.model';
 })
 export class MovieService {
     private readonly API_URL = 'https://api.themoviedb.org/3/discover/movie';
+    private readonly SEARCH_URL = 'https://api.themoviedb.org/3/search/movie';
+
     public watchlist: RecommendationsResult[] = [];
     public watched: RecommendationsResult[] = [];
 
@@ -21,6 +23,20 @@ export class MovieService {
      */
     getMovies(page: number = 1): Observable<any> {
         const url = `${this.API_URL}?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
+        const headers = new HttpHeaders({
+            accept: 'application/json',
+            Authorization: environment.apiKey,
+        });
+        return this.http.get<any>(url, { headers });
+    }
+
+    /**
+   * Search movies based on a query string.
+   * @param query The search term to use.
+   * @returns Observable containing search results.
+   */
+    searchMovies(query: string): Observable<any> {
+        const url = `${this.SEARCH_URL}?query=${encodeURIComponent(query)}&include_adult=false`;
         const headers = new HttpHeaders({
             accept: 'application/json',
             Authorization: environment.apiKey,
