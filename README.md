@@ -71,4 +71,4 @@ This project is licensed under the **MIT License**.
 
 ---
 
-⭐ **Enjoy tracking your movies & TV series with Movie Tracker App!**
+⭐ **Enjoy tracking your movies & TV series with CINESCOPE**
