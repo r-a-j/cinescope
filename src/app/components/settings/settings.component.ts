@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NavController, ToastController } from '@ionic/angular';
+import { of, switchMap } from 'rxjs';
+import { User } from 'src/app/models/user';
+import { StorageService } from 'src/app/services/storage.service';
 
 @Component({
   selector: 'app-settings',
@@ -7,13 +10,17 @@ import { NavController, ToastController } from '@ionic/angular';
   styleUrls: ['./settings.component.scss'],
   standalone: false,
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
 
   tmdbApiKey: string = ''; // Placeholder for API key
+  newUserName = ''
+  userList: User[] = []
+  isWeb: any
 
   constructor(
     private navCtrl: NavController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private storage: StorageService
   ) {
     // Load the API key from storage when the settings page loads
     const savedKey = localStorage.getItem('tmdbApiKey');
@@ -58,5 +65,39 @@ export class SettingsComponent {
     } else {
       await this.showToast('Invalid API key. Please try again.', 'danger');
     }
+  }
+
+  ngOnInit() {
+    try {
+      this.storage.userState().pipe(
+        switchMap(res => {
+          if (res) {
+            return this.storage.fetchUsers();
+          } else {
+            return of([]); // Return an empty array when res is false
+          }
+        })
+      ).subscribe(data => {
+        this.userList = data; // Update the user list when the data changes
+      });
+
+    } catch (err) {
+      throw new Error(`Error: ${err}`);
+    }
+  }
+
+  async createUser() {
+    await this.storage.addUser(this.newUserName)
+    this.newUserName = ''
+    console.log(this.userList, '#users')
+  }
+
+  updateUser(user: User) {
+    const active = user.active === 0 ? 1 : 0
+    this.storage.updateUserById(user.id.toString(), active)
+  }
+
+  deleteUser(user: User) {
+    this.storage.deleteUserById(user.id.toString())
   }
 }
