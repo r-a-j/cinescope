@@ -25,20 +25,29 @@ export class Tab3Page implements OnInit {
   /**
    * Loads movies by subscribing to the MovieService.
    */
-  loadMovies(): void {
-    this.movieService.getMovies().subscribe({
-      next: (data) => {
-        this.movies = data.results;
-      },
-      error: (error) => {
-        console.error('Error fetching movies:', error);
-      }
+  async loadMovies(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.movieService.getMovies().subscribe({
+        next: (data) => {
+          this.movies = data.results;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error fetching movies:', error);
+          reject(error);
+        }
+      });
     });
+  }
+
+  // Called every time the view is about to enter
+  ionViewWillEnter(): void {
+    this.loadMovies();
   }
 
   /**
    * Opens the movie details modal and handles actions from the modal.
-   * @param movieId The ID of the movie to show details for
+   * @param movieId The ID of the movie to show details for.
    */
   async openMovieDetails(movieId: number): Promise<void> {
     const modal = await this.modalCtrl.create({
@@ -46,13 +55,15 @@ export class Tab3Page implements OnInit {
       componentProps: { movieId }
     });
 
-    modal.onDidDismiss().then((result) => {
+    modal.onDidDismiss().then(async (result) => {
       if (result.data) {
         if (result.data.action === 'watchlist') {
-          this.movieService.addToWatchlist(result.data.movie);
+          await this.movieService.addToWatchlist(result.data.movie);
         } else if (result.data.action === 'watched') {
-          this.movieService.moveToWatched(result.data.movie);
+          await this.movieService.moveToWatched(result.data.movie);
         }
+        // Refresh the movies list after the action
+        await this.loadMovies();
       }
     });
 

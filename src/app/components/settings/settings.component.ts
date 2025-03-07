@@ -11,48 +11,110 @@ import { StorageService } from 'src/app/services/storage.service';
   standalone: false,
 })
 export class SettingsComponent implements OnInit {
-
-  tmdbApiKey: string = ''; // Placeholder for API key
-  newUserName = ''
-  userList: User[] = []
-  isWeb: any
+  tmdbApiKey: string = ''; // API key placeholder
+  newUserName = '';
+  userList: User[] = [];
+  isWeb: any;
 
   constructor(
     private navCtrl: NavController,
     private toastController: ToastController,
     private storage: StorageService
-  ) {
-    // Load the API key from storage when the settings page loads
-    const savedKey = localStorage.getItem('tmdbApiKey');
-    if (savedKey) {
-      this.tmdbApiKey = savedKey;
+  ) { }
+
+  // Remove localStorage-based API key load; instead load from DB on init.
+  async ngOnInit() {
+    try {
+      // Load users as before.
+      this.storage.userState().pipe(
+        switchMap(res => {
+          if (res) {
+            return this.storage.fetchUsers();
+          } else {
+            return of([]);
+          }
+        })
+      ).subscribe(data => {
+        this.userList = data;
+      });
+
+      // Load the TMDB API key from the database.
+      const savedKey = await this.storage.getSetting('tmdbApiKey');
+      if (savedKey) {
+        this.tmdbApiKey = savedKey;
+      }
+    } catch (err) {
+      throw new Error(`Error: ${err}`);
     }
   }
 
   async clearWatchlist() {
-    localStorage.removeItem('watchlist'); // Clear the watchlist from localStorage
+    // Optionally, you can move watchlist storage to the DB.
+    localStorage.removeItem('watchlist');
     await this.showToast('Watchlist cleared!', 'success');
   }
 
   async clearWatchedList() {
-    localStorage.removeItem('watchedList'); // Clear the watched list from localStorage
+    // Optionally, you can move watched list storage to the DB.
+    localStorage.removeItem('watchedList');
     await this.showToast('Watched list cleared!', 'success');
   }
 
   navigateBack() {
-    this.navCtrl.back(); // Navigates back to the previous page
+    this.navCtrl.back();
   }
 
   isValidApiKey(key: string): boolean {
-    // Basic validation logic (replace with your real validation logic)
-    return key.trim().length === 32; // Example: TMDB keys are 32 characters long
+    // Check if key is a non-empty string.
+    if (!key || typeof key !== 'string') {
+      return false;
+    }
+
+    // A valid JWT should have 3 parts separated by periods.
+    const parts = key.split('.');
+    if (parts.length !== 3) {
+      return false;
+    }
+
+    // Each part should contain only valid JWT characters.
+    const jwtRegex = /^[A-Za-z0-9\-_]+$/;
+    if (!parts.every(part => jwtRegex.test(part))) {
+      return false;
+    }
+
+    try {
+      // Decode the header and payload parts from base64.
+      const headerJson = atob(parts[0]);
+      const payloadJson = atob(parts[1]);
+
+      // Parse the JSON strings.
+      const header = JSON.parse(headerJson);
+      const payload = JSON.parse(payloadJson);
+
+      // Ensure the header contains an algorithm.
+      if (!header.alg) {
+        return false;
+      }
+
+      // Check for required fields in payload (adjust these as necessary).
+      if (!payload.aud || !payload.sub) {
+        return false;
+      }
+
+    } catch (error) {
+      // If decoding or parsing fails, the key is not valid.
+      return false;
+    }
+
+    // All checks passed.
+    return true;
   }
 
   async showToast(message: string, color: 'success' | 'danger') {
     const toast = await this.toastController.create({
       message,
-      duration: 2000, // Toast is displayed for 2 seconds
-      position: 'bottom', // Position: top, middle, or bottom
+      duration: 2000,
+      position: 'bottom',
       color
     });
     toast.present();
@@ -60,44 +122,25 @@ export class SettingsComponent implements OnInit {
 
   async saveApiKey() {
     if (this.isValidApiKey(this.tmdbApiKey)) {
-      localStorage.setItem('tmdbApiKey', this.tmdbApiKey.trim());
+      await this.storage.saveSetting('tmdbApiKey', this.tmdbApiKey.trim());
       await this.showToast('API key saved successfully!', 'success');
     } else {
       await this.showToast('Invalid API key. Please try again.', 'danger');
     }
   }
 
-  ngOnInit() {
-    try {
-      this.storage.userState().pipe(
-        switchMap(res => {
-          if (res) {
-            return this.storage.fetchUsers();
-          } else {
-            return of([]); // Return an empty array when res is false
-          }
-        })
-      ).subscribe(data => {
-        this.userList = data; // Update the user list when the data changes
-      });
-
-    } catch (err) {
-      throw new Error(`Error: ${err}`);
-    }
-  }
-
   async createUser() {
-    await this.storage.addUser(this.newUserName)
-    this.newUserName = ''
-    console.log(this.userList, '#users')
+    await this.storage.addUser(this.newUserName);
+    this.newUserName = '';
+    console.log(this.userList, '#users');
   }
 
   updateUser(user: User) {
-    const active = user.active === 0 ? 1 : 0
-    this.storage.updateUserById(user.id.toString(), active)
+    const active = user.active === 0 ? 1 : 0;
+    this.storage.updateUserById(user.id.toString(), active);
   }
 
   deleteUser(user: User) {
-    this.storage.deleteUserById(user.id.toString())
+    this.storage.deleteUserById(user.id.toString());
   }
 }

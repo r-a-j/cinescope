@@ -32,50 +32,5 @@ export class SettingsComponentModule {
   navigateBack() {
     // Navigate back to home or previous page
     this.router.navigate(['/']);
-  }
-
-  saveApiKey() {
-    // Save the API key to localStorage (or use a dedicated settings service)
-    localStorage.setItem('tmdbApiKey', this.tmdbApiKey);
-  }
-
-  async clearWatchlist() {
-    const alert = await this.alertController.create({
-      header: 'Clear Watchlist',
-      message: 'Are you sure you want to clear your watchlist?',
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
-        {
-          text: 'Clear',
-          handler: () => {
-            this.movieService.watchlist = [];
-          },
-        },
-      ],
-    });
-    await alert.present();
-  }
-
-  async clearWatchedList() {
-    const alert = await this.alertController.create({
-      header: 'Clear Watched List',
-      message: 'Are you sure you want to clear your watched list?',
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
-        {
-          text: 'Clear',
-          handler: () => {
-            this.movieService.watched = [];
-          },
-        },
-      ],
-    });
-    await alert.present();
-  }
+  }  
 }

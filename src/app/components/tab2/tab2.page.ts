@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { RecommendationsResult } from 'src/app/models/movie-details.model';
+import { MovieDetails, RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieService } from 'src/app/services/movie.service';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 
@@ -10,15 +10,25 @@ import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-mo
   styleUrls: ['tab2.page.scss'],
   standalone: false,
 })
-export class Tab2Page {
-
+export class Tab2Page implements OnInit {
+  watchedMovies: MovieDetails[] = [];
+  
   constructor(
     private movieService: MovieService,
     private modalCtrl: ModalController
   ) { }
 
-  get watchedMovies(): RecommendationsResult[] {
-    return this.movieService.watched;
+  async ngOnInit() {
+    await this.loadWatchedMovies();
+  }
+  
+  async loadWatchedMovies() {
+    this.watchedMovies = await this.movieService.getWatched();
+  }
+
+  // Called every time the view is about to enter
+  ionViewWillEnter(): void {
+    this.loadWatchedMovies();
   }
 
   // 3) Method to open the modal
@@ -38,5 +48,8 @@ export class Tab2Page {
       console.log('User marked movie as watched:', data.movie.title);
       // If you want to handle that event, do it here
     }
+
+    // Refresh the watchlist after the action
+    await this.loadWatchedMovies();
   }
 }

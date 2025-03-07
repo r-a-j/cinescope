@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-modal.component';
 import { MovieService } from 'src/app/services/movie.service';
-import { RecommendationsResult } from 'src/app/models/movie-details.model';
+import { MovieDetails, RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 
 @Component({
@@ -11,40 +11,54 @@ import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-mo
   styleUrls: ['tab1.page.scss'],
   standalone: false,
 })
-export class Tab1Page {
-
+export class Tab1Page implements OnInit {
+  watchlist: MovieDetails[] = [];
+  
   constructor(
     private modalController: ModalController,
     private movieService: MovieService
   ) { }
 
-  get movies(): RecommendationsResult[] {
-    return this.movieService.watchlist;
+  async ngOnInit() {
+    await this.loadWatchlist();
   }
 
+  async loadWatchlist() {
+    this.watchlist = await this.movieService.getWatchlist();
+  }
+
+  // Called every time the view is about to enter
+  ionViewWillEnter(): void {
+    this.loadWatchlist();
+  }
+  
   async openModal() {
     const modal = await this.modalController.create({
       component: MovieSearchModalComponent,
       componentProps: {
-        watchlist: this.movieService.watchlist,
+        watchlist: this.watchlist,
       },
     });
 
-    modal.onDidDismiss().then((result) => {
+    modal.onDidDismiss().then(async (result) => {
       if (result.data) {
         if (result.data.action === 'watchlist') {
           this.movieService.addToWatchlist(result.data.movie);
         } else if (result.data.action === 'watched') {
           this.movieService.moveToWatched(result.data.movie);
         }
+
+        // Refresh the watchlist after the action
+        await this.loadWatchlist();
       }
     });
 
     await modal.present();
   }
 
-  moveToWatched(movie: RecommendationsResult) {
-    this.movieService.moveToWatched(movie);
+  async moveToWatched(movie: MovieDetails) {
+    await this.movieService.moveToWatched(movie);
+    await this.loadWatchlist();
   }
 
   async openMovieDetails(movieId: number) {
@@ -53,13 +67,16 @@ export class Tab1Page {
       componentProps: { movieId }
     });
 
-    modal.onDidDismiss().then((result) => {
+    modal.onDidDismiss().then(async (result) => {
       if (result.data) {
         if (result.data.action === 'watchlist') {
           this.movieService.addToWatchlist(result.data.movie);
         } else if (result.data.action === 'watched') {
           this.movieService.moveToWatched(result.data.movie);
         }
+
+        // Refresh the watchlist after the action
+        await this.loadWatchlist();
       }
     });
 
