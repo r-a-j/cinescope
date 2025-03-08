@@ -1,11 +1,12 @@
-import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA, ViewChild } from '@angular/core';
-import { IonContent, IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnDestroy } from '@angular/core';
+import { IonContent, IonicModule, ModalController, Platform, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Swiper } from 'swiper';
 import { MovieDetails, RecommendationsResult, VideosResult } from 'src/app/models/movie-details.model';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MovieService } from 'src/app/services/movie.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-movie-detail-modal',
@@ -15,7 +16,7 @@ import { MovieService } from 'src/app/services/movie.service';
   templateUrl: './movie-detail-modal.component.html',
   styleUrls: ['./movie-detail-modal.component.scss'],
 })
-export class MovieDetailModalComponent implements OnInit {
+export class MovieDetailModalComponent implements OnInit, OnDestroy {
   @Input() movieId!: number;
   @ViewChild(IonContent) content!: IonContent;
 
@@ -23,14 +24,27 @@ export class MovieDetailModalComponent implements OnInit {
   selectedSegment: string = 'overview';
   slideOpts = { slidesPerView: 2.5, spaceBetween: 10 };
 
+  private backButtonSubscription!: Subscription;
+  
   constructor(
     private movieService: MovieService,
     private modalCtrl: ModalController,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private platform: Platform
   ) { }
 
   ngOnInit(): void {
     this.fetchMovieDetails();
+    // Subscribe to the hardware back button event.
+    this.backButtonSubscription = this.platform.backButton.subscribeWithPriority(10, () => {
+      this.dismiss();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.backButtonSubscription) {
+      this.backButtonSubscription.unsubscribe();
+    }
   }
 
   /**

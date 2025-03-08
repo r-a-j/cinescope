@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
-import { IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { Component, Input, OnDestroy } from '@angular/core';
+import { IonicModule, ModalController, Platform, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 import { MovieService } from 'src/app/services/movie.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-movie-search-modal',
@@ -13,18 +14,27 @@ import { MovieService } from 'src/app/services/movie.service';
   templateUrl: './movie-search-modal.component.html',
   styleUrls: ['./movie-search-modal.component.scss'],
 })
-export class MovieSearchModalComponent {
+export class MovieSearchModalComponent implements OnDestroy {
   @Input() watchlist: RecommendationsResult[] = [];
 
   searchQuery: string = '';
   filteredMovies: RecommendationsResult[] = [];
   private searchTimeout: any;
 
+  private backButtonSubscription!: Subscription;
+  
   constructor(
     private modalController: ModalController,
     private toastController: ToastController,
-    private movieService: MovieService
+    private movieService: MovieService,
+    private platform: Platform
   ) { }
+
+  ngOnDestroy(): void {
+    if (this.backButtonSubscription) {
+      this.backButtonSubscription.unsubscribe();
+    }
+  }
 
   dismiss(): void {
     this.modalController.dismiss();
