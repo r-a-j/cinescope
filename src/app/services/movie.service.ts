@@ -83,15 +83,20 @@ export class MovieService {
 
   /**
    * Adds a movie (full details) to the watchlist in the database.
+   * Ensures the movie is not present in the watched list.
    */
   async addToWatchlist(movie: MovieDetails): Promise<void> {
+    // Remove the movie from watched if it exists.
+    await this.storage.removeMovieFromList(movie, 'watched');
     await this.storage.addMovieToList(movie, 'watchlist');
   }
 
   /**
    * Moves a movie from the watchlist to the watched list in the database.
+   * Ensures the movie is not present in both lists.
    */
   async moveToWatched(movie: MovieDetails): Promise<void> {
+    // Remove from watchlist if exists.
     await this.storage.removeMovieFromList(movie, 'watchlist');
     await this.storage.addMovieToList(movie, 'watched');
   }
