@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 import { MovieService } from 'src/app/services/movie.service';
+import { LoaderService } from 'src/app/services/loader.service';
 
 @Component({
   selector: 'app-tab3',
@@ -15,7 +16,7 @@ export class Tab3Page implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
-    private movieService: MovieService
+    private movieService: MovieService    
   ) { }
 
   ngOnInit(): void {
@@ -62,9 +63,10 @@ export class Tab3Page implements OnInit {
         } else if (result.data.action === 'watched') {
           await this.movieService.moveToWatched(result.data.movie);
         }
-        // Refresh the movies list after the action
-        await this.loadMovies();
       }
+      
+      // Refresh the movies list after the action
+      await this.loadMovies();
     });
 
     await modal.present();

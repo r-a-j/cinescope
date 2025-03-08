@@ -47,10 +47,10 @@ export class Tab1Page implements OnInit {
         } else if (result.data.action === 'watched') {
           this.movieService.moveToWatched(result.data.movie);
         }
-
-        // Refresh the watchlist after the action
-        await this.loadWatchlist();
       }
+      
+      // Refresh the watchlist after the action
+      await this.loadWatchlist();
     });
 
     await modal.present();
