@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { MovieDetails, RecommendationsResult } from 'src/app/models/movie-details.model';
 import { MovieService } from 'src/app/services/movie.service';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
@@ -15,7 +15,8 @@ export class Tab2Page implements OnInit {
   
   constructor(
     private movieService: MovieService,
-    private modalCtrl: ModalController
+    private modalController: ModalController,
+    private toastController: ToastController
   ) { }
 
   async ngOnInit() {
@@ -32,24 +33,39 @@ export class Tab2Page implements OnInit {
   }
 
   // 3) Method to open the modal
-  async openMovieDetail(movieId: number) {
-    const modal = await this.modalCtrl.create({
+  async openMovieDetails(movieId: number) {
+    const modal = await this.modalController.create({
       component: MovieDetailModalComponent,
       componentProps: { movieId }
     });
+
+    modal.onDidDismiss().then(async (result) => {
+      if (result.data) {
+        if (result.data.action === 'watchlist') {
+          this.movieService.addToWatchlist(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watchlist!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
+        } else if (result.data.action === 'watched') {
+          this.movieService.moveToWatched(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watched!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
+        }
+
+        // Refresh the watchlist after the action
+        await this.loadWatchedMovies();
+      }
+    });
+
     await modal.present();
-
-    // Optionally handle the data returned on dismiss
-    const { data } = await modal.onDidDismiss();
-    if (data?.action === 'watchlist') {
-      console.log('User added movie to watchlist:', data.movie.title);
-      // If you want to do something with the watchlist result, do it here
-    } else if (data?.action === 'watched') {
-      console.log('User marked movie as watched:', data.movie.title);
-      // If you want to handle that event, do it here
-    }
-
-    // Refresh the watchlist after the action
-    await this.loadWatchedMovies();
   }
 }

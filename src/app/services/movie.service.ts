@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { from, Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { MovieDetails, RecommendationsResult } from 'src/app/models/movie-details.model';
+import { from, Observable, of, throwError } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
+import { MovieDetails } from 'src/app/models/movie-details.model';
 import { StorageService } from './storage.service';
+import { ToastController } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,41 @@ export class MovieService {
   private readonly SEARCH_URL = 'https://api.themoviedb.org/3/search/movie';
   private readonly MOVIE_DETAILS_URL = 'https://api.themoviedb.org/3/movie';
 
-  constructor(private http: HttpClient, private storage: StorageService) { }
+  constructor(
+    private http: HttpClient,
+    private storage: StorageService,
+    private toastController: ToastController,
+  ) { }
+
+  /**
+   * Helper method to retrieve the API key from storage and return HttpHeaders.
+   */
+  private getAuthHeaders(): Observable<HttpHeaders> {
+    return from(this.storage.getSetting('tmdbApiKey')).pipe(
+      switchMap(apiKey => {
+        if (!apiKey) {
+          return throwError(() => new Error('No API key found in database'));
+        }
+        const fullApiKey = `Bearer ${apiKey}`;
+        const headers = new HttpHeaders({
+          accept: 'application/json',
+          Authorization: fullApiKey,
+        });
+        return of(headers);
+      }),
+      tap({
+        error: () => {
+          // Show the toast only if there was an error.
+          this.toastController.create({
+            message: 'API Key Missing - Add in settings',
+            duration: 3000,
+            position: 'top',
+            color: 'danger',
+          }).then(toast => toast.present());
+        }
+      })
+    );
+  }
 
   /**
    * Fetch movies from The Movie Database API.
@@ -21,17 +56,9 @@ export class MovieService {
    * @returns Observable containing movie data.
    */
   getMovies(page: number = 1): Observable<any> {
-    return from(this.storage.getSetting('tmdbApiKey')).pipe(
-      switchMap(apiKey => {
-        if (!apiKey) {
-          throw new Error('No API key found in database');
-        }
-        const fullApiKey = `Bearer ${apiKey}`;
+    return this.getAuthHeaders().pipe(
+      switchMap(headers => {
         const url = `${this.API_URL}?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
-        const headers = new HttpHeaders({
-          accept: 'application/json',
-          Authorization: fullApiKey,
-        });
         return this.http.get<any>(url, { headers });
       })
     );
@@ -43,17 +70,9 @@ export class MovieService {
    * @returns Observable containing search results.
    */
   searchMovies(query: string): Observable<any> {
-    return from(this.storage.getSetting('tmdbApiKey')).pipe(
-      switchMap(apiKey => {
-        if (!apiKey) {
-          throw new Error('No API key found in database');
-        }
-        const fullApiKey = `Bearer ${apiKey}`;
+    return this.getAuthHeaders().pipe(
+      switchMap(headers => {
         const url = `${this.SEARCH_URL}?query=${encodeURIComponent(query)}&include_adult=false`;
-        const headers = new HttpHeaders({
-          accept: 'application/json',
-          Authorization: fullApiKey,
-        });
         return this.http.get<any>(url, { headers });
       })
     );
@@ -65,17 +84,9 @@ export class MovieService {
    * @returns Observable containing movie details.
    */
   getMovieDetails(movieId: number): Observable<MovieDetails> {
-    return from(this.storage.getSetting('tmdbApiKey')).pipe(
-      switchMap(apiKey => {
-        if (!apiKey) {
-          throw new Error('No API key found in database');
-        }
-        const fullApiKey = `Bearer ${apiKey}`;
+    return this.getAuthHeaders().pipe(
+      switchMap(headers => {
         const url = `${this.MOVIE_DETAILS_URL}/${movieId}?append_to_response=videos,providers,recommendations,reviews&language=en-US`;
-        const headers = new HttpHeaders({
-          accept: 'application/json',
-          Authorization: fullApiKey,
-        });
         return this.http.get<MovieDetails>(url, { headers });
       })
     );
@@ -86,7 +97,7 @@ export class MovieService {
    * Ensures the movie is not present in the watched list.
    */
   async addToWatchlist(movie: MovieDetails): Promise<void> {
-    // Remove the movie from watched if it exists.
+    // Ensure the movie is not in the watched list.
     await this.storage.removeMovieFromList(movie, 'watched');
     await this.storage.addMovieToList(movie, 'watchlist');
   }
@@ -96,7 +107,6 @@ export class MovieService {
    * Ensures the movie is not present in both lists.
    */
   async moveToWatched(movie: MovieDetails): Promise<void> {
-    // Remove from watchlist if exists.
     await this.storage.removeMovieFromList(movie, 'watchlist');
     await this.storage.addMovieToList(movie, 'watched');
   }

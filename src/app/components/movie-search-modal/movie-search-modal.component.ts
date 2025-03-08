@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { IonicModule, ModalController, Platform, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './movie-search-modal.component.html',
   styleUrls: ['./movie-search-modal.component.scss'],
 })
-export class MovieSearchModalComponent implements OnDestroy {
+export class MovieSearchModalComponent implements OnInit, OnDestroy {
   @Input() watchlist: RecommendationsResult[] = [];
 
   searchQuery: string = '';
@@ -22,13 +22,20 @@ export class MovieSearchModalComponent implements OnDestroy {
   private searchTimeout: any;
 
   private backButtonSubscription!: Subscription;
-  
+
   constructor(
     private modalController: ModalController,
     private toastController: ToastController,
     private movieService: MovieService,
     private platform: Platform
   ) { }
+
+  ngOnInit(): void {
+    // Subscribe to the hardware back button event.
+    this.backButtonSubscription = this.platform.backButton.subscribeWithPriority(10, () => {
+      this.dismiss();
+    });
+  }
 
   ngOnDestroy(): void {
     if (this.backButtonSubscription) {
@@ -106,7 +113,8 @@ export class MovieSearchModalComponent implements OnDestroy {
           const toast = await this.toastController.create({
             message: `${result.data.movie.title} added to Watchlist!`,
             duration: 2000,
-            color: 'custom-red'
+            position: 'top',
+            color: 'success'
           });
           await toast.present();
         } else if (result.data.action === 'watched') {
@@ -114,7 +122,8 @@ export class MovieSearchModalComponent implements OnDestroy {
           const toast = await this.toastController.create({
             message: `${result.data.movie.title} added to Watched!`,
             duration: 2000,
-            color: 'custom-red'
+            position: 'top',
+            color: 'success',
           });
           await toast.present();
         }

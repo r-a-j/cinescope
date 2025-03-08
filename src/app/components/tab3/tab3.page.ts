@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { MovieDetailModalComponent } from '../movie-detail-modal/movie-detail-modal.component';
 import { MovieService } from 'src/app/services/movie.service';
 import { LoaderService } from 'src/app/services/loader.service';
@@ -16,7 +16,8 @@ export class Tab3Page implements OnInit {
 
   constructor(
     private modalCtrl: ModalController,
-    private movieService: MovieService    
+    private movieService: MovieService,
+    private toastController: ToastController
   ) { }
 
   ngOnInit(): void {
@@ -60,8 +61,22 @@ export class Tab3Page implements OnInit {
       if (result.data) {
         if (result.data.action === 'watchlist') {
           await this.movieService.addToWatchlist(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watchlist!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
         } else if (result.data.action === 'watched') {
           await this.movieService.moveToWatched(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watched!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
         }
       }
       

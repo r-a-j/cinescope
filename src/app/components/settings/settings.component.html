@@ -10,35 +10,6 @@
 
         <h2>Application Settings</h2>
 
-        <!-- <ion-row>
-            <ion-col size="9">
-                <ion-item>
-                    <ion-input label="Name" labelPlacement="stacked" placeholder="Rose Miller"
-                        [(ngModel)]="newUserName">
-                    </ion-input>
-                </ion-item>
-            </ion-col>
-
-            <ion-col size="3">
-                <ion-button (click)="createUser()" expand="block" fill="outline">
-                    <ion-icon name="add" slot="icon-only"></ion-icon>
-                </ion-button>
-            </ion-col>
-        </ion-row>
-
-        <ion-item *ngFor="let user of userList">
-            <ion-checkbox aria-label="Label" slot="start" [ngModel]="user.active" (ionChange)="updateUser(user)">
-            </ion-checkbox>
-
-            <span>
-                {{ user.id }} - {{ user.name }} - {{ user.active }}
-            </span>
-
-            <ion-button slot="end" (click)="deleteUser(user)" fill="clear" color="danger">
-                <ion-icon name="trash" slot="icon-only"></ion-icon>
-            </ion-button>
-        </ion-item> -->
-
         <!-- TMDB API Key Setting -->
         <ion-card>
             <ion-card-header>
@@ -82,6 +53,10 @@
                 <ion-item>
                     <ion-label>Developed By</ion-label>
                     <ion-note slot="end">Raj Pawar</ion-note>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Website</ion-label>
+                    <ion-note slot="end">rajpawar.in</ion-note>
                 </ion-item>
             </ion-card-content>
         </ion-card>

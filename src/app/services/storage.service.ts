@@ -120,4 +120,10 @@ export class StorageService {
   async getWatchedList(): Promise<MovieDetails[]> {
     return this.getMoviesFromList('watched');
   }
+
+  // Inside StorageService class
+  async clearMovieList(listType: string): Promise<void> {
+    const sql = `DELETE FROM movie_list WHERE listType = ?`;
+    await this.db.run(sql, [listType]);
+  }
 }

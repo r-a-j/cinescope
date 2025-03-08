@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { MovieSearchModalComponent } from '../movie-search-modal/movie-search-modal.component';
 import { MovieService } from 'src/app/services/movie.service';
 import { MovieDetails, RecommendationsResult } from 'src/app/models/movie-details.model';
@@ -16,7 +16,8 @@ export class Tab1Page implements OnInit {
   
   constructor(
     private modalController: ModalController,
-    private movieService: MovieService
+    private movieService: MovieService,
+    private toastController: ToastController
   ) { }
 
   async ngOnInit() {
@@ -71,8 +72,22 @@ export class Tab1Page implements OnInit {
       if (result.data) {
         if (result.data.action === 'watchlist') {
           this.movieService.addToWatchlist(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watchlist!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
         } else if (result.data.action === 'watched') {
           this.movieService.moveToWatched(result.data.movie);
+          const toast = await this.toastController.create({
+            message: `${result.data.movie.title} added to Watched!`,
+            duration: 2000,
+            position: 'top',
+            color: 'success',
+          });
+          await toast.present();
         }
 
         // Refresh the watchlist after the action
