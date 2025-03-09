@@ -38,7 +38,6 @@ export class InitializeAppService {
         this.isAppInit = true;
 
       } catch (error) {
-        console.log(`initializeAppError: ${error}`);
         await Toast.show({
           text: `initializeAppError: ${error}`,
           duration: 'long'
