@@ -4,10 +4,10 @@ An android mobile application built with **Ionic, Angular, and Capacitor** that 
 
 ## 📸 Screenshots
 
-<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/1.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/2.jpg" width="300">
-<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/3.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/4.jpg" width="300">
-<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/6.jpg" width="300"> <img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/7.jpg" width="300">
-<img src="https://github.com/r-a-j/cine-scope/blob/master/screenshots/5.jpg" width="300">
+<img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/1.jpg" width="300"> <img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/2.jpg" width="300">
+<img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/3.jpg" width="300"> <img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/4.jpg" width="300">
+<img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/6.jpg" width="300"> <img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/7.jpg" width="300">
+<img src="https://raw.githubusercontent.com/r-a-j/cine-scope/master/screenshots/5.jpg" width="300">
 
 ## 🚀 Features
 
