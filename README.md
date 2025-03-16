@@ -37,11 +37,7 @@ An android mobile application built with **Ionic, Angular, and Capacitor** that 
    npm install
    ```
 
-3. **Set up API Key** (Get your TMDB API key [here](https://www.themoviedb.org/))
-   - Create a `.env` file in the root directory and add:
-     ```
-     TMDB_API_KEY=your_api_key_here
-     ```
+3. **Get your TMDB API Key** (Get your TMDB API key [here](https://developer.themoviedb.org/reference/intro/getting-started)
 
 4. **Run the app**
    ```bash
