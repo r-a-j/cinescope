@@ -60,5 +60,18 @@
                 </ion-item>
             </ion-card-content>
         </ion-card>
+
+        <!-- Adult Content Toggle -->
+        <ion-card>
+            <ion-card-header>
+                <ion-card-title>Adult Content</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+                <ion-item>
+                    <ion-label>Allow Adult Content</ion-label>
+                    <ion-toggle [(ngModel)]="allowAdultContent" (ionChange)="toggleAllowAdultContent()"></ion-toggle>
+                </ion-item>
+            </ion-card-content>
+        </ion-card>
     </div>
 </ion-content>

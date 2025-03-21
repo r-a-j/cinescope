@@ -51,6 +51,19 @@ export class MovieService {
   }
 
   /**
+   * Helper method to retrieve allowAdultContent setting.
+   */
+  private getAdultParam(): Observable<string> {
+    return from(this.storage.getSetting('allowAdultContent')).pipe(
+      switchMap(allow => {
+        // If setting is not set, default to "false"
+        const includeAdult = (allow && allow.toLowerCase() === 'true') ? 'true' : 'false';
+        return of(includeAdult);
+      })
+    );
+  }
+
+  /**
    * Fetch movies from The Movie Database API.
    * @param page Optional page number for pagination (default is 1)
    * @returns Observable containing movie data.
@@ -58,8 +71,12 @@ export class MovieService {
   getMovies(page: number = 1): Observable<any> {
     return this.getAuthHeaders().pipe(
       switchMap(headers => {
-        const url = `${this.API_URL}?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
-        return this.http.get<any>(url, { headers });
+        return this.getAdultParam().pipe(
+          switchMap(includeAdult => {
+            const url = `${this.API_URL}?include_adult=${includeAdult}&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
+            return this.http.get<any>(url, { headers });
+          })
+        );
       })
     );
   }
@@ -72,8 +89,12 @@ export class MovieService {
   searchMovies(query: string): Observable<any> {
     return this.getAuthHeaders().pipe(
       switchMap(headers => {
-        const url = `${this.SEARCH_URL}?query=${encodeURIComponent(query)}&include_adult=false`;
-        return this.http.get<any>(url, { headers });
+        return this.getAdultParam().pipe(
+          switchMap(includeAdult => {
+            const url = `${this.SEARCH_URL}?query=${encodeURIComponent(query)}&include_adult=${includeAdult}`;
+            return this.http.get<any>(url, { headers });
+          })
+        );
       })
     );
   }

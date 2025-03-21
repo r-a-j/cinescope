@@ -11,7 +11,8 @@ import { StorageService } from 'src/app/services/storage.service';
   standalone: false,
 })
 export class SettingsComponent implements OnInit, OnDestroy {
-  tmdbApiKey: string = ''; // API key placeholder
+  tmdbApiKey: string = '';
+  allowAdultContent: boolean = false;
   newUserName = '';
   userList: User[] = [];
   isWeb: any;
@@ -25,12 +26,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private platform: Platform
   ) { }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.storage.getSetting('tmdbApiKey').then(savedKey => {
       if (savedKey) {
         this.tmdbApiKey = savedKey;
       }
     });
+
+    // Load the allowAdultContent setting from the database.
+    const allowVal = await this.storage.getSetting('allowAdultContent');
+    this.allowAdultContent = allowVal ? (allowVal.toLowerCase() === 'true') : false;
 
     this.backButtonSubscription = this.platform.backButton.subscribeWithPriority(10, () => {
       this.navigateBack();
@@ -40,6 +45,43 @@ export class SettingsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.backButtonSubscription) {
       this.backButtonSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Called when the adult content toggle changes.
+   * If turning on, confirm the user is 18+.
+   */
+  async toggleAllowAdultContent() {
+    if (this.allowAdultContent) {
+      // When user is trying to enable, ask for age confirmation.
+      const alert = await this.alertController.create({
+        header: 'Age Confirmation',
+        message: 'Are you 18 or above? Only then can you enable adult content.',
+        buttons: [
+          {
+            text: 'No',
+            role: 'cancel',
+            handler: () => {
+              // Revert the toggle.
+              this.allowAdultContent = false;
+              this.storage.saveSetting('allowAdultContent', 'false');
+            }
+          },
+          {
+            text: 'Yes',
+            handler: async () => {
+              await this.storage.saveSetting('allowAdultContent', 'true');
+              await this.showToast('Adult content enabled!', 'success');
+            }
+          }
+        ]
+      });
+      await alert.present();
+    } else {
+      // If disabling, simply save the value.
+      await this.storage.saveSetting('allowAdultContent', 'false');
+      await this.showToast('Adult content disabled!', 'success');
     }
   }
 
