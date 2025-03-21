@@ -157,6 +157,8 @@
     <div class="horizontal-scroll">
       <div class="movie-card" *ngFor="let rec of topRecommendations" (click)="openRecommendedMovie(rec)">
         <img [src]="'https://image.tmdb.org/t/p/w200' + rec.poster_path" [alt]="rec.title" />
+        <img [src]="rec.poster_path == null ? 'assets/placeholder.png' : 'https://image.tmdb.org/t/p/w300/' + rec.poster_path"
+                    alt="{{ rec.title }}" class="poster" />
       </div>
     </div>
   </div>
