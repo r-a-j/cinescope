@@ -1,11 +1,6 @@
-// For information on how to create your own theme, please see:
-// http://ionicframework.com/docs/theming/
-
-/* src/theme/variables.scss */
-
 :root {
     /** PRIMARY COLOR **/
-    --ion-color-primary: #E50914; // Netflix Red
+    --ion-color-primary: #E50914;
     --ion-color-primary-rgb: 229, 9, 20;
     --ion-color-primary-contrast: #ffffff;
     --ion-color-primary-contrast-rgb: 255, 255, 255;
@@ -13,7 +8,7 @@
     --ion-color-primary-tint: #eb2d38;
 
     /** SECONDARY COLOR **/
-    --ion-color-secondary: #221f1f; // Dark Gray
+    --ion-color-secondary: #221f1f;
     --ion-color-secondary-rgb: 34, 31, 31;
     --ion-color-secondary-contrast: #ffffff;
     --ion-color-secondary-contrast-rgb: 255, 255, 255;
@@ -30,15 +25,14 @@
     --ion-color-dark: #000000;
     --ion-color-light: #ffffff;
     --ion-color-medium: #999999;
-    --ion-color-warning: #f5c518; // IMDB Yellow
+    --ion-color-warning: #f5c518;
 }
 
-/* Optionally include dark mode overrides */
 @media (prefers-color-scheme: dark) {
     :root {
         --ion-background-color: #000000;
         --ion-text-color: #ffffff;
-        --ion-color-primary: #ff3c3c; // lighter Netflix red for dark mode
+        --ion-color-primary: #ff3c3c;
         --ion-color-primary-shade: #cc3131;
         --ion-color-primary-tint: #ff5c5c;
         --ion-toolbar-background: #000000 !important;
@@ -49,21 +43,21 @@
     :root {
         --ion-background-color: #ffffff;
         --ion-text-color: #000000;
-        --ion-color-primary: #ff3c3c; // lighter Netflix red for dark mode
+        --ion-color-primary: #ff3c3c;
         --ion-color-primary-shade: #cc3131;
         --ion-color-primary-tint: #ff5c5c;
         --ion-toolbar-background: #ffffff !important;
     }
 }
 
-@media (prefers-color-scheme: light) {
-    ion-content {
-        --background: #ffffff !important;        
-    }
-}
-
 @media (prefers-color-scheme: dark) {
     ion-content {
         --background: #000000 !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    ion-content {
+        --background: #ffffff !important;        
     }
 }

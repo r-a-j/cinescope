@@ -1,9 +1,15 @@
 <app-header></app-header>
-<ion-content class="ion-padding">
-  <h2>Top Rated TV Shows (Full View)</h2>
-  <div class="grid">
-    <div class="grid-item" *ngFor="let tv of tvShows" (click)="goToTvDetail(10)">
+<ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
+  <h2 class="section-title">Top Rated TV Shows</h2>
+
+  <div class="media-grid">
+    <div class="media-item" *ngFor="let tv of tvShows" (click)="goToTvDetail(10)">
       <img src="assets/placeholder.png" alt="{{ tv.title }}" />
     </div>
   </div>
+
+  <ion-infinite-scroll threshold="100px" position="bottom">
+    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more shows...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 </ion-content>
