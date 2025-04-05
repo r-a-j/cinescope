@@ -34,35 +34,38 @@ export class TmdbSearchService {
         localStorage.setItem('tmdbSettings', JSON.stringify(settings));
     }
 
-    searchMovies(query: string, page: number = 1): Observable<MovieSearchModel> {
-        const params = new HttpParams()
+    searchMovies(query: string, page = 1, year?: string, lang?: string): Observable<MovieSearchModel> {
+        let params = new HttpParams()
             .set('query', query)
             .set('include_adult', this.settings.allowAdultContent.toString())
             .set('language', 'en-US')
             .set('page', page);
 
-        return this.http
-            .get<MovieSearchModel>(`${this.BASE_URL}/search/movie`, {
-                headers: this.headers,
-                params
-            })
-            .pipe(catchError(this.handleError));
+        if (year) params = params.set('year', year);
+        if (lang) params = params.set('language', lang);
+
+        return this.http.get<MovieSearchModel>(`${this.BASE_URL}/search/movie`, {
+            headers: this.headers,
+            params
+        }).pipe(catchError(this.handleError));
     }
 
-    searchTV(query: string, page: number = 1): Observable<TvSearchModel> {
-        const params = new HttpParams()
+    searchTV(query: string, page = 1, year?: string, lang?: string): Observable<TvSearchModel> {
+        let params = new HttpParams()
             .set('query', query)
             .set('include_adult', this.settings.allowAdultContent.toString())
             .set('language', 'en-US')
             .set('page', page);
 
-        return this.http
-            .get<TvSearchModel>(`${this.BASE_URL}/search/tv`, {
-                headers: this.headers,
-                params
-            })
-            .pipe(catchError(this.handleError));
+        if (year) params = params.set('year', year);
+        if (lang) params = params.set('language', lang);
+
+        return this.http.get<TvSearchModel>(`${this.BASE_URL}/search/tv`, {
+            headers: this.headers,
+            params
+        }).pipe(catchError(this.handleError));
     }
+
 
     private handleError(error: any) {
         console.error('TMDB API Error:', error);

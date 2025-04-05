@@ -7,9 +7,6 @@
     </ion-buttons>
     <ion-title>Search</ion-title>
   </ion-toolbar>
-</ion-header>
-
-<ion-content [fullscreen]="true">
   <!-- Segment Toggle -->
   <ion-toolbar>
     <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)">
@@ -33,17 +30,19 @@
       </button>
     </div>
   </ion-toolbar>
+</ion-header>
 
+<ion-content [fullscreen]="true">
   <!-- Results -->
   <div class="grid" *ngIf="segmentValue === 'movies'">
-    <div class="grid-item" *ngFor="let item of movieResults">
+    <div class="grid-item animate__animated animate__fadeIn animate__fast" *ngFor="let item of movieResults">
       <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" />
       <p>{{ item.title }}</p>
     </div>
   </div>
 
   <div class="grid" *ngIf="segmentValue === 'tv'">
-    <div class="grid-item" *ngFor="let item of tvResults">
+    <div class="grid-item animate__animated animate__fadeIn animate__fast" *ngFor="let item of tvResults">
       <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" />
       <p>{{ item.name }}</p>
     </div>

@@ -13,8 +13,8 @@ import {
   IonButton,
   IonIcon,
   IonTitle,
-  IonText, 
-  IonInfiniteScroll, 
+  IonText,
+  IonInfiniteScroll,
   IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
@@ -25,6 +25,7 @@ import { Dialog } from '@capacitor/dialog';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MovieSearchResult } from 'src/models/movie/movie-search.model';
 import { TvSearchResult } from 'src/models/movie/tv-search.model';
+import { LanguageService } from 'src/services/language.service';
 
 @Component({
   selector: 'app-search',
@@ -32,7 +33,7 @@ import { TvSearchResult } from 'src/models/movie/tv-search.model';
   styleUrls: ['./search.page.scss'],
   standalone: true,
   imports: [
-    IonInfiniteScrollContent, 
+    IonInfiniteScrollContent,
     IonInfiniteScroll,
     IonText,
     IonTitle,
@@ -65,13 +66,27 @@ export class SearchPage implements OnInit, AfterViewInit {
 
   constructor(
     private router: Router,
-    private tmdbService: TmdbSearchService
+    private tmdbService: TmdbSearchService,
+    private languageService: LanguageService
   ) {
     addIcons({ arrowBackOutline, clipboardOutline });
   }
 
   ngOnInit() {
     setTimeout(() => this.searchBar?.setFocus(), 300);
+  }
+
+  private extractYearAndLanguage(query: string): { cleanQuery: string; year?: string; lang?: string } {
+    const yearMatch = query.match(/\b(19|20)\d{2}\b/);
+    const year = yearMatch ? yearMatch[0] : undefined;
+
+    const lang = this.languageService.extractLanguageFromQuery(query) ?? undefined;
+    const cleanQuery = query
+      .replace(year ?? '', '')
+      .replace(new RegExp(`\\b${lang}\\b`, 'i'), '')
+      .trim();
+
+    return { cleanQuery, year, lang };
   }
 
   async pasteFromClipboard(): Promise<void> {
@@ -117,8 +132,10 @@ export class SearchPage implements OnInit, AfterViewInit {
       this.totalPages = res.total_pages;
       if (this.segmentValue === 'movies') {
         this.movieResults = [...this.movieResults, ...res.results];
+        console.log('Movie Results:', this.movieResults);
       } else {
         this.tvResults = [...this.tvResults, ...res.results];
+        console.log('Movie Results:', this.tvResults);
       }
       this.isLoading = false;
     };
@@ -128,10 +145,12 @@ export class SearchPage implements OnInit, AfterViewInit {
       this.isLoading = false;
     };
 
+    const { cleanQuery, year, lang } = this.extractYearAndLanguage(this.searchQuery.trim());
+
     if (this.segmentValue === 'movies') {
-      this.tmdbService.searchMovies(this.searchQuery, page).subscribe({ next: onSuccess, error: onError });
+      this.tmdbService.searchMovies(cleanQuery, page, year, lang).subscribe({ next: onSuccess, error: onError });
     } else {
-      this.tmdbService.searchTV(this.searchQuery, page).subscribe({ next: onSuccess, error: onError });
+      this.tmdbService.searchTV(cleanQuery, page, year, lang).subscribe({ next: onSuccess, error: onError });
     }
   }
 
