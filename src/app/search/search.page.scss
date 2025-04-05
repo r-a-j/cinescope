@@ -1,0 +1,36 @@
+/* search.page.scss */
+.search-toolbar {
+    display: flex;
+    align-items: center;
+
+    ion-searchbar {
+        flex: 1;
+    }
+
+    ion-buttons {
+        margin-left: 8px;
+    }
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+
+    ion-searchbar {
+        width: 100%;
+    }
+
+    .paste-btn {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        color: var(--ion-color-primary);
+        border: none;
+        font-weight: 500;
+        font-size: 0.8rem;
+        cursor: pointer;
+        z-index: 10;
+    }
+}

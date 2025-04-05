@@ -1,0 +1,22 @@
+<app-header></app-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="section-header">
+    <h2>Top Rated Movies</h2>
+    <ion-button fill="clear" (click)="goToAllMovies()">all</ion-button>
+  </div>
+  <div class="horizontal-scroll">
+    <div class="item" *ngFor="let movie of topRatedMovies" (click)="goToMovieDetail(10)">
+      <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h2>Top Rated TV</h2>
+    <ion-button fill="clear" (click)="goToAllTV()">all</ion-button>
+  </div>
+  <div class="horizontal-scroll">
+    <div class="item" *ngFor="let tv of topRatedTV" (click)="goToTvDetail(10)">
+      <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+    </div>
+  </div>
+</ion-content>

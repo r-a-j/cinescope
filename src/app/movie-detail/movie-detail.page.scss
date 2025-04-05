@@ -1,0 +1,137 @@
+ion-chip[color="warning"] {
+    --background: rgba(255, 213, 79, 0.2);
+    --color: var(--ion-color-warning);
+}
+
+.movie-detail-content {
+    --background: var(--ion-background-color);
+
+    .back-btn {
+        position: absolute;
+        top: calc(var(--ion-safe-area-top) + 8px);
+        left: 8px;
+        z-index: 10;
+        fill: clear;
+    
+        .back-svg {
+            width: 24px;
+            height: 24px;
+        }
+    }
+    
+    .backdrop-wrapper {
+        position: relative;
+        height: 280px;
+        overflow: visible;
+
+        .backdrop-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-bottom-left-radius: 2rem;
+            border-bottom-right-radius: 2rem;
+        }
+
+        .backdrop-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(to top,
+                    var(--backdrop-gradient-dark, rgba(0, 0, 0, 0.8)) 0%,
+                    transparent 80%);
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+        }
+
+        .floating-poster {
+            position: absolute;
+            bottom: -40px;
+            left: 16px;
+            width: 100px;
+            height: 150px;
+            border-radius: 8px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            object-fit: cover;
+        }
+
+        .floating-bookmark {
+            position: absolute;
+            bottom: -24px;
+            right: 16px;
+            z-index: 10;
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+            ion-icon {
+                font-size: 24px;
+                color: var(--ion-color-danger);
+            }
+        }
+    }
+
+    .content-section {
+        padding: 1rem;
+        padding-top: 3rem;
+
+        .movie-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta-info,
+        .genre-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .media-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .overview {
+            margin-bottom: 1.5rem;
+
+            h2 {
+                font-size: 1.2rem;
+                font-weight: bold;
+                margin-bottom: 0.5rem;
+            }
+
+            p {
+                font-size: 14px;
+                color: var(--ion-text-color);
+                line-height: 1.5;
+            }
+        }
+
+        .cast-section {
+            h2 {
+                font-size: 1.2rem;
+                font-weight: bold;
+                margin-bottom: 0.5rem;
+            }
+
+            .cast-scroll {
+                display: flex;
+                gap: 1rem;
+                overflow-x: auto;
+            }
+        }
+    }
+}

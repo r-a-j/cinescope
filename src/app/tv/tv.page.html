@@ -1,0 +1,22 @@
+<app-header></app-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-segment [(ngModel)]="segment">
+    <ion-segment-button value="watchlist">
+      <ion-label>Watchlist</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="watched">
+      <ion-label>Watched</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <div *ngFor="let genre of genres">
+    <div class="genre-header">
+      <h2>{{ genre }}</h2>
+    </div>
+    <div class="horizontal-scroll">
+      <div class="item" *ngFor="let show of getShowsByGenre(genre)" (click)="goToTvDetail(10)">
+        <img [src]="show.image" alt="{{ show.title }}" />
+      </div>
+    </div>
+  </div>
+</ion-content>

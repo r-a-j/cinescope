@@ -1,0 +1,9 @@
+<app-header></app-header>
+<ion-content class="ion-padding">
+  <h2>Top Rated TV Shows (Full View)</h2>
+  <div class="grid">
+    <div class="grid-item" *ngFor="let tv of tvShows" (click)="goToTvDetail(10)">
+      <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+    </div>
+  </div>
+</ion-content>

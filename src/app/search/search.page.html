@@ -1,0 +1,42 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goHome()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Search</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Segment Toggle -->
+  <ion-toolbar>
+    <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)">
+      <ion-segment-button value="movies">
+        <ion-label>Movies</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="tv">
+        <ion-label>TV</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+
+  <!-- Searchbar Toolbar with Paste Button -->
+  <ion-toolbar class="search-toolbar">
+    <div class="search-wrapper">
+      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always">
+      </ion-searchbar>
+      <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
+        PASTE
+      </button>
+    </div>
+  </ion-toolbar>
+
+
+  <!-- Displaying search info for testing -->
+  <div class="ion-padding">
+    <p>Segment: {{ segmentValue }}</p>
+    <p>Search Query: {{ searchQuery }}</p>
+  </div>
+</ion-content>

@@ -1,0 +1,9 @@
+<app-header></app-header>
+<ion-content class="ion-padding">
+  <h2>Top Rated Movies (Full View)</h2>
+  <div class="grid">
+    <div class="grid-item" *ngFor="let movie of movies" (click)="goToMovieDetail(10)">
+      <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+    </div>
+  </div>
+</ion-content>

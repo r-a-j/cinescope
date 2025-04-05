@@ -1,0 +1,11 @@
+@media (prefers-color-scheme: light) {
+    .tabs-label {
+        color: black;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .tabs-label {
+        color: white;
+    }
+}

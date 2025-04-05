@@ -1,0 +1,36 @@
+<app-header></app-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-segment [(ngModel)]="segment">
+    <ion-segment-button value="watchlist">
+      <ion-icon name="bookmark"></ion-icon>
+    </ion-segment-button>
+    <ion-segment-button value="watched">
+      <ion-icon name="checkmark-done"></ion-icon>
+    </ion-segment-button>
+  </ion-segment>
+
+  <div *ngFor="let genre of genres">
+    <ng-container *ngIf="getCurrentList()[genre]?.length">
+      <div class="genre-header">
+        <h2>{{ genre }}</h2>
+      </div>
+      <div class="horizontal-scroll">
+        <div 
+          class="item" 
+          *ngFor="let movie of getCurrentList()[genre]; let i = index" 
+          [ngClass]="{'animate__animated animate__flipInY animate__fast': animateOnce}" 
+          [ngStyle]="animateOnce ? { 'animation-delay': (i * 0.1) + 's' } : {}" (click)="goToMovieDetail(10)"
+        >
+        <!-- <img src="assets/placeholder.png" alt="{{ movie.title }}" /> -->
+        <img src="https://image.tmdb.org/t/p/w300/zo8CIjJ2nfNOevqNajwMRO6Hwka.jpg" alt="{{ movie.title }}" />
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="goToSearch()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
