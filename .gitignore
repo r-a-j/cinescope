@@ -70,4 +70,4 @@ testem.log
 Thumbs.db
 
 resources/android/**/*
-.vscode/**/*
+.vscode/
