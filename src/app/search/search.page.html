@@ -26,7 +26,7 @@
   <ion-toolbar class="search-toolbar">
     <div class="search-wrapper">
       <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always"
-        (ionInput)="search()">
+        (ionInput)="search(true)">
       </ion-searchbar>
       <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
         PASTE
@@ -34,23 +34,28 @@
     </div>
   </ion-toolbar>
 
-  <!-- Search Results -->
+  <!-- Results -->
   <div class="grid" *ngIf="segmentValue === 'movies'">
     <div class="grid-item" *ngFor="let item of movieResults">
-      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" alt="{{ item.title }}" />
+      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" />
       <p>{{ item.title }}</p>
     </div>
   </div>
 
   <div class="grid" *ngIf="segmentValue === 'tv'">
     <div class="grid-item" *ngFor="let item of tvResults">
-      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" alt="{{ item.name }}" />
+      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" />
       <p>{{ item.name }}</p>
     </div>
   </div>
 
-  <!-- Loader/Error -->
-  <div class="ion-padding" *ngIf="loading">Loading...</div>
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)">
+    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <!-- Loading and Error -->
+  <div class="ion-padding" *ngIf="isLoading">Loading...</div>
   <div class="ion-padding" *ngIf="error">
     <ion-text color="danger">{{ error }}</ion-text>
   </div>

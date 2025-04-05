@@ -13,7 +13,9 @@ import {
   IonButton,
   IonIcon,
   IonTitle,
-  IonText
+  IonText, 
+  IonInfiniteScroll, 
+  IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -30,6 +32,8 @@ import { TvSearchResult } from 'src/models/movie/tv-search.model';
   styleUrls: ['./search.page.scss'],
   standalone: true,
   imports: [
+    IonInfiniteScrollContent, 
+    IonInfiniteScroll,
     IonText,
     IonTitle,
     IonIcon,
@@ -48,12 +52,16 @@ import { TvSearchResult } from 'src/models/movie/tv-search.model';
 })
 export class SearchPage implements OnInit, AfterViewInit {
   @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;
+
   segmentValue: 'movies' | 'tv' = 'movies';
   searchQuery: string = '';
   movieResults: MovieSearchResult[] = [];
   tvResults: TvSearchResult[] = [];
-  loading = false;
-  error: string = '';
+
+  currentPage: number = 1;
+  totalPages: number = 1;
+  isLoading = false;
+  error = '';
 
   constructor(
     private router: Router,
@@ -63,7 +71,7 @@ export class SearchPage implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    // ...
+    setTimeout(() => this.searchBar?.setFocus(), 300);
   }
 
   async pasteFromClipboard(): Promise<void> {
@@ -73,7 +81,7 @@ export class SearchPage implements OnInit, AfterViewInit {
     } else {
       await Dialog.alert({
         title: 'Clipboard Empty',
-        message: 'There is no text to paste from clipboard.'
+        message: 'Nothing to paste.'
       });
     }
   }
@@ -82,34 +90,48 @@ export class SearchPage implements OnInit, AfterViewInit {
     return path ? `https://image.tmdb.org/t/p/w300${path}` : 'assets/placeholder.png';
   }
 
-  async search() {
+  loadMore(event: any) {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.search(false);
+    } else {
+      event.target.disabled = true;
+    }
+    event.target.complete();
+  }
+
+  async search(reset: boolean = false): Promise<void> {
     if (!this.searchQuery.trim()) return;
 
-    this.loading = true;
-    this.error = '';
+    if (reset) {
+      this.currentPage = 1;
+      this.totalPages = 1;
+      this.movieResults = [];
+      this.tvResults = [];
+    }
+
+    this.isLoading = true;
+    const page = this.currentPage;
+
+    const onSuccess = (res: any) => {
+      this.totalPages = res.total_pages;
+      if (this.segmentValue === 'movies') {
+        this.movieResults = [...this.movieResults, ...res.results];
+      } else {
+        this.tvResults = [...this.tvResults, ...res.results];
+      }
+      this.isLoading = false;
+    };
+
+    const onError = (err: any) => {
+      this.error = err.message || 'Something went wrong';
+      this.isLoading = false;
+    };
 
     if (this.segmentValue === 'movies') {
-      this.tmdbService.searchMovies(this.searchQuery).subscribe({
-        next: (res) => {
-          this.movieResults = res.results;
-          this.loading = false;
-        },
-        error: (err) => {
-          this.error = err.message;
-          this.loading = false;
-        }
-      });
+      this.tmdbService.searchMovies(this.searchQuery, page).subscribe({ next: onSuccess, error: onError });
     } else {
-      this.tmdbService.searchTV(this.searchQuery).subscribe({
-        next: (res) => {
-          this.tvResults = res.results;
-          this.loading = false;
-        },
-        error: (err) => {
-          this.error = err.message;
-          this.loading = false;
-        }
-      });
+      this.tmdbService.searchTV(this.searchQuery, page).subscribe({ next: onSuccess, error: onError });
     }
   }
 
@@ -117,19 +139,6 @@ export class SearchPage implements OnInit, AfterViewInit {
     setTimeout(async () => {
       try {
         await this.searchBar.setFocus();
-        // // Check clipboard
-        // const { value } = await Clipboard.read();
-
-        // if (value?.trim()) {
-        //   const { value: userConfirmed } = await Dialog.confirm({
-        //     title: 'Paste from Clipboard?',
-        //     message: `We found "${value}" on your clipboard. Paste it here?`
-        //   });
-
-        //   if (userConfirmed) {
-        //     this.searchQuery = value;
-        //   }
-        // }
       } catch (err) {
         console.error('Clipboard read or focus error:', err);
       }
