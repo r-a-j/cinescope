@@ -25,10 +25,7 @@
   <!-- Searchbar Toolbar with Paste Button -->
   <ion-toolbar class="search-toolbar">
     <div class="search-wrapper">
-      <ion-searchbar 
-        [(ngModel)]="searchQuery" 
-        placeholder="Search here..." 
-        show-clear-button="always" 
+      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always"
         (ionInput)="search()">
       </ion-searchbar>
       <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
@@ -36,19 +33,19 @@
       </button>
     </div>
   </ion-toolbar>
-  
+
   <!-- Search Results -->
   <div class="grid" *ngIf="segmentValue === 'movies'">
-    <div class="grid-item" *ngFor="let movie of movieResults">
-      <img [src]="getImageUrl(movie.poster_path)" [alt]="movie.title" />
-      <p>{{ movie.title }}</p>
+    <div class="grid-item" *ngFor="let item of movieResults">
+      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" alt="{{ item.title }}" />
+      <p>{{ item.title }}</p>
     </div>
   </div>
 
   <div class="grid" *ngIf="segmentValue === 'tv'">
-    <div class="grid-item" *ngFor="let tv of tvResults">
-      <img [src]="getImageUrl(tv.poster_path)" [alt]="tv.name" />
-      <p>{{ tv.name }}</p>
+    <div class="grid-item" *ngFor="let item of tvResults">
+      <img [src]="getImageUrl(item.poster_path)" (error)="onImageError($event)" alt="{{ item.name }}" />
+      <p>{{ item.name }}</p>
     </div>
   </div>
 

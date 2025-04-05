@@ -11,9 +11,9 @@ import {
   IonHeader,
   IonButtons,
   IonButton,
-  IonIcon, 
-  IonTitle, 
-  IonText 
+  IonIcon,
+  IonTitle,
+  IonText
 } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -30,7 +30,7 @@ import { TvSearchResult } from 'src/models/movie/tv-search.model';
   styleUrls: ['./search.page.scss'],
   standalone: true,
   imports: [
-    IonText, 
+    IonText,
     IonTitle,
     IonIcon,
     IonButton,
@@ -47,8 +47,8 @@ import { TvSearchResult } from 'src/models/movie/tv-search.model';
   ],
 })
 export class SearchPage implements OnInit, AfterViewInit {
-  @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;  
-  segmentValue: 'movies' | 'tv' = 'movies';  
+  @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;
+  segmentValue: 'movies' | 'tv' = 'movies';
   searchQuery: string = '';
   movieResults: MovieSearchResult[] = [];
   tvResults: TvSearchResult[] = [];
@@ -78,8 +78,8 @@ export class SearchPage implements OnInit, AfterViewInit {
     }
   }
 
-  getImageUrl(path: string): string {
-    return `https://image.tmdb.org/t/p/w300${path}`;
+  getImageUrl(path: string | null | undefined): string {
+    return path ? `https://image.tmdb.org/t/p/w300${path}` : 'assets/placeholder.png';
   }
 
   async search() {
@@ -112,10 +112,10 @@ export class SearchPage implements OnInit, AfterViewInit {
       });
     }
   }
-  
+
   async ngAfterViewInit(): Promise<void> {
     setTimeout(async () => {
-      try {        
+      try {
         await this.searchBar.setFocus();
         // // Check clipboard
         // const { value } = await Clipboard.read();
@@ -142,5 +142,10 @@ export class SearchPage implements OnInit, AfterViewInit {
 
   segmentChanged(event: any) {
     this.segmentValue = event.detail.value;
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    target.src = 'assets/placeholder.png';
   }
 }
