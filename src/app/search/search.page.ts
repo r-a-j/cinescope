@@ -11,19 +11,27 @@ import {
   IonHeader,
   IonButtons,
   IonButton,
-  IonIcon, IonTitle } from '@ionic/angular/standalone';
+  IonIcon, 
+  IonTitle, 
+  IonText 
+} from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { arrowBackOutline, clipboardOutline } from 'ionicons/icons';
 import { Clipboard } from '@capacitor/clipboard';
 import { Dialog } from '@capacitor/dialog';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
+import { MovieSearchResult } from 'src/models/movie/movie-search.model';
+import { TvSearchResult } from 'src/models/movie/tv-search.model';
 
 @Component({
   selector: 'app-search',
   templateUrl: './search.page.html',
   styleUrls: ['./search.page.scss'],
   standalone: true,
-  imports: [IonTitle, 
+  imports: [
+    IonText, 
+    IonTitle,
     IonIcon,
     IonButton,
     IonButtons,
@@ -39,17 +47,19 @@ import { Dialog } from '@capacitor/dialog';
   ],
 })
 export class SearchPage implements OnInit, AfterViewInit {
-
-  @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;
-
-  // Segment model
-  segmentValue: string = 'movies';
-
-  // Two-way bind for the search text
+  @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;  
+  segmentValue: 'movies' | 'tv' = 'movies';  
   searchQuery: string = '';
+  movieResults: MovieSearchResult[] = [];
+  tvResults: TvSearchResult[] = [];
+  loading = false;
+  error: string = '';
 
-  constructor(private router: Router) {
-    addIcons({arrowBackOutline,clipboardOutline});
+  constructor(
+    private router: Router,
+    private tmdbService: TmdbSearchService
+  ) {
+    addIcons({ arrowBackOutline, clipboardOutline });
   }
 
   ngOnInit() {
@@ -68,14 +78,45 @@ export class SearchPage implements OnInit, AfterViewInit {
     }
   }
 
-  // After the view has initialized, we can safely access the IonSearchbar
-  async ngAfterViewInit(): Promise<void> {
-    // Delay to ensure view is ready before accessing searchBar
-    setTimeout(async () => {
-      try {
-        // Focus the searchbar
-        await this.searchBar.setFocus();
+  getImageUrl(path: string): string {
+    return `https://image.tmdb.org/t/p/w300${path}`;
+  }
 
+  async search() {
+    if (!this.searchQuery.trim()) return;
+
+    this.loading = true;
+    this.error = '';
+
+    if (this.segmentValue === 'movies') {
+      this.tmdbService.searchMovies(this.searchQuery).subscribe({
+        next: (res) => {
+          this.movieResults = res.results;
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = err.message;
+          this.loading = false;
+        }
+      });
+    } else {
+      this.tmdbService.searchTV(this.searchQuery).subscribe({
+        next: (res) => {
+          this.tvResults = res.results;
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = err.message;
+          this.loading = false;
+        }
+      });
+    }
+  }
+  
+  async ngAfterViewInit(): Promise<void> {
+    setTimeout(async () => {
+      try {        
+        await this.searchBar.setFocus();
         // // Check clipboard
         // const { value } = await Clipboard.read();
 

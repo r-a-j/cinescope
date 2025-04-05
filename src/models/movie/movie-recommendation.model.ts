@@ -1,11 +1,11 @@
 export interface MovieRecommendationModel {
     page: number
-    results: Result[]
+    results: MovieRecommendationResult[]
     total_pages: number
     total_results: number
 }
 
-export interface Result {
+export interface MovieRecommendationResult {
     backdrop_path: string
     id: number
     title: string

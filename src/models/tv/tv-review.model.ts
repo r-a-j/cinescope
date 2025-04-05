@@ -1,12 +1,12 @@
 export interface TvReviewModel {
     id: number
     page: number
-    results: Result[]
+    results: TvReviewResult[]
     total_pages: number
     total_results: number
 }
 
-export interface Result {
+export interface TvReviewResult {
     author: string
     author_details: AuthorDetails
     content: string

@@ -34,3 +34,27 @@
         z-index: 10;
     }
 }
+
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+
+    .grid-item {
+        width: calc(25% - 0.75rem);
+        text-align: center;
+
+        img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        p {
+            font-size: 0.9rem;
+            margin: 0.3rem 0 0;
+            color: var(--ion-text-color);
+        }
+    }
+}

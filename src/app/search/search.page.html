@@ -25,18 +25,37 @@
   <!-- Searchbar Toolbar with Paste Button -->
   <ion-toolbar class="search-toolbar">
     <div class="search-wrapper">
-      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always">
+      <ion-searchbar 
+        [(ngModel)]="searchQuery" 
+        placeholder="Search here..." 
+        show-clear-button="always" 
+        (ionInput)="search()">
       </ion-searchbar>
       <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
         PASTE
       </button>
     </div>
   </ion-toolbar>
-
-
-  <!-- Displaying search info for testing -->
-  <div class="ion-padding">
-    <p>Segment: {{ segmentValue }}</p>
-    <p>Search Query: {{ searchQuery }}</p>
+  
+  <!-- Search Results -->
+  <div class="grid" *ngIf="segmentValue === 'movies'">
+    <div class="grid-item" *ngFor="let movie of movieResults">
+      <img [src]="getImageUrl(movie.poster_path)" [alt]="movie.title" />
+      <p>{{ movie.title }}</p>
+    </div>
   </div>
+
+  <div class="grid" *ngIf="segmentValue === 'tv'">
+    <div class="grid-item" *ngFor="let tv of tvResults">
+      <img [src]="getImageUrl(tv.poster_path)" [alt]="tv.name" />
+      <p>{{ tv.name }}</p>
+    </div>
+  </div>
+
+  <!-- Loader/Error -->
+  <div class="ion-padding" *ngIf="loading">Loading...</div>
+  <div class="ion-padding" *ngIf="error">
+    <ion-text color="danger">{{ error }}</ion-text>
+  </div>
+
 </ion-content>

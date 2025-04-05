@@ -1,9 +1,9 @@
 export interface MovieVideoModel {
     id: number
-    results: Result[]
+    results: MovieVideoResult[]
 }
 
-export interface Result {
+export interface MovieVideoResult {
     iso_639_1: string
     iso_3166_1: string
     name: string

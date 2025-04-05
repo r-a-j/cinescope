@@ -1,11 +1,11 @@
 export interface TvRecommendationModel {
     page: number
-    results: Result[]
+    results: TvRecommendationResult[]
     total_pages: number
     total_results: number
 }
 
-export interface Result {
+export interface TvRecommendationResult {
     backdrop_path: string
     id: number
     name: string

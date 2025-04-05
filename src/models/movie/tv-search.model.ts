@@ -1,13 +1,13 @@
-export interface TvSimilarModel {
+export interface TvSearchModel {
     page: number
-    results: TvSimilarResult[]
+    results: TvSearchResult[]
     total_pages: number
     total_results: number
 }
 
-export interface TvSimilarResult {
+export interface TvSearchResult {
     adult: boolean
-    backdrop_path?: string
+    backdrop_path: string
     genre_ids: number[]
     id: number
     origin_country: string[]
@@ -15,7 +15,7 @@ export interface TvSimilarResult {
     original_name: string
     overview: string
     popularity: number
-    poster_path?: string
+    poster_path: string
     first_air_date: string
     name: string
     vote_average: number

@@ -1,12 +1,12 @@
 export interface MovieReviewModel {
     id: number
     page: number
-    results: Result[]
+    results: MovieReviewResult[]
     total_pages: number
     total_results: number
 }
 
-export interface Result {
+export interface MovieReviewResult {
     author: string
     author_details: AuthorDetails
     content: string

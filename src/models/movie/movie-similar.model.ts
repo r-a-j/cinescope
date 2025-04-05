@@ -1,11 +1,11 @@
 export interface MovieSimilarModel {
     page: number
-    results: Result[]
+    results: MovieSimilarResult[]
     total_pages: number
     total_results: number
 }
 
-export interface Result {
+export interface MovieSimilarResult {
     adult: boolean
     backdrop_path?: string
     genre_ids: number[]
