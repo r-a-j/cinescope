@@ -4,7 +4,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SettingModel } from '../models/setting.model';
 import { MovieSearchModel } from 'src/models/movie/movie-search.model';
-import { TvSearchModel } from 'src/models/movie/tv-search.model';
+import { TvSearchModel } from 'src/models/tv/tv-search.model';
+
 
 @Injectable({ providedIn: 'root' })
 export class TmdbSearchService {
@@ -12,6 +13,18 @@ export class TmdbSearchService {
     private settings: SettingModel = {
         tmdbApiKey: '',
         allowAdultContent: false
+    };
+
+    // Base URL and query parameters for Bollywood movies in Hindi
+    private apiUrl = 'https://api.themoviedb.org/3/discover/movie';
+    private apiParams =
+        '?include_adult=false&include_video=true&language=en-US&primary_release_year=2025&sort_by=vote_average.desc&with_origin_country=IN&with_original_language=hi';
+
+    private options = {
+        headers: {
+            accept: 'application/json',
+            Authorization: ''
+        }
     };
 
     constructor(private http: HttpClient) {
@@ -66,6 +79,10 @@ export class TmdbSearchService {
         }).pipe(catchError(this.handleError));
     }
 
+    getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
+        const url = `${this.apiUrl}${this.apiParams}&page=${page}`;
+        return this.http.get<MovieSearchModel>(url, this.options);
+    }
 
     private handleError(error: any) {
         console.error('TMDB API Error:', error);

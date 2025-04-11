@@ -22,8 +22,15 @@
   <!-- Searchbar Toolbar with Paste Button -->
   <ion-toolbar class="search-toolbar">
     <div class="search-wrapper">
-      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always"
-        (ionInput)="search(true)">
+      <ion-searchbar 
+        [(ngModel)]="searchQuery" 
+        placeholder="Search here..." 
+        show-clear-button="always"
+        (ionInput)="search(true)"
+        (ionChange)="search(true)"
+        (ionClear)="clearSearch()"
+        (keyup.enter)="search(true)"
+        >
       </ion-searchbar>
       <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
         PASTE

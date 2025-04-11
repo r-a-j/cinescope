@@ -3,13 +3,12 @@ import {
   IonContent, 
   IonSegment, 
   IonSegmentButton, 
-  IonLabel, 
   IonFabButton, 
   IonFab, 
-  IonIcon, IonCard, IonCardContent } from "@ionic/angular/standalone";
+  IonIcon } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
-import { add, bookmark, bookmarksOutline, checkmarkDone } from 'ionicons/icons';
+import { add, bookmark, checkmarkDone } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -19,13 +18,12 @@ import { AnimationService } from 'src/services/animation.service';
   selector: 'app-movie',
   templateUrl: 'movie.page.html',
   styleUrls: ['movie.page.scss'],
-  imports: [IonCardContent, IonCard, 
+  imports: [
     FormsModule,
     CommonModule,
     IonIcon, 
     IonFab, 
     IonFabButton,
-    IonLabel,
     IonSegmentButton,
     IonSegment,
     IonContent,

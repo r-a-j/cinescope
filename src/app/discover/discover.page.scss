@@ -1,0 +1,134 @@
+.section-header {
+    margin-top: 0 !important;
+}
+
+.content-layer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Slick Segment Toolbar */
+.slick-toolbar {
+    padding: 0 8px;
+    border-bottom: 1px solid var(--ion-color-primary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.slick-segment {
+    width: 100%;
+    background: transparent;
+    --indicator-color: var(--ion-color-primary);
+    --indicator-height: 3px;
+    --border-radius: 8px;
+    display: flex;
+    justify-content: space-evenly;
+
+    ion-segment-button {
+        --color-checked: var(--ion-color-primary);
+        --color: var(--ion-text-color);
+        color: var(--ion-text-color);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+        transition: transform 0.25s ease, color 0.25s ease;
+        position: relative;
+
+        &::part(indicator) {
+            transition: all 0.3s ease-in-out;
+            height: 3px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--ion-color-primary), #ff4d4d);
+        }
+
+        &.segment-button-checked {
+            transform: scale(1.1);
+            color: var(--ion-color-primary);
+        }
+
+        ion-label {
+            font-size: 0.8rem;
+        }
+    }
+}
+
+/* Big Banner Scroll & Items - page-specific */
+.big-banner-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 1rem 0;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 16px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.big-banner-item {
+    position: relative;
+    flex: 0 0 auto;
+    width: 280px;
+    height: 160px;
+    border-radius: 8px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .banner-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        color: #fff;
+        padding: 0.5rem;
+        box-sizing: border-box;
+
+        h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        p {
+            margin: 0;
+            font-size: 0.85rem;
+        }
+    }
+}
+
+/* Ensure horizontal scroll settings for banner-scroll */
+.banner-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 16px;
+    -webkit-overflow-scrolling: touch; // for smoother scrolling on iOS
+}
+
+/* Optionally hide the scrollbar for a cleaner look */
+.banner-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ensure each banner item doesn’t shrink so that overflow occurs */
+.banner-item {
+    flex: 0 0 auto;
+    width: 95px;
+    /* Adjust width as needed */
+    /* If needed, add a min-width to force overflow */
+    min-width: 95px;
+}

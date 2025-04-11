@@ -24,8 +24,8 @@ import { Clipboard } from '@capacitor/clipboard';
 import { Dialog } from '@capacitor/dialog';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MovieSearchResult } from 'src/models/movie/movie-search.model';
-import { TvSearchResult } from 'src/models/movie/tv-search.model';
 import { LanguageService } from 'src/services/language.service';
+import { TvSearchResult } from 'src/models/tv/tv-search.model';
 
 @Component({
   selector: 'app-search',
@@ -114,6 +114,13 @@ export class SearchPage implements OnInit, AfterViewInit {
     }
     event.target.complete();
   }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.movieResults = [];
+    this.tvResults = [];
+    this.currentPage = 1;
+  }  
 
   async search(reset: boolean = false): Promise<void> {
     if (!this.searchQuery.trim()) return;

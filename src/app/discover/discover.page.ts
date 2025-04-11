@@ -1,15 +1,25 @@
-import { Component } from '@angular/core';
-import { IonContent, IonButton } from '@ionic/angular/standalone';
+import { Component, OnInit } from '@angular/core';
+import { IonContent, IonButton, IonToolbar, IonSegmentButton, IonLabel, IonSegment } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MovieSearchResult } from 'src/models/movie/movie-search.model';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
+
+interface MediaItem {
+  id: number;
+  title: string;
+  rating?: number;
+  year?: number;
+  poster_path?: string;
+}
 
 @Component({
   selector: 'app-discover',
   templateUrl: 'discover.page.html',
   styleUrls: ['discover.page.scss'],
-  imports: [
+  imports: [IonLabel, IonSegment, IonSegmentButton, IonToolbar,
     IonButton,
     CommonModule,
     FormsModule,
@@ -17,39 +27,98 @@ import { Router } from '@angular/router';
     HeaderComponent
   ],
 })
-export class DiscoverPage {
-  // Demo data
-  topRatedMovies = [
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Adventure Time: Fionna & Cake', rating: 8.8, year: 2023 },
-    { title: 'Arcane', rating: 8.9, year: 2021 },
-    { title: 'Avatar: The Last Airbender', rating: 9.2, year: 2005 },
+export class DiscoverPage implements OnInit {
+  // Near the existing properties
+  desiTrendingMovies: MovieSearchResult[] = [];
+  
+  // Default segment value
+  segmentValue: string = 'bollywood';
+  scrollTop: number = 0;
+
+  // Demo data (with id added for navigation)
+  topRatedMovies: MediaItem[] = [
+    { id: 1, title: 'Breaking Bad', rating: 8.9, year: 2008 },
+    { id: 2, title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
+    { id: 3, title: 'Adventure Time: Fionna & Cake', rating: 8.8, year: 2023 },
+    { id: 4, title: 'Arcane', rating: 8.9, year: 2021 },
+    { id: 5, title: 'Avatar: The Last Airbender', rating: 9.2, year: 2005 },
   ];
 
-  topRatedTV = [
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'Hazbin Hotel', rating: 8.8, year: 2023 },
-    { title: 'Freiren: Beyond Journey’s End', rating: 8.8, year: 2023 },
-    { title: 'Dan Da Dan', rating: 8.6, year: 2024 },
+  topRatedTV: MediaItem[] = [
+    { id: 6, title: 'One Piece', rating: 8.8, year: 1999 },
+    { id: 7, title: 'Rick and Morty', rating: 8.9, year: 2013 },
+    { id: 8, title: 'Hazbin Hotel', rating: 8.8, year: 2023 },
+    { id: 9, title: 'Freiren: Beyond Journey’s End', rating: 8.8, year: 2023 },
+    { id: 10, title: 'Dan Da Dan', rating: 8.6, year: 2024 },
   ];
 
-  constructor(private router: Router) {}
+  // Demo banners (using unique ids)
+  banners = [
+    {
+      id: 101,
+      title: 'Blockbuster Hit',
+      subtitle: 'Summer 2023',
+      imageUrl: 'https://m.media-amazon.com/images/M/MV5BOTQ2MzE0YWItMGUxNy00MDhjLWE1MmItMzFjMjIzNmRlYzA4XkEyXkFqcGdeQXNhcmFocmVi._V1_QL75_UX500_CR0,0,500,281_.jpg'
+    },
+    {
+      id: 102,
+      title: 'Critically Acclaimed',
+      subtitle: 'Award Winner',
+      imageUrl: 'https://m.media-amazon.com/images/M/MV5BNTEyMTE1MDMtZTZlYi00NzhmLTlkNDMtMzhmMmFiODM2NDUyXkEyXkFqcGdeQWFybm8@._V1_QL75_UX1000_CR0,0,1000,563_.jpg'
+    },
+    {
+      id: 103,
+      title: 'New Releases',
+      subtitle: 'Must See',
+      imageUrl: 'https://m.media-amazon.com/images/M/MV5BZjQxNTQ1NzQtMzc0OC00NThmLWEyNTEtYjA0ZjBkOTBmZDdmXkEyXkFqcGdeQWFybm8@._V1_QL75_UY563_CR0,0,1000,563_.jpg'
+    },
+  ];
 
-  goToAllMovies() {
-    this.router.navigate(['/top-rated-movies']);
+  constructor(
+    public router: Router,
+    private tmdbService: TmdbSearchService,
+  ) { }
+
+  ngOnInit(): void {
+    this.loadDesiTrending();
   }
 
-  goToAllTV() {
-    this.router.navigate(['/top-rated-tv']);
+  loadDesiTrending(): void {
+    this.tmdbService.getTrendingBollywoodMovies(1).subscribe({
+      next: (data) => {
+        this.desiTrendingMovies = data.results;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
-  goToTvDetail(id: number | string) {
-    this.router.navigate(['/tv-detail', id]);
+  // Generic detail navigation for movies and TV shows
+  navigateToDetail(category: 'movie' | 'tv', id: number | string): void {
+    this.router.navigate([`/${category}-detail`, id]);
   }
 
-  goToMovieDetail(id: number | string) {
-    this.router.navigate(['/movie-detail', id]);
+  navigateToBollywoodTrending(): void {
+    this.router.navigate(['/bollywood-trending']);
+  }
+
+  // Generic list navigation for movies and TV shows
+  navigateToList(category: 'movie' | 'tv'): void {
+    const route = category === 'movie' ? '/top-rated-movies' : '/top-rated-tv';
+    this.router.navigate([route]);
+  }
+
+  segmentChanged(event: any): void {
+    this.segmentValue = event.detail.value;
+    // Optionally add animations here if desired.
+  }
+
+  // For the Bollywood segment, combine movies and TV items.
+  getBollywoodCombined(): MediaItem[] {
+    return [...this.topRatedMovies, ...this.topRatedTV];
+  }
+
+  // Update scroll position for a possible parallax effect.
+  onScroll(event: any): void {
+    this.scrollTop = event.detail.scrollTop;
   }
 }

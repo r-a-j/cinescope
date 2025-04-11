@@ -1,8 +1,4 @@
 <ion-content [fullscreen]="true" class="movie-detail-content">
-  <ion-button class="back-btn" fill="clear" (click)="goHome()">
-    <img src="assets/back.svg" alt="Back" class="back-svg" />
-  </ion-button>
-
   <!-- Backdrop image fills top area including under toolbar -->
   <div class="backdrop-wrapper">
     <img src="https://image.tmdb.org/t/p/original/zo8CIjJ2nfNOevqNajwMRO6Hwka.jpg" alt="Backdrop" class="backdrop-image" />
@@ -68,7 +64,7 @@
       <h2>Cast</h2>
       <div class="cast-scroll">
         <div class="cast-card" *ngFor="let actor of [1,2,3,4,5]">
-          <img src="assets/placeholder.png" alt="Actor">
+          <img src="assets/temp/leonardo.png" alt="Actor">
           <p>Actor Name</p>
         </div>
       </div>

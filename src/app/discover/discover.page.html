@@ -1,22 +1,152 @@
 <app-header></app-header>
-<ion-content class="ion-padding">
-  <div class="section-header">
-    <h2>Top Rated Movies</h2>
-    <ion-button fill="clear" (click)="goToAllMovies()">all</ion-button>
-  </div>
-  <div class="horizontal-scroll">
-    <div class="item" *ngFor="let movie of topRatedMovies" (click)="goToMovieDetail(10)">
-      <img src="assets/placeholder.png" alt="{{ movie.title }}" />
-    </div>
-  </div>
 
-  <div class="section-header">
-    <h2>Top Rated TV</h2>
-    <ion-button fill="clear" (click)="goToAllTV()">all</ion-button>
-  </div>
-  <div class="horizontal-scroll">
-    <div class="item" *ngFor="let tv of topRatedTV" (click)="goToTvDetail(10)">
-      <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+<!-- Sticky Segment Toolbar -->
+<ion-toolbar class="slick-toolbar">
+  <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)" class="slick-segment">
+    <ion-segment-button value="bollywood">
+      <ion-label>Bollywood</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="topRated">
+      <ion-label>Top Rated</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="trending">
+      <ion-label>Trending</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="actors">
+      <ion-label>Actors</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+</ion-toolbar>
+
+<ion-content class="ion-padding backdrop-wrapper" fullscreen (ionScroll)="onScroll($event)">
+  <div class="content-layer">
+    <!-- For the "Top Rated" segment -->
+    <div *ngIf="segmentValue === 'topRated'" class="animate__animated animate__fadeIn animate__fast">
+      <div class="section-header">
+        <h2>Top Rated Movies</h2>
+        <ion-button fill="clear" (click)="navigateToList('movie')">all</ion-button>
+      </div>
+      <div class="horizontal-scroll">
+        <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let movie of topRatedMovies"
+          (click)="navigateToDetail('movie', movie.id)">
+          <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2>Top Rated TV</h2>
+        <ion-button fill="clear" (click)="navigateToList('tv')">all</ion-button>
+      </div>
+      <div class="horizontal-scroll">
+        <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let tv of topRatedTV"
+          (click)="navigateToDetail('tv', tv.id)">
+          <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+        </div>
+      </div>
+    </div>
+
+    <!-- For the "Trending" segment -->
+    <div *ngIf="segmentValue === 'trending'" class="animate__animated animate__fadeIn animate__fast">
+      <p>Trending content coming soon...</p>
+    </div>
+
+    <!-- For the "Actors" segment -->
+    <div *ngIf="segmentValue === 'actors'" class="animate__animated animate__fadeIn animate__fast">
+      <p>Actors content coming soon...</p>
+    </div>
+
+    <!-- For the "Bollywood" segment -->
+    <div *ngIf="segmentValue === 'bollywood'" class="animate__animated animate__fadeIn animate__fast">
+      <!-- Big Banner Section -->
+      <div class="section-header">
+        <h2>New</h2>
+      </div>
+      <div class="big-banner-scroll">
+        <div class="big-banner-item" *ngFor="let banner of banners" (click)="navigateToDetail('movie', banner.id)">
+          <img [src]="banner.imageUrl" alt="{{ banner.title }}" />
+          <div class="banner-overlay">
+            <h2>{{ banner.title }}</h2>
+            <p>{{ banner.subtitle }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Repeatable Banner Scroll Sections -->
+      <div class="section-header">
+        <h2>Desi Trending</h2>
+        <ion-button fill="clear" (click)="navigateToBollywoodTrending()">all</ion-button>
+      </div>
+      <div class="banner-scroll">
+        <div class="banner-item animate__animated animate__flipInY animate__fast"
+          *ngFor="let item of desiTrendingMovies" (click)="navigateToDetail('movie', item.id)">
+          <img
+            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title }}" />
+          <div class="banner-info">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2>Top Rated</h2>
+        <ion-button fill="clear">all</ion-button>
+      </div>
+      <div class="banner-scroll">
+        <div class="banner-item animate__animated animate__flipInY animate__fast"
+          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
+          <img
+            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title }}" />
+          <div class="banner-info">
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional sections such as Gujarati, Marathi, Tollywood -->
+      <div class="section-header">
+        <h2>Gujarati</h2>
+        <ion-button fill="clear">all</ion-button>
+      </div>
+      <div class="banner-scroll">
+        <div class="banner-item animate__animated animate__flipInY animate__fast"
+          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
+          <img
+            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title }}" />
+          <div class="banner-info">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2>Marathi</h2>
+        <ion-button fill="clear">all</ion-button>
+      </div>
+      <div class="banner-scroll">
+        <div class="banner-item animate__animated animate__flipInY animate__fast"
+          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
+          <img
+            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title }}" />
+          <div class="banner-info">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2>Tollywood ki duniya</h2>
+        <ion-button fill="clear">all</ion-button>
+      </div>
+      <div class="banner-scroll">
+        <div class="banner-item animate__animated animate__flipInY animate__fast"
+          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
+          <img
+            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title }}" />
+          <div class="banner-info">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </ion-content>

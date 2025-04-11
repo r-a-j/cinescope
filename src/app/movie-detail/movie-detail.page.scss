@@ -12,13 +12,13 @@ ion-chip[color="warning"] {
         left: 8px;
         z-index: 10;
         fill: clear;
-    
+
         .back-svg {
             width: 24px;
             height: 24px;
         }
     }
-    
+
     .backdrop-wrapper {
         position: relative;
         height: 280px;
@@ -33,6 +33,24 @@ ion-chip[color="warning"] {
             border-bottom-right-radius: 2rem;
         }
 
+        @media (prefers-color-scheme: dark) {
+            .backdrop-gradient {
+                background: linear-gradient(to bottom,
+                        rgba(0, 0, 0, 1) 0%,
+                        rgba(0, 0, 0, 0.1) 15%,
+                        rgba(0, 0, 0, 0) 100%);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            .backdrop-gradient {
+                background: linear-gradient(to bottom,
+                        rgba(255, 255, 255, 1) 0%,
+                        rgba(0, 0, 0, 0.1) 15%,
+                        rgba(0, 0, 0, 0) 100%);
+            }
+        }
+
         .backdrop-gradient {
             position: absolute;
             top: 0;
@@ -41,9 +59,6 @@ ion-chip[color="warning"] {
             bottom: 0;
             z-index: 2;
             pointer-events: none;
-            background: linear-gradient(to top,
-                    var(--backdrop-gradient-dark, rgba(0, 0, 0, 0.8)) 0%,
-                    transparent 80%);
             border-bottom-left-radius: 1.5rem;
             border-bottom-right-radius: 1.5rem;
         }

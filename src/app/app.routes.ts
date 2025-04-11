@@ -29,4 +29,8 @@ export const routes: Routes = [
     path: 'tv-detail/:id',
     loadComponent: () => import('./tv-detail/tv-detail.page').then( m => m.TvDetailPage)
   },
+  {
+    path: 'bollywood-trending',
+    loadComponent: () => import('./bollywood-trending/bollywood-trending.page').then( m => m.BollywoodTrendingPage)
+  },
 ];
