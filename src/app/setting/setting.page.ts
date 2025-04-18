@@ -28,6 +28,7 @@ import { arrowBackOutline } from 'ionicons/icons';
 import { StorageService } from 'src/services/storage.service';
 import { SettingModel } from 'src/models/setting.model';
 import { t } from '@angular/core/weak_ref.d-Bp6cSy-X';
+import { Preferences } from '@capacitor/preferences';
 
 @Component({
   selector: 'app-setting',
@@ -101,10 +102,8 @@ export class SettingPage implements OnInit {
   }
 
   async toggleAllowAdultContent(): Promise<void> {
-    // Log current state before toggling
     console.log('Toggle requested. Current allowAdultContent:', this.allowAdultContent);
 
-    // If the toggle is turned ON, ask for age confirmation.
     if (this.allowAdultContent) {
       const { value } = await Dialog.confirm({
         title: 'Age Confirmation',
@@ -112,37 +111,33 @@ export class SettingPage implements OnInit {
       });
 
       if (!value) {
-        // User did not confirm—revert the toggle.
         this.allowAdultContent = false;
-        await Toast.show({
-          text: 'Adult content disabled!',
-          duration: 'short',
-          position: 'bottom'
-        });
-      } else {        
-        const content: SettingModel = {
-          tmdbApiKey: this.tmdbApiKey,
-          allowAdultContent: true,
-        };
-        this.storageService.saveSettings(content);
-        
-        await Toast.show({
-          text: 'Adult content enabled!',
-          duration: 'short',
-          position: 'bottom'
-        });
+        await this.saveCurrentSettings();
+        await this.showToast('Adult content disabled!', 'short', 'bottom');
+      } else {
+        this.allowAdultContent = true;
+        await this.saveCurrentSettings();
+        await this.showToast('Adult content enabled!', 'short', 'bottom');
       }
     } else {
-      // If toggling off, simply show a toast.
-      await Toast.show({
-        text: 'Adult content disabled!',
-        duration: 'short',
-        position: 'bottom'
-      });
+      // Toggle OFF
+      this.allowAdultContent = false;
+      await this.saveCurrentSettings();
+      await this.showToast('Adult content disabled!', 'short', 'bottom');
     }
 
     console.log('Allow Adult Content toggled to:', this.allowAdultContent);
   }
+
+  // Helper method
+  async saveCurrentSettings(): Promise<void> {
+    const content: SettingModel = {
+      tmdbApiKey: this.tmdbApiKey,
+      allowAdultContent: this.allowAdultContent,
+    };
+    await this.storageService.saveSettings(content);
+  }
+
 
   // Confirm before clearing the watchlist
   async confirmClearWatchlist(): Promise<void> {
@@ -168,19 +163,18 @@ export class SettingPage implements OnInit {
     }
   }
 
-  // Clear the watchlist and show a toast
   async clearWatchlist(): Promise<void> {
-    console.log('Clearing Watchlist...');
-    // Add your logic to clear the watchlist (e.g., call a service)
+    await Preferences.set({ key: 'watchlist_contents', value: JSON.stringify([]) });
+    this.storageService.emitStorageChanged();
     await this.showToast('Watchlist cleared!', 'short', 'bottom');
   }
 
-  // Clear the watched list and show a toast
   async clearWatchedList(): Promise<void> {
-    console.log('Clearing Watched List...');
-    // Add your logic to clear the watched list (e.g., call a service)
+    await Preferences.set({ key: 'watched_contents', value: JSON.stringify([]) });
+    this.storageService.emitStorageChanged();
     await this.showToast('Watched list cleared!', 'short', 'bottom');
   }
+
 
   isValidApiKey(key: string): boolean {
     if (!key || typeof key !== 'string') {

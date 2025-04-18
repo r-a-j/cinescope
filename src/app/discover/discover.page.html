@@ -74,7 +74,7 @@
 
       <ng-template #bannersContent>
         <div class="big-banner-scroll">
-          <div class="big-banner-item animate__animated animate__fadeIn animate__fast" *ngFor="let banner of banners">
+          <div class="big-banner-item animate__animated animate__fadeIn animate__fast" *ngFor="let banner of banners" (click)="navigateToDetail('movie', banner.id)">
             <!-- <div class="big-banner-item" *ngFor="let banner of banners" (click)="navigateToDetail('movie', banner.id)"></div> -->
             <img [src]="banner.imageUrl ? banner.imageUrl : 'url(assets/placeholder-backdrop.png)'" alt="{{ banner.title }}" />
             <!-- <img [src]="banner.imageUrl" alt="{{ banner.title }}" /> -->

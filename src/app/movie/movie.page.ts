@@ -5,12 +5,14 @@ import {
   IonSegmentButton,
   IonFabButton,
   IonFab,
-  IonIcon, IonCardContent, IonImg, IonCol, IonRow, IonGrid, IonCardHeader, IonCardTitle, IonCard,
-  Platform
+  IonIcon,
+  IonButtons,
+  IonButton,
+  IonCheckbox
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { NavigationEnd, Router } from '@angular/router';
-import { add, bookmark, checkmarkDone } from 'ionicons/icons';
+import { add, bookmark, checkmarkDone, create } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -18,15 +20,13 @@ import { StorageService } from 'src/services/storage.service';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { filter, firstValueFrom, Subscription } from 'rxjs';
 import { ContentModel } from 'src/models/content.model';
-import * as movieGenres from 'src/assets/movie_genres.json';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
-import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-movie',
   templateUrl: 'movie.page.html',
   styleUrls: ['movie.page.scss'],
-  imports: [IonCard, IonCardTitle, IonCardHeader, IonGrid, IonRow, IonCol, IonImg, IonCardContent,
+  imports: [IonCheckbox, IonButton, IonButtons,
     FormsModule,
     CommonModule,
     IonIcon,
@@ -35,35 +35,32 @@ import { NavController } from '@ionic/angular';
     IonSegmentButton,
     IonSegment,
     IonContent,
-    HeaderComponent
-  ],
+    HeaderComponent],
 })
 export class MoviePage implements OnInit, OnDestroy {
-
   segment: string = 'watchlist';
   watchlist: MovieDetailModel[] = [];
-  watched: MovieDetailModel[] = [];  
-  private storageSub!: Subscription;
-  private routerSubscription: any;
+  watched: MovieDetailModel[] = [];
 
+  selectionMode = false;
+  selectedIds = new Set<number>();
+
+  private routerSubscription!: Subscription;
 
   constructor(
     private router: Router,
     private storageService: StorageService,
-    private tmdbService: TmdbSearchService,
-    private navCtrl: NavController,
-    private platform: Platform
+    private tmdbService: TmdbSearchService
   ) {
-    addIcons({ add, bookmark, checkmarkDone });
+    addIcons({ add, create, bookmark, checkmarkDone });
   }
-  
-  
+
   ngOnInit() {
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
-        if (event.urlAfterRedirects.includes('tabs/movie')) {  // adjust the route if needed
-          console.log('I am back on Movie Page!');
+        if (event.urlAfterRedirects.includes('tabs/movie')) {
+          console.log('Back on Movie Page');
           this.loadMovies();
         }
       });
@@ -73,26 +70,24 @@ export class MoviePage implements OnInit, OnDestroy {
     this.routerSubscription?.unsubscribe();
   }
 
-  // ionViewWillEnter() {
-  //   // Subscribe to storage changes
-  //   this.storageSub = this.storageService.storageChanged$.subscribe(() => {
-  //     this.loadMovies();
-  //   });
-  // }
-
   async loadMovies() {
-    // Clear the movies array before loading new data
     this.watchlist = [];
+    this.watched = [];
 
-    // Load the watchlist
-    const savedItems = await this.storageService.getWatchlist();
+    const [watchlistItems, watchedItems] = await Promise.all([
+      this.storageService.getWatchlist(),
+      this.storageService.getWatched()
+    ]);
 
-    // Create a set of unique movie IDs to prevent duplicates
-    const uniqueSavedItems = Array.from(new Set(savedItems.map(item => item.contentId)))
-      .map(id => savedItems.find(item => item.contentId === id))
-      .filter((item): item is ContentModel => item !== undefined); // Filters out undefined values
+    const uniqueWatchlistItems = Array.from(new Set(watchlistItems.map(item => item.contentId)))
+      .map(id => watchlistItems.find(item => item.contentId === id))
+      .filter((item): item is ContentModel => item !== undefined);
 
-    const promises = uniqueSavedItems.map(async (item) => {
+    const uniqueWatchedItems = Array.from(new Set(watchedItems.map(item => item.contentId)))
+      .map(id => watchedItems.find(item => item.contentId === id))
+      .filter((item): item is ContentModel => item !== undefined);
+
+    const promises = [...uniqueWatchlistItems, ...uniqueWatchedItems].map(async (item) => {
       try {
         const movieDetail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId));
 
@@ -102,22 +97,80 @@ export class MoviePage implements OnInit, OnDestroy {
           poster_path: movieDetail?.poster_path,
         };
 
-        // Directly add to the movies array
-        this.watchlist.push(movieItem);
-
+        if (item.isWatched) {
+          this.watched.push(movieItem);
+        } else {
+          this.watchlist.push(movieItem);
+        }
       } catch (error) {
         console.error('Failed to fetch movie', item.contentId, error);
       }
     });
 
-    await Promise.all(promises); // Wait for all movies to load
+    await Promise.all(promises);
   }
 
-  goToSearch() {    
-    this.router.navigate(['/search']);    
+  getCurrentMovies(): MovieDetailModel[] {
+    return this.segment === 'watchlist' ? this.watchlist : this.watched;
+  }
+
+  goToSearch() {
+    this.router.navigate(['/search']);
   }
 
   goToMovieDetail(id?: number | string) {
     this.router.navigate(['/movie-detail', id]);
+  }
+
+  toggleSelectionMode() {
+    console.log('Pressed toggleSelectionMode', this.selectionMode);
+    this.selectionMode = !this.selectionMode;
+    //this.toggleSelect(movieId!);
+  }
+
+  toggleSelect(movieId: number) {
+    if (this.selectedIds.has(movieId)) {
+      this.selectedIds.delete(movieId);
+    } else {
+      this.selectedIds.add(movieId);
+    }
+  }
+
+  onMovieClick(movieId?: number | string) {
+    if (this.selectionMode) {
+      this.toggleSelect(Number(movieId)); // just toggle selection
+    } else {
+      this.goToMovieDetail(movieId);
+    }
+  }
+
+  clearSelection() {
+    this.selectionMode = false;
+    this.selectedIds.clear();
+  }
+
+  async removeSelected() {
+    const moviesToRemove = this.getCurrentMovies().filter(movie => this.selectedIds.has(movie.id!));
+    
+    if(this.segment === 'watchlist'){
+      for (const movie of moviesToRemove) {
+        await this.storageService.removeFromWatchlist(movie.id!, true, false); // Assuming all are movies
+      }
+    }
+    else{
+      for (const movie of moviesToRemove) {
+        await this.storageService.removeFromWatched(movie.id!, true, false); // Assuming all are movies
+      }
+    }
+    
+    this.clearSelection();
+    this.loadMovies();
+  }
+
+  async moveSelectedToWatched() {
+    const ids = Array.from(this.selectedIds);
+    await this.storageService.bulkMoveFromWatchlistToWatched(ids, true, false);
+    this.clearSelection();
+    this.loadMovies();
   }
 }

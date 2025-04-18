@@ -1,4 +1,4 @@
-<ion-header [class.scrolled]="isScrolled">
+<ion-header [class.scrolled]="isScrolled" class="custom-blur-header">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button (click)="goHome()">
@@ -11,10 +11,18 @@
 
 <ion-content *ngIf="movieDetail" (ionScroll)="onScroll($event)" scrollEvents="true" class="movie-detail-content">
   <div class="backdrop-wrapper">
-    <img [src]="'https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path" alt="Backdrop"
-      class="backdrop-image" />
+    
+    <!-- <img [src]="'https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path" alt="Backdrop"
+      class="backdrop-image" /> -->
+
+    <img class="backdrop-image"
+      [src]="movieDetail.backdrop_path ? ('https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path) : 'assets/placeholder-backdrop.png'"
+      [alt]="movieDetail.title" />
+
     <div class="backdrop-gradient"></div>
-    <img [src]="'https://image.tmdb.org/t/p/w300' + movieDetail.poster_path" alt="Poster" class="floating-poster" />
+    <img class="floating-poster"
+      [src]="movieDetail.poster_path ? ('https://image.tmdb.org/t/p/w300' + movieDetail.poster_path) : 'assets/placeholder.png'"
+      [alt]="movieDetail.title" />
     <ion-button class="floating-bookmark" fill="clear" size="default" shape="round" [color]="bookmarkColor"
       (click)="toggleWatchlist()">
       <ion-icon name="bookmark" slot="icon-only"></ion-icon>

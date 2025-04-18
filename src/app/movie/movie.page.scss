@@ -62,7 +62,7 @@
     align-items: center;
     padding-left: 16px;
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: 10px;
 }
 
 .left-slot {
@@ -75,4 +75,18 @@
 /* Optional: If you don't want anything in left yet, keep it empty but still reserve space */
 .left-slot::after {
     content: "";
+}
+
+.media-item {
+    position: relative;
+
+    ion-checkbox.media-checkbox {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        --size: 20px;
+        pointer-events: auto;
+        /* Important: prevent click conflict */
+    }
 }

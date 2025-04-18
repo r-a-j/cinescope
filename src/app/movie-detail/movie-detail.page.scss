@@ -19,7 +19,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
     --background: var(--ion-background-color);
 }
 
-/* Backdrop section */
+/* Backdrop Section */
 .backdrop-wrapper {
     position: relative;
     height: 280px;
@@ -33,7 +33,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
     border-bottom-right-radius: 2rem;
 }
 
-/* Backdrop Gradient (Light & Dark) */
+/* Backdrop Gradient */
 .backdrop-gradient {
     position: absolute;
     inset: 0;
@@ -54,7 +54,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
     border-radius: 1rem;
     object-fit: cover;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    z-index: 10;    
+    z-index: 10;
 }
 
 /* Floating Bookmark */
@@ -132,7 +132,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
 }
 
 /* Overview Section */
-.overview {    
+.overview {
     border-radius: 1rem;
     padding: 1rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -144,7 +144,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
     margin-bottom: 0.5rem;
 }
 
-/* Details Grid (Status, Budget, Revenue) */
+/* Details Grid */
 .details-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -164,21 +164,27 @@ ion-content .inner-scroll::-webkit-scrollbar {
     color: var(--ion-color-medium);
 }
 
+/* Header */
 ion-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: transparent;    
+    background: transparent;
+    --background: transparent;
     z-index: 100;
     transition: background-color 0.3s ease, color 0.3s ease;
-    --background: transparent;
     backdrop-filter: none;
     box-shadow: none;
 
     ion-toolbar {
-        --background: transparent;        
+        --background: transparent;
         --ion-toolbar-background: transparent;
+        --color: var(--ion-text-color);
+
+        ion-button {
+            --color: var(--ion-color-tertiary-shade);
+        }
     }
 
     ion-title {
@@ -187,18 +193,28 @@ ion-header {
     }
 
     &.scrolled {
-        --background: var(--ion-background-color);
-        --color: var(--ion-text-color);
         backdrop-filter: blur(10px);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 
         ion-toolbar {
-            --background: var(--ion-background-color);
+            --background: transparent;
             --color: var(--ion-text-color);
         }
 
         ion-title {
             opacity: 1;
         }
+    }
+}
+
+/* Dynamic Blur Background based on Theme */
+ion-header.scrolled {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    ion-header.scrolled {
+        background: rgba(0, 0, 0, 0.5);
     }
 }

@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { from, Observable, throwError } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { SettingModel } from '../models/setting.model';
 import { MovieSearchModel } from 'src/models/movie/movie-search.model';
 import { TvSearchModel } from 'src/models/tv/tv-search.model';
@@ -13,130 +13,162 @@ import { StorageService } from './storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class TmdbSearchService {
-
-    private TMDB_API_KEY = '';
-    private ALLOWED_ADULT_CONTENT = false;
+    private settings: SettingModel = {
+        tmdbApiKey: '',
+        allowAdultContent: false
+    };
 
     private BASE_URL = 'https://api.themoviedb.org/3';
-    private settings: SettingModel = {
-        tmdbApiKey: this.TMDB_API_KEY,
-        allowAdultContent: this.ALLOWED_ADULT_CONTENT
-    };
-
-    // Base URL and query parameters for Bollywood movies in Hindi
-    private apiUrl = 'https://api.themoviedb.org/3/discover/movie';
-    private apiParams =
-        '?include_adult=' + 
-        String(this.ALLOWED_ADULT_CONTENT) + 
-        '&include_video=true&language=en-US&primary_release_year=2025&sort_by=vote_average.desc&with_origin_country=IN&with_original_language=hi';
-
-    private options = {
-        headers: {
-            accept: 'application/json',
-            Authorization: 'Bearer ' + this.TMDB_API_KEY
-        }
-    };
+    private settingsLoaded = false;
 
     constructor(
         private http: HttpClient,
         private storageService: StorageService
     ) {
-        this.storageService.getSettings().then((settings: SettingModel | null) => {
-            if (settings) {
-              this.TMDB_API_KEY = settings.tmdbApiKey || '';
-              this.ALLOWED_ADULT_CONTENT = settings.allowAdultContent || false;
-            }
-          });
+        this.loadSettings();
     }
 
+    /** Load settings once during service construction */
+    private async loadSettings() {
+        const settings = await this.storageService.getSettings();
+        if (settings) {
+            this.settings = settings;
+            this.settingsLoaded = true;
+        } else {
+            console.warn('TMDB settings not found, using defaults.');
+        }
+    }
+
+    /** Safe dynamic headers */
     private get headers() {
         return new HttpHeaders({
             accept: 'application/json',
-            Authorization: `Bearer ${this.TMDB_API_KEY}`
+            Authorization: `Bearer ${this.settings.tmdbApiKey}`
         });
     }
 
-    updateSettings(settings: SettingModel) {
-        this.settings = settings;
-        localStorage.setItem('tmdbSettings', JSON.stringify(settings));
+    /** Wait for settings if needed */
+    private async ensureSettingsLoaded(): Promise<void> {
+        const settings = await this.storageService.getSettings();
+        if (settings) {
+            this.settings = settings;
+            this.settingsLoaded = true;
+        }
     }
 
-    searchMovies(query: string, page = 1, year?: string, lang?: string): Observable<MovieSearchModel> {
-        let params = new HttpParams()
-            .set('query', query)
-            .set('include_adult', this.settings.allowAdultContent.toString())
-            .set('language', 'en-US')
-            .set('page', page);
-
-        if (year) params = params.set('year', year);
-        if (lang) params = params.set('language', lang);
-
-        return this.http.get<MovieSearchModel>(`${this.BASE_URL}/search/movie`, {
-            headers: this.headers,
-            params
-        }).pipe(catchError(this.handleError));
-    }
-
-    searchTV(query: string, page = 1, year?: string, lang?: string): Observable<TvSearchModel> {
-        let params = new HttpParams()
-            .set('query', query)
-            .set('include_adult', this.settings.allowAdultContent.toString())
-            .set('language', 'en-US')
-            .set('page', page);
-
-        if (year) params = params.set('year', year);
-        if (lang) params = params.set('language', lang);
-
-        return this.http.get<TvSearchModel>(`${this.BASE_URL}/search/tv`, {
-            headers: this.headers,
-            params
-        }).pipe(catchError(this.handleError));
-    }
-
-    getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
-        const url = `${this.apiUrl}${this.apiParams}&page=${page}`;
-        return this.http.get<MovieSearchModel>(url, this.options);
-    }
-
+    /** Handle API errors */
     private handleError(error: any) {
         console.error('TMDB API Error:', error);
         return throwError(() => new Error('Something went wrong with the TMDB API.'));
     }
 
-    getUpcomingMovies(page: number = 1): Observable<MovieUpcomingModel> {
-        // Compute dynamic date parameters:
-        const today = new Date();
-        const minDate = today.toISOString().split('T')[0];
-        const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate()).toISOString().split('T')[0];
-        const currentYear = new Date().getFullYear();
+    /** Search Movies */
+    searchMovies(query: string, page = 1, year?: string, lang: string = 'en-US'): Observable<MovieSearchModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                let params = new HttpParams()
+                    .set('query', query)
+                    .set('include_adult', this.settings.allowAdultContent.toString())
+                    .set('language', lang)
+                    .set('page', page);
 
-        console.log(minDate);
-        console.log(maxDate);
-        console.log(currentYear);
+                if (year) params = params.set('year', year);
 
-        // const url = `${this.BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&with_release_type=2|3&release_date.gte=${minDate}&release_date.lte=${maxDate}&with_origin_country=IN&with_original_language=hi`;
-        const dynamicParams = {
-            "release_date.gte": minDate,
-            "release_date.lte": maxDate,
-            "with_release_type": '2|3',
-            "with_origin_country": 'IN',
-            "with_original_language": 'hi',
-        };
-
-        const upcomingurl = buildDiscoverMovieUrl(this.BASE_URL, dynamicParams);
-        console.log(upcomingurl);
-        return this.http.get<MovieUpcomingModel>(upcomingurl, this.options);
+                return this.http.get<MovieSearchModel>(`${this.BASE_URL}/search/movie`, {
+                    headers: this.headers,
+                    params
+                });
+            }),
+            catchError(this.handleError)
+        );
     }
 
-    getMovieDetail(movieId: number): Observable<MovieDetailModel> {
-        const params = new HttpParams()
-            .set('append_to_response', 'videos,recommendations,similar')
-            .set('language', 'en-US');
+    /** Search TV Shows */
+    searchTV(query: string, page = 1, year?: string, lang: string = 'en-US'): Observable<TvSearchModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                let params = new HttpParams()
+                    .set('query', query)
+                    .set('include_adult', this.settings.allowAdultContent.toString())
+                    .set('language', lang)
+                    .set('page', page);
 
-        return this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, {
-            headers: this.headers,
-            params
-        }).pipe(
+                if (year) params = params.set('first_air_date_year', year);
+
+                return this.http.get<TvSearchModel>(`${this.BASE_URL}/search/tv`, {
+                    headers: this.headers,
+                    params
+                });
+            }),
+            catchError(this.handleError)
+        );
+    }
+
+    /** Trending Bollywood Movies */
+    getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                const discoveryUrl = `${this.BASE_URL}/discover/movie`;
+                const apiParams = new HttpParams()
+                    .set('include_adult', this.settings.allowAdultContent.toString())
+                    .set('include_video', 'true')
+                    .set('language', 'en-US')
+                    .set('primary_release_year', '2025')
+                    .set('sort_by', 'vote_average.desc')
+                    .set('with_origin_country', 'IN')
+                    .set('with_original_language', 'hi')
+                    .set('page', page);
+
+                return this.http.get<MovieSearchModel>(discoveryUrl, {
+                    headers: this.headers,
+                    params: apiParams
+                });
+            }),
+            catchError(this.handleError)
+        );
+    }
+
+    /** Get Upcoming Movies */
+    getUpcomingMovies(page: number = 1): Observable<MovieUpcomingModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                const today = new Date();
+                const minDate = today.toISOString().split('T')[0];
+                const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate()).toISOString().split('T')[0];
+
+                const dynamicParams = {
+                    "release_date.gte": minDate,
+                    "release_date.lte": maxDate,
+                    "with_release_type": '2|3',
+                    "with_origin_country": 'IN',
+                    "with_original_language": 'hi',
+                    "language": 'en-US',
+                    "page": page.toString()
+                };
+
+                const upcomingUrl = buildDiscoverMovieUrl(this.BASE_URL, dynamicParams);
+
+                return this.http.get<MovieUpcomingModel>(upcomingUrl, {
+                    headers: this.headers
+                });
+            }),
+            catchError(this.handleError)
+        );
+    }
+
+    /** Movie Details */
+    getMovieDetail(movieId: number): Observable<MovieDetailModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                const params = new HttpParams()
+                    .set('append_to_response', 'videos,recommendations,similar')
+                    .set('language', 'en-US');
+
+                return this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, {
+                    headers: this.headers,
+                    params
+                });
+            }),
             catchError(this.handleError)
         );
     }

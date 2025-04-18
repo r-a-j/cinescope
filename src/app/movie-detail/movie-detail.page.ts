@@ -3,16 +3,26 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   IonContent,
-  IonIcon, IonButton, IonChip, IonHeader, IonToolbar, IonBackButton, IonButtons, IonTitle,
-  NavController
+  IonIcon, 
+  IonButton, 
+  IonChip, 
+  IonHeader, 
+  IonToolbar, 
+  IonButtons, 
+  IonTitle
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { bookmark, star, calendarOutline, timeOutline, close, arrowBackOutline } from 'ionicons/icons';
+import { 
+  bookmark, 
+  star, 
+  calendarOutline, 
+  timeOutline, 
+  close, 
+  arrowBackOutline 
+} from 'ionicons/icons';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
-import { Observable } from 'rxjs';
-import { HttpParams } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NumberSuffixPipe } from "../../pipes/number-suffix.pipe";
 import { StorageService } from 'src/services/storage.service';
@@ -24,13 +34,19 @@ import { ToastController } from '@ionic/angular';
   templateUrl: './movie-detail.page.html',
   styleUrls: ['./movie-detail.page.scss'],
   standalone: true,
-  imports: [IonTitle, IonButtons, IonBackButton, IonToolbar, IonHeader,
+  imports: [
+    IonTitle, 
+    IonButtons, 
+    IonToolbar, 
+    IonHeader,
     IonChip,
     IonButton,
     IonIcon,
     IonContent,
     CommonModule,
-    FormsModule, NumberSuffixPipe],
+    FormsModule, 
+    NumberSuffixPipe
+  ],
 })
 export class MovieDetailPage implements OnInit {
   movieId: string | null = null;
@@ -48,10 +64,16 @@ export class MovieDetailPage implements OnInit {
     private tmdbService: TmdbSearchService,
     private storageService: StorageService,
     private sanitizer: DomSanitizer,
-    private toastController: ToastController,
-    private navCtrl: NavController
+    private toastController: ToastController    
   ) {
-    addIcons({arrowBackOutline,bookmark,calendarOutline,timeOutline,star,close});
+    addIcons({
+      arrowBackOutline,
+      bookmark,
+      calendarOutline,
+      timeOutline,
+      star,
+      close
+    });
   }
 
   async ngOnInit() {

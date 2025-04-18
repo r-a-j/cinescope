@@ -1,9 +1,15 @@
 <app-header></app-header>
+
 <ion-content class="ion-padding">
+
   <div class="segment-wrapper">
-    <!-- Future Left Content -->
     <div class="left-slot">
-      <!-- Example: Search, Filters, Icons etc. -->
+      <!-- If in selection mode, show action buttons -->
+      <ion-buttons *ngIf="selectionMode">
+        <ion-button color="danger" (click)="removeSelected()">Remove</ion-button>
+        <ion-button color="primary" (click)="moveSelectedToWatched()">Watched</ion-button>
+        <ion-button color="medium" (click)="clearSelection()">Cancel</ion-button>
+      </ion-buttons>
     </div>
 
     <!-- Your Segment -->
@@ -17,41 +23,27 @@
     </ion-segment>
   </div>
 
-  <!-- <div *ngFor="let genre of genres">
-    <ng-container *ngIf="getCurrentList()[genre]?.length">
-      <div class="genre-header">
-        <h2>{{ genre }}</h2>
-      </div>
-      <div class="horizontal-scroll">
-        <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let movie of getCurrentList()[genre]"
-          (click)="goToMovieDetail(movie.id)">
-          <img [src]="'https://image.tmdb.org/t/p/w300' + movie.posterPath" alt="{{ movie.title }}" />
-        </div>
-      </div>
-    </ng-container>
-  </div> -->
+  <div class="media-grid">
+    <div class="media-item animate__animated animate__flipInY animate__faster" *ngFor="let movie of getCurrentMovies()"
+      (click)="onMovieClick(movie.id)">
+      <img
+        [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
+        [alt]="movie.title" />
 
-  <!-- <div class="" *ngFor="let movie of movies"
-    (click)="goToMovieDetail(movie.id)">
-    <img [src]="'https://image.tmdb.org/t/p/w300' + movie.posterPath" alt="{{ movie.title }}" />
-  </div> -->
+      <!-- Checkbox overlay -->
+      <ion-checkbox *ngIf="selectionMode" [checked]="selectedIds.has(movie.id!)" (click)="toggleSelect(movie.id!)"
+        class="media-checkbox">
+      </ion-checkbox>
+    </div>
+  </div>
 
-  <ion-grid>
-    <ion-row>
-      <ion-col class="item animate__animated animate__flipInY animate__fast" size="6" size-md="4"
-        *ngFor="let movie of watchlist">
-        <ion-card (click)="goToMovieDetail(movie.id)">
-          <ion-card-content>
-            <img [src]="'https://image.tmdb.org/t/p/w300' + movie.poster_path" alt="{{ movie.title }}" />
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
-
-  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button (click)="goToSearch()">
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
+    <!-- <ion-fab-button (click)="goToSearch()">
       <ion-icon name="add"></ion-icon>
+    </ion-fab-button> -->
+    <ion-fab-button (click)="toggleSelectionMode()">
+      <ion-icon name="create"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
 </ion-content>
