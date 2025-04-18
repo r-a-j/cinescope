@@ -9,6 +9,7 @@ import { MovieUpcomingModel } from 'src/models/movie/movie-upcoming.model';
 import { buildDiscoverMovieUrl } from 'src/app/utility/discover-movie-url.builder';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
 import { StorageService } from './storage.service';
+import { PersonModel } from 'src/models/person.model';
 
 
 @Injectable({ providedIn: 'root' })
@@ -169,6 +170,20 @@ export class TmdbSearchService {
                     params
                 });
             }),
+            catchError(this.handleError)
+        );
+    }
+
+    getPopularPersons(page = 1): Observable<PersonModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() =>
+                this.http.get<PersonModel>(`${this.BASE_URL}/person/popular`, {
+                    headers: this.headers,
+                    params: new HttpParams()
+                        .set('language', 'en-US')
+                        .set('page', page)
+                })
+            ),
             catchError(this.handleError)
         );
     }

@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MovieSearchResult } from 'src/models/movie/movie-search.model';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
+import { PersonResult } from 'src/models/person.model';
 
 interface MediaItem {
   id: number;
@@ -28,6 +29,10 @@ interface MediaItem {
   ],
 })
 export class DiscoverPage implements OnInit {
+
+  popularPersons: PersonResult[] = [];
+  isLoadingPersons = true;
+
   // Near the existing properties
   desiTrendingMovies: MovieSearchResult[] = [];
   isLoading = true;
@@ -64,6 +69,17 @@ export class DiscoverPage implements OnInit {
   ngOnInit(): void {
     this.loadDesiTrending();
     this.loadUpcomingBanners();
+    this.loadPopularPersons();
+  }
+
+  loadPopularPersons(): void {
+    this.tmdbService.getPopularPersons(1).subscribe({
+      next: (response) => {
+        this.popularPersons = response.results;
+        this.isLoadingPersons = false;
+      },
+      error: (error) => console.error(error)
+    });
   }
 
   loadDesiTrending(): void {
@@ -121,5 +137,9 @@ export class DiscoverPage implements OnInit {
   // Update scroll position for a possible parallax effect.
   onScroll(event: any): void {
     this.scrollTop = event.detail.scrollTop;
+  }
+
+  navigateToPersonDetail(id: number): void {
+    this.router.navigate(['/person-detail', id]);
   }
 }

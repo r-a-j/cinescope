@@ -124,7 +124,7 @@
         p {
             font-size: 0.85rem;
         }
-    }    
+    }
 }
 
 .banner-scroll {
@@ -145,4 +145,30 @@
     flex: 0 0 auto;
     width: 95px;
     min-width: 95px;
+}
+
+.person-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.person-card {
+    min-width: 100px;
+    text-align: center;
+}
+
+.person-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--ion-color-primary);
+}
+
+.person-card p {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 500;
 }
