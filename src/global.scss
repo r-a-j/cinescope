@@ -1,4 +1,4 @@
-@import './theme/variables.scss';
+@use "./theme/variables.scss" as *;
 @import "animate.css/animate.min.css";
 @import "@ionic/angular/css/core.css";
 @import "@ionic/angular/css/normalize.css";
@@ -18,7 +18,7 @@
 
 /* ========== TYPOGRAPHY ========== */
 body {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: "Bebas Neue", sans-serif;
     font-weight: 400;
     text-transform: none;
 }
@@ -40,10 +40,9 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: 'Bebas Neue', sans-serif !important;
+    font-family: "Bebas Neue", sans-serif !important;
     letter-spacing: 0.5px;
 }
-
 
 /* ========== IONIC COMPONENT THEME OVERRIDES ========== */
 ion-back-button {
@@ -105,7 +104,6 @@ ion-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1rem;
 
     h2,
     h3 {

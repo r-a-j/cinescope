@@ -1,32 +1,53 @@
 <app-header></app-header>
 <ion-content class="ion-padding">
-  <ion-segment [(ngModel)]="segment">
-    <ion-segment-button value="watchlist">
-      <ion-icon name="bookmark"></ion-icon>
-    </ion-segment-button>
-    <ion-segment-button value="watched">
-      <ion-icon name="checkmark-done"></ion-icon>
-    </ion-segment-button>
-  </ion-segment>
+  <div class="segment-wrapper">
+    <!-- Future Left Content -->
+    <div class="left-slot">
+      <!-- Example: Search, Filters, Icons etc. -->
+    </div>
 
-  <div *ngFor="let genre of genres">
+    <!-- Your Segment -->
+    <ion-segment [(ngModel)]="segment" class="custom-segment">
+      <ion-segment-button value="watchlist">
+        <ion-icon name="bookmark"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="watched">
+        <ion-icon name="checkmark-done"></ion-icon>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- <div *ngFor="let genre of genres">
     <ng-container *ngIf="getCurrentList()[genre]?.length">
       <div class="genre-header">
         <h2>{{ genre }}</h2>
       </div>
       <div class="horizontal-scroll">
-        <div 
-          class="item" 
-          *ngFor="let movie of getCurrentList()[genre]; let i = index" 
-          [ngClass]="{'animate__animated animate__flipInY animate__fast': animateOnce}" 
-          [ngStyle]="animateOnce ? { 'animation-delay': (i * 0.1) + 's' } : {}" (click)="goToMovieDetail(10)"
-        >
-        <!-- <img src="assets/placeholder.png" alt="{{ movie.title }}" /> -->
-        <img src="https://image.tmdb.org/t/p/w300/zo8CIjJ2nfNOevqNajwMRO6Hwka.jpg" alt="{{ movie.title }}" />
+        <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let movie of getCurrentList()[genre]"
+          (click)="goToMovieDetail(movie.id)">
+          <img [src]="'https://image.tmdb.org/t/p/w300' + movie.posterPath" alt="{{ movie.title }}" />
         </div>
       </div>
     </ng-container>
-  </div>
+  </div> -->
+
+  <!-- <div class="" *ngFor="let movie of movies"
+    (click)="goToMovieDetail(movie.id)">
+    <img [src]="'https://image.tmdb.org/t/p/w300' + movie.posterPath" alt="{{ movie.title }}" />
+  </div> -->
+
+  <ion-grid>
+    <ion-row>
+      <ion-col class="item animate__animated animate__flipInY animate__fast" size="6" size-md="4"
+        *ngFor="let movie of watchlist">
+        <ion-card (click)="goToMovieDetail(movie.id)">
+          <ion-card-content>
+            <img [src]="'https://image.tmdb.org/t/p/w300' + movie.poster_path" alt="{{ movie.title }}" />
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="goToSearch()">

@@ -3,21 +3,23 @@ import {
   IonContent, 
   IonSegment, 
   IonSegmentButton, 
-  IonLabel 
+  IonIcon 
 } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { bookmark, checkmarkDone } from 'ionicons/icons';
+import { addIcons } from 'ionicons';
 
 @Component({
   selector: 'app-tv',
   templateUrl: 'tv.page.html',
   styleUrls: ['tv.page.scss'],
   imports: [
+    IonIcon, 
     FormsModule,
     CommonModule,
-    IonLabel,
     IonSegmentButton,
     IonSegment,
     IonContent,
@@ -64,7 +66,9 @@ export class TvPage {
     ]
   };
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {
+    addIcons({ bookmark, checkmarkDone });
+   }
 
   get genres(): string[] {
     return this.segment === 'watchlist' ? Object.keys(this.watchlist) : Object.keys(this.watched);

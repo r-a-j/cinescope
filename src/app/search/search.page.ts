@@ -15,7 +15,8 @@ import {
   IonTitle,
   IonText,
   IonInfiniteScroll,
-  IonInfiniteScrollContent
+  IonInfiniteScrollContent,
+  NavController
 } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -51,13 +52,14 @@ import { TvSearchResult } from 'src/models/tv/tv-search.model';
     FormsModule
   ],
 })
-export class SearchPage implements OnInit, AfterViewInit {
+export class SearchPage implements AfterViewInit {
   @ViewChild(IonSearchbar, { static: false }) searchBar!: IonSearchbar;
 
   segmentValue: 'movies' | 'tv' = 'movies';
   searchQuery: string = '';
   movieResults: MovieSearchResult[] = [];
   tvResults: TvSearchResult[] = [];
+  private searchTimeout: any;
 
   currentPage: number = 1;
   totalPages: number = 1;
@@ -67,13 +69,10 @@ export class SearchPage implements OnInit, AfterViewInit {
   constructor(
     private router: Router,
     private tmdbService: TmdbSearchService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private navCtrl: NavController
   ) {
     addIcons({ arrowBackOutline, clipboardOutline });
-  }
-
-  ngOnInit() {
-    setTimeout(() => this.searchBar?.setFocus(), 300);
   }
 
   private extractYearAndLanguage(query: string): { cleanQuery: string; year?: string; lang?: string } {
@@ -120,7 +119,15 @@ export class SearchPage implements OnInit, AfterViewInit {
     this.movieResults = [];
     this.tvResults = [];
     this.currentPage = 1;
-  }  
+  }
+
+  onSearchInput(event: any) {
+    clearTimeout(this.searchTimeout);
+    
+    this.searchTimeout = setTimeout(() => {
+      this.search(true);
+    }, 500); // 500ms after user stops typing
+  }
 
   async search(reset: boolean = false): Promise<void> {
     if (!this.searchQuery.trim()) return;
@@ -172,7 +179,7 @@ export class SearchPage implements OnInit, AfterViewInit {
   }
 
   goHome(): void {
-    this.router.navigate(['/tabs']);
+    this.navCtrl.navigateBack('tabs/movie');
   }
 
   segmentChanged(event: any) {
@@ -182,5 +189,23 @@ export class SearchPage implements OnInit, AfterViewInit {
   onImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
     target.src = 'assets/placeholder.png';
+  }
+
+  async openMovieDetail(id: number): Promise<void> {
+    await this.blurSearchbar();
+    this.router.navigate(['/movie-detail', id]);
+  }
+
+  async openTvDetail(id: number): Promise<void> {
+    await this.blurSearchbar();
+    this.router.navigate(['/tv-detail', id]);
+  }
+
+  private async blurSearchbar(): Promise<void> {
+    try {
+      await this.searchBar?.getInputElement().then((input) => input?.blur());
+    } catch (err) {
+      console.error('Failed to blur searchbar:', err);
+    }
   }
 }

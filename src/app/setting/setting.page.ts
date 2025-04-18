@@ -25,6 +25,9 @@ import { Dialog } from '@capacitor/dialog';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { arrowBackOutline } from 'ionicons/icons';
+import { StorageService } from 'src/services/storage.service';
+import { SettingModel } from 'src/models/setting.model';
+import { t } from '@angular/core/weak_ref.d-Bp6cSy-X';
 
 @Component({
   selector: 'app-setting',
@@ -58,11 +61,21 @@ export class SettingPage implements OnInit {
   invalidAttempts: number = 0;
   showGetNewKey: boolean = false;
 
-  constructor(private router: Router) {
+  constructor(private router: Router,
+    private storageService: StorageService,
+  ) {
     addIcons({ arrowBackOutline });
   }
 
-  ngOnInit() { }
+  ngOnInit() {
+
+    this.storageService.getSettings().then((settings: SettingModel | null) => {
+      if (settings) {
+        this.tmdbApiKey = settings.tmdbApiKey || '';
+        this.allowAdultContent = settings.allowAdultContent || false;
+      }
+    });
+  }
 
   // Navigate back to home (adjust the route as needed)
   goHome(): void {
@@ -106,7 +119,13 @@ export class SettingPage implements OnInit {
           duration: 'short',
           position: 'bottom'
         });
-      } else {
+      } else {        
+        const content: SettingModel = {
+          tmdbApiKey: this.tmdbApiKey,
+          allowAdultContent: true,
+        };
+        this.storageService.saveSettings(content);
+        
         await Toast.show({
           text: 'Adult content enabled!',
           duration: 'short',
@@ -206,12 +225,20 @@ export class SettingPage implements OnInit {
 
   async saveApiKey() {
     if (this.isValidApiKey(this.tmdbApiKey)) {
+      const content: SettingModel = {
+        tmdbApiKey: this.tmdbApiKey,
+        allowAdultContent: this.allowAdultContent
+      };
+      this.storageService.saveSettings(content);
+
       await this.showToast("Successfully saved", "short", 'bottom');
+
       this.invalidAttempts = 0;
       this.showGetNewKey = false;
     } else {
       this.tmdbApiKey = '';
       this.invalidAttempts++;
+
       await this.showToast("Invalid key", "long", "bottom");
 
       if (this.invalidAttempts >= 3) {

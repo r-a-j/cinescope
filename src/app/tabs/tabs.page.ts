@@ -8,9 +8,9 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
-  filmOutline, 
-  tvOutline, 
-  flame
+  flame,
+  filmSharp,
+  tvSharp
 } from 'ionicons/icons';
 
 @Component({
@@ -29,6 +29,6 @@ export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
-    addIcons({ filmOutline, tvOutline, flame});
+    addIcons({ filmSharp, tvSharp, flame});
   }
 }

@@ -1,21 +1,31 @@
 <app-header></app-header>
 <ion-content class="ion-padding">
-  <ion-segment [(ngModel)]="segment">
-    <ion-segment-button value="watchlist">
-      <ion-label>Watchlist</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="watched">
-      <ion-label>Watched</ion-label>
-    </ion-segment-button>
-  </ion-segment>
+  <div class="segment-wrapper">
+    <!-- Future Left Content -->
+    <div class="left-slot">
+      <!-- Example: Search, Filters, Icons etc. -->
+    </div>
+
+    <!-- Your Segment -->
+    <ion-segment [(ngModel)]="segment" class="custom-segment">
+      <ion-segment-button value="watchlist">
+        <ion-icon name="bookmark"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="watched">
+        <ion-icon name="checkmark-done"></ion-icon>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
 
   <div *ngFor="let genre of genres">
     <div class="genre-header">
       <h2>{{ genre }}</h2>
     </div>
     <div class="horizontal-scroll">
-      <div class="item" *ngFor="let show of getShowsByGenre(genre)" (click)="goToTvDetail(10)">
-        <img [src]="show.image" alt="{{ show.title }}" />
+      <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let show of getShowsByGenre(genre)"
+        (click)="goToTvDetail(10)">
+        <!-- <img [src]="show.image" alt="{{ show.title }}" /> -->
+        <img src="https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" alt="{{ show.title }}" />
       </div>
     </div>
   </div>

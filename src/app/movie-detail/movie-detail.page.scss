@@ -1,152 +1,204 @@
-ion-chip[color="warning"] {
-    --background: rgba(255, 213, 79, 0.2);
-    --color: var(--ion-color-warning);
+/* Hide scrollbars globally */
+html,
+body,
+ion-content {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
 }
 
+ion-content::-webkit-scrollbar,
+ion-content .inner-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
+}
+
+/* Movie Detail Content */
 .movie-detail-content {
     --background: var(--ion-background-color);
+}
 
-    .back-btn {
-        position: absolute;
-        top: calc(var(--ion-safe-area-top) + 8px);
-        left: 8px;
-        z-index: 10;
-        fill: clear;
+/* Backdrop section */
+.backdrop-wrapper {
+    position: relative;
+    height: 280px;
+}
 
-        .back-svg {
-            width: 24px;
-            height: 24px;
-        }
+.backdrop-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+}
+
+/* Backdrop Gradient (Light & Dark) */
+.backdrop-gradient {
+    position: absolute;
+    inset: 0;
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
+}
+
+/* Floating Poster */
+.floating-poster {
+    position: absolute;
+    bottom: -50px;
+    left: 16px;
+    width: 110px;
+    height: 165px;
+    border-radius: 1rem;
+    object-fit: cover;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;    
+}
+
+/* Floating Bookmark */
+.floating-bookmark {
+    position: absolute;
+    bottom: -20px;
+    right: 16px;
+    z-index: 10;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.floating-bookmark ion-icon {
+    font-size: 24px;
+    color: var(--ion-color-primary);
+}
+
+/* Content Section */
+.content-section {
+    padding: 1rem;
+    padding-top: 4rem;
+    /* space for poster */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Movie Title */
+.movie-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Tagline */
+.tagline {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--ion-color-medium);
+}
+
+/* Meta Info & Genre Chips */
+.meta-info,
+.genre-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Trailer Section */
+.media-row {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Trailer Embed */
+.trailer-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    /* 16:9 Aspect Ratio */
+}
+
+.trailer-embed iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Overview Section */
+.overview {    
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.overview h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Details Grid (Status, Budget, Revenue) */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.details-grid div {
+    padding: 0.75rem;
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.details-grid h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--ion-color-medium);
+}
+
+ion-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: transparent;    
+    z-index: 100;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    --background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+
+    ion-toolbar {
+        --background: transparent;        
+        --ion-toolbar-background: transparent;
     }
 
-    .backdrop-wrapper {
-        position: relative;
-        height: 280px;
-        overflow: visible;
-
-        .backdrop-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            border-bottom-left-radius: 2rem;
-            border-bottom-right-radius: 2rem;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .backdrop-gradient {
-                background: linear-gradient(to bottom,
-                        rgba(0, 0, 0, 1) 0%,
-                        rgba(0, 0, 0, 0.1) 15%,
-                        rgba(0, 0, 0, 0) 100%);
-            }
-        }
-
-        @media (prefers-color-scheme: light) {
-            .backdrop-gradient {
-                background: linear-gradient(to bottom,
-                        rgba(255, 255, 255, 1) 0%,
-                        rgba(0, 0, 0, 0.1) 15%,
-                        rgba(0, 0, 0, 0) 100%);
-            }
-        }
-
-        .backdrop-gradient {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 2;
-            pointer-events: none;
-            border-bottom-left-radius: 1.5rem;
-            border-bottom-right-radius: 1.5rem;
-        }
-
-        .floating-poster {
-            position: absolute;
-            bottom: -40px;
-            left: 16px;
-            width: 100px;
-            height: 150px;
-            border-radius: 8px;
-            z-index: 10;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-            object-fit: cover;
-        }
-
-        .floating-bookmark {
-            position: absolute;
-            bottom: -24px;
-            right: 16px;
-            z-index: 10;
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-
-            ion-icon {
-                font-size: 24px;
-                color: var(--ion-color-danger);
-            }
-        }
+    ion-title {
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    .content-section {
-        padding: 1rem;
-        padding-top: 3rem;
+    &.scrolled {
+        --background: var(--ion-background-color);
+        --color: var(--ion-text-color);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 
-        .movie-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        ion-toolbar {
+            --background: var(--ion-background-color);
+            --color: var(--ion-text-color);
         }
 
-        .meta-info,
-        .genre-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .media-row {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .overview {
-            margin-bottom: 1.5rem;
-
-            h2 {
-                font-size: 1.2rem;
-                font-weight: bold;
-                margin-bottom: 0.5rem;
-            }
-
-            p {
-                font-size: 14px;
-                color: var(--ion-text-color);
-                line-height: 1.5;
-            }
-        }
-
-        .cast-section {
-            h2 {
-                font-size: 1.2rem;
-                font-weight: bold;
-                margin-bottom: 0.5rem;
-            }
-
-            .cast-scroll {
-                display: flex;
-                gap: 1rem;
-                overflow-x: auto;
-            }
+        ion-title {
+            opacity: 1;
         }
     }
 }

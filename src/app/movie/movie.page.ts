@@ -1,28 +1,36 @@
-import { Component, OnInit } from '@angular/core';
-import { 
-  IonContent, 
-  IonSegment, 
-  IonSegmentButton, 
-  IonFabButton, 
-  IonFab, 
-  IonIcon } from "@ionic/angular/standalone";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  IonContent,
+  IonSegment,
+  IonSegmentButton,
+  IonFabButton,
+  IonFab,
+  IonIcon, IonCardContent, IonImg, IonCol, IonRow, IonGrid, IonCardHeader, IonCardTitle, IonCard,
+  Platform
+} from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { add, bookmark, checkmarkDone } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AnimationService } from 'src/services/animation.service';
+import { StorageService } from 'src/services/storage.service';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
+import { filter, firstValueFrom, Subscription } from 'rxjs';
+import { ContentModel } from 'src/models/content.model';
+import * as movieGenres from 'src/assets/movie_genres.json';
+import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-movie',
   templateUrl: 'movie.page.html',
   styleUrls: ['movie.page.scss'],
-  imports: [
+  imports: [IonCard, IonCardTitle, IonCardHeader, IonGrid, IonRow, IonCol, IonImg, IonCardContent,
     FormsModule,
     CommonModule,
-    IonIcon, 
-    IonFab, 
+    IonIcon,
+    IonFab,
     IonFabButton,
     IonSegmentButton,
     IonSegment,
@@ -30,91 +38,86 @@ import { AnimationService } from 'src/services/animation.service';
     HeaderComponent
   ],
 })
-export class MoviePage implements OnInit {
-  animateOnce = true;
+export class MoviePage implements OnInit, OnDestroy {
+
   segment: string = 'watchlist';
-  genres: string[] = ['Action', 'Drama', 'Comedy', 'Sci-Fi'];
-  watchlist: GenreMap = {
-    Action: [
-      { title: 'John Wick', year: 2023 },
-      { title: 'The Dark Knight', year: 2008 },
-      { title: 'Taken', year: 2008 },
-      { title: 'Skyfall', year: 2012 },
-      { title: 'Black Panther', year: 2018 },
-      { title: 'Avengers: Endgame', year: 2019 },
-    ],
-    Drama: [
-      { title: 'The Shawshank Redemption', year: 1994 },
-      { title: 'Forrest Gump', year: 1994 },
-      { title: 'A Beautiful Mind', year: 2001 },
-      { title: '12 Years a Slave', year: 2013 },
-      { title: 'The Green Mile', year: 1999 },
-      { title: 'The Pursuit of Happyness', year: 2006 },
-      { title: 'Titanic', year: 1997 },
-      { title: 'The Imitation Game', year: 2014 },      
-    ],
-    Comedy: [
-      { title: 'The Mask', year: 1994 },
-      { title: 'Dumb and Dumber', year: 1994 },
-      { title: 'The Hangover', year: 2009 },
-      { title: 'The Intern', year: 2015 },
-      { title: 'Crazy Rich Asians', year: 2018 },
-      { title: 'Game Night', year: 2018 },
-      { title: 'Jumanji: Welcome to the Jungle', year: 2017 },
-    ],
-    'Sci-Fi': [
-      { title: 'Interstellar', year: 2014 },
-    ]
-  };
-  
-  watched: GenreMap = {
-    Action: [
-      { title: 'Mad Max: Fury Road', year: 2015 },
-    ],
-    Comedy: [
-      { title: 'Zombieland', year: 2009 },
-      { title: 'Napoleon Dynamite', year: 2004 },
-      { title: 'Free Guy', year: 2021 },
-    ],
-    'Sci-Fi': [
-      { title: 'The Matrix', year: 1999 },
-      { title: 'Oblivion', year: 2013 },
-      { title: 'Looper', year: 2012 },
-      { title: 'Minority Report', year: 2002 },
-      { title: 'Elysium', year: 2013 },
-      { title: 'Ex Machina', year: 2015 },
-      { title: 'The Hunger Games', year: 2012 },
-    ]
-  };  
+  watchlist: MovieDetailModel[] = [];
+  watched: MovieDetailModel[] = [];  
+  private storageSub!: Subscription;
+  private routerSubscription: any;
+
 
   constructor(
     private router: Router,
-    private animationService: AnimationService
+    private storageService: StorageService,
+    private tmdbService: TmdbSearchService,
+    private navCtrl: NavController,
+    private platform: Platform
   ) {
     addIcons({ add, bookmark, checkmarkDone });
   }
-  ngOnInit(): void {
-    this.animateOnce = !this.animationService.moviesAnimated;
-
-    if (!this.animationService.moviesAnimated) {
-      this.animationService.moviesAnimated = false;
-    }
+  
+  
+  ngOnInit() {
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        if (event.urlAfterRedirects.includes('tabs/movie')) {  // adjust the route if needed
+          console.log('I am back on Movie Page!');
+          this.loadMovies();
+        }
+      });
   }
 
-  goToSearch() {
-    this.router.navigate(['/search']);
+  ngOnDestroy() {
+    this.routerSubscription?.unsubscribe();
   }
 
-  getCurrentList(): GenreMap {
-    return this.segment === 'watchlist' ? this.watchlist : this.watched;
+  // ionViewWillEnter() {
+  //   // Subscribe to storage changes
+  //   this.storageSub = this.storageService.storageChanged$.subscribe(() => {
+  //     this.loadMovies();
+  //   });
+  // }
+
+  async loadMovies() {
+    // Clear the movies array before loading new data
+    this.watchlist = [];
+
+    // Load the watchlist
+    const savedItems = await this.storageService.getWatchlist();
+
+    // Create a set of unique movie IDs to prevent duplicates
+    const uniqueSavedItems = Array.from(new Set(savedItems.map(item => item.contentId)))
+      .map(id => savedItems.find(item => item.contentId === id))
+      .filter((item): item is ContentModel => item !== undefined); // Filters out undefined values
+
+    const promises = uniqueSavedItems.map(async (item) => {
+      try {
+        const movieDetail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId));
+
+        const movieItem: MovieDetailModel = {
+          id: movieDetail?.id,
+          title: movieDetail?.title,
+          poster_path: movieDetail?.poster_path,
+        };
+
+        // Directly add to the movies array
+        this.watchlist.push(movieItem);
+
+      } catch (error) {
+        console.error('Failed to fetch movie', item.contentId, error);
+      }
+    });
+
+    await Promise.all(promises); // Wait for all movies to load
   }
 
-  goToMovieDetail(id: number | string) {
+  goToSearch() {    
+    this.router.navigate(['/search']);    
+  }
+
+  goToMovieDetail(id?: number | string) {
     this.router.navigate(['/movie-detail', id]);
   }
 }
-
-type MovieItem = { title: string; year: number };
-
-// Add this type to allow any genre string key
-type GenreMap = { [genre: string]: MovieItem[] };

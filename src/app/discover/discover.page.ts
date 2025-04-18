@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IonContent, IonButton, IonToolbar, IonSegmentButton, IonLabel, IonSegment } from '@ionic/angular/standalone';
+import { IonContent, IonButton, IonToolbar, IonSegmentButton, IonLabel, IonSegment, IonSkeletonText } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +19,7 @@ interface MediaItem {
   selector: 'app-discover',
   templateUrl: 'discover.page.html',
   styleUrls: ['discover.page.scss'],
-  imports: [IonLabel, IonSegment, IonSegmentButton, IonToolbar,
+  imports: [IonSkeletonText, IonLabel, IonSegment, IonSegmentButton, IonToolbar,
     IonButton,
     CommonModule,
     FormsModule,
@@ -30,7 +30,8 @@ interface MediaItem {
 export class DiscoverPage implements OnInit {
   // Near the existing properties
   desiTrendingMovies: MovieSearchResult[] = [];
-  
+  isLoading = true;
+
   // Default segment value
   segmentValue: string = 'bollywood';
   scrollTop: number = 0;
@@ -53,26 +54,7 @@ export class DiscoverPage implements OnInit {
   ];
 
   // Demo banners (using unique ids)
-  banners = [
-    {
-      id: 101,
-      title: 'Blockbuster Hit',
-      subtitle: 'Summer 2023',
-      imageUrl: 'https://m.media-amazon.com/images/M/MV5BOTQ2MzE0YWItMGUxNy00MDhjLWE1MmItMzFjMjIzNmRlYzA4XkEyXkFqcGdeQXNhcmFocmVi._V1_QL75_UX500_CR0,0,500,281_.jpg'
-    },
-    {
-      id: 102,
-      title: 'Critically Acclaimed',
-      subtitle: 'Award Winner',
-      imageUrl: 'https://m.media-amazon.com/images/M/MV5BNTEyMTE1MDMtZTZlYi00NzhmLTlkNDMtMzhmMmFiODM2NDUyXkEyXkFqcGdeQWFybm8@._V1_QL75_UX1000_CR0,0,1000,563_.jpg'
-    },
-    {
-      id: 103,
-      title: 'New Releases',
-      subtitle: 'Must See',
-      imageUrl: 'https://m.media-amazon.com/images/M/MV5BZjQxNTQ1NzQtMzc0OC00NThmLWEyNTEtYjA0ZjBkOTBmZDdmXkEyXkFqcGdeQWFybm8@._V1_QL75_UY563_CR0,0,1000,563_.jpg'
-    },
-  ];
+  banners: { id: number; title: string; subtitle: string; imageUrl: string; }[] = [];
 
   constructor(
     public router: Router,
@@ -81,6 +63,7 @@ export class DiscoverPage implements OnInit {
 
   ngOnInit(): void {
     this.loadDesiTrending();
+    this.loadUpcomingBanners();
   }
 
   loadDesiTrending(): void {
@@ -89,6 +72,24 @@ export class DiscoverPage implements OnInit {
         this.desiTrendingMovies = data.results;
       },
       error: (err) => console.error(err)
+    });
+  }
+
+  // In discover.page.ts or your appropriate component
+  loadUpcomingBanners(): void {
+    this.tmdbService.getUpcomingMovies(1).subscribe({
+      next: (response) => {
+        this.banners = response.results.map(movie => ({
+          id: movie.id,
+          title: movie.title,
+          subtitle: `${movie.release_date}`,
+          imageUrl: movie.backdrop_path
+            ? 'https://image.tmdb.org/t/p/w500' + movie.backdrop_path
+            : 'assets/placeholder-backdrop.png'
+        }));
+        this.isLoading = false;
+      },
+      error: (error) => console.error(error)
     });
   }
 

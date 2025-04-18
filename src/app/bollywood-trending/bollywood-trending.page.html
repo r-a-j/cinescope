@@ -14,7 +14,7 @@
 <ion-content fullscreen (ionInfinite)="loadMore($event)">
   <div class="movies-list">
     <div class="movie-card" *ngFor="let movie of movies" (click)="navigateToDetail('movie', movie.id)">
-      <div class="movie-banner animate__animated animate__flipInX animate__fast clip-shape">
+      <div class="movie-banner animate__animated animate__pulse animate__fast clip-shape">
         <div class="banner-background" [style.backgroundImage]="movie.backdrop_path 
         ? 'url(https://image.tmdb.org/t/p/w500' + movie.backdrop_path + ')' : 'url(assets/placeholder-backdrop.png)'">
         </div>
@@ -30,7 +30,7 @@
         </div>
       </div>
       <!-- Poster is placed outside the clipped banner -->
-      <div class="poster animate__animated animate__pulse animate__fast">
+      <div class="poster animate__animated animate__flipInX animate__fast">
         <img
           [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
           [alt]="movie.title" />
