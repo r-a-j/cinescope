@@ -1,20 +1,63 @@
-// For information on how to create your own theme, please see:
-// http://ionicframework.com/docs/theming/
 :root {
-    --ion-background-color: #141414;
-    --ion-text-color: #ffffff;
-    --ion-tab-bar-background: #000000;
-    --ion-tab-bar-color: #ffffff;
-    --ion-tab-bar-color-selected: #db0000;
+    /** PRIMARY COLOR **/
+    --ion-color-primary: rgb(229, 9, 20);
+    --ion-color-primary-rgb: 229, 9, 20;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #cc0811;
+    --ion-color-primary-tint: #eb2d38;
 
-    --ion-color-custom-red: #db0000;
-    --ion-color-custom-red-rgb: 219, 0, 0;
-    --ion-color-custom-red-contrast: #ffffff;
-    --ion-color-custom-red-contrast-rgb: 255, 255, 255;
-    --ion-color-custom-red-shade: #c30000;
-    --ion-color-custom-red-tint: #e61919;
+    /** SECONDARY COLOR **/
+    --ion-color-secondary: #221f1f;
+    --ion-color-secondary-rgb: 34, 31, 31;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-contrast-rgb: 255, 255, 255;
+    --ion-color-secondary-shade: #1e1c1c;
+    --ion-color-secondary-tint: #3a3737;
+
+    /** CUSTOM COLORS **/
+    --ion-color-tertiary: #b81d24;
+    --ion-color-tertiary-rgb: 184, 29, 36;
+    --ion-color-tertiary-contrast: #fff;
+    --ion-color-tertiary-shade: #9f1a20;
+    --ion-color-tertiary-tint: #c6343a;
+
+    --ion-color-dark: #000000;
+    --ion-color-light: #ffffff;
+    --ion-color-medium: #999999;
+    --ion-color-warning: #f5c518;
 }
 
-ion-content {
-    --background: #000000;
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ion-background-color: #000000;
+        --ion-text-color: #ffffff;
+        --ion-color-primary: #ff3c3c;
+        --ion-color-primary-shade: #cc3131;
+        --ion-color-primary-tint: #ff5c5c;
+        --ion-toolbar-background: #000000 !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --ion-background-color: #ffffff;
+        --ion-text-color: #000000;
+        --ion-color-primary: #ff3c3c;
+        --ion-color-primary-shade: #cc3131;
+        --ion-color-primary-tint: #ff5c5c;
+        --ion-toolbar-background: #ffffff !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    ion-content {
+        --background: #000000 !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    ion-content {
+        --background: #ffffff !important;        
+    }
 }

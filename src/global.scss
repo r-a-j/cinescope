@@ -1,59 +1,205 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
- /* Updated to use new Sass module system */
-@use "theme/variables" as *;
-
-/* Core CSS required for Ionic components to work properly */
+@use "./theme/variables.scss" as *;
+@import "animate.css/animate.min.css";
 @import "@ionic/angular/css/core.css";
-
-/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
-/* Optional CSS utils that can be commented out */
+/* ========== OPTIONAL UTILITIES ========== */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+/* ========== DARK MODE PALETTE (Auto Switch) ========== */
 @import "@ionic/angular/css/palettes/dark.system.css";
-@import '~@fortawesome/fontawesome-free/css/all.min.css';
 
+/* ========== TYPOGRAPHY ========== */
 body {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: "Bebas Neue", sans-serif;
+    font-weight: 400;
+    text-transform: none;
 }
 
+ion-title,
+ion-label,
+ion-segment-button,
+ion-segment-button::part(indicator),
+ion-segment-button::part(native),
+ion-chip,
+ion-button,
+ion-input,
+ion-textarea,
+ion-select,
+ion-card-title,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Bebas Neue", sans-serif !important;
+    letter-spacing: 0.5px;
+}
+
+/* ========== IONIC COMPONENT THEME OVERRIDES ========== */
+ion-back-button {
+    color: #db0000;
+}
+
+@media (prefers-color-scheme: light) {
+    ion-back-button {
+        color: #000;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    ion-back-button {
+        color: #fff;
+    }
+}
+
+ion-header,
+ion-toolbar,
 ion-content {
-    --padding-top: calc(var(--ion-safe-area-top) + 70px);
-    /* Adjust for header height */
-    --padding-bottom: calc(var(--ion-safe-area-bottom) + 60px);
-    /* Adjust for tab bar */
+    box-shadow: none !important;
+    border-bottom: none !important;
+    --box-shadow: none;
+    --border-width: 0;
 }
 
-.custom-toast {
-    --background: #db0000;
-    /* your theme red */
-    --color: #ffffff;
-    /* text color */
+/* ========== CARD LAYOUT ========== */
+.horizontal-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.4rem;
+    padding: 0.25rem 0 0.5rem;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 12px;
+
+    .item {
+        flex: 0 0 auto;
+        width: 95px; // Smaller width
+        height: 142.5px; // Maintains 2:3 aspect ratio (95 * 1.5)
+        scroll-snap-align: start;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #111;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    }
+}
+
+/* ========== SECTION HEADERS ========== */
+.section-header,
+.genre-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h2,
+    h3 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin: 0;
+        color: var(--ion-text-color, #747474);
+    }
+}
+
+/* ========== GRID LAYOUT ========== */
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .grid-item {
+        width: 120px;
+
+        img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+    }
+}
+
+/* ========== BUTTON UTILITY ========== */
+.button-container {
+    display: flex;
+    gap: 10px;
+
+    ion-button {
+        flex: 1;
+    }
+}
+
+/* ========== REUSABLE COMPONENTS ========== */
+.cast-card {
+    text-align: center;
+    flex: 0 0 auto;
+
+    img {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-bottom: 6px;
+    }
+
+    p {
+        font-size: 12px;
+        margin: 0;
+        color: var(--ion-text-color);
+    }
+}
+
+.trailer-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+
+    iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+    }
+}
+
+//-- ========== TOP RATED TV ========== */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 0.75rem;
+
+    .media-item {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        background: #111;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    }
+}
+
+.section-title {
+    font-size: 1.4rem;
+    margin: 1rem 0 0.5rem;
 }

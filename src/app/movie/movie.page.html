@@ -1,0 +1,49 @@
+<app-header></app-header>
+
+<ion-content class="ion-padding">
+
+  <div class="segment-wrapper">
+    <div class="left-slot">
+      <!-- If in selection mode, show action buttons -->
+      <ion-buttons *ngIf="selectionMode">
+        <ion-button color="danger" (click)="removeSelected()">Remove</ion-button>
+        <ion-button color="primary" (click)="moveSelectedToWatched()">Watched</ion-button>
+        <ion-button color="medium" (click)="clearSelection()">Cancel</ion-button>
+      </ion-buttons>
+    </div>
+
+    <!-- Your Segment -->
+    <ion-segment [(ngModel)]="segment" class="custom-segment">
+      <ion-segment-button value="watchlist">
+        <ion-icon name="bookmark"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="watched">
+        <ion-icon name="checkmark-done"></ion-icon>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <div class="media-grid">
+    <div class="media-item animate__animated animate__flipInY animate__faster" *ngFor="let movie of getCurrentMovies()"
+      (click)="onMovieClick(movie.id)">
+      <img
+        [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
+        [alt]="movie.title" />
+
+      <!-- Checkbox overlay -->
+      <ion-checkbox *ngIf="selectionMode" [checked]="selectedIds.has(movie.id!)" (click)="toggleSelect(movie.id!)"
+        class="media-checkbox">
+      </ion-checkbox>
+    </div>
+  </div>
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
+    <!-- <ion-fab-button (click)="goToSearch()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button> -->
+    <ion-fab-button (click)="toggleSelectionMode()">
+      <ion-icon name="create"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

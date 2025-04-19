@@ -1,0 +1,220 @@
+/* Hide scrollbars globally */
+html,
+body,
+ion-content {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+ion-content::-webkit-scrollbar,
+ion-content .inner-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
+}
+
+/* Movie Detail Content */
+.movie-detail-content {
+    --background: var(--ion-background-color);
+}
+
+/* Backdrop Section */
+.backdrop-wrapper {
+    position: relative;
+    height: 280px;
+}
+
+.backdrop-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+}
+
+/* Backdrop Gradient */
+.backdrop-gradient {
+    position: absolute;
+    inset: 0;
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
+}
+
+/* Floating Poster */
+.floating-poster {
+    position: absolute;
+    bottom: -50px;
+    left: 16px;
+    width: 110px;
+    height: 165px;
+    border-radius: 1rem;
+    object-fit: cover;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+/* Floating Bookmark */
+.floating-bookmark {
+    position: absolute;
+    bottom: -20px;
+    right: 16px;
+    z-index: 10;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.floating-bookmark ion-icon {
+    font-size: 24px;
+    color: var(--ion-color-primary);
+}
+
+/* Content Section */
+.content-section {
+    padding: 1rem;
+    padding-top: 4rem;
+    /* space for poster */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Movie Title */
+.movie-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Tagline */
+.tagline {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--ion-color-medium);
+}
+
+/* Meta Info & Genre Chips */
+.meta-info,
+.genre-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Trailer Section */
+.media-row {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Trailer Embed */
+.trailer-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    /* 16:9 Aspect Ratio */
+}
+
+.trailer-embed iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Overview Section */
+.overview {
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.overview h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Details Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.details-grid div {
+    padding: 0.75rem;
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.details-grid h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--ion-color-medium);
+}
+
+/* Header */
+ion-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: transparent;
+    --background: transparent;
+    z-index: 100;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    backdrop-filter: none;
+    box-shadow: none;
+
+    ion-toolbar {
+        --background: transparent;
+        --ion-toolbar-background: transparent;
+        --color: var(--ion-text-color);
+
+        ion-button {
+            --color: var(--ion-color-tertiary-shade);
+        }
+    }
+
+    ion-title {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    &.scrolled {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+
+        ion-toolbar {
+            --background: transparent;
+            --color: var(--ion-text-color);
+        }
+
+        ion-title {
+            opacity: 1;
+        }
+    }
+}
+
+/* Dynamic Blur Background based on Theme */
+ion-header.scrolled {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    ion-header.scrolled {
+        background: rgba(0, 0, 0, 0.5);
+    }
+}

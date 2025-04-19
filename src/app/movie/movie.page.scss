@@ -1,0 +1,92 @@
+.custom-segment {
+    --indicator-color: var(--ion-color-primary);
+    --indicator-height: 2px;
+    height: 30px;
+    width: fit-content;
+    margin: auto;
+    border-radius: 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    ion-segment-button {
+        --color-checked: var(--ion-color-primary);
+        --ripple-color: transparent;
+        --background-activated: transparent;
+
+        background: transparent;
+        border-radius: 20px;
+        padding: 0 20px;
+        height: 32px;
+        min-width: 36px;
+        font-size: 0.9rem;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+
+        ion-icon {
+            font-size: 16px;
+        }
+
+        &.segment-button-checked {
+            // background: rgba(229, 9, 20, 0.15);
+            background: rgba(var(--ion-color-primary-rgb), 0.15);
+            color: var(--ion-color-primary);
+            transform: scale(1.03);
+        }
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .custom-segment {
+        --background: #000000;
+
+        ion-segment-button {
+            --color: var(--ion-color-light);
+        }
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .custom-segment {
+        --background: #ffffff;
+
+        ion-segment-button {
+            --color: var(--ion-color-dark);
+        }
+    }
+}
+
+.segment-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 16px;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.left-slot {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Optional: If you don't want anything in left yet, keep it empty but still reserve space */
+.left-slot::after {
+    content: "";
+}
+
+.media-item {
+    position: relative;
+
+    ion-checkbox.media-checkbox {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        --size: 20px;
+        pointer-events: auto;
+        /* Important: prevent click conflict */
+    }
+}

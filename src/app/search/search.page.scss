@@ -1,0 +1,59 @@
+/* search.page.scss */
+.search-toolbar {
+    display: flex;
+    align-items: center;
+
+    ion-searchbar {
+        flex: 1;
+    }
+
+    ion-buttons {
+        margin-left: 8px;
+    }
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+
+    ion-searchbar {
+        width: 100%;
+    }
+
+    .paste-btn {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        color: var(--ion-color-primary);
+        border: none;
+        font-weight: 500;
+        font-size: 0.8rem;
+        cursor: pointer;
+        z-index: 10;
+    }
+}
+
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem;
+
+    .grid-item {
+        width: calc(25% - 0.75rem);
+        text-align: center;
+
+        img {
+            width: 100%;
+            height: auto;
+        }
+
+        p {
+            font-size: 0.9rem;
+            margin: 0.3rem 0 0;
+            color: var(--ion-text-color);
+        }
+    }
+}

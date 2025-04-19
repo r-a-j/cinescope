@@ -1,0 +1,15 @@
+<app-header></app-header>
+<ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
+  <h2 class="section-title">Top Rated Movies</h2>
+
+  <div class="media-grid">
+    <div class="media-item" *ngFor="let movie of movies" (click)="goToMovieDetail(10)">
+      <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+    </div>
+  </div>
+
+  <ion-infinite-scroll threshold="100px" position="bottom">
+    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more movies...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

@@ -1,0 +1,87 @@
+<ion-header [class.scrolled]="isScrolled" class="custom-blur-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title *ngIf="isScrolled">{{ movieDetail?.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="movieDetail" (ionScroll)="onScroll($event)" scrollEvents="true" class="movie-detail-content">
+  <div class="backdrop-wrapper">
+    
+    <!-- <img [src]="'https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path" alt="Backdrop"
+      class="backdrop-image" /> -->
+
+    <img class="backdrop-image"
+      [src]="movieDetail.backdrop_path ? ('https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path) : 'assets/placeholder-backdrop.png'"
+      [alt]="movieDetail.title" />
+
+    <div class="backdrop-gradient"></div>
+    <img class="floating-poster"
+      [src]="movieDetail.poster_path ? ('https://image.tmdb.org/t/p/w300' + movieDetail.poster_path) : 'assets/placeholder.png'"
+      [alt]="movieDetail.title" />
+    <ion-button class="floating-bookmark" fill="clear" size="default" shape="round" [color]="bookmarkColor"
+      (click)="toggleWatchlist()">
+      <ion-icon name="bookmark" slot="icon-only"></ion-icon>
+    </ion-button>
+  </div>
+
+  <div class="content-section">
+    <h1 class="movie-title">{{ movieDetail.title }}</h1>
+    <p class="tagline" *ngIf="movieDetail.tagline">"{{ movieDetail.tagline }}"</p>
+
+    <div class="meta-info">
+      <ion-chip color="medium">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+        {{ movieDetail.release_date }}
+      </ion-chip>
+
+      <ion-chip color="medium">
+        <ion-icon name="time-outline" slot="start"></ion-icon>
+        {{ movieDetail.runtime }} min
+      </ion-chip>
+
+      <ion-chip color="warning">
+        <ion-icon name="star" slot="start"></ion-icon>
+        {{ movieDetail.vote_average | number: '1.1-1' }} / 10 IMDb
+      </ion-chip>
+    </div>
+
+    <div class="genre-chips">
+      <ion-chip *ngFor="let genre of movieDetail.genres">
+        {{ genre.name }}
+      </ion-chip>
+    </div>
+
+    <div class="media-row" *ngIf="safeYoutubeUrl">
+      <div class="trailer-embed">
+        <iframe [src]="safeYoutubeUrl" title="YouTube video" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+    <div class="overview">
+      <h2>Overview</h2>
+      <p *ngIf="movieDetail.overview; else noOverview">{{ movieDetail.overview }}</p>
+      <ng-template #noOverview>
+        <p>No overview available.</p>
+      </ng-template>
+    </div>
+
+    <div class="details-grid">
+      <div>
+        <h3>Status</h3>
+        <p>{{ movieDetail.status }}</p>
+      </div>
+      <div>
+        <h3>Budget/Revenue</h3>
+        <p>${{ movieDetail.budget | numberSuffix }}/${{ movieDetail.revenue | numberSuffix }}</p>
+      </div>
+    </div>
+  </div>
+</ion-content>
