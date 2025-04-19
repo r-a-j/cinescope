@@ -10,6 +10,8 @@ import { buildDiscoverMovieUrl } from 'src/app/utility/discover-movie-url.builde
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
 import { StorageService } from './storage.service';
 import { PersonModel } from 'src/models/person.model';
+import { MovieTopRatedModel } from 'src/models/movie/movie-top-rated.model';
+import { TvTopRatedModelRoot } from 'src/models/tv/tv-top-rated.model';
 
 
 @Injectable({ providedIn: 'root' })
@@ -184,6 +186,34 @@ export class TmdbSearchService {
                         .set('page', page)
                 })
             ),
+            catchError(this.handleError)
+        );
+    }
+
+    getTopRatedMovies(page: number = 1): Observable<MovieTopRatedModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                return this.http.get<MovieTopRatedModel>(`${this.BASE_URL}/movie/top_rated`, {
+                    headers: this.headers,
+                    params: new HttpParams()
+                        .set('language', 'en-US')
+                        .set('page', page)
+                });
+            }),
+            catchError(this.handleError)
+        );
+    }
+
+    getTopRatedTV(page: number = 1): Observable<TvTopRatedModelRoot> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                return this.http.get<TvTopRatedModelRoot>(`${this.BASE_URL}/tv/top_rated`, {
+                    headers: this.headers,
+                    params: new HttpParams()
+                        .set('language', 'en-US')
+                        .set('page', page)
+                });
+            }),
             catchError(this.handleError)
         );
     }

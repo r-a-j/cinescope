@@ -7,6 +7,8 @@ import { Router } from '@angular/router';
 import { MovieSearchResult } from 'src/models/movie/movie-search.model';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { PersonResult } from 'src/models/person.model';
+import { MovieTopRatedModelResult } from 'src/models/movie/movie-top-rated.model';
+import { TvTopRatedModelResult } from 'src/models/tv/tv-top-rated.model';
 
 interface MediaItem {
   id: number;
@@ -42,21 +44,24 @@ export class DiscoverPage implements OnInit {
   scrollTop: number = 0;
 
   // Demo data (with id added for navigation)
-  topRatedMovies: MediaItem[] = [
-    { id: 1, title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { id: 2, title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { id: 3, title: 'Adventure Time: Fionna & Cake', rating: 8.8, year: 2023 },
-    { id: 4, title: 'Arcane', rating: 8.9, year: 2021 },
-    { id: 5, title: 'Avatar: The Last Airbender', rating: 9.2, year: 2005 },
-  ];
+  // topRatedMovies: Partial<MovieTopRatedModelResult>[] = [
+  //   { id: 1, poster_path: 'assets/placeholder.png'},
+  //   { id: 2, poster_path: 'assets/placeholder.png'},
+  //   { id: 3, poster_path: 'assets/placeholder.png'},
+  //   { id: 4, poster_path: 'assets/placeholder.png'},
+  //   { id: 5, poster_path: 'assets/placeholder.png'},
+  // ];
 
-  topRatedTV: MediaItem[] = [
-    { id: 6, title: 'One Piece', rating: 8.8, year: 1999 },
-    { id: 7, title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { id: 8, title: 'Hazbin Hotel', rating: 8.8, year: 2023 },
-    { id: 9, title: 'Freiren: Beyond Journey’s End', rating: 8.8, year: 2023 },
-    { id: 10, title: 'Dan Da Dan', rating: 8.6, year: 2024 },
-  ];
+  // topRatedTV: Partial<TvTopRatedModelResult>[] = [
+  //   { id: 1, poster_path: 'assets/placeholder.png'},
+  //   { id: 2, poster_path: 'assets/placeholder.png'},
+  //   { id: 3, poster_path: 'assets/placeholder.png'},
+  //   { id: 4, poster_path: 'assets/placeholder.png'},
+  //   { id: 5, poster_path: 'assets/placeholder.png'},
+  // ];
+
+  topRatedMovies: Partial<MovieTopRatedModelResult>[] = [];
+  topRatedTV: Partial<TvTopRatedModelResult>[] = [];
 
   // Demo banners (using unique ids)
   banners: { id: number; title: string; subtitle: string; imageUrl: string; }[] = [];
@@ -70,6 +75,26 @@ export class DiscoverPage implements OnInit {
     this.loadDesiTrending();
     this.loadUpcomingBanners();
     this.loadPopularPersons();
+    this.loadTopRatedMovies();
+    this.loadTopRatedTv();
+  }
+
+  loadTopRatedMovies(): void {
+    this.tmdbService.getTopRatedMovies(1).subscribe({
+      next: (data) => {
+        this.topRatedMovies = data.results;
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  loadTopRatedTv(): void {
+    this.tmdbService.getTopRatedTV(1).subscribe({
+      next: (data) => {
+        this.topRatedTV = data.results;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
   loadPopularPersons(): void {
@@ -130,9 +155,9 @@ export class DiscoverPage implements OnInit {
   }
 
   // For the Bollywood segment, combine movies and TV items.
-  getBollywoodCombined(): MediaItem[] {
-    return [...this.topRatedMovies, ...this.topRatedTV];
-  }
+  // getBollywoodCombined(): MediaItem[] {
+  //   return [...this.topRatedMovies, ...this.topRatedTV];
+  // }
 
   // Update scroll position for a possible parallax effect.
   onScroll(event: any): void {

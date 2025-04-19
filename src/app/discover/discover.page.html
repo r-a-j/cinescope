@@ -28,8 +28,9 @@
       </div>
       <div class="horizontal-scroll">
         <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let movie of topRatedMovies"
-          (click)="navigateToDetail('movie', movie.id)">
-          <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+          (click)="navigateToDetail('movie', movie.id!)">
+          <!-- <img src="assets/placeholder.png" alt="{{ movie.title }}" /> -->
+          <img [src]="movie.poster_path ? 'https://image.tmdb.org/t/p/w300' + movie.poster_path : 'assets/placeholder.png'" />
         </div>
       </div>
 
@@ -39,8 +40,9 @@
       </div>
       <div class="horizontal-scroll">
         <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let tv of topRatedTV"
-          (click)="navigateToDetail('tv', tv.id)">
-          <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+          (click)="navigateToDetail('tv', tv.id!)">
+          <!-- <img src="assets/placeholder.png" alt="{{ tv.name }}" /> -->
+          <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
         </div>
       </div>
     </div>
@@ -140,67 +142,6 @@
       <div class="banner-scroll">
         <div class="banner-item animate__animated animate__flipInY animate__fast"
           *ngFor="let item of desiTrendingMovies" (click)="navigateToDetail('movie', item.id)">
-          <img
-            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-            alt="{{ item.title }}" />
-          <div class="banner-info">
-          </div>
-        </div>
-      </div>
-
-      <div class="section-header">
-        <h2>Top Rated</h2>
-        <ion-button fill="clear">all</ion-button>
-      </div>
-      <div class="banner-scroll">
-        <div class="banner-item animate__animated animate__flipInY animate__fast"
-          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
-          <img
-            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-            alt="{{ item.title }}" />
-          <div class="banner-info">
-          </div>
-        </div>
-      </div>
-
-      <!-- Additional sections such as Gujarati, Marathi, Tollywood -->
-      <div class="section-header">
-        <h2>Gujarati</h2>
-        <ion-button fill="clear">all</ion-button>
-      </div>
-      <div class="banner-scroll">
-        <div class="banner-item animate__animated animate__flipInY animate__fast"
-          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
-          <img
-            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-            alt="{{ item.title }}" />
-          <div class="banner-info">
-          </div>
-        </div>
-      </div>
-
-      <div class="section-header">
-        <h2>Marathi</h2>
-        <ion-button fill="clear">all</ion-button>
-      </div>
-      <div class="banner-scroll">
-        <div class="banner-item animate__animated animate__flipInY animate__fast"
-          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
-          <img
-            [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-            alt="{{ item.title }}" />
-          <div class="banner-info">
-          </div>
-        </div>
-      </div>
-
-      <div class="section-header">
-        <h2>Tollywood ki duniya</h2>
-        <ion-button fill="clear">all</ion-button>
-      </div>
-      <div class="banner-scroll">
-        <div class="banner-item animate__animated animate__flipInY animate__fast"
-          *ngFor="let item of getBollywoodCombined()" (click)="navigateToDetail('movie', item.id)">
           <img
             [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
             alt="{{ item.title }}" />

@@ -9,7 +9,8 @@ import {
   IonHeader, 
   IonToolbar, 
   IonButtons, 
-  IonTitle
+  IonTitle,
+  NavController
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -64,7 +65,8 @@ export class MovieDetailPage implements OnInit {
     private tmdbService: TmdbSearchService,
     private storageService: StorageService,
     private sanitizer: DomSanitizer,
-    private toastController: ToastController    
+    private toastController: ToastController,
+    private navCtrl: NavController    
   ) {
     addIcons({
       arrowBackOutline,
@@ -84,8 +86,8 @@ export class MovieDetailPage implements OnInit {
     await this.refreshBookmarkState();
   }
 
-  goHome(): void {
-    this.router.navigate(['tabs/movie']);
+  goBack(): void {
+    this.navCtrl.back();
   }
 
   async loadMovieDetail(id: number) {
