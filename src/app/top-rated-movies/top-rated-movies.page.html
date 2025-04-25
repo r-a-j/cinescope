@@ -1,30 +1,48 @@
-<app-header></app-header>
+<ion-header class="custom-blur-header">
+  <ion-toolbar>
+    <ion-title>Top Rated Movies</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="navigateToTopRated()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+          <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" />
+        </svg>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
-  <h2 class="section-title">Top Rated Movies</h2>
-
-  <!-- Full-page Skeleton on First Load -->
   <div class="media-grid" *ngIf="firstLoad">
-    <div class="media-item skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]">
-      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
+    <div class="media-card skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8,9]">
+      <ion-skeleton-text animated class="poster-skeleton"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 70%; height: 16px; margin-top: 0.5rem;"></ion-skeleton-text>
     </div>
   </div>
 
-  <!-- Real Content -->
   <div class="media-grid" *ngIf="!firstLoad">
-    <div class="media-item" *ngFor="let movie of movies" (click)="goToMovieDetail(movie.id!)">
-      <img [src]="movie.poster_path ? 'https://image.tmdb.org/t/p/w300' + movie.poster_path : 'assets/placeholder.png'"
-        alt="{{ movie.title }}" />
+    <div class="media-card" *ngFor="let movie of movieList" (click)="goToMovieDetail(movie.id!)">
+      <div class="poster-wrapper">
+        <img
+          [src]="movie.poster_path ? 'https://image.tmdb.org/t/p/w342' + movie.poster_path : 'assets/placeholder.png'"
+          [alt]="movie.title" />
+      </div>
+      <div class="movie-info">
+        <h4 class="title">{{ movie.title }}</h4>
+        <span class="rating-badge" *ngIf="movie.vote_average">
+          ★ {{ movie.vote_average | number: '1.0-1' }}
+        </span>
+      </div>
     </div>
 
-    <!-- Paginated Loading Placeholder -->
-    <div class="media-item skeleton" *ngIf="isPaginating" style="grid-column: span 2;">
-      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
+    <!-- Infinite scroll loader -->
+    <div class="media-card skeleton" *ngIf="isPaginating">
+      <ion-skeleton-text animated class="poster-skeleton"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 70%; height: 16px; margin-top: 0.5rem;"></ion-skeleton-text>
     </div>
   </div>
 
   <ion-infinite-scroll threshold="100px" position="bottom">
-    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more movies...">
-    </ion-infinite-scroll-content>
+    <ion-infinite-scroll-content loadingSpinner="dots"
+      loadingText="Loading more movies..."></ion-infinite-scroll-content>
   </ion-infinite-scroll>
 </ion-content>

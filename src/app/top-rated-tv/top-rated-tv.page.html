@@ -1,15 +1,39 @@
-<app-header></app-header>
-<ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
-  <h2 class="section-title">Top Rated TV Shows</h2>
+<ion-header class="custom-blur-header">
+  <ion-toolbar>
+    <ion-title>Top Rated TV</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="navigateToTopRated()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+          <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" />
+        </svg>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
 
-  <div class="media-grid">
-    <div class="media-item" *ngFor="let tv of tvShows" (click)="goToTvDetail(10)">
-      <img src="assets/placeholder.png" alt="{{ tv.title }}" />
+<ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
+  <!-- Full-page Skeleton on First Load -->
+  <div class="media-grid" *ngIf="firstLoad">
+    <div class="media-item skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
+    </div>
+  </div>
+
+  <!-- Real Content -->
+  <div class="media-grid" *ngIf="!firstLoad">
+    <div class="media-item" *ngFor="let tv of tvList" (click)="goToTvDetail(tv.id!)">
+      <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'"
+        alt="{{ tv.name }}" />
+    </div>
+
+    <!-- Paginated Loading Placeholder -->
+    <div class="media-item skeleton" *ngIf="isPaginating" style="grid-column: span 2;">
+      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
     </div>
   </div>
 
   <ion-infinite-scroll threshold="100px" position="bottom">
-    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more shows...">
+    <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more TV...">
     </ion-infinite-scroll-content>
   </ion-infinite-scroll>
 </ion-content>

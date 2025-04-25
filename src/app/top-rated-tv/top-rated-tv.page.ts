@@ -1,72 +1,96 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
-import { HeaderComponent } from '../header/header.component';
+import { 
+  IonContent, 
+  IonInfiniteScroll, 
+  IonInfiniteScrollContent, 
+  IonSkeletonText, 
+  IonButton, 
+  IonButtons, 
+  IonTitle, 
+  IonToolbar, 
+  IonHeader 
+} from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
+import { TvTopRatedModelResult } from 'src/models/tv/tv-top-rated.model';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
 
 @Component({
   selector: 'app-top-rated-tv',
   templateUrl: './top-rated-tv.page.html',
   styleUrls: ['./top-rated-tv.page.scss'],
   standalone: true,
-  imports: [IonInfiniteScrollContent, IonInfiniteScroll,
+  imports: [
+    IonHeader, 
+    IonToolbar, 
+    IonTitle, 
+    IonButtons, 
+    IonButton, 
+    IonSkeletonText, 
+    IonInfiniteScrollContent, 
+    IonInfiniteScroll,
     IonContent,
     CommonModule,
-    FormsModule,
-    HeaderComponent
+    FormsModule
   ],
 })
 export class TopRatedTvPage implements OnInit {
+  tvList: Partial<TvTopRatedModelResult>[] = [];
+  currentPage = 1;
+  totalPages = 0;
+  isLoading = false;
+  firstLoad = true;
+  isPaginating = false;
 
-  tvShows = [
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    { title: 'One Piece', rating: 8.8, year: 1999 },
-    { title: 'Rick and Morty', rating: 8.9, year: 2013 },
-    // Add more data as needed
-  ];
-
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private tmdbService: TmdbSearchService,
+  ) { }
 
   ngOnInit() {
+    this.loadTv();
   }
 
   goToTvDetail(id: number | string) {
     this.router.navigate(['/tv-detail', id]);
   }
 
-  loadMore(event: any) {
-    setTimeout(() => {
-      const newItems = [
-        { title: 'New Show', rating: 8.5, year: 2020 },
-        { title: 'Another Show', rating: 8.7, year: 2021 },
-        { title: 'Show Again', rating: 9.0, year: 2022 },
-        { title: 'Last Show', rating: 8.6, year: 2023 },
-      ];
-      this.tvShows.push(...newItems);
-      event.target.complete();
-    }, 1000);
+  loadTv(event?: any) {
+    if (this.isLoading) return;
+
+    this.isLoading = true;
+    if (this.currentPage > 1) this.isPaginating = true;
+
+    this.tmdbService.getTopRatedTV(this.currentPage).subscribe({
+      next: (data) => {
+        this.tvList.push(...data.results);
+        this.totalPages = data.total_pages;
+        this.currentPage++;
+
+        this.isLoading = false;
+        this.isPaginating = false;
+        this.firstLoad = false;
+
+        if (event) event.target.complete();
+        if (this.currentPage > this.totalPages && event) event.target.disabled = true;
+      },
+      error: (err) => {
+        console.error('Error loading TV:', err);
+        this.isLoading = false;
+        this.isPaginating = false;
+        this.firstLoad = false;
+
+        if (event) event.target.complete();
+      }
+    });
   }
 
+  loadMore(event: any) {
+    this.loadTv(event);
+  }
+
+  navigateToTopRated(): void {
+    this.router.navigate(['tabs/discover']);
+  }
 }
