@@ -1,0 +1,19 @@
+.banner-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.banner-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.banner-item {
+    flex: 0 0 auto;
+    width: 95px;
+    min-width: 95px;
+}

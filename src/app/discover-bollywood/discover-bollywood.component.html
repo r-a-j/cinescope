@@ -1,45 +1,4 @@
 <div class="animate__animated animate__fadeIn animate__fast">
-  <!-- Big Banner Section -->
-  <div class="section-header">
-    <h2>Upcoming</h2>
-  </div>
-
-  <div *ngIf="isLoading; else bannersContent">
-    <!-- Placeholders -->
-    <div class="big-banner-scroll">
-      <!-- Repeat the skeleton for as many banner items you’d like to show as placeholders -->
-      <div class="big-banner-item" *ngFor="let placeholder of [1,2,3]">
-        <ion-skeleton-text animated style="width: 280px; height: 160px; border-radius: 8px;"></ion-skeleton-text>
-      </div>
-    </div>
-  </div>
-
-  <ng-template #bannersContent>
-    <div class="big-banner-scroll">
-      <div class="big-banner-item animate__animated animate__fadeIn animate__fast" *ngFor="let banner of banners"
-        (click)="navigateToDetail('movie', banner.id)">
-        <!-- <div class="big-banner-item" *ngFor="let banner of banners" (click)="navigateToDetail('movie', banner.id)"></div> -->
-        <img [src]="banner.imageUrl ? banner.imageUrl : 'url(assets/placeholder-backdrop.png)'"
-          alt="{{ banner.title }}" />
-        <!-- <img [src]="banner.imageUrl" alt="{{ banner.title }}" /> -->
-        <div class="banner-overlay">
-          <h2>{{ banner.title }}</h2>
-          <p>{{ banner.subtitle | date:'MMM d, y' }}</p>
-        </div>
-      </div>
-    </div>
-  </ng-template>
-
-  <!-- Repeatable Banner Scroll Sections -->
-  <div class="section-header">
-    <h2>Desi Trending</h2>
-    <ion-button fill="clear" (click)="navigateToBollywoodTrending()">all</ion-button>
-  </div>
-  <div class="banner-scroll">
-    <div class="banner-item animate__animated animate__flipInY animate__fast" *ngFor="let item of desiTrendingMovies"
-      (click)="navigateToDetail('movie', item.id)">
-      <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-        alt="{{ item.title }}" />
-    </div>
-  </div>
+  <app-discover-bollywood-upcoming-movies></app-discover-bollywood-upcoming-movies>
+  <app-discover-bollywood-trending-movies></app-discover-bollywood-trending-movies>
 </div>

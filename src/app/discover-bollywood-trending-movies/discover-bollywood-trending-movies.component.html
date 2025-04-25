@@ -1,3 +1,11 @@
-<p>
-  discover-bollywood-trending-movies works!
-</p>
+<div class="section-header">
+  <h2>Desi Trending</h2>
+  <ion-button fill="clear" (click)="navigateToBollywoodTrending()">all</ion-button>
+</div>
+<div class="banner-scroll">
+  <div class="banner-item animate__animated animate__flipInY animate__fast" *ngFor="let item of desiTrendingMovies"
+    (click)="navigateToDetail('movie', item.id)">
+    <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+      alt="{{ item.title }}" />
+  </div>
+</div>
