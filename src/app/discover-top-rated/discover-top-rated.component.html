@@ -1,0 +1,24 @@
+<div class="animate__animated animate__fadeIn animate__fast">
+  <div class="section-header">
+    <h2>Top Rated Movies</h2>
+    <ion-button fill="clear" (click)="navigateToList('movie')">all</ion-button>
+  </div>
+  <div class="horizontal-scroll">
+    <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let movie of topRatedMovies"
+      (click)="navigateToDetail('movie', movie.id!)">
+      <img
+        [src]="movie.poster_path ? 'https://image.tmdb.org/t/p/w300' + movie.poster_path : 'assets/placeholder.png'" />
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h2>Top Rated TV</h2>
+    <ion-button fill="clear" (click)="navigateToList('tv')">all</ion-button>
+  </div>
+  <div class="horizontal-scroll">
+    <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let tv of topRatedTV"
+      (click)="navigateToDetail('tv', tv.id!)">
+      <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
+    </div>
+  </div>
+</div>
