@@ -20,7 +20,11 @@ interface MediaItem {
   selector: 'app-discover',
   templateUrl: 'discover.page.html',
   styleUrls: ['discover.page.scss'],
-  imports: [IonLabel, IonSegment, IonSegmentButton, IonToolbar,
+  imports: [
+    IonLabel, 
+    IonSegment, 
+    IonSegmentButton, 
+    IonToolbar,
     CommonModule,
     FormsModule,
     IonContent,
