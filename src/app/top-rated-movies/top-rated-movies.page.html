@@ -1,10 +1,25 @@
 <app-header></app-header>
+
 <ion-content [fullscreen]="true" class="ion-padding" (ionInfinite)="loadMore($event)">
   <h2 class="section-title">Top Rated Movies</h2>
 
-  <div class="media-grid">
-    <div class="media-item" *ngFor="let movie of movies" (click)="goToMovieDetail(10)">
-      <img src="assets/placeholder.png" alt="{{ movie.title }}" />
+  <!-- Full-page Skeleton on First Load -->
+  <div class="media-grid" *ngIf="firstLoad">
+    <div class="media-item skeleton" *ngFor="let i of [1,2,3,4,5,6,7,8]">
+      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
+    </div>
+  </div>
+
+  <!-- Real Content -->
+  <div class="media-grid" *ngIf="!firstLoad">
+    <div class="media-item" *ngFor="let movie of movies" (click)="goToMovieDetail(movie.id!)">
+      <img [src]="movie.poster_path ? 'https://image.tmdb.org/t/p/w300' + movie.poster_path : 'assets/placeholder.png'"
+        alt="{{ movie.title }}" />
+    </div>
+
+    <!-- Paginated Loading Placeholder -->
+    <div class="media-item skeleton" *ngIf="isPaginating" style="grid-column: span 2;">
+      <ion-skeleton-text animated style="width: 100%; height: 200px; border-radius: 10px;"></ion-skeleton-text>
     </div>
   </div>
 

@@ -1,16 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent } from '@ionic/angular/standalone';
+import { IonContent, IonInfiniteScroll, IonInfiniteScrollContent, IonSkeletonText } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
+import { MovieTopRatedModelResult } from 'src/models/movie/movie-top-rated.model';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
 
 @Component({
   selector: 'app-top-rated-movies',
   templateUrl: './top-rated-movies.page.html',
   styleUrls: ['./top-rated-movies.page.scss'],
   standalone: true,
-  imports: [IonInfiniteScrollContent, IonInfiniteScroll,
+  imports: [IonSkeletonText, IonInfiniteScrollContent, IonInfiniteScroll,
     IonContent,
     CommonModule,
     FormsModule,
@@ -18,57 +20,57 @@ import { Router } from '@angular/router';
   ],
 })
 export class TopRatedMoviesPage implements OnInit {
+  movies: Partial<MovieTopRatedModelResult>[] = [];
+  currentPage = 1;
+  totalPages = 0;
+  isLoading = false;
+  firstLoad = true;
+  isPaginating = false;
 
-  // Placeholder for a larger grid or list
-  movies = [
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    { title: 'Breaking Bad', rating: 8.9, year: 2008 },
-    { title: 'The Apothecary Diaries', rating: 8.8, year: 2023 },
-    // Add more data as needed
-  ];
-
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private tmdbService: TmdbSearchService,
+  ) { }
 
   ngOnInit() {
+    this.loadMovies();
   }
 
   goToMovieDetail(id: number | string) {
     this.router.navigate(['/movie-detail', id]);
   }
 
+  loadMovies(event?: any) {
+    if (this.isLoading) return;
+
+    this.isLoading = true;
+    if (this.currentPage > 1) this.isPaginating = true;
+
+    this.tmdbService.getTopRatedMovies(this.currentPage).subscribe({
+      next: (data) => {
+        this.movies.push(...data.results);
+        this.totalPages = data.total_pages;
+        this.currentPage++;
+
+        this.isLoading = false;
+        this.isPaginating = false;
+        this.firstLoad = false;
+
+        if (event) event.target.complete();
+        if (this.currentPage > this.totalPages && event) event.target.disabled = true;
+      },
+      error: (err) => {
+        console.error('Error loading movies:', err);
+        this.isLoading = false;
+        this.isPaginating = false;
+        this.firstLoad = false;
+
+        if (event) event.target.complete();
+      }
+    });
+  }
+
   loadMore(event: any) {
-    setTimeout(() => {
-      const moreMovies = [
-        { title: 'Inception', rating: 8.8, year: 2010 },
-        { title: 'The Godfather', rating: 9.2, year: 1972 },
-        { title: 'The Dark Knight', rating: 9.0, year: 2008 },
-        { title: 'Pulp Fiction', rating: 8.9, year: 1994 },
-      ];
-      this.movies.push(...moreMovies);
-      event.target.complete();
-    }, 1000);
+    this.loadMovies(event);
   }
 }
