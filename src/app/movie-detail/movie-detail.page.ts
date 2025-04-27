@@ -10,8 +10,7 @@ import {
   IonToolbar, 
   IonButtons, 
   IonTitle,
-  NavController
-} from '@ionic/angular/standalone';
+  NavController, IonLabel } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { 
@@ -29,13 +28,14 @@ import { NumberSuffixPipe } from "../../pipes/number-suffix.pipe";
 import { StorageService } from 'src/services/storage.service';
 import { ContentModel } from 'src/models/content.model';
 import { ToastController } from '@ionic/angular';
+import { IonThumbnail } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-movie-detail',
   templateUrl: './movie-detail.page.html',
   styleUrls: ['./movie-detail.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonLabel, 
     IonTitle, 
     IonButtons, 
     IonToolbar, 
@@ -46,10 +46,13 @@ import { ToastController } from '@ionic/angular';
     IonContent,
     CommonModule,
     FormsModule, 
-    NumberSuffixPipe
+    NumberSuffixPipe,
+    IonThumbnail,
   ],
 })
 export class MovieDetailPage implements OnInit {
+  bookmarkIcon: string = 'assets/bookmark-empty.png';
+
   movieId: string | null = null;
   movieDetail: MovieDetailModel | null = null;
   safeYoutubeUrl: SafeResourceUrl | null = null;
@@ -118,22 +121,57 @@ export class MovieDetailPage implements OnInit {
 
   async refreshBookmarkState() {
     if (!this.movieId) return;
-
+  
     const id = +this.movieId!;
     const watchlist = await this.storageService.getWatchlist();
     const watched = await this.storageService.getWatched();
-
-    this.isInWatchlist = !!watchlist.find(c => c.contentId === +id && c.isMovie);
-    this.isInWatched = !!watched.find(c => c.contentId === +id && c.isMovie);
-
+  
+    this.isInWatchlist = !!watchlist.find(c => c.contentId === id && c.isMovie);
+    this.isInWatched = !!watched.find(c => c.contentId === id && c.isMovie);
+  
     if (this.isInWatched) {
-      this.bookmarkColor = 'success'; // Green
+      this.bookmarkIcon = 'assets/bookmark-watched.png';
     } else if (this.isInWatchlist) {
-      this.bookmarkColor = 'danger'; // Red
+      this.bookmarkIcon = 'assets/bookmark-watchlist.png';
     } else {
-      this.bookmarkColor = 'medium'; // Light red (default)
+      this.bookmarkIcon = 'assets/bookmark-empty.png';
     }
   }
+
+  async toggleBookmarkState() {
+    if (!this.movieDetail) return;
+  
+    const id = this.movieDetail.id!;
+  
+    if (this.isInWatched) {
+      // Currently watched → remove it from watched
+      await this.storageService.removeFromWatched(id, true, false);
+      this.isInWatched = false;
+      this.isInWatchlist = false;
+    } 
+    else if (this.isInWatchlist) {
+      // Currently in watchlist → move it to watched
+      await this.storageService.moveFromWatchlistToWatched(id, true, false);
+      this.isInWatched = true;
+      this.isInWatchlist = false;
+    }
+    else {
+      // Not in any list → add to watchlist
+      const content: ContentModel = {
+        contentId: id,
+        isMovie: true,
+        isTv: false,
+        isWatched: false,
+        isWatchlist: true
+      };
+      await this.storageService.addToWatchlist(content);
+      this.isInWatchlist = true;
+      this.isInWatched = false;
+    }
+  
+    this.refreshBookmarkState(); // Refresh icon
+    this.storageService.emitStorageChanged();
+  }  
 
   async toggleWatchlist() {
     if (!this.movieDetail) return;

@@ -11,42 +11,37 @@
 
 <ion-content *ngIf="movieDetail" (ionScroll)="onScroll($event)" scrollEvents="true" class="movie-detail-content">
   <div class="backdrop-wrapper">
-    
-    <!-- <img [src]="'https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path" alt="Backdrop"
-      class="backdrop-image" /> -->
-
     <img class="backdrop-image"
-      [src]="movieDetail.backdrop_path ? ('https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path) : 'assets/placeholder-backdrop.png'"
+      [src]="movieDetail.backdrop_path ? 'https://image.tmdb.org/t/p/original' + movieDetail.backdrop_path : 'assets/placeholder-backdrop.png'"
       [alt]="movieDetail.title" />
-
     <div class="backdrop-gradient"></div>
     <img class="floating-poster"
-      [src]="movieDetail.poster_path ? ('https://image.tmdb.org/t/p/w300' + movieDetail.poster_path) : 'assets/placeholder.png'"
+      [src]="movieDetail.poster_path ? 'https://image.tmdb.org/t/p/w300' + movieDetail.poster_path : 'assets/placeholder.png'"
       [alt]="movieDetail.title" />
-    <ion-button class="floating-bookmark" fill="clear" size="default" shape="round" [color]="bookmarkColor"
-      (click)="toggleWatchlist()">
-      <ion-icon name="bookmark" slot="icon-only"></ion-icon>
-    </ion-button>
+    <div class="floating-bookmark" (click)="toggleBookmarkState()">
+      <ion-thumbnail>
+        <img alt="Bookmark" [src]="bookmarkIcon" />
+      </ion-thumbnail>
+    </div>
   </div>
 
   <div class="content-section">
     <h1 class="movie-title">{{ movieDetail.title }}</h1>
     <p class="tagline" *ngIf="movieDetail.tagline">"{{ movieDetail.tagline }}"</p>
-
     <div class="meta-info">
       <ion-chip color="medium">
         <ion-icon name="calendar-outline" slot="start"></ion-icon>
-        {{ movieDetail.release_date }}
+        <ion-label>{{ movieDetail.release_date }}</ion-label>
       </ion-chip>
 
       <ion-chip color="medium">
         <ion-icon name="time-outline" slot="start"></ion-icon>
-        {{ movieDetail.runtime }} min
+        <ion-label>{{ movieDetail.runtime }} min</ion-label>
       </ion-chip>
 
-      <ion-chip color="warning">
-        <ion-icon name="star" slot="start"></ion-icon>
-        {{ movieDetail.vote_average | number: '1.1-1' }} / 10 IMDb
+      <ion-chip color="warning" class="imdb-chip">
+        <img src="assets/imdb-96.png" alt="IMDb" class="imdb-logo" />
+        <ion-label>{{ movieDetail.vote_average | number: '1.1-1' }}</ion-label>
       </ion-chip>
     </div>
 
@@ -58,9 +53,8 @@
 
     <div class="media-row" *ngIf="safeYoutubeUrl">
       <div class="trailer-embed">
-        <iframe [src]="safeYoutubeUrl" title="YouTube video" frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
+        <iframe [src]="safeYoutubeUrl" title="YouTube video" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
         </iframe>
       </div>
     </div>
