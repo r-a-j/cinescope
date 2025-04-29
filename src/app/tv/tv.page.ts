@@ -1,22 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { 
   IonContent, 
   IonSegment, 
   IonSegmentButton, 
-  IonIcon 
-} from '@ionic/angular/standalone';
+  IonIcon, IonButton, IonButtons, IonCheckbox, IonFab, IonFabButton } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { bookmark, checkmarkDone } from 'ionicons/icons';
+import { NavigationEnd, Router } from '@angular/router';
+import { add, bookmark, checkmarkDone, create } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
+import { TvDetailModel } from 'src/models/tv/tv-detail.model';
+import { filter, firstValueFrom, Subscription } from 'rxjs';
+import { StorageService } from 'src/services/storage.service';
+import { TmdbSearchService } from 'src/services/tmdb-search.service';
+import { ContentModel } from 'src/models/content.model';
 
 @Component({
   selector: 'app-tv',
   templateUrl: 'tv.page.html',
   styleUrls: ['tv.page.scss'],
-  imports: [
+  imports: [IonFabButton, IonFab, IonCheckbox, IonButtons, IonButton, 
     IonIcon, 
     FormsModule,
     CommonModule,
@@ -26,66 +30,140 @@ import { addIcons } from 'ionicons';
     HeaderComponent
   ],
 })
-export class TvPage {
+export class TvPage implements OnInit, OnDestroy {
+segment: string = 'watchlist';
+  watchlist: TvDetailModel[] = [];
+  watched: TvDetailModel[] = [];
 
-  segment: string = 'watchlist';
-  Object = Object;
+  selectionMode = false;
+  selectedIds = new Set<number>();
 
-  watchlist: GenreMap = {
-    Action: [
-      { title: '24', year: 2001, image: 'assets/placeholder.png' },
-      { title: 'Arrow', year: 2012, image: 'assets/placeholder.png' },
-      { title: 'The Mandalorian', year: 2019, image: 'assets/placeholder.png' }
-    ],
-    Drama: [
-      { title: 'Breaking Bad', year: 2008, image: 'assets/placeholder.png' },
-      { title: 'The Crown', year: 2016, image: 'assets/placeholder.png' }
-    ],
-    Mystery: [
-      { title: 'Dark', year: 2017, image: 'assets/placeholder.png' },
-      { title: 'Sherlock', year: 2010, image: 'assets/placeholder.png' }
-    ],
-    Fantasy: [
-      { title: 'The Witcher', year: 2019, image: 'assets/placeholder.png' },
-      { title: 'Game of Thrones', year: 2011, image: 'assets/placeholder.png' }
-    ]
-  };
+  private routerSubscription!: Subscription;
 
-  watched: GenreMap = {
-    Action: [
-      { title: 'Prison Break', year: 2005, image: 'assets/placeholder.png' },
-      { title: 'Jack Ryan', year: 2018, image: 'assets/placeholder.png' }
-    ],
-    Drama: [
-      { title: 'The Sopranos', year: 1999, image: 'assets/placeholder.png' },
-      { title: 'This Is Us', year: 2016, image: 'assets/placeholder.png' }
-    ],
-    SciFi: [
-      { title: 'Stranger Things', year: 2016, image: 'assets/placeholder.png' },
-      { title: 'Westworld', year: 2016, image: 'assets/placeholder.png' }
-    ]
-  };
-
-  constructor(private router: Router) {
-    addIcons({ bookmark, checkmarkDone });
-   }
-
-  get genres(): string[] {
-    return this.segment === 'watchlist' ? Object.keys(this.watchlist) : Object.keys(this.watched);
+  constructor(
+    private router: Router,
+    private storageService: StorageService,
+    private tmdbService: TmdbSearchService
+  ) {
+    addIcons({ add, create, bookmark, checkmarkDone });
   }
 
-  getShowsByGenre(genre: string): TVShow[] {
-    return this.segment === 'watchlist' ? this.watchlist[genre] : this.watched[genre];
+  ngOnInit() {
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        if (event.urlAfterRedirects.includes('tabs/tv')) {
+          console.log('Back on Tv Page');
+          this.loadTv();
+        }
+      });
   }
 
-  goToTvDetail(id: number | string) {
+  ngOnDestroy() {
+    this.routerSubscription?.unsubscribe();
+  }
+
+  async loadTv() {
+    this.watchlist = [];
+    this.watched = [];
+
+    const [watchlistItems, watchedItems] = await Promise.all([
+      this.storageService.getWatchlist(),
+      this.storageService.getWatched()
+    ]);
+
+    const uniqueWatchlistItems = Array.from(new Set(watchlistItems.map(item => item.contentId)))
+      .map(id => watchlistItems.find(item => item.contentId === id && item.isTv === true))
+      .filter((item): item is ContentModel => item !== undefined);
+
+    const uniqueWatchedItems = Array.from(new Set(watchedItems.map(item => item.contentId)))
+      .map(id => watchedItems.find(item => item.contentId === id && item.isTv === true))
+      .filter((item): item is ContentModel => item !== undefined);
+
+    const promises = [...uniqueWatchlistItems, ...uniqueWatchedItems].map(async (item) => {
+      try {
+        const tvDetail = await firstValueFrom(this.tmdbService.getTvDetail(item.contentId));
+
+        const tvItem: TvDetailModel = {
+          id: tvDetail?.id!,
+          name: tvDetail?.name,
+          poster_path: tvDetail?.poster_path,
+        };
+
+        if (item.isWatched) {
+          this.watched.push(tvItem);
+        } else {
+          this.watchlist.push(tvItem);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tv', item.contentId, error);
+      }
+    });
+
+    await Promise.all(promises);
+  }
+
+  getCurrentTv(): TvDetailModel[] {
+    return this.segment === 'watchlist' ? this.watchlist : this.watched;
+  }
+
+  goToSearch() {
+    this.router.navigate(['/search']);
+  }
+
+  goToTvDetail(id?: number | string) {
     this.router.navigate(['/tv-detail', id]);
   }
-}
 
-interface TVShow {
-  title: string;
-  year: number;
-  image: string;
+  toggleSelectionMode() {
+    console.log('Pressed toggleSelectionMode', this.selectionMode);
+    this.selectionMode = !this.selectionMode;
+    //this.toggleSelect(tvId!);
+  }
+
+  toggleSelect(tvId: number) {
+    if (this.selectedIds.has(tvId)) {
+      this.selectedIds.delete(tvId);
+    } else {
+      this.selectedIds.add(tvId);
+    }
+  }
+
+  onTvClick(tvId?: number | string) {
+    if (this.selectionMode) {
+      this.toggleSelect(Number(tvId)); // just toggle selection
+    } else {
+      this.goToTvDetail(tvId);
+    }
+  }
+
+  clearSelection() {
+    this.selectionMode = false;
+    this.selectedIds.clear();
+  }
+
+  async removeSelected() {
+    const tvToRemove = this.getCurrentTv().filter(tv => this.selectedIds.has(tv.id!));
+    
+    if(this.segment === 'watchlist'){
+      for (const tv of tvToRemove) {
+        await this.storageService.removeFromWatchlist(tv.id!, false, true);
+      }
+    }
+    else{
+      for (const tv of tvToRemove) {
+        await this.storageService.removeFromWatched(tv.id!, false, true);
+      }
+    }
+    
+    this.clearSelection();
+    this.loadTv();
+  }
+
+  async moveSelectedToWatched() {
+    const ids = Array.from(this.selectedIds);
+    await this.storageService.bulkMoveFromWatchlistToWatched(ids, false, true);
+    this.clearSelection();
+    this.loadTv();
+  }
 }
-type GenreMap = { [genre: string]: TVShow[] };

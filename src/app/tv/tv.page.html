@@ -1,9 +1,15 @@
 <app-header></app-header>
+
 <ion-content class="ion-padding">
+
   <div class="segment-wrapper">
-    <!-- Future Left Content -->
     <div class="left-slot">
-      <!-- Example: Search, Filters, Icons etc. -->
+      <!-- If in selection mode, show action buttons -->
+      <ion-buttons *ngIf="selectionMode">
+        <ion-button color="danger" (click)="removeSelected()">Remove</ion-button>
+        <ion-button color="primary" (click)="moveSelectedToWatched()">Watched</ion-button>
+        <ion-button color="medium" (click)="clearSelection()">Cancel</ion-button>
+      </ion-buttons>
     </div>
 
     <!-- Your Segment -->
@@ -17,16 +23,29 @@
     </ion-segment>
   </div>
 
-  <div *ngFor="let genre of genres">
-    <div class="genre-header">
-      <h2>{{ genre }}</h2>
-    </div>
-    <div class="horizontal-scroll">
-      <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let show of getShowsByGenre(genre)"
-        (click)="goToTvDetail(10)">
-        <!-- <img [src]="show.image" alt="{{ show.title }}" /> -->
-        <img src="https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" alt="{{ show.title }}" />
-      </div>
+  <div class="media-grid">
+    <div 
+      class="media-item animate__animated animate__flipInY animate__faster" 
+      *ngFor="let tv of getCurrentTv()"
+      (click)="onTvClick(tv.id)">
+      <img
+        [src]="tv.poster_path ? ('https://image.tmdb.org/t/p/w300' + tv.poster_path) : 'assets/placeholder.png'"
+        [alt]="tv.name" />
+
+      <!-- Checkbox overlay -->
+      <ion-checkbox *ngIf="selectionMode" [checked]="selectedIds.has(tv.id!)" (click)="toggleSelect(tv.id!)"
+        class="media-checkbox">
+      </ion-checkbox>
     </div>
   </div>
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
+    <!-- <ion-fab-button (click)="goToSearch()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button> -->
+    <ion-fab-button (click)="toggleSelectionMode()">
+      <ion-icon name="create"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  
 </ion-content>

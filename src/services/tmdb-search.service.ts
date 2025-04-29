@@ -12,6 +12,7 @@ import { StorageService } from './storage.service';
 import { PersonModel } from 'src/models/person.model';
 import { MovieTopRatedModel } from 'src/models/movie/movie-top-rated.model';
 import { TvTopRatedModelRoot } from 'src/models/tv/tv-top-rated.model';
+import { TvDetailModel } from 'src/models/tv/tv-detail.model';
 
 
 @Injectable({ providedIn: 'root' })
@@ -168,6 +169,22 @@ export class TmdbSearchService {
                     .set('language', 'en-US');
 
                 return this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, {
+                    headers: this.headers,
+                    params
+                });
+            }),
+            catchError(this.handleError)
+        );
+    }
+
+    getTvDetail(tvId: number): Observable<TvDetailModel> {
+        return from(this.ensureSettingsLoaded()).pipe(
+            switchMap(() => {
+                const params = new HttpParams()
+                    .set('append_to_response', 'videos,recommendations,similar')
+                    .set('language', 'en-US');
+
+                return this.http.get<TvDetailModel>(`${this.BASE_URL}/tv/${tvId}`, {
                     headers: this.headers,
                     params
                 });

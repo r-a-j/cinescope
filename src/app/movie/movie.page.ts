@@ -80,11 +80,11 @@ export class MoviePage implements OnInit, OnDestroy {
     ]);
 
     const uniqueWatchlistItems = Array.from(new Set(watchlistItems.map(item => item.contentId)))
-      .map(id => watchlistItems.find(item => item.contentId === id))
+      .map(id => watchlistItems.find(item => item.contentId === id && item.isMovie === true))
       .filter((item): item is ContentModel => item !== undefined);
 
     const uniqueWatchedItems = Array.from(new Set(watchedItems.map(item => item.contentId)))
-      .map(id => watchedItems.find(item => item.contentId === id))
+      .map(id => watchedItems.find(item => item.contentId === id && item.isMovie === true))
       .filter((item): item is ContentModel => item !== undefined);
 
     const promises = [...uniqueWatchlistItems, ...uniqueWatchedItems].map(async (item) => {
