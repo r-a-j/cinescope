@@ -67,6 +67,131 @@
       </ng-template>
     </div>
 
+    <ion-accordion-group>
+      <ion-accordion *ngFor="let season of tvDetail.seasons">
+        <ion-item slot="header" color="secondary">
+          <ion-label>
+            <strong>Season {{ season.season_number }}</strong> – {{ season.name }}
+            <div class="season-subtext">
+              {{ season.air_date | date:'yyyy' }} • {{ season.episode_count }} episodes
+            </div>
+          </ion-label>
+        </ion-item>
+        <div class="season-content" slot="content">
+          <div class="season-poster-info">
+            <img *ngIf="season.poster_path" class="season-poster"
+              [src]="'https://image.tmdb.org/t/p/w200' + season.poster_path" alt="{{ season.name }}" />
+
+            <div class="season-rating-box" *ngIf="season.vote_average">
+              <div class="meta-info">
+                <!-- <ion-chip color="medium">
+                  <ion-icon name="calendar-outline" slot="start"></ion-icon>
+                  <ion-label>{{ tvDetail.first_air_date }}</ion-label>
+                </ion-chip>
+          
+                <ion-chip color="medium">
+                  <ion-icon name="time-outline" slot="start"></ion-icon>
+                  <ion-label>{{ tvDetail.episode_run_time }} min</ion-label>
+                </ion-chip> -->
+
+                <ion-chip color="warning" class="imdb-chip">
+                  <img src="assets/imdb-96.png" alt="IMDb" class="imdb-logo" />
+                  <ion-label>{{ tvDetail.vote_average | number: '1.1-1' }}</ion-label>
+                </ion-chip>
+              </div>
+            </div>
+          </div>
+
+          <p *ngIf="season.overview; else noSeasonOverview">{{ season.overview }}</p>
+          <ng-template #noSeasonOverview>
+            <p><i>No overview available for this season.</i></p>
+          </ng-template>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+
+
+    <div class="section episode-info" *ngIf="tvDetail.last_episode_to_air">
+      <h2>Last Episode</h2>
+      <p><strong>{{ tvDetail.last_episode_to_air.name }}</strong> (S{{ tvDetail.last_episode_to_air.season_number }}E{{
+        tvDetail.last_episode_to_air.episode_number }})</p>
+      <p>{{ tvDetail.last_episode_to_air.air_date | date }}</p>
+      <p>{{ tvDetail.last_episode_to_air.overview }}</p>
+    </div>
+
+    <div class="section episode-info" *ngIf="tvDetail.next_episode_to_air">
+      <h2>Next Episode</h2>
+      <!-- Similar to above -->
+    </div>
+
+    <div class="section" *ngIf="tvDetail.recommendations?.results?.length">
+      <div class="section-header">
+        <h2>Recommended</h2>
+      </div>
+      <div class="horizontal-scroll">
+        <div class="item animate__animated animate__flipInY animate__fast"
+          *ngFor="let tv of tvDetail.recommendations?.results" (click)="navigateToDetail('tv', tv.id!)">
+          <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section" *ngIf="tvDetail.similar?.results?.length">
+      <div class="section-header">
+        <h2>Similar</h2>
+      </div>
+      <div class="horizontal-scroll">
+        <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let tv of tvDetail.similar?.results"
+          (click)="navigateToDetail('tv', tv.id!)">
+          <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section" *ngIf="tvDetail.created_by?.length">
+      <h2>Created By</h2>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" sizeMd="3" *ngFor="let creator of tvDetail.created_by">
+            <ion-card>
+              <img
+                [src]="creator.profile_path ? 'https://image.tmdb.org/t/p/w185' + creator.profile_path : 'assets/placeholder-profile.png'" />
+              <ion-card-header>
+                <ion-card-title>{{ creator.name }}</ion-card-title>
+              </ion-card-header>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
+
+    <div class="section" *ngIf="tvDetail.networks?.length">
+      <h2>Networks</h2>
+      <div class="networks-logos">
+        <img *ngFor="let network of tvDetail.networks" [src]="'https://image.tmdb.org/t/p/w92' + network.logo_path"
+          [alt]="network.name" />
+      </div>
+    </div>
+
+    <div class="section" *ngIf="tvDetail.spoken_languages?.length">
+      <h2>Spoken Languages</h2>
+      <ion-chip *ngFor="let lang of tvDetail.spoken_languages">
+        {{ lang.english_name }}
+      </ion-chip>
+    </div>
+
+    <div class="section" *ngIf="tvDetail.production_companies?.length">
+      <h2>Production Companies</h2>
+      <div class="production-logos">
+        <img *ngFor="let company of tvDetail.production_companies"
+          [src]="company.logo_path ? 'https://image.tmdb.org/t/p/w92' + company.logo_path : 'assets/placeholder.png'"
+          [alt]="company.name" />
+      </div>
+    </div>
+
+
+
     <div class="details-grid">
       <div>
         <h3>Status</h3>

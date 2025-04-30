@@ -13,8 +13,8 @@ import {
   IonButton,
   NavController,
   ToastController,
-  IonThumbnail
-} from '@ionic/angular/standalone';
+  IonThumbnail,
+  IonInfiniteScroll, IonGrid, IonCol, IonCard, IonCardHeader, IonCardTitle, IonRow, IonAccordionGroup, IonAccordion, IonItem } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
@@ -36,7 +36,7 @@ import {
   templateUrl: './tv-detail.page.html',
   styleUrls: ['./tv-detail.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonItem, IonAccordion, IonAccordionGroup, IonRow, IonCardTitle, IonCardHeader, IonCard, IonCol, IonGrid, 
     IonButton,
     IonButtons,
     IonIcon,
@@ -48,7 +48,8 @@ import {
     IonToolbar,
     CommonModule,
     FormsModule,
-    IonThumbnail
+    IonThumbnail,
+    IonInfiniteScroll
   ],
 })
 export class TvDetailPage implements OnInit {
@@ -97,8 +98,9 @@ export class TvDetailPage implements OnInit {
   async loadTvDetail(id: number) {
     this.tmdbService.getTvDetail(id).subscribe({
       next: (data) => {
+        
         this.tvDetail = data;
-
+        console.log(this.tvDetail);
         // Prefer trailer video
         const trailer = data?.videos?.results?.find(
           (v) => v.type === 'Trailer' && v.site === 'YouTube'
@@ -214,5 +216,9 @@ export class TvDetailPage implements OnInit {
       color
     });
     toast.present();
+  }
+
+  navigateToDetail(category: 'movie' | 'tv', id: number | string): void {
+    this.router.navigate([`/${category}-detail`, id]);
   }
 }
