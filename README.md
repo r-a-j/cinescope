@@ -1,0 +1,1 @@
+An android mobile application built with Ionic, Angular, and Capacitor that helps users track movies and TV series they have watched or plan to watch. The app integrates with the TMDB API to fetch metadata, including posters, titles, summaries, and reviews. 
