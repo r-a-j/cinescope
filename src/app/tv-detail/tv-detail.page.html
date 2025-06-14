@@ -10,14 +10,17 @@
 </ion-header>
 
 <ion-content *ngIf="tvDetail" (ionScroll)="onScroll($event)" scrollEvents="true" class="movie-detail-content">
+  <!-- ─────────  HERO / BACKDROP  ───────── -->
   <div class="backdrop-wrapper">
-    <img class="backdrop-image"
-      [src]="tvDetail.backdrop_path ? 'https://image.tmdb.org/t/p/original' + tvDetail.backdrop_path : 'assets/placeholder-backdrop.png'"
-      [alt]="tvDetail.name" />
+    <img class="backdrop-image" [src]="tvDetail.backdrop_path
+        ? 'https://image.tmdb.org/t/p/original' + tvDetail.backdrop_path
+        : 'assets/placeholder-backdrop.png'" [alt]="tvDetail.name" />
     <div class="backdrop-gradient"></div>
-    <img class="floating-poster"
-      [src]="tvDetail.poster_path ? 'https://image.tmdb.org/t/p/w300' + tvDetail.poster_path : 'assets/placeholder.png'"
-      [alt]="tvDetail.name" />
+
+    <img class="floating-poster" [src]="tvDetail.poster_path
+        ? 'https://image.tmdb.org/t/p/w300' + tvDetail.poster_path
+        : 'assets/placeholder.png'" [alt]="tvDetail.name" />
+
     <div class="floating-bookmark" (click)="toggleBookmarkState()">
       <ion-thumbnail>
         <img alt="Bookmark" [src]="bookmarkIcon" />
@@ -25,9 +28,12 @@
     </div>
   </div>
 
+  <!-- ─────────  MAIN CONTENT BLOCK  ───────── -->
   <div class="content-section">
     <h1 class="movie-title">{{ tvDetail.name }}</h1>
     <p class="tagline" *ngIf="tvDetail.tagline">"{{ tvDetail.tagline }}"</p>
+
+    <!-- meta chips -->
     <div class="meta-info">
       <ion-chip color="medium">
         <ion-icon name="calendar-outline" slot="start"></ion-icon>
@@ -45,64 +51,63 @@
       </ion-chip>
     </div>
 
+    <!-- genre chips -->
     <div class="genre-chips">
-      <ion-chip *ngFor="let genre of tvDetail.genres">
-        {{ genre.name }}
-      </ion-chip>
+      <ion-chip *ngFor="let genre of tvDetail.genres">{{ genre.name }}</ion-chip>
     </div>
 
+    <!-- trailer -->
     <div class="media-row" *ngIf="safeYoutubeUrl">
       <div class="trailer-embed">
-        <iframe [src]="safeYoutubeUrl" title="YouTube video" allowfullscreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
+        <iframe [src]="safeYoutubeUrl" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          title="YouTube video"></iframe>
       </div>
     </div>
 
+    <!-- overview -->
     <div class="overview">
       <h2>Overview</h2>
-      <p *ngIf="tvDetail.overview; else noOverview">{{ tvDetail.overview }}</p>
+      <p *ngIf="tvDetail.overview; else noOverview">
+        {{ tvDetail.overview }}
+      </p>
       <ng-template #noOverview>
         <p>No overview available.</p>
       </ng-template>
     </div>
 
+    <!-- seasons accordion -->
     <ion-accordion-group>
       <ion-accordion *ngFor="let season of tvDetail.seasons">
         <ion-item slot="header" color="secondary">
           <ion-label>
             <strong>Season {{ season.season_number }}</strong> – {{ season.name }}
             <div class="season-subtext">
-              {{ season.air_date | date:'yyyy' }} • {{ season.episode_count }} episodes
+              {{ season.air_date | date: 'yyyy' }} • {{ season.episode_count }}
+              episodes
             </div>
           </ion-label>
         </ion-item>
+
         <div class="season-content" slot="content">
           <div class="season-poster-info">
             <img *ngIf="season.poster_path" class="season-poster"
-              [src]="'https://image.tmdb.org/t/p/w200' + season.poster_path" alt="{{ season.name }}" />
+              [src]="'https://image.tmdb.org/t/p/w200' + season.poster_path" [alt]="season.name" />
 
-            <div class="season-rating-box" *ngIf="season.vote_average">
-              <div class="meta-info">
-                <!-- <ion-chip color="medium">
-                  <ion-icon name="calendar-outline" slot="start"></ion-icon>
-                  <ion-label>{{ tvDetail.first_air_date }}</ion-label>
-                </ion-chip>
-          
-                <ion-chip color="medium">
-                  <ion-icon name="time-outline" slot="start"></ion-icon>
-                  <ion-label>{{ tvDetail.episode_run_time }} min</ion-label>
-                </ion-chip> -->
-
-                <ion-chip color="warning" class="imdb-chip">
-                  <img src="assets/imdb-96.png" alt="IMDb" class="imdb-logo" />
-                  <ion-label>{{ tvDetail.vote_average | number: '1.1-1' }}</ion-label>
-                </ion-chip>
-              </div>
+            <div class="meta-info" *ngIf="season.vote_average">
+              <ion-chip color="warning" class="imdb-chip">
+                <img src="assets/imdb-96.png" alt="IMDb" class="imdb-logo" />
+                <!-- ✅ fixed: use season.vote_average -->
+                <ion-label>{{
+                  season.vote_average | number: '1.1-1'
+                  }}</ion-label>
+              </ion-chip>
             </div>
           </div>
 
-          <p *ngIf="season.overview; else noSeasonOverview">{{ season.overview }}</p>
+          <p *ngIf="season.overview; else noSeasonOverview">
+            {{ season.overview }}
+          </p>
           <ng-template #noSeasonOverview>
             <p><i>No overview available for this season.</i></p>
           </ng-template>
@@ -110,21 +115,52 @@
       </ion-accordion>
     </ion-accordion-group>
 
+    <!-- last / next episode cards -->
+    <ng-container *ngIf="tvDetail.last_episode_to_air as last">
+      <ion-card class="episode-card">
+        <ion-item lines="none">
+          <ion-thumbnail slot="start">
+            <img [src]="last.still_path
+                ? 'https://image.tmdb.org/t/p/w300' + last.still_path
+                : 'assets/placeholder-backdrop.png'" />
+          </ion-thumbnail>
+          <ion-label>
+            <h2>Last Episode</h2>
+            <h3>{{ last.name }}</h3>
+            <p>
+              S{{ last.season_number }} · E{{ last.episode_number }} ·
+              {{ last.air_date | date }}
+            </p>
+            <p class="episode-overview">{{ last.overview }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-card>
+    </ng-container>
 
+    <ng-container *ngIf="tvDetail.next_episode_to_air as next">
+      <ion-card class="episode-card">
+        <ion-item lines="none">
+          <ion-thumbnail slot="start">
+            <img [src]="next.still_path
+                ? 'https://image.tmdb.org/t/p/w300' + next.still_path
+                : 'assets/placeholder-backdrop.png'" />
+          </ion-thumbnail>
+          <ion-label>
+            <h2>Next Episode</h2>
+            <h3>{{ next.name }}</h3>
+            <p>
+              S{{ next.season_number }} · E{{ next.episode_number }} ·
+              {{ next.air_date | date }}
+            </p>
+            <p class="episode-overview">
+              {{ next.overview || 'No synopsis yet.' }}
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-card>
+    </ng-container>
 
-    <div class="section episode-info" *ngIf="tvDetail.last_episode_to_air">
-      <h2>Last Episode</h2>
-      <p><strong>{{ tvDetail.last_episode_to_air.name }}</strong> (S{{ tvDetail.last_episode_to_air.season_number }}E{{
-        tvDetail.last_episode_to_air.episode_number }})</p>
-      <p>{{ tvDetail.last_episode_to_air.air_date | date }}</p>
-      <p>{{ tvDetail.last_episode_to_air.overview }}</p>
-    </div>
-
-    <div class="section episode-info" *ngIf="tvDetail.next_episode_to_air">
-      <h2>Next Episode</h2>
-      <!-- Similar to above -->
-    </div>
-
+    <!-- recommended -->
     <div class="section" *ngIf="tvDetail.recommendations?.results?.length">
       <div class="section-header">
         <h2>Recommended</h2>
@@ -132,11 +168,14 @@
       <div class="horizontal-scroll">
         <div class="item animate__animated animate__flipInY animate__fast"
           *ngFor="let tv of tvDetail.recommendations?.results" (click)="navigateToDetail('tv', tv.id!)">
-          <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
+          <img [src]="tv.poster_path
+              ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path
+              : 'assets/placeholder.png'" />
         </div>
       </div>
     </div>
 
+    <!-- similar -->
     <div class="section" *ngIf="tvDetail.similar?.results?.length">
       <div class="section-header">
         <h2>Similar</h2>
@@ -144,136 +183,50 @@
       <div class="horizontal-scroll">
         <div class="item animate__animated animate__flipInY animate__fast" *ngFor="let tv of tvDetail.similar?.results"
           (click)="navigateToDetail('tv', tv.id!)">
-          <img [src]="tv.poster_path ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path : 'assets/placeholder.png'" />
+          <img [src]="tv.poster_path
+              ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path
+              : 'assets/placeholder.png'" />
         </div>
       </div>
     </div>
 
-    <div class="section" *ngIf="tvDetail.created_by?.length">
-      <h2>Created By</h2>
-      <ion-grid>
-        <ion-row>
-          <ion-col size="6" sizeMd="3" *ngFor="let creator of tvDetail.created_by">
-            <ion-card>
-              <img
-                [src]="creator.profile_path ? 'https://image.tmdb.org/t/p/w185' + creator.profile_path : 'assets/placeholder-profile.png'" />
-              <ion-card-header>
-                <ion-card-title>{{ creator.name }}</ion-card-title>
-              </ion-card-header>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+    <!-- networks -->
+    <div class="section logos-section" *ngIf="tvDetail.networks?.length">
+      <h2 class="section-title">Networks</h2>
+      <ion-row class="logo-row" justify-content-center>
+        <ion-col size="4" sizeMd="2" *ngFor="let network of tvDetail.networks">
+          <img loading="lazy" [src]="'https://image.tmdb.org/t/p/w185' + network.logo_path" [alt]="network.name" />
+        </ion-col>
+      </ion-row>
     </div>
 
-    <div class="section" *ngIf="tvDetail.networks?.length">
-      <h2>Networks</h2>
-      <div class="networks-logos">
-        <img *ngFor="let network of tvDetail.networks" [src]="'https://image.tmdb.org/t/p/w92' + network.logo_path"
-          [alt]="network.name" />
-      </div>
-    </div>
-
+    <!-- spoken languages -->
     <div class="section" *ngIf="tvDetail.spoken_languages?.length">
-      <h2>Spoken Languages</h2>
-      <ion-chip *ngFor="let lang of tvDetail.spoken_languages">
-        {{ lang.english_name }}
-      </ion-chip>
-    </div>
-
-    <div class="section" *ngIf="tvDetail.production_companies?.length">
-      <h2>Production Companies</h2>
-      <div class="production-logos">
-        <img *ngFor="let company of tvDetail.production_companies"
-          [src]="company.logo_path ? 'https://image.tmdb.org/t/p/w92' + company.logo_path : 'assets/placeholder.png'"
-          [alt]="company.name" />
+      <h2 class="section-title">Spoken Languages</h2>
+      <div class="chip-row">
+        <ion-chip color="tertiary" outline="true" *ngFor="let lang of tvDetail.spoken_languages">{{ lang.english_name
+          }}</ion-chip>
       </div>
     </div>
 
-
-
+    <!-- quick-facts grid -->
     <div class="details-grid">
       <div>
         <h3>Status</h3>
         <p>{{ tvDetail.status }}</p>
       </div>
       <div>
-        <h3>Budget/Revenue</h3>
-        <!-- <p>${{ tvDetail. | numberSuffix }}/${{ movieDetail.revenue | numberSuffix }}</p> -->
+        <h3>Seasons</h3>
+        <p>{{ tvDetail.number_of_seasons }}</p>
+      </div>
+      <div *ngIf="tvDetail.episode_run_time?.length">
+        <h3>Runtime</h3>
+        <p>{{ tvDetail.episode_run_time }} min</p>
+      </div>
+      <div *ngIf="tvDetail.vote_average">
+        <h3>User Score</h3>
+        <p>{{ tvDetail.vote_average | number: '1.1-1' }}/10</p>
       </div>
     </div>
   </div>
 </ion-content>
-
-<!-- <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/home"></ion-back-button>
-    </ion-buttons>
-    <ion-title *ngIf="isScrolled">{{ tvDetail?.name }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="toggleWatchlist()">
-        <ion-icon
-          [name]="isInWatchlist ? 'bookmark' : 'bookmark-outline'"
-          slot="icon-only"
-        ></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content [fullscreen]="true" (ionScroll)="onScroll($event)">
-  <div *ngIf="tvDetail" class="tv-banner">
-    <img
-      [src]="'https://image.tmdb.org/t/p/original' + tvDetail.backdrop_path"
-      alt="Backdrop"
-    />
-    <div class="overlay"></div>
-    <div class="tv-info">
-      <h1>{{ tvDetail.name }}</h1>
-      <ion-button size="small" (click)="toggleBookmarkState()" fill="outline">
-        <ion-icon
-          [name]="isBookmarked ? 'heart' : 'heart-outline'"
-          slot="start"
-        ></ion-icon>
-        {{ isBookmarked ? 'Bookmarked' : 'Bookmark' }}
-      </ion-button>
-    </div>
-  </div>
-
-  <div class="tv-meta">
-    <ion-chip color="medium">
-      <ion-icon name="calendar-outline" slot="start"></ion-icon>
-      <ion-label>{{ tvDetail?.first_air_date }}</ion-label>
-    </ion-chip>
-    <ion-chip color="medium" *ngIf="tvDetail?.episode_run_time?.length">
-      <ion-icon name="time-outline" slot="start"></ion-icon>
-      <ion-label>{{ tvDetail?.episode_run_time![0] }} min</ion-label>
-    </ion-chip>
-    <ion-chip color="medium">
-      <ion-icon name="albums-outline" slot="start"></ion-icon>
-      <ion-label>{{ tvDetail?.number_of_seasons }} Season(s)</ion-label>
-    </ion-chip>
-  </div>
-
-  <div class="tv-overview">
-    <h2>Overview</h2>
-    <p *ngIf="tvDetail?.overview; else noOverview">
-      {{ tvDetail?.overview }}
-    </p>
-    <ng-template #noOverview>
-      <p><i>No overview available.</i></p>
-    </ng-template>
-  </div>
-
-  <div class="tv-trailer" *ngIf="safeYoutubeUrl">
-    <h2>Trailer</h2>
-    <iframe
-      width="100%"
-      height="200"
-      [src]="safeYoutubeUrl"
-      frameborder="0"
-      allowfullscreen
-    ></iframe>
-  </div>
-</ion-content> -->

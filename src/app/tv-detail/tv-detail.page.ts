@@ -14,7 +14,13 @@ import {
   NavController,
   ToastController,
   IonThumbnail,
-  IonInfiniteScroll, IonGrid, IonCol, IonCard, IonCardHeader, IonCardTitle, IonRow, IonAccordionGroup, IonAccordion, IonItem } from '@ionic/angular/standalone';
+  IonCol, 
+  IonCard, 
+  IonRow, 
+  IonAccordionGroup, 
+  IonAccordion, 
+  IonItem 
+} from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
@@ -36,7 +42,13 @@ import {
   templateUrl: './tv-detail.page.html',
   styleUrls: ['./tv-detail.page.scss'],
   standalone: true,
-  imports: [IonItem, IonAccordion, IonAccordionGroup, IonRow, IonCardTitle, IonCardHeader, IonCard, IonCol, IonGrid, 
+  imports: [
+    IonItem,
+    IonAccordion,
+    IonAccordionGroup,
+    IonRow,
+    IonCard,
+    IonCol,
     IonButton,
     IonButtons,
     IonIcon,
@@ -48,9 +60,8 @@ import {
     IonToolbar,
     CommonModule,
     FormsModule,
-    IonThumbnail,
-    IonInfiniteScroll
-  ],
+    IonThumbnail
+],
 })
 export class TvDetailPage implements OnInit {
   bookmarkIcon: string = 'assets/bookmark-empty.png';
@@ -204,9 +215,8 @@ export class TvDetailPage implements OnInit {
     }
 
     await this.refreshBookmarkState();
-    this.storageService.emitStorageChanged(); // Emit change!
+    this.storageService.emitStorageChanged();
   }
-
 
   async showToast(message: string, color: 'success' | 'danger') {
     const toast = await this.toastController.create({
