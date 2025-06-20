@@ -1,5 +1,28 @@
 <app-header></app-header>
 
+<!-- GENRE POP-OVER -->
+<ion-popover [isOpen]="filterOpen" [event]="popoverEvent" (didDismiss)="filterOpen = false" translucent="true">
+  <ng-template>
+    <ion-list>
+
+      <!-- GENRE ROW -->
+      <ion-item *ngFor="let g of genres" button="true" lines="none" (click)="toggleGenre(g)"
+        [class.active]="selectedGenres.has(g)" class="popover-genre-item">
+        <ion-label>{{ g }}</ion-label>        
+        <ion-checkbox slot="end" [checked]="selectedGenres.has(g)" (click)="$event.stopPropagation(); toggleGenre(g)">
+        </ion-checkbox>
+      </ion-item>
+
+      <!-- ACTION ROW -->
+      <ion-item lines="none">
+        <ion-button expand="block" size="small" (click)="applyFilter()">Apply</ion-button>
+        <ion-button expand="block" size="small" fill="clear" (click)="clearFilter()">Clear</ion-button>
+      </ion-item>
+
+    </ion-list>
+  </ng-template>
+</ion-popover>
+
 <ion-content class="ion-padding">
 
   <div class="segment-wrapper">
@@ -12,7 +35,6 @@
       </ion-buttons>
     </div>
 
-    <!-- Your Segment -->
     <ion-segment [(ngModel)]="segment" class="custom-segment">
       <ion-segment-button value="watchlist">
         <ion-icon name="bookmark"></ion-icon>
@@ -37,13 +59,19 @@
     </div>
   </div>
 
+  <!-- FILTER (bottom-most) -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
-    <!-- <ion-fab-button (click)="goToSearch()">
-      <ion-icon name="add"></ion-icon>
-    </ion-fab-button> -->
-    <ion-fab-button (click)="toggleSelectionMode()">
-      <ion-icon name="create"></ion-icon>
+    <ion-fab-button class="fab-filter" (click)="openFilter($event)">
+      <ion-icon name="options"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
+  <!-- EDIT / SELECTION -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="fab-edit" *ngIf="!selectionMode">
+    <ion-fab-button class="fab-edit-btn" (click)="toggleSelectionMode()">
+      <ion-icon name="trash"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
 
 </ion-content>

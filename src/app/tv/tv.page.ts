@@ -1,14 +1,24 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { 
-  IonContent, 
-  IonSegment, 
-  IonSegmentButton, 
-  IonIcon, IonButton, IonButtons, IonCheckbox, IonFab, IonFabButton } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonSegment,
+  IonSegmentButton,
+  IonIcon,
+  IonButton,
+  IonButtons,
+  IonCheckbox,
+  IonFab,
+  IonFabButton,
+  IonPopover,
+  IonList,
+  IonItem,
+  IonLabel
+} from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
-import { add, bookmark, checkmarkDone, create } from 'ionicons/icons';
+import { add, bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
 import { filter, firstValueFrom, Subscription } from 'rxjs';
@@ -20,8 +30,17 @@ import { ContentModel } from 'src/models/content.model';
   selector: 'app-tv',
   templateUrl: 'tv.page.html',
   styleUrls: ['tv.page.scss'],
-  imports: [IonFabButton, IonFab, IonCheckbox, IonButtons, IonButton, 
-    IonIcon, 
+  imports: [
+    IonPopover,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonFabButton,
+    IonFab,
+    IonCheckbox,
+    IonButtons,
+    IonButton,
+    IonIcon,
     FormsModule,
     CommonModule,
     IonSegmentButton,
@@ -31,7 +50,7 @@ import { ContentModel } from 'src/models/content.model';
   ],
 })
 export class TvPage implements OnInit, OnDestroy {
-segment: string = 'watchlist';
+  segment: 'watchlist' | 'watched' = 'watchlist';
   watchlist: TvDetailModel[] = [];
   watched: TvDetailModel[] = [];
 
@@ -40,12 +59,17 @@ segment: string = 'watchlist';
 
   private routerSubscription!: Subscription;
 
+  filterOpen = false;
+  popoverEvent: any = null;
+  genres: string[] = [];
+  selectedGenres = new Set<string>();
+
   constructor(
     private router: Router,
     private storageService: StorageService,
     private tmdbService: TmdbSearchService
   ) {
-    addIcons({ add, create, bookmark, checkmarkDone });
+    addIcons({ add, trash, bookmark, checkmarkDone, options });
   }
 
   ngOnInit() {
@@ -88,6 +112,7 @@ segment: string = 'watchlist';
           id: tvDetail?.id!,
           name: tvDetail?.name,
           poster_path: tvDetail?.poster_path,
+          genres: tvDetail?.genres          
         };
 
         if (item.isWatched) {
@@ -101,10 +126,37 @@ segment: string = 'watchlist';
     });
 
     await Promise.all(promises);
+
+    const gSet = new Set<string>();
+    [...this.watchlist, ...this.watched].forEach(tv => tv.genres?.forEach(g => gSet.add(g.name!)));
+    this.genres = Array.from(gSet).sort();
   }
 
+  openFilter(ev: Event) {
+    this.popoverEvent = ev; this.filterOpen = true;
+  }
+
+  toggleGenre(g: string) {
+    this.selectedGenres.has(g) ? this.selectedGenres.delete(g) : this.selectedGenres.add(g);
+  }
+
+  applyFilter() {
+    this.filterOpen = false;
+  }
+
+  clearFilter() {
+    this.selectedGenres.clear();
+    this.filterOpen = false;
+  }
+
+  /** returns TVs respecting active genre filter */
   getCurrentTv(): TvDetailModel[] {
-    return this.segment === 'watchlist' ? this.watchlist : this.watched;
+    const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
+    if (this.selectedGenres.size === 0) { return base; }
+
+    return base.filter(tv =>
+      tv.genres?.some(g => this.selectedGenres.has(g.name!))
+    );
   }
 
   goToSearch() {
@@ -144,18 +196,18 @@ segment: string = 'watchlist';
 
   async removeSelected() {
     const tvToRemove = this.getCurrentTv().filter(tv => this.selectedIds.has(tv.id!));
-    
-    if(this.segment === 'watchlist'){
+
+    if (this.segment === 'watchlist') {
       for (const tv of tvToRemove) {
         await this.storageService.removeFromWatchlist(tv.id!, false, true);
       }
     }
-    else{
+    else {
       for (const tv of tvToRemove) {
         await this.storageService.removeFromWatched(tv.id!, false, true);
       }
     }
-    
+
     this.clearSelection();
     this.loadTv();
   }

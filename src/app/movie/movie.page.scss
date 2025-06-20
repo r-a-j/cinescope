@@ -28,7 +28,6 @@
         }
 
         &.segment-button-checked {
-            // background: rgba(229, 9, 20, 0.15);
             background: rgba(var(--ion-color-primary-rgb), 0.15);
             color: var(--ion-color-primary);
             transform: scale(1.03);
@@ -72,7 +71,6 @@
     gap: 8px;
 }
 
-/* Optional: If you don't want anything in left yet, keep it empty but still reserve space */
 .left-slot::after {
     content: "";
 }
@@ -87,6 +85,28 @@
         z-index: 10;
         --size: 20px;
         pointer-events: auto;
-        /* Important: prevent click conflict */
     }
+}
+
+ion-popover ion-item:last-child {
+    justify-content: space-between;
+}
+
+ion-fab.fab-edit {
+    bottom: 72px;
+}
+
+ion-popover .popover-genre-item {
+    --padding-start: 16px;
+    --min-height: 44px;
+}
+
+ion-popover .popover-genre-item.active {
+    background: rgba(var(--ion-color-primary-rgb), 0.15);
+    color: var(--ion-color-primary);
+}
+
+ion-fab-button.fab-filter,
+ion-fab-button.fab-edit-btn {
+    --background: var(--ion-color-primary-shade);
 }

@@ -8,11 +8,15 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  IonCheckbox
+  IonCheckbox,
+  IonPopover,
+  IonList,
+  IonItem,
+  IonLabel
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { NavigationEnd, Router } from '@angular/router';
-import { add, bookmark, checkmarkDone, create } from 'ionicons/icons';
+import { bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -26,7 +30,14 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
   selector: 'app-movie',
   templateUrl: 'movie.page.html',
   styleUrls: ['movie.page.scss'],
-  imports: [IonCheckbox, IonButton, IonButtons,
+  imports: [
+    IonPopover,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonCheckbox,
+    IonButton,
+    IonButtons,
     FormsModule,
     CommonModule,
     IonIcon,
@@ -38,7 +49,7 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
     HeaderComponent],
 })
 export class MoviePage implements OnInit, OnDestroy {
-  segment: string = 'watchlist';
+  segment: 'watchlist' | 'watched' = 'watchlist';
   watchlist: MovieDetailModel[] = [];
   watched: MovieDetailModel[] = [];
 
@@ -47,12 +58,17 @@ export class MoviePage implements OnInit, OnDestroy {
 
   private routerSubscription!: Subscription;
 
+  filterOpen = false;
+  popoverEvent: any = null;
+  genres: string[] = [];
+  selectedGenres = new Set<string>();
+
   constructor(
     private router: Router,
     private storageService: StorageService,
     private tmdbService: TmdbSearchService
   ) {
-    addIcons({ add, create, bookmark, checkmarkDone });
+    addIcons({ trash, bookmark, checkmarkDone, options });
   }
 
   ngOnInit() {
@@ -95,6 +111,7 @@ export class MoviePage implements OnInit, OnDestroy {
           id: movieDetail?.id,
           title: movieDetail?.title,
           poster_path: movieDetail?.poster_path,
+          genres: movieDetail?.genres,
         };
 
         if (item.isWatched) {
@@ -108,10 +125,37 @@ export class MoviePage implements OnInit, OnDestroy {
     });
 
     await Promise.all(promises);
+
+    const gSet = new Set<string>();
+    [...this.watchlist, ...this.watched].forEach(m => m.genres?.forEach(g => gSet.add(g.name!)));
+    this.genres = Array.from(gSet).sort();
   }
 
+  openFilter(ev: Event) {
+    this.popoverEvent = ev;
+    this.filterOpen = true;
+  }
+
+  toggleGenre(g: string) {
+    this.selectedGenres.has(g) ? this.selectedGenres.delete(g) : this.selectedGenres.add(g);
+  }
+
+  applyFilter() { 
+    this.filterOpen = false; 
+  }
+
+  clearFilter() { 
+    this.selectedGenres.clear(); this.filterOpen = false; 
+  }
+  
   getCurrentMovies(): MovieDetailModel[] {
-    return this.segment === 'watchlist' ? this.watchlist : this.watched;
+    const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
+    
+    if (this.selectedGenres.size === 0) { 
+      return base; 
+    }
+
+    return base.filter(m => m.genres?.some(g => this.selectedGenres.has(g.name!)));
   }
 
   goToSearch() {
@@ -151,18 +195,18 @@ export class MoviePage implements OnInit, OnDestroy {
 
   async removeSelected() {
     const moviesToRemove = this.getCurrentMovies().filter(movie => this.selectedIds.has(movie.id!));
-    
-    if(this.segment === 'watchlist'){
+
+    if (this.segment === 'watchlist') {
       for (const movie of moviesToRemove) {
-        await this.storageService.removeFromWatchlist(movie.id!, true, false); // Assuming all are movies
+        await this.storageService.removeFromWatchlist(movie.id!, true, false);
       }
     }
-    else{
+    else {
       for (const movie of moviesToRemove) {
-        await this.storageService.removeFromWatched(movie.id!, true, false); // Assuming all are movies
+        await this.storageService.removeFromWatched(movie.id!, true, false);
       }
     }
-    
+
     this.clearSelection();
     this.loadMovies();
   }
