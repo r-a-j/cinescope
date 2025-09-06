@@ -17,7 +17,7 @@ import {
   IonButtons,
   IonIcon,
   IonHeader,
-  IonTitle
+  IonTitle,
 } from '@ionic/angular/standalone';
 import { Toast } from '@capacitor/toast';
 import { Clipboard } from '@capacitor/clipboard';
@@ -27,8 +27,9 @@ import { addIcons } from 'ionicons';
 import { arrowBackOutline } from 'ionicons/icons';
 import { StorageService } from 'src/services/storage.service';
 import { SettingModel } from 'src/models/setting.model';
-import { t } from '@angular/core/weak_ref.d-Bp6cSy-X';
+import { Filesystem } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 
 @Component({
   selector: 'app-setting',
@@ -53,7 +54,7 @@ import { Preferences } from '@capacitor/preferences';
     IonButton,
     IonContent,
     CommonModule,
-    FormsModule
+    FormsModule,
   ],
 })
 export class SettingPage implements OnInit {
@@ -62,20 +63,78 @@ export class SettingPage implements OnInit {
   invalidAttempts: number = 0;
   showGetNewKey: boolean = false;
 
-  constructor(private router: Router,
-    private storageService: StorageService,
-  ) {
+  constructor(private router: Router, private storageService: StorageService) {
     addIcons({ arrowBackOutline });
   }
 
   ngOnInit() {
-
     this.storageService.getSettings().then((settings: SettingModel | null) => {
       if (settings) {
         this.tmdbApiKey = settings.tmdbApiKey || '';
         this.allowAdultContent = settings.allowAdultContent || false;
       }
     });
+  }
+
+  // Create & share a backup file
+  async createBackup(): Promise<void> {
+    try {
+      const { fileName } = await this.storageService.exportBackupAndShare();
+      await this.showToast(`Backup created: ${fileName}`, 'short', 'bottom');
+    } catch (err) {
+      console.error(err);
+      await this.showToast('Backup failed', 'long', 'bottom');
+    }
+  }
+
+  // Pick a .json and restore (default: merge; hold "replace" behind a confirm)
+  async restoreBackup(): Promise<void> {
+    try {
+      // Let user choose any .json
+      const result = await FilePicker.pickFiles({
+        types: ['application/json'],
+        limit: 1,
+        readData: true, // returns base64; fine for small JSON backups
+      }); // :contentReference[oaicite:7]{index=7}
+
+      if (!result.files?.length) return;
+
+      const f = result.files[0];
+
+      // Obtain the text content (prefer base64 data if provided)
+      let jsonText: string;
+      if (f.data) {
+        // base64 -> UTF-8 string
+        jsonText = atob(f.data);
+      } else if (f.path) {
+        const r = await Filesystem.readFile({ path: f.path });
+        jsonText = typeof r.data === 'string' ? r.data : await r.data.text();
+      } else if (f.blob) {
+        jsonText = await (f.blob as Blob).text();
+      } else {
+        throw new Error('No file data');
+      }
+
+      // Ask user how to apply
+      const { value: replace } = await Dialog.confirm({
+        title: 'Restore Backup',
+        message: 'Replace existing lists & settings? (Cancel = Safe Merge)',
+      });
+
+      await this.storageService.restoreFromBackupJson(
+        jsonText,
+        replace ? 'replace' : 'merge'
+      );
+      await this.showToast(
+        `Backup restored (${replace ? 'replaced' : 'merged'})`,
+        'short',
+        'bottom'
+      );
+    } catch (err) {
+      if ((err as any)?.message?.includes('User cancelled')) return;
+      console.error(err);
+      await this.showToast('Restore failed', 'long', 'bottom');
+    }
   }
 
   // Navigate back to home (adjust the route as needed)
@@ -102,12 +161,15 @@ export class SettingPage implements OnInit {
   }
 
   async toggleAllowAdultContent(): Promise<void> {
-    console.log('Toggle requested. Current allowAdultContent:', this.allowAdultContent);
+    console.log(
+      'Toggle requested. Current allowAdultContent:',
+      this.allowAdultContent
+    );
 
     if (this.allowAdultContent) {
       const { value } = await Dialog.confirm({
         title: 'Age Confirmation',
-        message: 'Are you 18 or above? Only then can you enable adult content.'
+        message: 'Are you 18 or above? Only then can you enable adult content.',
       });
 
       if (!value) {
@@ -138,12 +200,12 @@ export class SettingPage implements OnInit {
     await this.storageService.saveSettings(content);
   }
 
-
   // Confirm before clearing the watchlist
   async confirmClearWatchlist(): Promise<void> {
     const { value } = await Dialog.confirm({
       title: 'Confirm Clear Watchlist',
-      message: 'Are you sure you want to clear the watchlist? This action cannot be undone.'
+      message:
+        'Are you sure you want to clear the watchlist? This action cannot be undone.',
     });
 
     if (value) {
@@ -155,7 +217,8 @@ export class SettingPage implements OnInit {
   async confirmClearWatchedList(): Promise<void> {
     const { value } = await Dialog.confirm({
       title: 'Confirm Clear Watched List',
-      message: 'Are you sure you want to clear the watched list? This action cannot be undone.'
+      message:
+        'Are you sure you want to clear the watched list? This action cannot be undone.',
     });
 
     if (value) {
@@ -164,17 +227,22 @@ export class SettingPage implements OnInit {
   }
 
   async clearWatchlist(): Promise<void> {
-    await Preferences.set({ key: 'watchlist_contents', value: JSON.stringify([]) });
+    await Preferences.set({
+      key: 'watchlist_contents',
+      value: JSON.stringify([]),
+    });
     this.storageService.emitStorageChanged();
     await this.showToast('Watchlist cleared!', 'short', 'bottom');
   }
 
   async clearWatchedList(): Promise<void> {
-    await Preferences.set({ key: 'watched_contents', value: JSON.stringify([]) });
+    await Preferences.set({
+      key: 'watched_contents',
+      value: JSON.stringify([]),
+    });
     this.storageService.emitStorageChanged();
     await this.showToast('Watched list cleared!', 'short', 'bottom');
   }
-
 
   isValidApiKey(key: string): boolean {
     if (!key || typeof key !== 'string') {
@@ -185,7 +253,7 @@ export class SettingPage implements OnInit {
       return false;
     }
     const jwtRegex = /^[A-Za-z0-9\-_]+$/;
-    if (!parts.every(part => jwtRegex.test(part))) {
+    if (!parts.every((part) => jwtRegex.test(part))) {
       return false;
     }
     try {
@@ -207,13 +275,13 @@ export class SettingPage implements OnInit {
 
   async showToast(
     message: string,
-    duration: "short" | "long",
-    position: "top" | "center" | "bottom"
+    duration: 'short' | 'long',
+    position: 'top' | 'center' | 'bottom'
   ) {
     await Toast.show({
       text: message,
       duration: duration,
-      position: position
+      position: position,
     });
   }
 
@@ -221,11 +289,11 @@ export class SettingPage implements OnInit {
     if (this.isValidApiKey(this.tmdbApiKey)) {
       const content: SettingModel = {
         tmdbApiKey: this.tmdbApiKey,
-        allowAdultContent: this.allowAdultContent
+        allowAdultContent: this.allowAdultContent,
       };
       this.storageService.saveSettings(content);
 
-      await this.showToast("Successfully saved", "short", 'bottom');
+      await this.showToast('Successfully saved', 'short', 'bottom');
 
       this.invalidAttempts = 0;
       this.showGetNewKey = false;
@@ -233,7 +301,7 @@ export class SettingPage implements OnInit {
       this.tmdbApiKey = '';
       this.invalidAttempts++;
 
-      await this.showToast("Invalid key", "long", "bottom");
+      await this.showToast('Invalid key', 'long', 'bottom');
 
       if (this.invalidAttempts >= 3) {
         this.showGetNewKey = true;
@@ -242,6 +310,9 @@ export class SettingPage implements OnInit {
   }
 
   goToTMDB() {
-    window.open('https://developer.themoviedb.org/reference/intro/getting-started', '_blank');
+    window.open(
+      'https://developer.themoviedb.org/reference/intro/getting-started',
+      '_blank'
+    );
   }
 }

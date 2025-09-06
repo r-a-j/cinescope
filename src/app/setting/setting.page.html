@@ -15,16 +15,30 @@
     </ion-card-header>
     <ion-card-content>
       <ion-item>
-        <ion-input type="text" [(ngModel)]="tmdbApiKey" placeholder="Enter your API key">
+        <ion-input
+          type="text"
+          [(ngModel)]="tmdbApiKey"
+          placeholder="Enter your API key"
+        >
         </ion-input>
-        <ion-button slot="end" fill="clear" size="small" (click)="pasteApiKey()">
+        <ion-button
+          slot="end"
+          fill="clear"
+          size="small"
+          (click)="pasteApiKey()"
+        >
           Paste
         </ion-button>
       </ion-item>
       <ion-button expand="block" (click)="saveApiKey()">
         Save API Key
       </ion-button>
-      <ion-button *ngIf="showGetNewKey" expand="block" color="danger" (click)="goToTMDB()">
+      <ion-button
+        *ngIf="showGetNewKey"
+        expand="block"
+        color="danger"
+        (click)="goToTMDB()"
+      >
         Get New API Key from TMDB
       </ion-button>
     </ion-card-content>
@@ -49,8 +63,29 @@
     <ion-card-content>
       <ion-item>
         <ion-label>Allow Adult Content</ion-label>
-        <ion-toggle [(ngModel)]="allowAdultContent" (ionChange)="toggleAllowAdultContent()"></ion-toggle>
+        <ion-toggle
+          [(ngModel)]="allowAdultContent"
+          (ionChange)="toggleAllowAdultContent()"
+        ></ion-toggle>
       </ion-item>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Backup & Restore</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="button-container">
+        <ion-button (click)="createBackup()">Create Backup</ion-button>
+        <ion-button color="medium" (click)="restoreBackup()"
+          >Restore Backup</ion-button
+        >
+      </div>
+      <ion-note>
+        Creates a portable JSON file with your watchlist, watched, and settings.
+        You can save it to Files/Drive/etc and restore later.
+      </ion-note>
     </ion-card-content>
   </ion-card>
 
@@ -67,11 +102,21 @@
         <ion-label>Developed By</ion-label>
         <ion-note slot="end">Raj Pawar</ion-note>
       </ion-item>
-      <ion-item button href="https://rajpawar.in" target="_blank" rel="noopener noreferrer">
+      <ion-item
+        button
+        href="https://rajpawar.in"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <ion-label>Website</ion-label>
         <ion-note slot="end">rajpawar.in</ion-note>
       </ion-item>
-      <ion-item button href="https://github.com/r-a-j/cine-scope" target="_blank" rel="noopener noreferrer">
+      <ion-item
+        button
+        href="https://github.com/r-a-j/cine-scope"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <ion-label>Source code</ion-label>
         <ion-note slot="end">Github - Cinescope</ion-note>
       </ion-item>
