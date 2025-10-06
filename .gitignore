@@ -71,3 +71,6 @@ Thumbs.db
 
 resources/android/**/*
 .vscode/
+
+**/android/app/release
+**/keystore
