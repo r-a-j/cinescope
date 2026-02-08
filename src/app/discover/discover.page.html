@@ -10,10 +10,21 @@
 </ion-toolbar>
 
 <ion-content class="ion-padding" fullscreen>
-  <div class="content-layer">
-    <app-discover-bollywood *ngIf="segmentValue === 'bollywood'"></app-discover-bollywood>
-    <app-discover-top-rated *ngIf="segmentValue === 'topRated'"></app-discover-top-rated>
-    <app-discover-trending *ngIf="segmentValue === 'trending'"></app-discover-trending>
-    <app-discover-actors *ngIf="segmentValue === 'actors'"></app-discover-actors>
+  <div class="content-layer animate__animated animate__fadeIn">
+    
+    <ng-container *ngFor="let section of currentSections">
+      <app-media-carousel
+        [title]="section.title"
+        [items]="section.items"
+        [viewAllRoute]="section.viewAllRoute || ''"
+        [type]="section.type === 'person' ? 'movie' : section.type"> <!-- fallback for person, or update carousel to handle person -->
+      </app-media-carousel>
+    </ng-container>
+
+    <!-- Empty State -->
+    <div *ngIf="currentSections.length === 0" class="empty-state">
+      <p>No content available for this category.</p>
+    </div>
+
   </div>
 </ion-content>

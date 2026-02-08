@@ -7,30 +7,33 @@ export const routes: Routes = [
   },
   {
     path: 'search',
-    loadComponent: () => import('./search/search.page').then( m => m.SearchPage)
+    loadComponent: () => import('./search/search.page').then(m => m.SearchPage)
   },
   {
     path: 'setting',
-    loadComponent: () => import('./setting/setting.page').then( m => m.SettingPage)
+    loadComponent: () => import('./setting/setting.page').then(m => m.SettingPage)
   },
   {
     path: 'top-rated-movies',
-    loadComponent: () => import('./top-rated-movies/top-rated-movies.page').then( m => m.TopRatedMoviesPage)
+    loadComponent: () => import('./pages/generic-discover/generic-discover.page').then(m => m.GenericDiscoverPage),
+    data: { title: 'Top Rated Movies', method: 'getTopRatedMovies', type: 'movie' }
   },
   {
     path: 'top-rated-tv',
-    loadComponent: () => import('./top-rated-tv/top-rated-tv.page').then( m => m.TopRatedTvPage)
+    loadComponent: () => import('./pages/generic-discover/generic-discover.page').then(m => m.GenericDiscoverPage),
+    data: { title: 'Top Rated TV', method: 'getTopRatedTV', type: 'tv' }
   },
   {
     path: 'movie-detail/:id',
-    loadComponent: () => import('./movie-detail/movie-detail.page').then( m => m.MovieDetailPage)
+    loadComponent: () => import('./movie-detail/movie-detail.page').then(m => m.MovieDetailPage)
   },
   {
     path: 'tv-detail/:id',
-    loadComponent: () => import('./tv-detail/tv-detail.page').then( m => m.TvDetailPage)
+    loadComponent: () => import('./tv-detail/tv-detail.page').then(m => m.TvDetailPage)
   },
   {
     path: 'bollywood-trending',
-    loadComponent: () => import('./bollywood-trending/bollywood-trending.page').then( m => m.BollywoodTrendingPage)
+    loadComponent: () => import('./pages/generic-discover/generic-discover.page').then(m => m.GenericDiscoverPage),
+    data: { title: 'Desi Trending', method: 'getTrendingBollywoodMovies', type: 'movie' }
   },
 ];

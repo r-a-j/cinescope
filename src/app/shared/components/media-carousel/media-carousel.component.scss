@@ -1,0 +1,43 @@
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    margin-top: 10px;
+
+    h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--ion-color-light); // Assuming dark mode or generic light color
+    }
+}
+
+.banner-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding: 0.5rem 16px; // Added horizontal padding logic
+    scroll-snap-type: x mandatory;
+    scroll-padding: 16px;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.banner-item {
+    flex: 0 0 auto;
+    width: 95px; // Standard width from original
+    min-width: 95px;
+    
+    img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        object-fit: cover;
+        aspect-ratio: 2/3;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+}

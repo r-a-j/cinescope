@@ -1,0 +1,31 @@
+<div class="movies-list">
+  <div class="movie-card" *ngFor="let item of items" (click)="navigateToDetail(item.id)">
+    <div class="movie-banner animate__animated animate__pulse animate__fast clip-shape">
+      <div class="banner-background" [style.backgroundImage]="item.backdrop_path 
+      ? 'url(https://image.tmdb.org/t/p/w500' + item.backdrop_path + ')' : 'url(assets/placeholder-backdrop.png)'">
+      </div>
+      <div class="banner-overlay">
+        <div class="movie-info">
+          <h2>{{ item.title || item.name }}</h2>
+          <p class="overview">{{ item.overview }}</p>
+          <div class="details">
+            <span class="vote">Rating: {{ item.vote_average | number:'1.1-1' }}</span>
+            <span class="release-date" *ngIf="item.release_date || item.first_air_date">
+                Release: {{ (item.release_date || item.first_air_date) | date:'MMM d, y' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Poster is placed outside the clipped banner -->
+    <div class="poster animate__animated animate__flipInX animate__fast">
+      <img
+        [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
+        [alt]="item.title || item.name" />
+    </div>
+  </div>
+</div>
+
+<ion-infinite-scroll threshold="100px" (ionInfinite)="onIonInfinite($event)">
+  <ion-infinite-scroll-content loadingSpinner="circles" loadingText="Loading more..."></ion-infinite-scroll-content>
+</ion-infinite-scroll>

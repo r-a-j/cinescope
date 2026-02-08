@@ -1,0 +1,20 @@
+<ion-header class="custom-blur-header">
+  <ion-toolbar>
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" (click)="goBack()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+  <app-media-list
+    [items]="items"
+    [type]="type"
+    (loadMore)="loadData($event)">
+  </app-media-list>
+</ion-content>

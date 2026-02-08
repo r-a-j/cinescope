@@ -1,0 +1,11 @@
+<div class="section-header" *ngIf="items.length > 0">
+  <h2>{{ title }}</h2>
+  <ion-button fill="clear" *ngIf="viewAllRoute" (click)="navigateToViewAll()">all</ion-button>
+</div>
+<div class="banner-scroll" *ngIf="items.length > 0">
+  <div class="banner-item animate__animated animate__flipInY animate__fast" *ngFor="let item of items"
+    (click)="navigateToDetail(item.id)">
+    <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+      alt="{{ item.title || item.name }}" />
+  </div>
+</div>

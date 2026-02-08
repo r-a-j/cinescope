@@ -1,0 +1,8 @@
+.custom-blur-header {
+    ion-toolbar {
+        --background: rgba(0, 0, 0, 0.8);
+        --backdrop-filter: blur(10px);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        color: white;
+    }
+}
