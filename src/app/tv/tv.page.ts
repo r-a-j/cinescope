@@ -64,27 +64,24 @@ export class TvPage implements OnInit, OnDestroy {
   genres: string[] = [];
   selectedGenres = new Set<string>();
 
+  storageSub!: Subscription;
+
   constructor(
     private router: Router,
-    private storageService: StorageService,
-    private tmdbService: TmdbSearchService
+    private storageService: StorageService
   ) {
     addIcons({ add, trash, bookmark, checkmarkDone, options });
   }
 
   ngOnInit() {
-    this.routerSubscription = this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        if (event.urlAfterRedirects.includes('tabs/tv')) {
-          console.log('Back on Tv Page');
-          this.loadTv();
-        }
-      });
+    this.storageSub = this.storageService.storageChanged$.subscribe(() => {
+      this.loadTv();
+    });
+    this.loadTv();
   }
 
   ngOnDestroy() {
-    this.routerSubscription?.unsubscribe();
+    this.storageSub?.unsubscribe();
   }
 
   async loadTv() {
@@ -96,36 +93,27 @@ export class TvPage implements OnInit, OnDestroy {
       this.storageService.getWatched()
     ]);
 
-    const uniqueWatchlistItems = Array.from(new Set(watchlistItems.map(item => item.contentId)))
-      .map(id => watchlistItems.find(item => item.contentId === id && item.isTv === true))
-      .filter((item): item is ContentModel => item !== undefined);
+    // Filter for TV
+    const tvWatchlist = watchlistItems.filter(item => item.isTv);
+    const tvWatched = watchedItems.filter(item => item.isTv);
 
-    const uniqueWatchedItems = Array.from(new Set(watchedItems.map(item => item.contentId)))
-      .map(id => watchedItems.find(item => item.contentId === id && item.isTv === true))
-      .filter((item): item is ContentModel => item !== undefined);
+    this.watchlist = tvWatchlist.map(item => ({
+      id: item.contentId,
+      name: item.name,
+      poster_path: item.poster_path,
+      genres: item.genres,
+      vote_average: item.vote_average,
+      first_air_date: item.first_air_date
+    }));
 
-    const promises = [...uniqueWatchlistItems, ...uniqueWatchedItems].map(async (item) => {
-      try {
-        const tvDetail = await firstValueFrom(this.tmdbService.getTvDetail(item.contentId));
-
-        const tvItem: TvDetailModel = {
-          id: tvDetail?.id!,
-          name: tvDetail?.name,
-          poster_path: tvDetail?.poster_path,
-          genres: tvDetail?.genres          
-        };
-
-        if (item.isWatched) {
-          this.watched.push(tvItem);
-        } else {
-          this.watchlist.push(tvItem);
-        }
-      } catch (error) {
-        console.error('Failed to fetch tv', item.contentId, error);
-      }
-    });
-
-    await Promise.all(promises);
+    this.watched = tvWatched.map(item => ({
+      id: item.contentId,
+      name: item.name,
+      poster_path: item.poster_path,
+      genres: item.genres,
+      vote_average: item.vote_average,
+      first_air_date: item.first_air_date
+    }));
 
     const gSet = new Set<string>();
     [...this.watchlist, ...this.watched].forEach(tv => tv.genres?.forEach(g => gSet.add(g.name!)));

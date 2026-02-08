@@ -1,125 +1,119 @@
-<ion-header>
+<ion-header class="ion-no-border">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button (click)="goHome()">
-        <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+        <ion-icon name="arrow-back-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
     <ion-title>Settings</ion-title>
   </ion-toolbar>
 </ion-header>
+
 <ion-content [fullscreen]="true">
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>TMDB API Key</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-item>
-        <ion-input
-          type="text"
-          [(ngModel)]="tmdbApiKey"
-          placeholder="Enter your API key"
-        >
-        </ion-input>
-        <ion-button
-          slot="end"
-          fill="clear"
-          size="small"
-          (click)="pasteApiKey()"
-        >
-          Paste
-        </ion-button>
-      </ion-item>
-      <ion-button expand="block" (click)="saveApiKey()">
-        Save API Key
-      </ion-button>
-      <ion-button
-        *ngIf="showGetNewKey"
-        expand="block"
-        color="danger"
-        (click)="goToTMDB()"
-      >
-        Get New API Key from TMDB
-      </ion-button>
-    </ion-card-content>
-  </ion-card>
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Settings</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Clear list</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="button-container">
-        <ion-button (click)="confirmClearWatchlist()">Watchlist</ion-button>
-        <ion-button (click)="confirmClearWatchedList()">Watched</ion-button>
-      </div>
-    </ion-card-content>
-  </ion-card>
+  <ion-list inset="true">
+    <ion-list-header>
+      <ion-label>Appearance</ion-label>
+    </ion-list-header>
+    <ion-item>
+      <ion-icon slot="start" name="contrast-outline" color="primary"></ion-icon>
+      <ion-select label="Theme" interface="popover" [value]="theme" (ionChange)="onThemeChange($event)">
+        <ion-select-option value="system">System Default</ion-select-option>
+        <ion-select-option value="light">Light Mode</ion-select-option>
+        <ion-select-option value="dark">Dark Mode</ion-select-option>
+      </ion-select>
+    </ion-item>
+  </ion-list>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Adult Content</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-item>
+  <ion-list inset="true">
+    <ion-list-header>
+      <ion-label>API Configuration</ion-label>
+    </ion-list-header>
+    <ion-item>
+      <ion-icon slot="start" name="key-outline" color="warning"></ion-icon>
+      <ion-input type="text" label="TMDB API Key" labelPlacement="stacked" [(ngModel)]="tmdbApiKey" placeholder="Enter Key"></ion-input>
+      <ion-button slot="end" fill="clear" (click)="pasteApiKey()">Paste</ion-button>
+    </ion-item>
+    <ion-item lines="none">
+      <ion-button expand="block" (click)="saveApiKey()" slot="end">Save Key</ion-button>
+      <ion-button *ngIf="showGetNewKey" color="danger" fill="outline" slot="end" (click)="openUrl('https://developer.themoviedb.org/reference/intro/getting-started')">Get Key</ion-button>
+    </ion-item>
+  </ion-list>
+
+  <ion-list inset="true">
+    <ion-list-header>
+      <ion-label>Content & Privacy</ion-label>
+    </ion-list-header>
+    <ion-item>
+      <ion-icon slot="start" name="shield-checkmark-outline" color="danger"></ion-icon>
+      <ion-toggle [(ngModel)]="allowAdultContent" (ionChange)="toggleAllowAdultContent()">
         <ion-label>Allow Adult Content</ion-label>
-        <ion-toggle
-          [(ngModel)]="allowAdultContent"
-          (ionChange)="toggleAllowAdultContent()"
-        ></ion-toggle>
-      </ion-item>
-    </ion-card-content>
-  </ion-card>
+        <ion-note color="medium" class="ion-text-wrap" style="display: block; font-size: 0.8em;">Requires 18+ confirmation</ion-note>
+      </ion-toggle>
+    </ion-item>
+  </ion-list>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Backup & Restore</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="button-container">
-        <ion-button (click)="createBackup()">Create Backup</ion-button>
-        <ion-button color="medium" (click)="restoreBackup()"
-          >Restore Backup</ion-button
-        >
-      </div>
-      <ion-note>
-        Creates a portable JSON file with your watchlist, watched, and settings.
-        You can save it to Files/Drive/etc and restore later.
-      </ion-note>
-    </ion-card-content>
-  </ion-card>
+  <ion-list inset="true">
+    <ion-list-header>
+      <ion-label>Data Management</ion-label>
+    </ion-list-header>
+    <ion-item button (click)="confirmClearWatchlist()">
+      <ion-icon slot="start" name="trash-outline"></ion-icon>
+      <ion-label>Clear Watchlist</ion-label>
+    </ion-item>
+    <ion-item button (click)="confirmClearWatchedList()">
+      <ion-icon slot="start" name="trash-outline"></ion-icon>
+      <ion-label>Clear Watched List</ion-label>
+    </ion-item>
+    <ion-item button (click)="confirmClearCache()">
+      <ion-icon slot="start" name="trash-outline"></ion-icon>
+      <ion-label>Clear Cache</ion-label>
+    </ion-item>
+    <ion-item button (click)="createBackup()">
+      <ion-icon slot="start" name="cloud-download-outline" color="secondary"></ion-icon>
+      <ion-label>Backup Data</ion-label>
+    </ion-item>
+    <ion-item button (click)="restoreBackup()" lines="none">
+      <ion-icon slot="start" name="cloud-upload-outline" color="secondary"></ion-icon>
+      <ion-label>Restore Data</ion-label>
+    </ion-item>
+  </ion-list>
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>About</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-item>
-        <ion-label>Version</ion-label>
-        <ion-note slot="end">2.0.0</ion-note>
-      </ion-item>
-      <ion-item>
-        <ion-label>Developed By</ion-label>
-        <ion-note slot="end">Raj Pawar</ion-note>
-      </ion-item>
-      <ion-item
-        button
-        href="https://rajpawar.in"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <ion-label>Website</ion-label>
-        <ion-note slot="end">rajpawar.in</ion-note>
-      </ion-item>
-      <ion-item
-        button
-        href="https://github.com/r-a-j/cine-scope"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <ion-label>Source code</ion-label>
-        <ion-note slot="end">Github - Cinescope</ion-note>
-      </ion-item>
-    </ion-card-content>
-  </ion-card>
+  <ion-list inset="true">
+    <ion-list-header>
+      <ion-label>About & Support</ion-label>
+    </ion-list-header>
+    <ion-item button (click)="openUrl('https://github.com/r-a-j/cine-scope')">
+      <ion-icon slot="start" name="logo-github"></ion-icon>
+      <ion-label>Source Code</ion-label>
+    </ion-item>
+    <ion-item button (click)="sendFeedback()">
+      <ion-icon slot="start" name="mail-outline"></ion-icon>
+      <ion-label>Send Feedback</ion-label>
+    </ion-item>
+    <ion-item button (click)="openUrl('https://rajpawar.in')">
+      <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+      <ion-label>Developer Website</ion-label>
+    </ion-item>
+    <ion-item lines="none">
+      <ion-label>Version</ion-label>
+      <ion-note slot="end">2.0.0</ion-note>
+    </ion-item>
+  </ion-list>
+
+  <div class="ion-padding ion-text-center">
+    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB Logo" style="width: 100px; opacity: 0.7;">
+    <p class="ion-text-small" style="color: var(--ion-color-medium); margin-top: 10px;">
+      This product uses the TMDB API but is not endorsed or certified by TMDB.
+    </p>
+    <ion-button fill="clear" size="small" (click)="openUrl('https://www.themoviedb.org/documentation/api/terms-of-use')">Terms of Use</ion-button>
+    <ion-button fill="clear" size="small" (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy Policy</ion-button>
+  </div>
+  
+  <br><br>
 </ion-content>

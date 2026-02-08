@@ -23,6 +23,7 @@
     "@angular/router": "^19.0.0",
     "@capacitor/android": "7.1.0",
     "@capacitor/app": "7.0.0",
+    "@capacitor/browser": "^8.0.0",
     "@capacitor/clipboard": "^7.0.1",
     "@capacitor/core": "7.1.0",
     "@capacitor/dialog": "^7.0.1",

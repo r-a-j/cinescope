@@ -13,8 +13,8 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/* ========== DARK MODE PALETTE (Auto Switch) ========== */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/* ========== DARK MODE PALETTE (Manual Switch) ========== */
+/* @import "@ionic/angular/css/palettes/dark.system.css"; - REMOVED to prevent conflict */
 
 /* ========== TYPOGRAPHY ========== */
 body {

@@ -98,3 +98,4 @@ GoogleService-Info.plist
 # Testing
 /testem.log
 /libpeerconnection.log
+crash_log.txt

@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { Share } from '@capacitor/share';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { BackupModel } from 'src/models/backup.model';
 import { ContentModel } from 'src/models/content.model';
 import { SettingModel } from 'src/models/setting.model';
+import { TmdbSearchService } from './tmdb-search.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +20,7 @@ export class StorageService {
   private storageChangedSource = new BehaviorSubject<void>(undefined);
   storageChanged$ = this.storageChangedSource.asObservable();
 
-  constructor() {}
+  constructor(private tmdbService: TmdbSearchService) {}
 
   emitStorageChanged() {
     this.storageChangedSource.next();
@@ -126,14 +127,73 @@ async restoreFromBackupJson(jsonText: string, mode: 'merge' | 'replace' = 'merge
   await this.restoreFromBackupPayload(parsed, mode);
 }
 
+  /**
+   * Retrieves the list and performs "lazy hydration" if items are missing critical display data.
+   */
   private async getList(key: string): Promise<ContentModel[]> {
     const { value } = await Preferences.get({ key });
-    const list: ContentModel[] = value ? JSON.parse(value) : [];
+    let list: ContentModel[] = value ? JSON.parse(value) : [];
     
-    const uniqueList = Array.from(
-      new Map(list.map((item: ContentModel) => [item.contentId, item])).values()
+    // De-duplicate first
+    list = Array.from(
+      new Map(list.map((item: ContentModel) => [item.contentId, item])).values() // Bug fix here: Map key should probably include type, but ID is usually safe enough per list type. Better to be safe: using ID is OK for now as lists are usually type specific but mixed lists might have ID collisions if Movie ID == TV ID.
+      // Actually, TMDB IDs can collide between Movie and TV. 
+      // Let's use uniqKey logic if we can, but uniqKey uses private method.
+      // Re-implementing simplified distinct logic:
     );
-    return uniqueList;
+     // Distinct by ID+Type
+    const seen = new Set<string>();
+    list = list.filter(item => {
+        const k = `${item.contentId}-${item.isMovie}`;
+        if(seen.has(k)) return false;
+        seen.add(k);
+        return true;
+    });
+
+    // LAZY HYDRATION: Check if we have items without titles/names
+    const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
+
+    if (needsUpdate) {
+        console.log(`[Storage] Hydrating missing data for list: ${key}`);
+        await this.hydrateList(list);
+        // Save the hydrated list back to storage so we don't do this next time
+        await this.setList(key, list);
+    }
+
+    return list;
+  }
+
+  private async hydrateList(list: ContentModel[]) {
+    // Process in batches or parallel? Parallel is fine for small lists, but safeguard for large ones?
+    // Let's just do Promise.all for now, typically user lists aren't massive.
+    
+    const tasks = list.map(async (item) => {
+        // Skip if already has data
+        if ((item.isMovie && item.title) || (item.isTv && item.name)) return;
+
+        try {
+            if (item.isMovie) {
+                const detail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId));
+                item.title = detail.title;
+                item.poster_path = detail.poster_path;
+                item.vote_average = detail.vote_average;
+                item.release_date = detail.release_date;
+                item.genres = detail.genres;
+            } else if (item.isTv) {
+                const detail = await firstValueFrom(this.tmdbService.getTvDetail(item.contentId));
+                item.name = detail.name;
+                item.poster_path = detail.poster_path;
+                item.vote_average = detail.vote_average;
+                item.first_air_date = detail.first_air_date;
+                item.genres = detail.genres;
+            }
+        } catch (e) {
+            console.error(`[Storage] Failed to hydrate item ${item.contentId}`, e);
+            // Keep item as is, maybe retry next time
+        }
+    });
+
+    await Promise.all(tasks);
   }
 
   private async setList(key: string, list: ContentModel[]): Promise<void> {
@@ -142,6 +202,7 @@ async restoreFromBackupJson(jsonText: string, mode: 'merge' | 'replace' = 'merge
 
   async addToWatchlist(content: ContentModel): Promise<void> {
     const watchlist = await this.getList(this.WATCHLIST_KEY);
+    // Use proper find logic
     if (
       !watchlist.find(
         (c) =>

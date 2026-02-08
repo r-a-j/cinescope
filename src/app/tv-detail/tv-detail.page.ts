@@ -14,12 +14,12 @@ import {
   NavController,
   ToastController,
   IonThumbnail,
-  IonCol, 
-  IonCard, 
-  IonRow, 
-  IonAccordionGroup, 
-  IonAccordion, 
-  IonItem 
+  IonCol,
+  IonCard,
+  IonRow,
+  IonAccordionGroup,
+  IonAccordion,
+  IonItem
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
@@ -61,7 +61,7 @@ import {
     CommonModule,
     FormsModule,
     IonThumbnail
-],
+  ],
 })
 export class TvDetailPage implements OnInit {
   bookmarkIcon: string = 'assets/bookmark-empty.png';
@@ -109,7 +109,7 @@ export class TvDetailPage implements OnInit {
   async loadTvDetail(id: number) {
     this.tmdbService.getTvDetail(id).subscribe({
       next: (data) => {
-        
+
         this.tvDetail = data;
         console.log(this.tvDetail);
         // Prefer trailer video
@@ -176,7 +176,12 @@ export class TvDetailPage implements OnInit {
         isMovie: false,
         isTv: true,
         isWatched: false,
-        isWatchlist: true
+        isWatchlist: true,
+        name: this.tvDetail.name,
+        poster_path: this.tvDetail.poster_path,
+        vote_average: this.tvDetail.vote_average,
+        first_air_date: this.tvDetail.first_air_date,
+        genres: this.tvDetail.genres
       };
       await this.storageService.addToWatchlist(content);
       this.isInWatchlist = true;
@@ -199,7 +204,12 @@ export class TvDetailPage implements OnInit {
         isMovie: false,
         isTv: true,
         isWatched: false,
-        isWatchlist: true
+        isWatchlist: true,
+        name: this.tvDetail.name,
+        poster_path: this.tvDetail.poster_path,
+        vote_average: this.tvDetail.vote_average,
+        first_air_date: this.tvDetail.first_air_date,
+        genres: this.tvDetail.genres
       };
 
       // Check if the tv is already in the watchlist before adding it

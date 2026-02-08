@@ -3,23 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   IonContent,
-  IonIcon, 
-  IonButton, 
-  IonChip, 
-  IonHeader, 
-  IonToolbar, 
-  IonButtons, 
+  IonIcon,
+  IonButton,
+  IonChip,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
   IonTitle,
-  NavController, IonLabel } from '@ionic/angular/standalone';
+  NavController, IonLabel
+} from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { 
-  bookmark, 
-  star, 
-  calendarOutline, 
-  timeOutline, 
-  close, 
-  arrowBackOutline 
+import {
+  bookmark,
+  star,
+  calendarOutline,
+  timeOutline,
+  close,
+  arrowBackOutline
 } from 'ionicons/icons';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
@@ -35,17 +36,17 @@ import { IonThumbnail } from '@ionic/angular/standalone';
   templateUrl: './movie-detail.page.html',
   styleUrls: ['./movie-detail.page.scss'],
   standalone: true,
-  imports: [IonLabel, 
-    IonTitle, 
-    IonButtons, 
-    IonToolbar, 
+  imports: [IonLabel,
+    IonTitle,
+    IonButtons,
+    IonToolbar,
     IonHeader,
     IonChip,
     IonButton,
     IonIcon,
     IonContent,
     CommonModule,
-    FormsModule, 
+    FormsModule,
     NumberSuffixPipe,
     IonThumbnail,
   ],
@@ -69,7 +70,7 @@ export class MovieDetailPage implements OnInit {
     private storageService: StorageService,
     private sanitizer: DomSanitizer,
     private toastController: ToastController,
-    private navCtrl: NavController    
+    private navCtrl: NavController
   ) {
     addIcons({
       arrowBackOutline,
@@ -121,14 +122,14 @@ export class MovieDetailPage implements OnInit {
 
   async refreshBookmarkState() {
     if (!this.movieId) return;
-  
+
     const id = +this.movieId!;
     const watchlist = await this.storageService.getWatchlist();
     const watched = await this.storageService.getWatched();
-  
+
     this.isInWatchlist = !!watchlist.find(c => c.contentId === id && c.isMovie);
     this.isInWatched = !!watched.find(c => c.contentId === id && c.isMovie);
-  
+
     if (this.isInWatched) {
       this.bookmarkIcon = 'assets/bookmark-watched.png';
     } else if (this.isInWatchlist) {
@@ -140,15 +141,15 @@ export class MovieDetailPage implements OnInit {
 
   async toggleBookmarkState() {
     if (!this.movieDetail) return;
-  
+
     const id = this.movieDetail.id!;
-  
+
     if (this.isInWatched) {
       // Currently watched → remove it from watched
       await this.storageService.removeFromWatched(id, true, false);
       this.isInWatched = false;
       this.isInWatchlist = false;
-    } 
+    }
     else if (this.isInWatchlist) {
       // Currently in watchlist → move it to watched
       await this.storageService.moveFromWatchlistToWatched(id, true, false);
@@ -162,16 +163,21 @@ export class MovieDetailPage implements OnInit {
         isMovie: true,
         isTv: false,
         isWatched: false,
-        isWatchlist: true
+        isWatchlist: true,
+        title: this.movieDetail.title,
+        poster_path: this.movieDetail.poster_path,
+        vote_average: this.movieDetail.vote_average,
+        release_date: this.movieDetail.release_date,
+        genres: this.movieDetail.genres
       };
       await this.storageService.addToWatchlist(content);
       this.isInWatchlist = true;
       this.isInWatched = false;
     }
-  
+
     this.refreshBookmarkState(); // Refresh icon
     this.storageService.emitStorageChanged();
-  }  
+  }
 
   async toggleWatchlist() {
     if (!this.movieDetail) return;
@@ -185,7 +191,12 @@ export class MovieDetailPage implements OnInit {
         isMovie: true,
         isTv: false,
         isWatched: false,
-        isWatchlist: true
+        isWatchlist: true,
+        title: this.movieDetail.title,
+        poster_path: this.movieDetail.poster_path,
+        vote_average: this.movieDetail.vote_average,
+        release_date: this.movieDetail.release_date,
+        genres: this.movieDetail.genres
       };
 
       // Check if the movie is already in the watchlist before adding it

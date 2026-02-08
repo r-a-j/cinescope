@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { MovieSearchModel } from 'src/models/movie/movie-search.model';
 import { TvSearchModel } from 'src/models/tv/tv-search.model';
 import { MovieUpcomingModel } from 'src/models/movie/movie-upcoming.model';
@@ -11,17 +11,42 @@ import { PersonModel } from 'src/models/person.model';
 import { MovieTopRatedModel } from 'src/models/movie/movie-top-rated.model';
 import { TvTopRatedModelRoot } from 'src/models/tv/tv-top-rated.model';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
+import { CacheService } from './cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class TmdbSearchService {
     private BASE_URL = 'https://api.themoviedb.org/3';
 
-    constructor(private http: HttpClient) { }
+    constructor(
+        private http: HttpClient,
+        private cacheService: CacheService
+    ) { }
 
     /** Handle API errors */
     private handleError(error: any) {
         console.error('TMDB API Error:', error);
         return throwError(() => new Error('Something went wrong with the TMDB API.'));
+    }
+
+    /** Helper to check cache or fetch */
+    private getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number): Observable<T> {
+        return new Observable<T>(observer => {
+            this.cacheService.get(key).then(cached => {
+                if (cached) {
+                    observer.next(cached);
+                    observer.complete();
+                } else {
+                    fetch$.subscribe({
+                        next: (data) => {
+                            this.cacheService.set(key, data, ttl);
+                            observer.next(data);
+                            observer.complete();
+                        },
+                        error: (err) => observer.error(err)
+                    });
+                }
+            });
+        });
     }
 
     /** Search Movies */
@@ -52,20 +77,23 @@ export class TmdbSearchService {
 
     /** Generic Trending Movies */
     getTrendingMovies(page: number = 1): Observable<MovieSearchModel> {
-        return this.http.get<MovieSearchModel>(`${this.BASE_URL}/trending/movie/week`, {
+        const key = `trending_movie_${page}`;
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/trending/movie/week`, {
             params: new HttpParams().set('page', page).set('language', 'en-US')
-        }).pipe(catchError(this.handleError));
+        }).pipe(catchError(this.handleError)));
     }
 
     /** Generic Trending TV */
     getTrendingTv(page: number = 1): Observable<TvSearchModel> {
-        return this.http.get<TvSearchModel>(`${this.BASE_URL}/trending/tv/week`, {
+        const key = `trending_tv_${page}`;
+        return this.getWithCache(key, this.http.get<TvSearchModel>(`${this.BASE_URL}/trending/tv/week`, {
             params: new HttpParams().set('page', page).set('language', 'en-US')
-        }).pipe(catchError(this.handleError));
+        }).pipe(catchError(this.handleError)));
     }
 
     /** Trending Bollywood Movies */
     getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
+        const key = `trending_bollywood_${page}`;
         const discoveryUrl = `${this.BASE_URL}/discover/movie`;
         const apiParams = new HttpParams()
             .set('include_video', 'true')
@@ -76,12 +104,13 @@ export class TmdbSearchService {
             .set('with_original_language', 'hi')
             .set('page', page);
 
-        return this.http.get<MovieSearchModel>(discoveryUrl, { params: apiParams })
-            .pipe(catchError(this.handleError));
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(discoveryUrl, { params: apiParams })
+            .pipe(catchError(this.handleError)));
     }
 
     /** Get Upcoming Movies */
     getUpcomingMovies(page: number = 1): Observable<MovieUpcomingModel> {
+        const key = `upcoming_movies_${page}`;
         const today = new Date();
         const minDate = today.toISOString().split('T')[0];
         const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate()).toISOString().split('T')[0];
@@ -98,50 +127,57 @@ export class TmdbSearchService {
 
         const upcomingUrl = buildDiscoverMovieUrl(this.BASE_URL, dynamicParams);
 
-        return this.http.get<MovieUpcomingModel>(upcomingUrl)
-            .pipe(catchError(this.handleError));
+        return this.getWithCache(key, this.http.get<MovieUpcomingModel>(upcomingUrl)
+            .pipe(catchError(this.handleError)));
     }
 
     /** Movie Details */
     getMovieDetail(movieId: number): Observable<MovieDetailModel> {
+        const key = `movie_detail_${movieId}`;
         const params = new HttpParams()
             .set('append_to_response', 'videos,recommendations,similar')
             .set('language', 'en-US');
 
-        return this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, { params })
-            .pipe(catchError(this.handleError));
+        // Cache details for 24 hours (86400000 ms)
+        return this.getWithCache(key, this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, { params })
+            .pipe(catchError(this.handleError)), 86400000);
     }
 
     getTvDetail(tvId: number): Observable<TvDetailModel> {
+        const key = `tv_detail_${tvId}`;
         const params = new HttpParams()
             .set('append_to_response', 'videos,recommendations,similar')
             .set('language', 'en-US');
 
-        return this.http.get<TvDetailModel>(`${this.BASE_URL}/tv/${tvId}`, { params })
-            .pipe(catchError(this.handleError));
+        // Cache details for 24 hours
+        return this.getWithCache(key, this.http.get<TvDetailModel>(`${this.BASE_URL}/tv/${tvId}`, { params })
+            .pipe(catchError(this.handleError)), 86400000);
     }
 
     getPopularPersons(page = 1): Observable<PersonModel> {
-        return this.http.get<PersonModel>(`${this.BASE_URL}/person/popular`, {
+        const key = `popular_persons_${page}`;
+        return this.getWithCache(key, this.http.get<PersonModel>(`${this.BASE_URL}/person/popular`, {
             params: new HttpParams()
                 .set('language', 'en-US')
                 .set('page', page)
-        }).pipe(catchError(this.handleError));
+        }).pipe(catchError(this.handleError)));
     }
 
     getTopRatedMovies(page: number = 1): Observable<MovieTopRatedModel> {
-        return this.http.get<MovieTopRatedModel>(`${this.BASE_URL}/movie/top_rated`, {
+        const key = `top_rated_movies_${page}`;
+        return this.getWithCache(key, this.http.get<MovieTopRatedModel>(`${this.BASE_URL}/movie/top_rated`, {
             params: new HttpParams()
                 .set('language', 'en-US')
                 .set('page', page)
-        }).pipe(catchError(this.handleError));
+        }).pipe(catchError(this.handleError)));
     }
 
     getTopRatedTV(page: number = 1): Observable<TvTopRatedModelRoot> {
-        return this.http.get<TvTopRatedModelRoot>(`${this.BASE_URL}/tv/top_rated`, {
+        const key = `top_rated_tv_${page}`;
+        return this.getWithCache(key, this.http.get<TvTopRatedModelRoot>(`${this.BASE_URL}/tv/top_rated`, {
             params: new HttpParams()
                 .set('language', 'en-US')
                 .set('page', page)
-        }).pipe(catchError(this.handleError));
+        }).pipe(catchError(this.handleError)));
     }
 }

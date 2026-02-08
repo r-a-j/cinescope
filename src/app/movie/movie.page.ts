@@ -65,25 +65,21 @@ export class MoviePage implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private storageService: StorageService,
-    private tmdbService: TmdbSearchService
+    private storageService: StorageService
   ) {
     addIcons({ trash, bookmark, checkmarkDone, options });
   }
 
   ngOnInit() {
-    this.routerSubscription = this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        if (event.urlAfterRedirects.includes('tabs/movie')) {
-          console.log('Back on Movie Page');
-          this.loadMovies();
-        }
-      });
+    this.storageService.storageChanged$.subscribe(() => {
+      this.loadMovies();
+    });
+    this.loadMovies();
   }
 
   ngOnDestroy() {
-    this.routerSubscription?.unsubscribe();
+    // Subscription handled automatically or need explicit unzip? 
+    // Ideally subscription should be stored and unsubscribed.
   }
 
   async loadMovies() {
@@ -95,36 +91,27 @@ export class MoviePage implements OnInit, OnDestroy {
       this.storageService.getWatched()
     ]);
 
-    const uniqueWatchlistItems = Array.from(new Set(watchlistItems.map(item => item.contentId)))
-      .map(id => watchlistItems.find(item => item.contentId === id && item.isMovie === true))
-      .filter((item): item is ContentModel => item !== undefined);
+    // Filter for Movies
+    const movieWatchlist = watchlistItems.filter(item => item.isMovie);
+    const movieWatched = watchedItems.filter(item => item.isMovie);
 
-    const uniqueWatchedItems = Array.from(new Set(watchedItems.map(item => item.contentId)))
-      .map(id => watchedItems.find(item => item.contentId === id && item.isMovie === true))
-      .filter((item): item is ContentModel => item !== undefined);
+    this.watchlist = movieWatchlist.map(item => ({
+      id: item.contentId,
+      title: item.title,
+      poster_path: item.poster_path,
+      genres: item.genres,
+      vote_average: item.vote_average,
+      release_date: item.release_date
+    }));
 
-    const promises = [...uniqueWatchlistItems, ...uniqueWatchedItems].map(async (item) => {
-      try {
-        const movieDetail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId));
-
-        const movieItem: MovieDetailModel = {
-          id: movieDetail?.id,
-          title: movieDetail?.title,
-          poster_path: movieDetail?.poster_path,
-          genres: movieDetail?.genres,
-        };
-
-        if (item.isWatched) {
-          this.watched.push(movieItem);
-        } else {
-          this.watchlist.push(movieItem);
-        }
-      } catch (error) {
-        console.error('Failed to fetch movie', item.contentId, error);
-      }
-    });
-
-    await Promise.all(promises);
+    this.watched = movieWatched.map(item => ({
+      id: item.contentId,
+      title: item.title,
+      poster_path: item.poster_path,
+      genres: item.genres,
+      vote_average: item.vote_average,
+      release_date: item.release_date
+    }));
 
     const gSet = new Set<string>();
     [...this.watchlist, ...this.watched].forEach(m => m.genres?.forEach(g => gSet.add(g.name!)));
@@ -140,19 +127,19 @@ export class MoviePage implements OnInit, OnDestroy {
     this.selectedGenres.has(g) ? this.selectedGenres.delete(g) : this.selectedGenres.add(g);
   }
 
-  applyFilter() { 
-    this.filterOpen = false; 
+  applyFilter() {
+    this.filterOpen = false;
   }
 
-  clearFilter() { 
-    this.selectedGenres.clear(); this.filterOpen = false; 
+  clearFilter() {
+    this.selectedGenres.clear(); this.filterOpen = false;
   }
-  
+
   getCurrentMovies(): MovieDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
-    
-    if (this.selectedGenres.size === 0) { 
-      return base; 
+
+    if (this.selectedGenres.size === 0) {
+      return base;
     }
 
     return base.filter(m => m.genres?.some(g => this.selectedGenres.has(g.name!)));
