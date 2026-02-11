@@ -1,12 +1,22 @@
 <app-header></app-header>
 
 <ion-toolbar class="slick-toolbar">
-  <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)" class="slick-segment">
+  <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)" class="slick-segment" scrollable="true">
     <ion-segment-button value="bollywood"><ion-label>Bollywood</ion-label></ion-segment-button>
+    <ion-segment-button value="desi"><ion-label>Desi Hub</ion-label></ion-segment-button>
     <ion-segment-button value="topRated"><ion-label>Top Rated</ion-label></ion-segment-button>
     <ion-segment-button value="trending"><ion-label>Trending</ion-label></ion-segment-button>
     <ion-segment-button value="actors"><ion-label>Actors</ion-label></ion-segment-button>
   </ion-segment>
+
+  <!-- Language Filters for Desi Hub -->
+  <div class="filter-chips-container" *ngIf="segmentValue === 'desi'">
+    <ion-chip *ngFor="let lang of languageChips" 
+              [class.selected]="selectedLanguage === lang.value"
+              (click)="languageChanged(lang.value)">
+      <ion-label>{{ lang.label }}</ion-label>
+    </ion-chip>
+  </div>
 </ion-toolbar>
 
 <ion-content class="ion-padding" fullscreen>

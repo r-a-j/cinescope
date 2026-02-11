@@ -109,6 +109,53 @@ export class TmdbSearchService {
             .pipe(catchError(this.handleError)));
     }
 
+    // --- Desi Hub Methods ---
+
+    getTrendingIndia(page = 1): Observable<MovieSearchModel> {
+        const key = `trending_india_v2_${page}`;
+        // Using discover to force Indian content sorting by popularity
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
+            params: new HttpParams()
+                .set('language', 'en-US')
+                .set('region', 'IN')
+                .set('sort_by', 'popularity.desc')
+                .set('with_origin_country', 'IN') // Crucial for Indian content
+                .set('page', page)
+        }).pipe(catchError(this.handleError)));
+    }
+
+    getIndianTheatrical(page = 1): Observable<MovieSearchModel> {
+        const key = `indian_theatrical_v2_${page}`;
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/movie/now_playing`, {
+            params: new HttpParams()
+                .set('language', 'en-US')
+                .set('region', 'IN')
+                .set('with_release_type', '3|2') // Theatrical
+                .set('page', page)
+        }).pipe(catchError(this.handleError)));
+    }
+
+    getDiscoverIndian(page = 1, languageISO: string = 'hi'): Observable<MovieSearchModel> {
+        const key = `discover_indian_v2_${languageISO}_${page}`;
+        let params = new HttpParams()
+            .set('language', 'en-US')
+            .set('region', 'IN')
+            .set('sort_by', 'popularity.desc')
+            .set('page', page);
+
+        if (languageISO === 'all') {
+            params = params.set('with_origin_country', 'IN');
+        } else {
+            params = params.set('with_original_language', languageISO);
+            // Optionally filter by India region release too if needed, but language is usually enough
+            // params = params.set('region', 'IN');
+        }
+
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
+            params: params
+        }).pipe(catchError(this.handleError)));
+    }
+
     /** Get Upcoming Movies */
     getUpcomingMovies(page: number = 1): Observable<MovieUpcomingModel> {
         const key = `upcoming_movies_${page}`;
