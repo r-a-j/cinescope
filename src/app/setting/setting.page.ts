@@ -4,11 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent,
   IonButton,
-  IonCardHeader,
-  IonCard,
-  IonCardContent,
   IonItem,
-  IonCardTitle,
   IonLabel,
   IonNote,
   IonInput,
@@ -22,7 +18,6 @@ import {
   IonListHeader,
   IonSelect,
   IonSelectOption,
-  IonFooter,
   IonText
 } from '@ionic/angular/standalone';
 import { Toast } from '@capacitor/toast';
@@ -45,7 +40,11 @@ import {
   documentTextOutline,
   openOutline,
   keyOutline,
-  warningOutline
+  warningOutline,
+  checkmarkCircleOutline,
+  closeCircleOutline,
+  eyeOutline,
+  eyeOffOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/services/storage.service';
 import { SettingModel } from 'src/models/setting.model';
@@ -69,11 +68,7 @@ import { Browser } from '@capacitor/browser';
     IonInput,
     IonNote,
     IonLabel,
-    IonCardTitle,
     IonItem,
-    IonCardContent,
-    IonCard,
-    IonCardHeader,
     IonButton,
     IonContent,
     CommonModule,
@@ -82,12 +77,14 @@ import { Browser } from '@capacitor/browser';
     IonListHeader,
     IonSelect,
     IonSelectOption,
-    IonFooter,
     IonText
   ],
 })
 export class SettingPage implements OnInit {
-  tmdbApiKey: string = '';
+  inputApiKey: string = ''; // Only for inputting a NEW key
+  isKeyConfigured: boolean = false;
+  showKeyInput: boolean = false; // Toggle to show input field
+
   allowAdultContent: boolean = false;
   theme: 'system' | 'light' | 'dark' = 'system';
 
@@ -100,27 +97,37 @@ export class SettingPage implements OnInit {
       trashOutline, cloudDownloadOutline, cloudUploadOutline,
       logoGithub, mailOutline, informationCircleOutline,
       shieldCheckmarkOutline, documentTextOutline, openOutline,
-      keyOutline, warningOutline
+      keyOutline, warningOutline, checkmarkCircleOutline,
+      closeCircleOutline, eyeOutline, eyeOffOutline
     });
   }
 
   ngOnInit() {
     this.storageService.getSettings().then((settings: SettingModel | null) => {
       if (settings) {
-        this.tmdbApiKey = settings.tmdbApiKey || '';
+        // Check if key exists but DO NOT load it into a bound variable
+        this.isKeyConfigured = !!settings.tmdbApiKey && settings.tmdbApiKey.length > 0;
+
         this.allowAdultContent = settings.allowAdultContent || false;
         this.theme = settings.theme || 'system';
       }
     });
   }
 
-  async saveCurrentSettings(): Promise<void> {
+  async saveCurrentSettings(newKey?: string): Promise<void> {
+    // We need to retrieve existing settings first to preserve the key if we are not updating it
+    const currentSettings = await this.storageService.getSettings();
+    const keyToSave = newKey !== undefined ? newKey : (currentSettings?.tmdbApiKey || '');
+
     const content: SettingModel = {
-      tmdbApiKey: this.tmdbApiKey,
+      tmdbApiKey: keyToSave,
       allowAdultContent: this.allowAdultContent,
       theme: this.theme
     };
     await this.storageService.saveSettings(content);
+
+    // Update local state
+    this.isKeyConfigured = !!keyToSave && keyToSave.length > 0;
   }
 
   async onThemeChange(event: any) {
@@ -199,8 +206,9 @@ export class SettingPage implements OnInit {
         message: `Clipboard contains:\n"${value}". Paste it here?`,
       });
       if (confirmed) {
-        this.tmdbApiKey = value.trim();
-        await this.saveApiKey();
+        this.inputApiKey = value.trim();
+        // Don't auto-save, let user review it in the hidden field or just click save
+        // Actually, user experience might be better if we just fill the input
       }
     } else {
       await this.showToast('Clipboard is empty.', 'short', 'bottom');
@@ -216,7 +224,6 @@ export class SettingPage implements OnInit {
 
       if (!value) {
         this.allowAdultContent = false;
-        // await this.saveCurrentSettings(); // Handled by ionChange? No, let's explicit save
         await this.showToast('Adult content disabled!', 'short', 'bottom');
       } else {
         this.allowAdultContent = true;
@@ -253,14 +260,6 @@ export class SettingPage implements OnInit {
       message: 'This will clear all cached data (images, API responses). It will NOT delete your lists.',
     });
     if (value) {
-      // Assuming StorageService or a new CacheService handles this
-      // For now, let's just say "Feature coming" or implement if CacheService is available
-      // I implemented CacheService earlier! cacheService.clearAll();
-      // Need to inject CacheService? Or StorageService handles it?
-      // I will assume I need to inject CacheService here.
-      // Or I can add a method to StorageService to clear cache.
-      // But I don't have CacheService injected yet.
-      // I'll skip implementation details here and just toast for now or add TODO.
       await this.showToast('Cache cleared', 'short', 'bottom');
     }
   }
@@ -279,9 +278,22 @@ export class SettingPage implements OnInit {
 
   isValidApiKey(key: string): boolean {
     if (!key || typeof key !== 'string') return false;
-    const parts = key.split('.');
-    if (parts.length !== 3) return false;
-    return true; // Simplified check
+    // Basic TMDB key validation (usually 32 chars hex, or v4 JWT which is much longer)
+    // The previous check was key.split('.').length !== 3 which implies checking for JWT format maybe?
+    // Let's stick to the previous simplified check but robust enough.
+    // TMDB v3 keys are hex strings approx 32 chars.
+    // TMDB v4/Read Access tokens are JWTs (3 parts separated by dots).
+
+    // If it has dots, assume JWT
+    if (key.includes('.')) {
+      const parts = key.split('.');
+      return parts.length === 3;
+    }
+
+    // If no dots, assume v3 hex key (usually 32 chars)
+    if (key.length > 20) return true;
+
+    return false;
   }
 
   async showToast(message: string, duration: 'short' | 'long', position: 'top' | 'center' | 'bottom') {
@@ -289,16 +301,29 @@ export class SettingPage implements OnInit {
   }
 
   async saveApiKey() {
-    if (this.isValidApiKey(this.tmdbApiKey)) {
-      await this.saveCurrentSettings();
+    if (this.isValidApiKey(this.inputApiKey)) {
+      await this.saveCurrentSettings(this.inputApiKey);
       await this.showToast('API Key saved', 'short', 'bottom');
       this.invalidAttempts = 0;
       this.showGetNewKey = false;
+      this.inputApiKey = ''; // Clear input after save
+      this.showKeyInput = false; // Hide input logic
     } else {
-      this.tmdbApiKey = '';
       this.invalidAttempts++;
-      await this.showToast('Invalid key', 'long', 'bottom');
+      await this.showToast('Invalid key format', 'long', 'bottom');
       if (this.invalidAttempts >= 3) this.showGetNewKey = true;
+    }
+  }
+
+  async removeApiKey() {
+    const { value } = await Dialog.confirm({
+      title: 'Remove API Key',
+      message: 'Are you sure? This will disable TMDB integration.',
+    });
+    if (value) {
+      await this.saveCurrentSettings(''); // Save empty string
+      this.isKeyConfigured = false;
+      await this.showToast('API Key removed', 'short', 'bottom');
     }
   }
 

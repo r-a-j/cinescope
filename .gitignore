@@ -99,3 +99,6 @@ GoogleService-Info.plist
 /testem.log
 /libpeerconnection.log
 crash_log.txt
+
+# Local Helper Scripts
+connect-phone.ps1
