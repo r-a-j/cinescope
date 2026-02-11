@@ -4,8 +4,14 @@
 </div>
 <div class="banner-scroll" *ngIf="items.length > 0">
   <div class="banner-item animate__animated animate__flipInY animate__fast" *ngFor="let item of items"
-    (click)="navigateToDetail(item.id)">
-    <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
-      alt="{{ item.title || item.name }}" />
+    (click)="navigateToDetail(item)">
+    <ng-container *ngIf="type === 'person'; else mediaImage">
+        <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w300' + item.profile_path : 'assets/placeholder-user.png'"
+            alt="{{ item.name }}" class="poster-image" />
+    </ng-container>
+    <ng-template #mediaImage>
+        <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w300' + item.poster_path : 'assets/placeholder.png'"
+            alt="{{ item.title || item.name }}" class="poster-image" />
+    </ng-template>
   </div>
 </div>

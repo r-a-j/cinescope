@@ -53,7 +53,7 @@ export class DiscoverPage implements OnInit {
   ];
 
   actorSections: DiscoverSection[] = [
-    { title: 'Popular Actors', method: 'getPopularPersons', type: 'movie', items: [] } // Type movie used for route but might need adjustment
+    { title: 'Popular Actors', method: 'getPopularPersons', type: 'person', items: [] }
   ];
 
   constructor(private tmdbService: TmdbSearchService) { }

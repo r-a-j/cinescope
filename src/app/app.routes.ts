@@ -35,5 +35,9 @@ export const routes: Routes = [
     path: 'bollywood-trending',
     loadComponent: () => import('./pages/generic-discover/generic-discover.page').then(m => m.GenericDiscoverPage),
     data: { title: 'Desi Trending', method: 'getTrendingBollywoodMovies', type: 'movie' }
+  }, {
+    path: 'person-detail/:id',
+    loadComponent: () => import('./pages/person-detail/person-detail.page').then(m => m.PersonDetailPage)
   },
+
 ];

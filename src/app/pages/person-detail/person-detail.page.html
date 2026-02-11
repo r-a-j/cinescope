@@ -1,0 +1,100 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/discover"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ person?.name || 'Actor Details' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  
+  <div class="loading-container" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <div class="error-container" *ngIf="error && !isLoading">
+    <p>Could not load actor details.</p>
+  </div>
+
+  <div class="content-container animate__animated animate__fadeIn" *ngIf="!isLoading && person">
+    
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-image-container">
+        <img [src]="person.profile_path ? 'https://image.tmdb.org/t/p/w300' + person.profile_path : 'assets/placeholder-user.png'" 
+             alt="{{ person.name }}" 
+             class="profile-image" />
+        
+        <!-- Social Links -->
+        <div class="social-links" *ngIf="person.external_ids">
+            <ion-icon name="logo-instagram" *ngIf="person.external_ids.instagram_id" (click)="openExternal('https://instagram.com/' + person.external_ids.instagram_id)"></ion-icon>
+            <ion-icon name="logo-twitter" *ngIf="person.external_ids.twitter_id" (click)="openExternal('https://twitter.com/' + person.external_ids.twitter_id)"></ion-icon>
+            <ion-icon name="logo-facebook" *ngIf="person.external_ids.facebook_id" (click)="openExternal('https://facebook.com/' + person.external_ids.facebook_id)"></ion-icon>
+            <ion-icon name="globe-outline" *ngIf="person.external_ids.imdb_id" (click)="openExternal('https://imdb.com/name/' + person.external_ids.imdb_id)"></ion-icon>
+        </div>
+      </div>
+      <div class="profile-info">
+        <h1>{{ person.name }}</h1>
+        <div class="profile-stats">
+          <ion-chip *ngIf="person.birthday">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <ion-label>{{ person.birthday | date:'mediumDate' }}</ion-label>
+          </ion-chip>
+          <ion-chip *ngIf="person.place_of_birth">
+            <ion-icon name="location-outline"></ion-icon>
+            <ion-label>{{ person.place_of_birth }}</ion-label>
+          </ion-chip>
+          <ion-chip>
+            <ion-icon name="person-outline"></ion-icon>
+            <ion-label>{{ getGender(person.gender) }}</ion-label>
+          </ion-chip>
+        </div>
+        
+        <div class="biography-preview" *ngIf="person.biography">
+           {{ person.biography | slice:0:200 }}<span *ngIf="person.biography.length > 200">...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Images Gallery -->
+    <div class="section-container" *ngIf="person.images?.profiles?.length">
+      <h2>Photos</h2>
+      <div class="photos-scroll">
+        <div class="photo-item" *ngFor="let img of person.images?.profiles" (click)="openImage(img.file_path)">
+            <img [src]="'https://image.tmdb.org/t/p/w300' + img.file_path" loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Biography Full -->
+    <div class="section-container" *ngIf="person.biography && person.biography.length > 200">
+      <h2>Biography</h2>
+      <p class="biography">{{ person.biography }}</p>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <ion-modal [isOpen]="isImageModalOpen" (didDismiss)="closeImage()">
+      <ng-template>
+        <div class="image-viewer">
+          <ion-button fill="clear" class="close-button" (click)="closeImage()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+          <div class="image-container">
+            <img [src]="selectedImage" *ngIf="selectedImage" />
+          </div>
+        </div>
+      </ng-template>
+    </ion-modal>
+
+    <!-- Known For -->
+    <div class="section-container">
+      <app-media-carousel 
+        title="Known For" 
+        [items]="knownFor" 
+        type="movie"> <!-- Using 'movie' generically for mixed credits, handled by router logic -->
+      </app-media-carousel>
+    </div>
+
+  </div>
+</ion-content>

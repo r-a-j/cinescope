@@ -11,6 +11,7 @@ import { PersonModel } from 'src/models/person.model';
 import { MovieTopRatedModel } from 'src/models/movie/movie-top-rated.model';
 import { TvTopRatedModelRoot } from 'src/models/tv/tv-top-rated.model';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
+import { PersonDetailModel } from 'src/models/person-detail.model';
 import { CacheService } from './cache.service';
 
 @Injectable({ providedIn: 'root' })
@@ -155,12 +156,22 @@ export class TmdbSearchService {
     }
 
     getPopularPersons(page = 1): Observable<PersonModel> {
-        const key = `popular_persons_${page}`;
-        return this.getWithCache(key, this.http.get<PersonModel>(`${this.BASE_URL}/person/popular`, {
+        const key = `trending_persons_${page}`; // Updated key
+        return this.getWithCache(key, this.http.get<PersonModel>(`${this.BASE_URL}/trending/person/day`, {
             params: new HttpParams()
                 .set('language', 'en-US')
                 .set('page', page)
         }).pipe(catchError(this.handleError)));
+    }
+
+    getPersonDetail(id: number): Observable<PersonDetailModel> {
+        const key = `person_detail_full_${id}`;
+        // Cache for 24 hours
+        return this.getWithCache(key, this.http.get<PersonDetailModel>(`${this.BASE_URL}/person/${id}`, {
+            params: new HttpParams()
+                .set('language', 'en-US')
+                .set('append_to_response', 'images,external_ids,combined_credits')
+        }).pipe(catchError(this.handleError)), 86400000);
     }
 
     getTopRatedMovies(page: number = 1): Observable<MovieTopRatedModel> {

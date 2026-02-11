@@ -14,12 +14,17 @@ export class MediaCarouselComponent {
     @Input() title: string = '';
     @Input() viewAllRoute: string = '';
     @Input() items: any[] = [];
-    @Input() type: 'movie' | 'tv' = 'movie';
+    @Input() type: 'movie' | 'tv' | 'person' = 'movie';
 
     constructor(private router: Router) { }
 
-    navigateToDetail(id: number) {
-        this.router.navigate([`/${this.type}-detail`, id]);
+    navigateToDetail(item: any) {
+        const type = item.media_type || this.type;
+        if (type === 'person') {
+            this.router.navigate(['/person-detail', item.id]);
+        } else {
+            this.router.navigate([`/${type}-detail`, item.id]);
+        }
     }
 
     navigateToViewAll() {
