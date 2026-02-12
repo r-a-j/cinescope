@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { forkJoin, map, switchMap } from 'rxjs';
 import { MovieSearchModel } from 'src/models/movie/movie-search.model';
 import { TvSearchModel } from 'src/models/tv/tv-search.model';
 import { MovieUpcomingModel } from 'src/models/movie/movie-upcoming.model';
@@ -250,5 +251,74 @@ export class TmdbSearchService {
         return this.getWithCache(key, this.http.get<MovieSearchModel>(url).pipe(
             catchError(this.handleError)
         ));
+    }
+
+    getTrendingIndianStars(): Observable<PersonModel> {
+        const key = 'trending_indian_stars_v1';
+
+        // Define the source streams (Movies and TV)
+        const movies$ = this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
+            params: new HttpParams()
+                .set('language', 'en-US')
+                .set('region', 'IN')
+                .set('sort_by', 'popularity.desc')
+                .set('with_origin_country', 'IN')
+                .set('page', '1')
+        });
+
+        const tv$ = this.http.get<TvSearchModel>(`${this.BASE_URL}/discover/tv`, {
+            params: new HttpParams()
+                .set('language', 'en-US')
+                .set('sort_by', 'popularity.desc')
+                .set('with_origin_country', 'IN')
+                .set('page', '1')
+        });
+
+        // The Complex Construction
+        const fetchLogic$ = forkJoin([movies$, tv$]).pipe(
+            switchMap(([movieData, tvData]) => {
+                // 1. Get Top 3 Movies and Top 3 TV Shows
+                const topMovies = (movieData.results || []).slice(0, 3);
+                const topTV = (tvData.results || []).slice(0, 3);
+
+                // 2. Create an array of API calls for their credits
+                const creditsCalls = [
+                    ...topMovies.map(m => this.http.get<any>(`${this.BASE_URL}/movie/${m.id}/credits`)),
+                    ...topTV.map(t => this.http.get<any>(`${this.BASE_URL}/tv/${t.id}/credits`))
+                ];
+
+                // 3. Execute all credit calls in parallel
+                return forkJoin(creditsCalls).pipe(
+                    map((creditsResponses: any[]) => {
+                        let allActors: any[] = [];
+
+                        // 4. Extract Top 4 Cast members from each result
+                        creditsResponses.forEach(credit => {
+                            if (credit.cast) {
+                                allActors.push(...credit.cast.slice(0, 4));
+                            }
+                        });
+
+                        // 5. Deduplicate by ID (Actors appear in multiple movies)
+                        const uniqueActors = Array.from(new Map(allActors.map(item => [item.id, item])).values());
+
+                        // 6. Filter valid images and Popularity check (keep only known stars)
+                        const validStars = uniqueActors
+                            .filter(a => a.profile_path && a.popularity > 5)
+                            .sort((a, b) => b.popularity - a.popularity); // Sort by star power
+
+                        // Return as PersonModel structure
+                        return {
+                            page: 1,
+                            results: validStars,
+                            total_pages: 1,
+                            total_results: validStars.length
+                        } as PersonModel;
+                    })
+                );
+            })
+        );
+
+        return this.getWithCache(key, fetchLogic$, 12 * 60 * 60 * 1000); // Cache for 12 hours
     }
 }

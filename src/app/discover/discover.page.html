@@ -14,29 +14,17 @@
   
   <div class="content-layer animate__animated animate__fadeIn" *ngIf="!isLoading">
     
-    <div class="hero-wrapper" *ngIf="heroItem"
-    (touchstart)="onTouchStart($event)"
-         (touchend)="onTouchEnd($event)"
-         [routerLink]="heroItem.media_type === 'person' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
+    <div class="hero-wrapper" *ngIf="heroItem" #heroWrapper
+         [routerLink]="heroItem.media_type === 'person' || segmentValue === 'actors' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
       
       <div class="hero-image-container">
-         <div class="hero-layer"
-              [style.backgroundImage]="'url(' + heroBackdrops[0] + ')'"
-              [class.visible]="activeBackdropIndex === 0">
-         </div>
-         <div class="hero-layer"
-              [style.backgroundImage]="'url(' + heroBackdrops[1] + ')'"
-              [class.visible]="activeBackdropIndex === 1">
-         </div>
+         <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[0] + ')'" [class.visible]="activeBackdropIndex === 0"></div>
+         <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[1] + ')'" [class.visible]="activeBackdropIndex === 1"></div>
       </div>
         
-      <div class="filter-overlay animate__animated animate__fadeInDown" 
-            *ngIf="segmentValue === 'desi'"
-            (click)="$event.stopPropagation()">
+      <div class="filter-overlay animate__animated animate__fadeInDown" *ngIf="segmentValue === 'desi'" (click)="$event.stopPropagation()">
         <div class="filter-chips-scroll">
-          <ion-chip *ngFor="let lang of languageChips" 
-                    [class.selected]="selectedLanguage === lang.value"
-                    (click)="languageChanged(lang.value)">
+          <ion-chip *ngFor="let lang of languageChips" [class.selected]="selectedLanguage === lang.value" (click)="languageChanged(lang.value)">
             <ion-label>{{ lang.label }}</ion-label>
           </ion-chip>
         </div>
@@ -45,8 +33,45 @@
       <div class="hero-gradient-overlay">
         <div class="hero-text animate__animated animate__fadeIn">
           <ng-container *ngFor="let item of [heroItem]">
-             <ion-chip class="hero-badge" color="primary">#{{ currentHeroIndex + 1 }} Trending</ion-chip>
-             <h1 class="truncate-title">{{ item.title || item.name }}</h1>
+             
+             <div class="hero-actor-layout" *ngIf="segmentValue === 'actors'; else standardLayout">
+                <div class="hero-actor-thumb">
+                    <img [src]="'https://image.tmdb.org/t/p/w200' + item.profile_path" />
+                </div>
+                <div class="hero-info-col">
+                    <ion-chip class="hero-badge" color="tertiary">#{{ currentHeroIndex + 1 }} Trending Star</ion-chip>
+                    <h1 class="truncate-title">{{ item.name }}</h1>
+                    <p class="hero-subtitle" *ngIf="item.known_for && item.known_for[0]">
+                        Known for: <span class="highlight">{{ item.known_for[0].title || item.known_for[0].name }}</span>
+                    </p>
+                </div>
+             </div>
+
+             <ng-template #standardLayout>
+                <div class="hero-standard-layout">
+                    <div class="badge-row">
+                        <ion-chip class="hero-badge" color="primary">#{{ currentHeroIndex + 1 }} Trending</ion-chip>
+                        <div class="rating-badge" *ngIf="item.vote_average">
+                            <ion-icon name="star" color="warning"></ion-icon> {{ item.vote_average | number:'1.1-1' }}
+                        </div>
+                    </div>
+
+                    <h1 class="truncate-title">{{ item.title || item.name }}</h1>
+
+                    <div class="meta-row">
+                        <span>{{ (item.release_date || item.first_air_date) | date:'yyyy' }}</span>
+                        <span class="dot">•</span>
+                        <span class="lang-text">{{ item.original_language | uppercase }}</span>
+                        <ng-container *ngIf="!item.overview">
+                            <span class="dot">•</span>
+                            <span>{{ item.media_type === 'tv' ? 'TV Series' : 'Movie' }}</span>
+                        </ng-container>
+                    </div>
+
+                    <p class="hero-desc">{{ item.overview }}</p>
+                </div>
+             </ng-template>
+
           </ng-container>
         </div>
       </div>
