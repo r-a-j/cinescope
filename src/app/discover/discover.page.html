@@ -1,40 +1,78 @@
 <app-header></app-header>
 
-<ion-toolbar class="slick-toolbar">
-  <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)" class="slick-segment" scrollable="true">
+<ion-toolbar class="glass-toolbar">
+  <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged()" class="transparent-segment" scrollable="true">
     <ion-segment-button value="bollywood"><ion-label>Bollywood</ion-label></ion-segment-button>
     <ion-segment-button value="desi"><ion-label>Desi Hub</ion-label></ion-segment-button>
     <ion-segment-button value="topRated"><ion-label>Top Rated</ion-label></ion-segment-button>
     <ion-segment-button value="trending"><ion-label>Trending</ion-label></ion-segment-button>
     <ion-segment-button value="actors"><ion-label>Actors</ion-label></ion-segment-button>
   </ion-segment>
-
-  <!-- Language Filters for Desi Hub -->
-  <div class="filter-chips-container" *ngIf="segmentValue === 'desi'">
-    <ion-chip *ngFor="let lang of languageChips" 
-              [class.selected]="selectedLanguage === lang.value"
-              (click)="languageChanged(lang.value)">
-      <ion-label>{{ lang.label }}</ion-label>
-    </ion-chip>
-  </div>
 </ion-toolbar>
 
-<ion-content class="ion-padding" fullscreen>
-  <div class="content-layer animate__animated animate__fadeIn">
+<ion-content fullscreen [scrollEvents]="true" (ionScroll)="handleScroll($event)">
+  
+  <div class="content-layer animate__animated animate__fadeIn" *ngIf="!isLoading">
     
+    <div class="hero-wrapper" *ngIf="heroItem"
+         [routerLink]="heroItem.media_type === 'person' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
+      
+      <div class="hero-image"
+           [style.backgroundImage]="'url(https://image.tmdb.org/t/p/original' + (heroItem.backdrop_path || heroItem.poster_path) + ')'">
+        
+        <div class="filter-overlay animate__animated animate__fadeInDown" 
+             *ngIf="segmentValue === 'desi'"
+             (click)="$event.stopPropagation()">
+          
+          <div class="filter-chips-scroll">
+            <ion-chip *ngFor="let lang of languageChips" 
+                      [class.selected]="selectedLanguage === lang.value"
+                      (click)="languageChanged(lang.value)">
+              <ion-label>{{ lang.label }}</ion-label>
+            </ion-chip>
+          </div>
+          </div>
+
+        <div class="hero-gradient-overlay">
+          <div class="hero-text">
+            <ion-chip class="hero-badge" color="primary">#1 Trending</ion-chip>
+            <h1 class="truncate-title">{{ heroItem.title || heroItem.name }}</h1>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <ng-container *ngFor="let section of currentSections">
       <app-media-carousel
         [title]="section.title"
         [items]="section.items"
-        [viewAllRoute]="section.viewAllRoute || ''"
+        [viewAllRoute]="section.viewAllRoute ?? ''" 
         [type]="section.type">
       </app-media-carousel>
     </ng-container>
-
-    <!-- Empty State -->
+    
     <div *ngIf="currentSections.length === 0" class="empty-state">
-      <p>No content available for this category.</p>
+        <ion-label color="medium">No content found.</ion-label>
     </div>
-
   </div>
+
+  <div *ngIf="isLoading" class="skeleton-wrapper">
+      <ion-skeleton-text animated style="width: 100%; aspect-ratio: 16/9; margin-bottom: 20px; border-radius: 0;"></ion-skeleton-text>
+      <div *ngFor="let i of [1,2,3]" class="skeleton-section">
+          <ion-skeleton-text animated style="width: 40%; height: 20px; margin-bottom: 12px; border-radius: 4px;"></ion-skeleton-text>
+          <div class="skeleton-row">
+              <ion-skeleton-text animated class="skeleton-card" *ngFor="let j of [1,2,3,4]"></ion-skeleton-text>
+          </div>
+      </div>
+  </div>
+
+  <div style="height: 80px;"></div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="showScrollBtn">
+    <ion-fab-button (click)="scrollToTop()" color="primary" class="scroll-fab">
+      <ion-icon name="arrow-up-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
 </ion-content>

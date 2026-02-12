@@ -1,18 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonToolbar, IonSegmentButton, IonLabel, IonSegment, IonChip } from '@ionic/angular/standalone';
+import { IonContent, IonToolbar, IonSegmentButton, IonLabel, IonSegment, IonChip, IonSkeletonText, IonItem, IonList, IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { MediaCarouselComponent } from '../shared/components/media-carousel/media-carousel.component';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { Observable } from 'rxjs';
+import { addIcons } from 'ionicons';
+import { arrowUpOutline } from 'ionicons/icons';
+import { RouterModule } from '@angular/router';
 
 interface DiscoverSection {
   title: string;
   method: string;
   viewAllRoute?: string;
-  type: 'movie' | 'tv' | 'person'; // Added person
+  type: 'movie' | 'tv' | 'person';
   items: any[];
+  params?: any;
 }
 
 @Component({
@@ -21,6 +25,10 @@ interface DiscoverSection {
   styleUrls: ['discover.page.scss'],
   standalone: true,
   imports: [
+    IonIcon,
+    IonFabButton,
+    IonFab,
+    IonSkeletonText,
     IonLabel,
     IonChip,
     IonSegment,
@@ -30,135 +38,209 @@ interface DiscoverSection {
     CommonModule,
     FormsModule,
     HeaderComponent,
-    MediaCarouselComponent
+    MediaCarouselComponent,
+    RouterModule
   ],
 })
 export class DiscoverPage implements OnInit {
+  @ViewChild(IonContent) content!: IonContent;
+
   segmentValue: string = 'bollywood';
   isLoading: boolean = false;
+  selectedLanguage: string = 'hi';
+  heroItem: any = null;
+  showScrollBtn: boolean = false;
 
-  // Configuration for each segment
+  languageChips = [
+    { label: 'Hindi', value: 'hi' },
+    { label: 'Telugu', value: 'te' },
+    { label: 'Tamil', value: 'ta' },
+    { label: 'Malayalam', value: 'ml' },
+    { label: 'Kannada', value: 'kn' },
+    { label: 'Marathi', value: 'mr' },
+    { label: 'Bengali', value: 'bn' },
+    { label: 'Gujarati', value: 'gu' }
+  ];
+
+  currentSections: DiscoverSection[] = [];
+
+  // Static Definitions
   bollywoodSections: DiscoverSection[] = [
-    { title: 'Trending Desi Movies', method: 'getTrendingBollywoodMovies', viewAllRoute: '/bollywood-trending', type: 'movie', items: [] },
-    { title: 'Upcoming Desi Movies', method: 'getUpcomingMovies', viewAllRoute: '', type: 'movie', items: [] }
+    { title: 'Trending Bollywood', method: 'getTrendingBollywoodMovies', type: 'movie', items: [] },
+    { title: 'Top Rated Hindi', method: 'getTopRatedMovies', params: { with_original_language: 'hi' }, type: 'movie', items: [] },
+    { title: 'Upcoming Hindi', method: 'getUpcomingMovies', params: { with_original_language: 'hi', region: 'IN' }, type: 'movie', items: [] }
   ];
 
   topRatedSections: DiscoverSection[] = [
-    { title: 'Top Rated Movies', method: 'getTopRatedMovies', viewAllRoute: '/top-rated-movies', type: 'movie', items: [] },
-    { title: 'Top Rated TV Shows', method: 'getTopRatedTV', viewAllRoute: '/top-rated-tv', type: 'tv', items: [] }
+    { title: 'Top Rated Movies', method: 'getTopRatedMovies', type: 'movie', items: [], viewAllRoute: '/top-rated-movies' },
+    { title: 'Top Rated TV Shows', method: 'getTopRatedTV', type: 'tv', items: [], viewAllRoute: '/top-rated-tv' }
   ];
 
   trendingSections: DiscoverSection[] = [
-    { title: 'Trending Movies (Global)', method: 'getTrendingMovies', type: 'movie', items: [] },
-    { title: 'Trending TV (Global)', method: 'getTrendingTv', type: 'tv', items: [] }
+    { title: 'Trending Movies', method: 'getTrendingMovies', type: 'movie', items: [] },
+    { title: 'Trending TV', method: 'getTrendingTV', type: 'tv', items: [] }
   ];
 
   actorSections: DiscoverSection[] = [
     { title: 'Popular Actors', method: 'getPopularPersons', type: 'person', items: [] }
   ];
 
-  // Desi Hub Configuration
-  selectedLanguage: string = 'all';
-  languageChips = [
-    { label: 'All India', value: 'all' },
-    { label: 'Hindi', value: 'hi' },
-    { label: 'Telugu', value: 'te' },
-    { label: 'Tamil', value: 'ta' },
-    { label: 'Malayalam', value: 'ml' },
-    { label: 'Kannada', value: 'kn' }
-  ];
+  desiSections: DiscoverSection[] = [];
 
-  desiSections: DiscoverSection[] = [
-    { title: 'Trending in India', method: 'getTrendingIndia', type: 'movie', items: [] },
-    { title: 'In Theaters', method: 'getIndianTheatrical', type: 'movie', items: [] },
-    { title: 'Regional Hits', method: 'getDiscoverIndian', type: 'movie', items: [] }
-  ];
-
-  constructor(private tmdbService: TmdbSearchService) { }
-
-  ngOnInit() {
-    this.loadSegmentData();
+  constructor(private tmdbService: TmdbSearchService) {
+    addIcons({ arrowUpOutline });
   }
 
-  segmentChanged(event: any) {
-    this.segmentValue = event.detail.value;
-    this.loadSegmentData();
+  ngOnInit() {
+    this.segmentChanged();
+  }
+
+  segmentChanged() {
+    this.currentSections = [];
+    this.heroItem = null;
+    this.isLoading = true;
+
+    switch (this.segmentValue) {
+      case 'bollywood':
+        this.currentSections = this.bollywoodSections;
+        break;
+      case 'topRated':
+        this.currentSections = this.topRatedSections;
+        break;
+      case 'trending':
+        this.currentSections = this.trendingSections;
+        break;
+      case 'actors':
+        this.currentSections = this.actorSections;
+        break;
+      case 'desi':
+        this.generateDesiSections();
+        this.currentSections = this.desiSections;
+        break;
+    }
+
+    this.loadSections(this.currentSections);
   }
 
   languageChanged(lang: string) {
     this.selectedLanguage = lang;
-    // Reload only the necessary sections for Desi Hub
-    this.loadDesiData();
-  }
 
-  get currentSections(): DiscoverSection[] {
-    switch (this.segmentValue) {
-      case 'bollywood': return this.bollywoodSections;
-      case 'topRated': return this.topRatedSections;
-      case 'trending': return this.trendingSections;
-      case 'actors': return this.actorSections;
-      case 'desi': return this.desiSections;
-      default: return [];
+    // Don't clear heroItem immediately to avoid flashing white
+    // this.heroItem = null; 
+
+    if (this.segmentValue === 'desi') {
+      this.generateDesiSections();
+      this.currentSections = this.desiSections;
+      this.loadSections(this.currentSections);
     }
   }
 
-  loadSegmentData() {
-    switch (this.segmentValue) {
-      case 'bollywood':
-        this.loadSections(this.bollywoodSections);
-        break;
-      case 'topRated':
-        this.loadSections(this.topRatedSections);
-        break;
-      case 'trending':
-        this.loadSections(this.trendingSections);
-        break;
-      case 'actors':
-        this.loadSections(this.actorSections);
-        break;
-      case 'desi':
-        this.loadDesiData();
-        break;
-    }
-  }
+  generateDesiSections() {
+    const langLabel = this.languageChips.find(l => l.value === this.selectedLanguage)?.label || 'Indian';
 
-  loadDesiData() {
-    // Custom loading for Desi Hub because it might use specific params (language)
-    this.desiSections.forEach(section => {
-      let method = section.method;
-      let methodArgs: any[] = [];
-
-      if (method === 'getDiscoverIndian') {
-        methodArgs = [1, this.selectedLanguage];
+    this.desiSections = [
+      {
+        title: `New ${langLabel} Releases`,
+        method: 'getDiscoverMovies',
+        type: 'movie',
+        items: [],
+        params: {
+          with_original_language: this.selectedLanguage,
+          sort_by: 'primary_release_date.desc',
+          'primary_release_date.lte': new Date().toISOString().split('T')[0],
+          with_origin_country: 'IN'
+        }
+      },
+      {
+        title: `Popular in ${langLabel}`,
+        method: 'getDiscoverMovies',
+        type: 'movie',
+        items: [],
+        params: {
+          with_original_language: this.selectedLanguage,
+          sort_by: 'popularity.desc',
+          with_origin_country: 'IN'
+        }
+      },
+      {
+        title: `Top Rated ${langLabel}`,
+        method: 'getDiscoverMovies',
+        type: 'movie',
+        items: [],
+        params: {
+          with_original_language: this.selectedLanguage,
+          sort_by: 'vote_average.desc',
+          'vote_count.gte': 50,
+          with_origin_country: 'IN'
+        }
+      },
+      {
+        title: `${langLabel} Action Hits`,
+        method: 'getDiscoverMovies',
+        type: 'movie',
+        items: [],
+        params: {
+          with_original_language: this.selectedLanguage,
+          with_genres: '28',
+          sort_by: 'popularity.desc'
+        }
       }
-
-      if (this.tmdbService[method as keyof TmdbSearchService]) {
-        // @ts-ignore
-        (this.tmdbService[method](...methodArgs) as Observable<any>).subscribe({
-          next: (data: any) => {
-            // console.log(`Loaded ${section.title}`, data);
-            section.items = data.results || [];
-          },
-          error: (err) => console.error(`Error loading ${section.title}`, err)
-        });
-      }
-    });
+    ];
   }
 
   private loadSections(sections: DiscoverSection[]) {
-    sections.forEach(section => {
+    this.isLoading = true;
+    let pendingCalls = 0;
+
+    sections.forEach((section, index) => {
       if (section.items.length === 0) {
-        const method = section.method;
-        if (this.tmdbService[method as keyof TmdbSearchService]) {
+        pendingCalls++;
+
+        let obs: Observable<any>;
+        if (section.method === 'getDiscoverMovies') {
+          obs = this.tmdbService.getDiscoverMovies(section.params);
+        } else if (this.tmdbService[section.method as keyof TmdbSearchService]) {
           // @ts-ignore
-          (this.tmdbService[method]() as Observable<any>).subscribe({
-            next: (data: any) => {
-              section.items = data.results;
-            },
-            error: (err) => console.error(`Error loading ${section.title}`, err)
-          });
+          obs = this.tmdbService[section.method](...Object.values(section.params || {}));
+        } else {
+          console.warn(`Method ${section.method} not found`);
+          pendingCalls--;
+          return;
+        }
+
+        obs.subscribe({
+          next: (data: any) => {
+            section.items = data.results || [];
+
+            // Set Hero Item from the FIRST section (Trending/New)
+            if (index === 0 && section.items.length > 0) {
+              this.heroItem = section.items[0];
+            }
+
+            pendingCalls--;
+            if (pendingCalls <= 0) this.isLoading = false;
+          },
+          error: () => {
+            pendingCalls--;
+            if (pendingCalls <= 0) this.isLoading = false;
+          }
+        });
+      } else {
+        if (index === 0 && section.items.length > 0) {
+          this.heroItem = section.items[0];
         }
       }
     });
+
+    if (pendingCalls === 0) this.isLoading = false;
+  }
+
+  handleScroll(event: any) {
+    const scrollTop = event.detail.scrollTop;
+    this.showScrollBtn = scrollTop > 400;
+  }
+
+  scrollToTop() {
+    this.content.scrollToTop(500);
   }
 }

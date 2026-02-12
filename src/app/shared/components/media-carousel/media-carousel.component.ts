@@ -12,7 +12,7 @@ import { IonButton } from "@ionic/angular/standalone";
 })
 export class MediaCarouselComponent {
     @Input() title: string = '';
-    @Input() viewAllRoute: string = '';
+    @Input() viewAllRoute?: string;
     @Input() items: any[] = [];
     @Input() type: 'movie' | 'tv' | 'person' = 'movie';
 

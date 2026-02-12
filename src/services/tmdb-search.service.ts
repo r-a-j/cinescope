@@ -238,4 +238,17 @@ export class TmdbSearchService {
                 .set('page', page)
         }).pipe(catchError(this.handleError)));
     }
+
+    getDiscoverMovies(params: any): Observable<MovieSearchModel> {
+        // Generate a unique cache key based on params
+        const key = `discover_movie_${JSON.stringify(params)}`;
+
+        // Build URL
+        const url = buildDiscoverMovieUrl(this.BASE_URL, params);
+
+        // Execute with Cache
+        return this.getWithCache(key, this.http.get<MovieSearchModel>(url).pipe(
+            catchError(this.handleError)
+        ));
+    }
 }
