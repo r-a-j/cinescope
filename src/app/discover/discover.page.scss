@@ -1,4 +1,4 @@
-// 1. GLASS TOOLBAR
+// 1. GLASS TOOLBAR (Sticky & Premium)
 .glass-toolbar {
     position: sticky;
     top: 0;
@@ -28,27 +28,50 @@
         
         &::part(indicator) {
             height: 2px;
-            box-shadow: 0 -2px 10px var(--ion-color-primary);
+            box-shadow: 0 -2px 10px var(--ion-color-primary); // Glow effect
         }
     }
 }
 
-// 3. CINEMATIC HERO WRAPPER
+// 3. CINEMATIC HERO WRAPPER (16:9)
 .hero-wrapper {
     width: 100%;
     aspect-ratio: 16/9;
     position: relative;
     overflow: hidden;
     margin-bottom: 16px;
-    background: #111;
+    background: #111; // Placeholder while loading
 }
 
-.hero-image {
+// ✨ DOUBLE BUFFERED LAYERS (The "Butter Smooth" Logic)
+.hero-image-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-layer {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     background-size: cover;
     background-position: center center;
-    position: relative;
+    
+    // Initial State: Hidden
+    opacity: 0;
+    z-index: 0;
+    
+    // Smooth Transition: This cross-fades the images
+    transition: opacity 1s ease-in-out;
+    will-change: opacity;
+    
+    // Active State: Visible
+    &.visible {
+        opacity: 1;
+        z-index: 1;
+    }
 }
 
 // 4. THE SEXY FILTER OVERLAY (Top of Hero)
@@ -57,21 +80,16 @@
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 10;
-    padding: 12px 0 30px 0; // Extra bottom padding for fade space
+    z-index: 10; // Must be higher than hero layers
+    padding: 12px 0 30px 0;
 
-    // The Magic: Dark top fading to transparent bottom
+    // Gradient: Dark top fading to transparent bottom
     background: linear-gradient(to bottom, 
         rgba(0,0,0,0.9) 0%, 
         rgba(0,0,0,0.4) 50%, 
         rgba(0,0,0,0) 100%
     );
 
-    // Optional: Add a subtle blur that fades out using mask
-    // backdrop-filter: blur(4px); 
-    // -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-    // mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-    
     .filter-chips-scroll {
         display: flex;
         gap: 10px;
@@ -82,14 +100,12 @@
 
         ion-chip {
             margin: 0;
-            // FIXED TEXT CUT-OFF
             height: auto;
             min-height: 32px;
             padding: 6px 14px;
             flex-shrink: 0;
-            
+            white-space: nowrap;            
             font-size: 13px;
-            // Semi-transparent glass chips
             background: rgba(255, 255, 255, 0.15); 
             color: #eee;
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -116,8 +132,9 @@
     left: 0;
     width: 100%;
     padding: 16px;
+    z-index: 5; // Above layers, below filters
     
-    // Gradient from transparent to black
+    // Gradient from transparent to black (matches page background)
     background: linear-gradient(to bottom, 
         rgba(0,0,0,0) 0%, 
         rgba(0,0,0,0.6) 50%, 
@@ -152,11 +169,12 @@
     }
 }
 
-// 6. FAB & SKELETON
+// 6. FAB, SKELETON & UTILS
 .scroll-fab {
     --box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     animation: bounceIn 0.3s ease;
 }
+
 @keyframes bounceIn {
     0% { transform: scale(0); opacity: 0; }
     80% { transform: scale(1.1); }

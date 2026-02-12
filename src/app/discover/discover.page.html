@@ -15,31 +15,40 @@
   <div class="content-layer animate__animated animate__fadeIn" *ngIf="!isLoading">
     
     <div class="hero-wrapper" *ngIf="heroItem"
+    (touchstart)="onTouchStart($event)"
+         (touchend)="onTouchEnd($event)"
          [routerLink]="heroItem.media_type === 'person' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
       
-      <div class="hero-image"
-           [style.backgroundImage]="'url(https://image.tmdb.org/t/p/original' + (heroItem.backdrop_path || heroItem.poster_path) + ')'">
+      <div class="hero-image-container">
+         <div class="hero-layer"
+              [style.backgroundImage]="'url(' + heroBackdrops[0] + ')'"
+              [class.visible]="activeBackdropIndex === 0">
+         </div>
+         <div class="hero-layer"
+              [style.backgroundImage]="'url(' + heroBackdrops[1] + ')'"
+              [class.visible]="activeBackdropIndex === 1">
+         </div>
+      </div>
         
-        <div class="filter-overlay animate__animated animate__fadeInDown" 
-             *ngIf="segmentValue === 'desi'"
-             (click)="$event.stopPropagation()">
-          
-          <div class="filter-chips-scroll">
-            <ion-chip *ngFor="let lang of languageChips" 
-                      [class.selected]="selectedLanguage === lang.value"
-                      (click)="languageChanged(lang.value)">
-              <ion-label>{{ lang.label }}</ion-label>
-            </ion-chip>
-          </div>
-          </div>
-
-        <div class="hero-gradient-overlay">
-          <div class="hero-text">
-            <ion-chip class="hero-badge" color="primary">#1 Trending</ion-chip>
-            <h1 class="truncate-title">{{ heroItem.title || heroItem.name }}</h1>
-          </div>
+      <div class="filter-overlay animate__animated animate__fadeInDown" 
+            *ngIf="segmentValue === 'desi'"
+            (click)="$event.stopPropagation()">
+        <div class="filter-chips-scroll">
+          <ion-chip *ngFor="let lang of languageChips" 
+                    [class.selected]="selectedLanguage === lang.value"
+                    (click)="languageChanged(lang.value)">
+            <ion-label>{{ lang.label }}</ion-label>
+          </ion-chip>
         </div>
+      </div>
 
+      <div class="hero-gradient-overlay">
+        <div class="hero-text animate__animated animate__fadeIn">
+          <ng-container *ngFor="let item of [heroItem]">
+             <ion-chip class="hero-badge" color="primary">#{{ currentHeroIndex + 1 }} Trending</ion-chip>
+             <h1 class="truncate-title">{{ item.title || item.name }}</h1>
+          </ng-container>
+        </div>
       </div>
     </div>
 
