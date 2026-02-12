@@ -33,12 +33,44 @@
     }
 }
 
-// 3. DESI HUB FILTERS (Seamlessly Integrated)
-.filter-section {
-    padding: 16px 0 10px 0;
-    background: var(--ion-background-color, #000); // Match page bg
-    
-    // Removed the "Select Language" label styling as we removed the element
+// 3. CINEMATIC HERO WRAPPER
+.hero-wrapper {
+    width: 100%;
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: #111;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
+    position: relative;
+}
+
+// 4. THE SEXY FILTER OVERLAY (Top of Hero)
+.filter-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    padding: 12px 0 30px 0; // Extra bottom padding for fade space
+
+    // The Magic: Dark top fading to transparent bottom
+    background: linear-gradient(to bottom, 
+        rgba(0,0,0,0.9) 0%, 
+        rgba(0,0,0,0.4) 50%, 
+        rgba(0,0,0,0) 100%
+    );
+
+    // Optional: Add a subtle blur that fades out using mask
+    // backdrop-filter: blur(4px); 
+    // -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    // mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
     
     .filter-chips-scroll {
         display: flex;
@@ -50,61 +82,47 @@
 
         ion-chip {
             margin: 0;
+            // FIXED TEXT CUT-OFF
             height: auto;
             min-height: 32px;
             padding: 6px 14px;
             flex-shrink: 0;
-            white-space: nowrap;
+            
             font-size: 13px;
-            background: #1a1a1a;
-            color: #ccc;
-            border: 1px solid #333;
+            // Semi-transparent glass chips
+            background: rgba(255, 255, 255, 0.15); 
+            color: #eee;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
             border-radius: 20px;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 
             &.selected {
                 background: var(--ion-color-primary);
                 color: white;
                 border-color: var(--ion-color-primary);
                 transform: scale(1.05);
-                box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+                box-shadow: 0 4px 12px rgba(229, 9, 20, 0.5);
                 font-weight: 600;
             }
         }
     }
 }
 
-// 4. CINEMATIC HERO (16:9)
-.hero-wrapper {
-    width: 100%;
-    aspect-ratio: 16/9;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 16px; // Gap between Hero and Lists
-    background: #111;
-    // Removed negative margins to fix "going inside sections"
-}
-
-.hero-image {
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center center;
-    position: relative;
-}
-
-.hero-overlay {
+// 5. BOTTOM TEXT OVERLAY
+.hero-gradient-overlay {
     position: absolute;
-    inset: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 16px;
+    
+    // Gradient from transparent to black
     background: linear-gradient(to bottom, 
-        rgba(0,0,0,0) 20%, 
-        rgba(0,0,0,0.4) 60%, 
+        rgba(0,0,0,0) 0%, 
+        rgba(0,0,0,0.6) 50%, 
         rgba(0,0,0,0.95) 100%
     );
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 16px;
 }
 
 .hero-text {
@@ -134,22 +152,17 @@
     }
 }
 
-// 5. SCROLL FAB
+// 6. FAB & SKELETON
 .scroll-fab {
     --box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     animation: bounceIn 0.3s ease;
 }
-
 @keyframes bounceIn {
     0% { transform: scale(0); opacity: 0; }
     80% { transform: scale(1.1); }
     100% { transform: scale(1); opacity: 1; }
 }
 
-// 6. SKELETON
-.skeleton-wrapper {
-    // Matches new layout
-}
 .skeleton-section {
     padding-left: 16px;
     margin-top: 16px;
