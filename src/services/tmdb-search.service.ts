@@ -31,7 +31,11 @@ export class TmdbSearchService {
     }
 
     /** Helper to check cache or fetch */
-    private getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number): Observable<T> {
+    private getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number, skipCache: boolean = false): Observable<T> {
+        if (skipCache) {
+            return fetch$;
+        }
+
         return new Observable<T>(observer => {
             this.cacheService.get(key).then(cached => {
                 if (cached) {
@@ -181,7 +185,7 @@ export class TmdbSearchService {
     }
 
     /** Movie Details */
-    getMovieDetail(movieId: number): Observable<MovieDetailModel> {
+    getMovieDetail(movieId: number, skipCache: boolean = false): Observable<MovieDetailModel> {
         const key = `movie_detail_${movieId}`;
         const params = new HttpParams()
             .set('append_to_response', 'videos,recommendations,similar')
@@ -189,10 +193,10 @@ export class TmdbSearchService {
 
         // Cache details for 24 hours (86400000 ms)
         return this.getWithCache(key, this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, { params })
-            .pipe(catchError(this.handleError)), 86400000);
+            .pipe(catchError(this.handleError)), 86400000, skipCache);
     }
 
-    getTvDetail(tvId: number): Observable<TvDetailModel> {
+    getTvDetail(tvId: number, skipCache: boolean = false): Observable<TvDetailModel> {
         const key = `tv_detail_${tvId}`;
         const params = new HttpParams()
             .set('append_to_response', 'videos,recommendations,similar')
@@ -200,7 +204,7 @@ export class TmdbSearchService {
 
         // Cache details for 24 hours
         return this.getWithCache(key, this.http.get<TvDetailModel>(`${this.BASE_URL}/tv/${tvId}`, { params })
-            .pipe(catchError(this.handleError)), 86400000);
+            .pipe(catchError(this.handleError)), 86400000, skipCache);
     }
 
     getPopularPersons(page = 1): Observable<PersonModel> {

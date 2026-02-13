@@ -18,7 +18,10 @@ import {
   IonListHeader,
   IonSelect,
   IonSelectOption,
-  IonText
+  IonText,
+  LoadingController,
+  AlertController,
+  ToastController
 } from '@ionic/angular/standalone';
 import { Toast } from '@capacitor/toast';
 import { Clipboard } from '@capacitor/clipboard';
@@ -91,7 +94,12 @@ export class SettingPage implements OnInit {
   invalidAttempts: number = 0;
   showGetNewKey: boolean = false;
 
-  constructor(private router: Router, private storageService: StorageService) {
+  constructor(
+    private router: Router,
+    private storageService: StorageService,
+    private loadingCtrl: LoadingController,
+    private alertCtrl: AlertController,
+    private toastCtrl: ToastController,) {
     addIcons({
       arrowBackOutline, moonOutline, sunnyOutline, contrastOutline,
       trashOutline, cloudDownloadOutline, cloudUploadOutline,
@@ -146,7 +154,6 @@ export class SettingPage implements OnInit {
     }
   }
 
-  // Pick a .json and restore (default: merge; hold "replace" behind a confirm)
   async restoreBackup(): Promise<void> {
     try {
       const result = await FilePicker.pickFiles({
@@ -158,7 +165,10 @@ export class SettingPage implements OnInit {
       if (!result.files?.length) return;
 
       const f = result.files[0];
-      let jsonText: string;
+
+      // 🟢 SCOPE FIX: Declare variable outside the if/else blocks
+      let jsonText = '';
+
       if (f.data) {
         jsonText = atob(f.data);
       } else if (f.path) {
@@ -170,27 +180,74 @@ export class SettingPage implements OnInit {
         throw new Error('No file data');
       }
 
-      const { value: replace } = await Dialog.confirm({
-        title: 'Restore Backup',
-        message: 'Replace existing lists & settings? (Cancel = Safe Merge)',
+      // Now 'jsonText' is safe to use here
+      const alert = await this.alertCtrl.create({
+        header: 'Restore Backup',
+        message: 'How would you like to restore your data?',
+        cssClass: 'custom-alert',
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel'
+          },
+          {
+            text: 'Merge (Keep Existing)',
+            handler: () => {
+              this.processRestore(jsonText, 'merge');
+            }
+          },
+          {
+            text: 'Replace (Overwrite)',
+            role: 'destructive',
+            handler: () => {
+              this.processRestore(jsonText, 'replace');
+            }
+          }
+        ]
       });
 
-      await this.storageService.restoreFromBackupJson(
-        jsonText,
-        replace ? 'replace' : 'merge'
-      );
+      await alert.present();
+
+    } catch (err) {
+      if ((err as any)?.message?.includes('User cancelled')) return;
+      console.error(err);
+      await this.showToast('Restore failed. Please try again.', 'long', 'bottom');
+    }
+  }
+
+  // Helper method for the "Cool" Loading
+  async processRestore(jsonText: string, mode: 'merge' | 'replace') {
+    const loader = await this.loadingCtrl.create({
+      message: mode === 'merge' ? 'Merging your world...' : 'Restoring backup...',
+      spinner: 'crescent',
+      duration: 0,
+      cssClass: 'custom-loader'
+    });
+    await loader.present();
+
+    const progressSub = this.storageService.restoreProgress$.subscribe((msg) => {
+      // Direct DOM update for better performance or just rely on Ionic binding
+      loader.message = msg;
+    });
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      // This  will take time to load the data
+      await this.storageService.restoreFromBackupJson(jsonText, mode);
+      progressSub.unsubscribe();
+      await loader.dismiss();
+
       await this.showToast(
-        `Backup restored (${replace ? 'replaced' : 'merged'})`,
+        `Backup restored successfully! (${mode === 'merge' ? 'Merged' : 'Replaced'})`,
         'short',
         'bottom'
       );
 
-      // Refresh local state from storage
-      this.ngOnInit();
-    } catch (err) {
-      if ((err as any)?.message?.includes('User cancelled')) return;
-      console.error(err);
-      await this.showToast('Restore failed', 'long', 'bottom');
+    } catch (error) {
+      progressSub.unsubscribe();
+      await loader.dismiss();
+      console.error('Restore Error:', error);
+      await this.showToast('Error restoring data. File might be corrupt.', 'long', 'bottom');
     }
   }
 
@@ -332,6 +389,6 @@ export class SettingPage implements OnInit {
   }
 
   sendFeedback() {
-    window.location.href = 'mailto:raj.pawar@example.com?subject=Cinescope Feedback';
+    window.location.href = 'mailto:er.rajpawar@gmail.com?subject=Cinescope Feedback';
   }
 }

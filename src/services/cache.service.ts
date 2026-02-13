@@ -11,31 +11,43 @@ export class CacheService {
     constructor() { }
 
     async get(key: string): Promise<any | null> {
-        const { value } = await Preferences.get({ key: this.CACHE_PREFIX + key });
-        if (!value) return null;
-
         try {
+            const { value } = await Preferences.get({ key: this.CACHE_PREFIX + key });
+            if (!value) return null;
+
             const entry = JSON.parse(value);
             if (Date.now() > entry.expiry) {
-                await this.remove(key);
+                // Fire and forget removal of expired item
+                this.remove(key).catch(e => console.warn('Cache cleanup failed', e));
                 return null;
             }
             return entry.data;
         } catch (e) {
-            console.error('Cache parse error', e);
+            console.error('[Cache] Parse error', e);
             return null;
         }
     }
 
     async set(key: string, data: any, ttlMs: number = this.DEFAULT_TTL): Promise<void> {
-        const entry = {
-            expiry: Date.now() + ttlMs,
-            data: data
-        };
-        await Preferences.set({
-            key: this.CACHE_PREFIX + key,
-            value: JSON.stringify(entry)
-        });
+        try {
+            const entry = {
+                expiry: Date.now() + ttlMs,
+                data: data
+            };
+            // 🛡️ CRITICAL FIX: Safe Set
+            await Preferences.set({
+                key: this.CACHE_PREFIX + key,
+                value: JSON.stringify(entry)
+            });
+        } catch (e: any) {
+            // 🛡️ Handle Quota Exceeded Gracefully
+            if (e.name === 'QuotaExceededError' || e.message?.includes('exceeded the quota')) {
+                console.warn('[Cache] Storage full! Item not cached:', key);
+                // Optional: Trigger a clear of expired items here if you want to be fancy
+            } else {
+                console.error('[Cache] Set error', e);
+            }
+        }
     }
 
     async remove(key: string): Promise<void> {
