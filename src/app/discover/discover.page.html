@@ -39,7 +39,9 @@
                     <img [src]="'https://image.tmdb.org/t/p/w200' + item.profile_path" />
                 </div>
                 <div class="hero-info-col">
-                    <ion-chip class="hero-badge" color="tertiary">#{{ currentHeroIndex + 1 }} Trending Star</ion-chip>
+                    <div class="hero-badge actor-badge">
+                        #{{ currentHeroIndex + 1 }} TRENDING STAR
+                    </div>
                     <h1 class="truncate-title">{{ item.name }}</h1>
                     <p class="hero-subtitle" *ngIf="item.known_for && item.known_for[0]">
                         Known for: <span class="highlight">{{ item.known_for[0].title || item.known_for[0].name }}</span>
@@ -50,7 +52,9 @@
              <ng-template #standardLayout>
                 <div class="hero-standard-layout">
                     <div class="badge-row">
-                        <ion-chip class="hero-badge" color="primary">#{{ currentHeroIndex + 1 }} Trending</ion-chip>
+                        <div class="hero-badge standard-badge">
+                            #{{ currentHeroIndex + 1 }} TRENDING
+                        </div>
                         <div class="rating-badge" *ngIf="item.vote_average">
                             <ion-icon name="star" color="warning"></ion-icon> {{ item.vote_average | number:'1.1-1' }}
                         </div>

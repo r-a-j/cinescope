@@ -159,14 +159,6 @@
         margin-bottom: 8px;
     }
 
-    .hero-badge {
-        height: 22px;
-        font-size: 10px;
-        margin: 0;
-        border-radius: 4px;
-        font-weight: 700;
-    }
-
     .rating-badge {
         display: flex;
         align-items: center;
@@ -226,16 +218,6 @@
 
 .hero-text {
     z-index: 2;
-
-    .hero-badge {
-        height: 20px;
-        font-size: 10px;
-        margin: 0 0 8px 0;
-        background: var(--ion-color-primary);
-        color: white;
-        border: none;
-        padding-inline: 8px;
-    }
 
     h1 {
         font-size: 1.6rem;
@@ -326,11 +308,6 @@
         flex-direction: column;
         padding-bottom: 4px;
 
-        .hero-badge {
-            margin-bottom: 6px;
-            align-self: flex-start;
-        }
-
         h1 {
             margin: 0;
             font-size: 1.8rem;
@@ -356,16 +333,6 @@
     z-index: 2;
     width: 100%;
 
-    .hero-badge {
-        height: 20px;
-        font-size: 10px;
-        margin: 0 0 8px 0;
-        background: var(--ion-color-primary);
-        color: white;
-        border: none;
-        padding-inline: 8px;
-    }
-
     h1 {
         font-size: 1.8rem; // Slightly larger
         font-weight: 800;
@@ -377,5 +344,41 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    // COMPACT SIZING
+    height: 18px; // Much slimmer than ion-chip (32px)
+    padding: 0 8px; // Tight padding
+    border-radius: 4px; // Soft rectangle
+
+    // TYPOGRAPHY
+    font-size: 9px;
+    font-weight: 800; // Extra Bold
+    text-transform: uppercase;
+    letter-spacing: 0.6px; // Premium feel
+    color: white;
+
+    // PREVENT LAYOUT SHIFT
+    margin: 0;
+    line-height: 1;
+
+    // VARIANT: Standard (Red/Primary)
+    &.standard-badge {
+        background: var(--ion-color-primary);
+        box-shadow: 0 2px 8px rgba(var(--ion-color-primary-rgb), 0.5); // Glow
+    }
+
+    // VARIANT: Actor (Blue/Tertiary)
+    &.actor-badge {
+        background: var(--ion-color-tertiary);
+        box-shadow: 0 2px 8px rgba(var(--ion-color-tertiary-rgb), 0.5); // Glow
+        margin-bottom: 6px; // Spacing for actor layout
+        align-self: flex-start;
     }
 }
