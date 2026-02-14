@@ -15,10 +15,15 @@ export class MediaCarouselComponent {
     @Input() viewAllRoute?: string;
     @Input() items: any[] = [];
     @Input() type: 'movie' | 'tv' | 'person' = 'movie';
+    @Input() viewAllParams?: any;
 
     constructor(private router: Router) { }
 
     navigateToDetail(item: any) {
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
         const type = item.media_type || this.type;
         if (type === 'person') {
             this.router.navigate(['/person-detail', item.id]);
@@ -28,8 +33,12 @@ export class MediaCarouselComponent {
     }
 
     navigateToViewAll() {
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
         if (this.viewAllRoute) {
-            this.router.navigate([this.viewAllRoute]);
+            this.router.navigate([this.viewAllRoute], { queryParams: this.viewAllParams });
         }
     }
 }

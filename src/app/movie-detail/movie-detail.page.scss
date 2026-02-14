@@ -87,7 +87,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
 .meta-info {
     display: flex;
     flex-wrap: wrap;
-   
+
     .imdb-chip {
         .imdb-logo {
             width: 32px;
@@ -141,14 +141,55 @@ ion-content .inner-scroll::-webkit-scrollbar {
 .trailer-embed {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%;
+    padding-bottom: 56.25%; // 16:9 Aspect Ratio
+    background: #111; // Deep dark background while loading
+
+    // The Loader Overlay
+    .video-loader {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.03);
+        animation: subtlePulse 1.5s infinite ease-in-out;
+
+        ion-spinner {
+            transform: scale(1.5); // Make the spinner a bit more prominent
+        }
+    }
+
+    iframe {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        z-index: 1;
+
+        // The Magic Fade-In
+        opacity: 0;
+        transition: opacity 0.5s ease-in;
+
+        &.visible {
+            opacity: 1;
+        }
+    }
 }
 
-.trailer-embed iframe {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border: 0;
+// Gives the background a sleek, breathing effect while loading
+@keyframes subtlePulse {
+    0% {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    50% {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    100% {
+        background: rgba(255, 255, 255, 0.02);
+    }
 }
 
 .overview {
@@ -217,6 +258,118 @@ ion-header {
 
         @media (prefers-color-scheme: dark) {
             background: rgba(0, 0, 0, 0.5);
+        }
+    }
+}
+
+// COLLECTION CARD
+.collection-wrapper {
+    h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+    }
+}
+
+.collection-card {
+    position: relative;
+    height: 140px;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .collection-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+        display: flex;
+        align-items: flex-end;
+        padding: 1rem;
+
+        h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+    }
+}
+
+// HORIZONTAL IMAGE GALLERY
+.gallery-wrapper {
+    h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+    }
+}
+
+.horizontal-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 8px; // Space for native scrollbar if forced
+    scroll-snap-type: x mandatory;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    img {
+        height: 110px;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+        border-radius: 8px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+}
+
+// PRODUCTION COMPANIES
+.production-wrapper {
+    h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+    }
+}
+
+.company-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    background: rgba(120, 120, 120, 0.1);
+    padding: 16px;
+    border-radius: 1rem;
+
+    .company-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            max-height: 35px;
+            max-width: 100px;
+            object-fit: contain;
+            // Many TMDB logos are black. This trick inverts them to white for dark mode apps.
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+
+        .company-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ion-color-medium);
+            text-align: center;
         }
     }
 }

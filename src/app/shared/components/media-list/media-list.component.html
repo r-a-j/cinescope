@@ -20,7 +20,7 @@
     <!-- Poster is placed outside the clipped banner -->
     <div class="poster animate__animated animate__flipInX animate__fast">
       <img
-        [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
+        [src]="(item.poster_path || item.profile_path) ? ('https://image.tmdb.org/t/p/w300' + (item.poster_path || item.profile_path)) : 'assets/placeholder.png'"
         [alt]="item.title || item.name" />
     </div>
   </div>

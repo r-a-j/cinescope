@@ -33,7 +33,6 @@ export class HeaderComponent {
     addIcons({ camera, searchOutline, settingsOutline });
   }
 
-
   goToMovie() {
     this.router.navigate(['tabs/movie']);
   }

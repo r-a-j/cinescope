@@ -12,7 +12,7 @@ import { InfiniteScrollCustomEvent, IonContent, IonInfiniteScroll, IonInfiniteSc
 })
 export class MediaListComponent {
     @Input() items: any[] = [];
-    @Input() type: 'movie' | 'tv' = 'movie';
+    @Input() type: 'movie' | 'tv' | 'person' = 'movie';
     @Input() isLoading: boolean = false;
 
     // Optional: Emit event for infinite scroll if parent handles loading

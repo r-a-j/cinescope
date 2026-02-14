@@ -4,7 +4,7 @@ import { CommonModule, Location } from '@angular/common';
 import { InfiniteScrollCustomEvent, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton } from '@ionic/angular/standalone';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MediaListComponent } from '../../shared/components/media-list/media-list.component';
-import { Observable } from 'rxjs'; // Import Observable
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-generic-discover',
@@ -16,8 +16,9 @@ import { Observable } from 'rxjs'; // Import Observable
 export class GenericDiscoverPage implements OnInit {
     title: string = 'Discover';
     items: any[] = [];
-    type: 'movie' | 'tv' = 'movie';
+    type: 'movie' | 'tv' | 'person' = 'movie';
     categoryMethod: string = '';
+    extraParams: any = null; // Store extra params (like languages)
     currentPage: number = 1;
     isLoading: boolean = false;
 
@@ -28,11 +29,16 @@ export class GenericDiscoverPage implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.route.data.subscribe(data => {
-            this.title = data['title'] || 'Discover';
-            this.type = data['type'] || 'movie';
-            this.categoryMethod = data['method'];
-            this.items = []; // Clear on route change
+        // Look at queryParams instead of data!
+        this.route.queryParams.subscribe(params => {
+            this.title = params['title'] || 'Discover';
+            this.type = params['type'] || 'movie';
+            this.categoryMethod = params['method'];
+
+            // Parse the stringified params if they exist
+            this.extraParams = params['extraParams'] ? JSON.parse(params['extraParams']) : null;
+
+            this.items = [];
             this.currentPage = 1;
             this.loadData();
         });
@@ -40,17 +46,25 @@ export class GenericDiscoverPage implements OnInit {
 
     loadData(event?: InfiniteScrollCustomEvent) {
         if (!this.categoryMethod) {
-            console.error('No category method specified for GenericDiscoverPage');
+            console.error('No category method specified');
             event?.target.complete();
             return;
         }
 
         this.isLoading = true;
+        let serviceCall: Observable<any>;
 
-        // Dynamic service call
-        const serviceCall = (this.tmdbService as any)[this.categoryMethod](this.currentPage);
+        // 💥 Intelligent Routing Logic 
+        if (this.categoryMethod === 'getDiscoverMovies') {
+            // If it's a discover method, merge the page into the params object
+            const apiParams = { ...this.extraParams, page: this.currentPage };
+            serviceCall = this.tmdbService.getDiscoverMovies(apiParams);
+        } else {
+            // For standard methods (getTrendingMovies, getPopularPersons, etc.) pass the page number
+            serviceCall = (this.tmdbService as any)[this.categoryMethod](this.currentPage);
+        }
 
-        if (serviceCall instanceof Observable) { // Ensure it's an observable
+        if (serviceCall instanceof Observable) {
             serviceCall.subscribe({
                 next: (response: any) => {
                     if (response && response.results) {
@@ -66,10 +80,6 @@ export class GenericDiscoverPage implements OnInit {
                     event?.target.complete();
                 }
             });
-        } else {
-            console.error(`Method ${this.categoryMethod} does not return an Observable or does not exist on TmdbSearchService`);
-            this.isLoading = false;
-            event?.target.complete();
         }
     }
 

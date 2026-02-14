@@ -10,7 +10,9 @@ import {
   IonToolbar,
   IonButtons,
   IonTitle,
-  NavController, IonLabel
+  NavController,
+  IonLabel,
+  IonSpinner
 } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -49,6 +51,7 @@ import { IonThumbnail } from '@ionic/angular/standalone';
     FormsModule,
     NumberSuffixPipe,
     IonThumbnail,
+    IonSpinner
   ],
 })
 export class MovieDetailPage implements OnInit {
@@ -62,6 +65,8 @@ export class MovieDetailPage implements OnInit {
   isInWatchlist: boolean = false;
   isInWatched: boolean = false;
   bookmarkColor: 'danger' | 'success' | 'medium' = 'medium';
+
+  isVideoLoading: boolean = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -88,6 +93,10 @@ export class MovieDetailPage implements OnInit {
 
     await this.loadMovieDetail(+this.movieId);
     await this.refreshBookmarkState();
+  }
+
+  onVideoLoad() {
+    this.isVideoLoading = false;
   }
 
   goBack(): void {

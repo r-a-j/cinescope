@@ -53,9 +53,16 @@
 
     <div class="media-row" *ngIf="safeYoutubeUrl">
       <div class="trailer-embed">
-        <iframe [src]="safeYoutubeUrl" title="YouTube video" allowfullscreen
+
+        <div class="video-loader" *ngIf="isVideoLoading">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+        </div>
+
+        <iframe [src]="safeYoutubeUrl" (load)="onVideoLoad()" [class.visible]="!isVideoLoading" loading="lazy"
+          title="YouTube video" allowfullscreen
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
         </iframe>
+
       </div>
     </div>
 
@@ -75,6 +82,39 @@
       <div>
         <h3>Budget/Revenue</h3>
         <p>${{ movieDetail.budget | numberSuffix }}/${{ movieDetail.revenue | numberSuffix }}</p>
+      </div>
+    </div>
+    <div class="collection-wrapper" *ngIf="movieDetail.belongs_to_collection">
+      <h2>Collection</h2>
+      <div class="collection-card">
+        <img [src]="'https://image.tmdb.org/t/p/w500' + movieDetail.belongs_to_collection.backdrop_path"
+          [alt]="movieDetail.belongs_to_collection.name" />
+        <div class="collection-overlay">
+          <h3>Part of the {{ movieDetail.belongs_to_collection.name }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery-wrapper" *ngIf="movieDetail.images?.backdrops?.length">
+      <h2>Gallery</h2>
+      <div class="horizontal-scroll">
+        <img *ngFor="let img of (movieDetail.images?.backdrops || []).slice(0, 10)"
+          [src]="'https://image.tmdb.org/t/p/w300' + img.file_path" alt="Movie Backdrop" />
+      </div>
+    </div>
+
+    <div class="production-wrapper" *ngIf="movieDetail.production_companies?.length">
+      <h2>Production Companies</h2>
+      <div class="company-list">
+        <ng-container *ngFor="let comp of movieDetail.production_companies">
+          <div class="company-item" *ngIf="comp.logo_path || comp.name">
+            <img *ngIf="comp.logo_path; else textLogo" [src]="'https://image.tmdb.org/t/p/w200' + comp.logo_path"
+              [alt]="comp.name" />
+            <ng-template #textLogo>
+              <span class="company-text">{{ comp.name }}</span>
+            </ng-template>
+          </div>
+        </ng-container>
       </div>
     </div>
   </div>

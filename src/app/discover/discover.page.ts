@@ -89,23 +89,73 @@ export class DiscoverPage implements OnInit, OnDestroy {
 
   // Static Definitions
   bollywoodSections: DiscoverSection[] = [
-    { title: 'Trending Bollywood', method: 'getTrendingBollywoodMovies', type: 'movie', items: [] },
-    { title: 'Top Rated Hindi', method: 'getTopRatedMovies', params: { with_original_language: 'hi' }, type: 'movie', items: [] },
-    { title: 'Upcoming Hindi', method: 'getUpcomingMovies', params: { with_original_language: 'hi', region: 'IN' }, type: 'movie', items: [] }
+    {
+      title: 'Trending Bollywood',
+      method: 'getTrendingBollywoodMovies',
+      type: 'movie',
+      items: []
+    },
+    {
+      title: 'Top Rated Hindi',
+      method: 'getDiscoverMovies',
+      params: {
+        with_original_language: 'hi',
+        with_origin_country: 'IN',
+        sort_by: 'vote_average.desc',
+        'vote_count.gte': 300
+      },
+      type: 'movie',
+      items: []
+    },
+    {
+      title: 'Upcoming Hindi',
+      method: 'getUpcomingMovies',
+      type: 'movie',
+      items: []
+    }
   ];
 
   topRatedSections: DiscoverSection[] = [
-    { title: 'Top Rated Movies', method: 'getTopRatedMovies', type: 'movie', items: [], viewAllRoute: '/top-rated-movies' },
-    { title: 'Top Rated TV Shows', method: 'getTopRatedTV', type: 'tv', items: [], viewAllRoute: '/top-rated-tv' }
+    {
+      title: 'Top Rated Movies',
+      method: 'getTopRatedMovies',
+      type: 'movie',
+      items: []
+    },
+    {
+      title: 'Top Rated TV Shows',
+      method: 'getTopRatedTV',
+      type: 'tv',
+      items: []
+    }
   ];
 
   trendingSections: DiscoverSection[] = [
-    { title: 'Trending Movies', method: 'getTrendingMovies', type: 'movie', items: [] },
-    { title: 'Trending TV', method: 'getTrendingTV', type: 'tv', items: [] }
+    {
+      title: 'Trending Movies',
+      method: 'getTrendingMovies',
+      type: 'movie',
+      items: []
+    },
+    {
+      title: 'Trending TV',
+      method: 'getTrendingTv',
+      type: 'tv',
+      items: []
+    }
   ];
 
   constructor(private tmdbService: TmdbSearchService) {
     addIcons({ star, arrowUpOutline });
+  }
+
+  getQueryParams(section: DiscoverSection) {
+    return {
+      title: section.title,
+      method: section.method,
+      type: section.type,
+      extraParams: section.params ? JSON.stringify(section.params) : null
+    };
   }
 
   ngOnInit() {
@@ -256,6 +306,13 @@ export class DiscoverPage implements OnInit, OnDestroy {
 
     this.desiSections = [
       {
+        title: `🔥 Trending Pan-India`,
+        method: 'getTrendingIndia',
+        type: 'movie',
+        items: [],
+        viewAllRoute: `/view-all/trending-pan-india`
+      },
+      {
         title: `New ${langLabel} Releases`,
         method: 'getDiscoverMovies',
         type: 'movie',
@@ -265,7 +322,8 @@ export class DiscoverPage implements OnInit, OnDestroy {
           sort_by: 'primary_release_date.desc',
           'primary_release_date.lte': new Date().toISOString().split('T')[0],
           with_origin_country: 'IN'
-        }
+        },
+        viewAllRoute: `/view-all/new-releases/${this.selectedLanguage}`
       },
       {
         title: `Popular in ${langLabel}`,
@@ -276,7 +334,8 @@ export class DiscoverPage implements OnInit, OnDestroy {
           with_original_language: this.selectedLanguage,
           sort_by: 'popularity.desc',
           with_origin_country: 'IN'
-        }
+        },
+        viewAllRoute: `/view-all/popular/${this.selectedLanguage}`
       },
       {
         title: `Top Rated ${langLabel}`,
@@ -288,7 +347,8 @@ export class DiscoverPage implements OnInit, OnDestroy {
           sort_by: 'vote_average.desc',
           'vote_count.gte': 50,
           with_origin_country: 'IN'
-        }
+        },
+        viewAllRoute: `/view-all/top-rated/${this.selectedLanguage}`
       },
       {
         title: `${langLabel} Action Hits`,
@@ -299,7 +359,8 @@ export class DiscoverPage implements OnInit, OnDestroy {
           with_original_language: this.selectedLanguage,
           with_genres: '28',
           sort_by: 'popularity.desc'
-        }
+        },
+        viewAllRoute: `/view-all/action-hits/${this.selectedLanguage}`
       }
     ];
   }

@@ -101,10 +101,14 @@ export class TmdbSearchService {
     getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
         const key = `trending_bollywood_${page}`;
         const discoveryUrl = `${this.BASE_URL}/discover/movie`;
+
+        // Dynamically get today's date in 'YYYY-MM-DD' format
+        const today = new Date().toISOString().split('T')[0];
+
         const apiParams = new HttpParams()
             .set('include_video', 'true')
             .set('language', 'en-US')
-            .set('primary_release_year', '2025')
+            .set('primary_release_year', today)
             .set('sort_by', 'vote_average.desc')
             .set('with_origin_country', 'IN')
             .set('with_original_language', 'hi')
@@ -116,16 +120,26 @@ export class TmdbSearchService {
 
     // --- Desi Hub Methods ---
 
+    // tmdb-search.service.ts
+
     getTrendingIndia(page = 1): Observable<MovieSearchModel> {
-        const key = `trending_india_v2_${page}`;
-        // Using discover to force Indian content sorting by popularity
+        const key = `trending_india_ultimate_${page}`;
+
+        // The "Ultimate Badass" Params
+        const params = new HttpParams()
+            .set('include_adult', 'false')
+            .set('include_video', 'false')
+            .set('language', 'en-US')
+            .set('page', page.toString())
+            .set('region', 'IN')
+            .set('sort_by', 'popularity.desc')
+            .set('vote_average.gte', '7.0') // Quality Control
+            .set('vote_count.gte', '300')   // Legitimacy Check
+            .set('with_origin_country', 'IN')
+            .set('with_original_language', 'hi|te|ta|ml|kn'); // Pan-Indian Scope
+
         return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
-            params: new HttpParams()
-                .set('language', 'en-US')
-                .set('region', 'IN')
-                .set('sort_by', 'popularity.desc')
-                .set('with_origin_country', 'IN') // Crucial for Indian content
-                .set('page', page)
+            params: params
         }).pipe(catchError(this.handleError)));
     }
 
@@ -188,7 +202,7 @@ export class TmdbSearchService {
     getMovieDetail(movieId: number, skipCache: boolean = false): Observable<MovieDetailModel> {
         const key = `movie_detail_${movieId}`;
         const params = new HttpParams()
-            .set('append_to_response', 'videos,recommendations,similar')
+            .set('append_to_response', 'videos,recommendations,similar,images')
             .set('language', 'en-US');
 
         // Cache details for 24 hours (86400000 ms)

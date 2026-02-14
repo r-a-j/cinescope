@@ -85,7 +85,8 @@
       <app-media-carousel
         [title]="section.title"
         [items]="section.items"
-        [viewAllRoute]="section.viewAllRoute ?? ''" 
+        viewAllRoute="/view-all"
+        [viewAllParams]="getQueryParams(section)" 
         [type]="section.type">
       </app-media-carousel>
     </ng-container>
