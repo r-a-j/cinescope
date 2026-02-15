@@ -154,19 +154,16 @@ export class MovieDetailPage implements OnInit {
     const id = this.movieDetail.id!;
 
     if (this.isInWatched) {
-      // Currently watched → remove it from watched
       await this.storageService.removeFromWatched(id, true, false);
       this.isInWatched = false;
       this.isInWatchlist = false;
     }
     else if (this.isInWatchlist) {
-      // Currently in watchlist → move it to watched
       await this.storageService.moveFromWatchlistToWatched(id, true, false);
       this.isInWatched = true;
       this.isInWatchlist = false;
     }
     else {
-      // Not in any list → add to watchlist
       const content: ContentModel = {
         contentId: id,
         isMovie: true,
@@ -184,7 +181,7 @@ export class MovieDetailPage implements OnInit {
       this.isInWatched = false;
     }
 
-    this.refreshBookmarkState(); // Refresh icon
+    this.refreshBookmarkState();
     this.storageService.emitStorageChanged();
   }
 
@@ -208,7 +205,6 @@ export class MovieDetailPage implements OnInit {
         genres: this.movieDetail.genres
       };
 
-      // Check if the movie is already in the watchlist before adding it
       const watchlist = await this.storageService.getWatchlist();
       const isDuplicate = watchlist.some(c => c.contentId === content.contentId && c.isMovie === content.isMovie);
 
@@ -221,9 +217,8 @@ export class MovieDetailPage implements OnInit {
     }
 
     await this.refreshBookmarkState();
-    this.storageService.emitStorageChanged(); // Emit change!
+    this.storageService.emitStorageChanged();
   }
-
 
   async showToast(message: string, color: 'success' | 'danger') {
     const toast = await this.toastController.create({

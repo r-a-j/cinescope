@@ -10,7 +10,6 @@
 </ion-header>
 
 <ion-content *ngIf="tvDetail" (ionScroll)="onScroll($event)" scrollEvents="true" class="movie-detail-content">
-  <!-- ─────────  HERO / BACKDROP  ───────── -->
   <div class="backdrop-wrapper">
     <img class="backdrop-image" [src]="tvDetail.backdrop_path
         ? 'https://image.tmdb.org/t/p/original' + tvDetail.backdrop_path
@@ -28,12 +27,9 @@
     </div>
   </div>
 
-  <!-- ─────────  MAIN CONTENT BLOCK  ───────── -->
   <div class="content-section">
     <h1 class="movie-title">{{ tvDetail.name }}</h1>
     <p class="tagline" *ngIf="tvDetail.tagline">"{{ tvDetail.tagline }}"</p>
-
-    <!-- meta chips -->
     <div class="meta-info">
       <ion-chip color="medium">
         <ion-icon name="calendar-outline" slot="start"></ion-icon>
@@ -51,12 +47,9 @@
       </ion-chip>
     </div>
 
-    <!-- genre chips -->
     <div class="genre-chips">
       <ion-chip *ngFor="let genre of tvDetail.genres">{{ genre.name }}</ion-chip>
     </div>
-
-    <!-- trailer -->
     <div class="media-row" *ngIf="safeYoutubeUrl">
       <div class="trailer-embed">
         <iframe [src]="safeYoutubeUrl" allowfullscreen
@@ -65,7 +58,6 @@
       </div>
     </div>
 
-    <!-- overview -->
     <div class="overview">
       <h2>Overview</h2>
       <p *ngIf="tvDetail.overview; else noOverview">
@@ -76,7 +68,6 @@
       </ng-template>
     </div>
 
-    <!-- seasons accordion -->
     <ion-accordion-group>
       <ion-accordion *ngFor="let season of tvDetail.seasons">
         <ion-item slot="header" color="secondary">
@@ -97,7 +88,6 @@
             <div class="meta-info" *ngIf="season.vote_average">
               <ion-chip color="warning" class="imdb-chip">
                 <img src="assets/imdb-96.png" alt="IMDb" class="imdb-logo" />
-                <!-- ✅ fixed: use season.vote_average -->
                 <ion-label>{{
                   season.vote_average | number: '1.1-1'
                   }}</ion-label>
@@ -115,7 +105,6 @@
       </ion-accordion>
     </ion-accordion-group>
 
-    <!-- last / next episode cards -->
     <ng-container *ngIf="tvDetail.last_episode_to_air as last">
       <ion-card class="episode-card">
         <ion-item lines="none">
@@ -160,7 +149,6 @@
       </ion-card>
     </ng-container>
 
-    <!-- recommended -->
     <div class="section" *ngIf="tvDetail.recommendations?.results?.length">
       <div class="section-header">
         <h2>Recommended</h2>
@@ -175,7 +163,6 @@
       </div>
     </div>
 
-    <!-- similar -->
     <div class="section" *ngIf="tvDetail.similar?.results?.length">
       <div class="section-header">
         <h2>Similar</h2>
@@ -190,7 +177,6 @@
       </div>
     </div>
 
-    <!-- networks -->
     <div class="section logos-section" *ngIf="tvDetail.networks?.length">
       <h2 class="section-title">Networks</h2>
       <ion-row class="logo-row" justify-content-center>
@@ -200,7 +186,6 @@
       </ion-row>
     </div>
 
-    <!-- spoken languages -->
     <div class="section" *ngIf="tvDetail.spoken_languages?.length">
       <h2 class="section-title">Spoken Languages</h2>
       <div class="chip-row">
@@ -209,7 +194,6 @@
       </div>
     </div>
 
-    <!-- quick-facts grid -->
     <div class="details-grid">
       <div>
         <h3>Status</h3>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { forkJoin, map, switchMap } from 'rxjs';
 import { MovieSearchModel } from 'src/models/movie/movie-search.model';
 import { TvSearchModel } from 'src/models/tv/tv-search.model';
@@ -24,13 +24,11 @@ export class TmdbSearchService {
         private cacheService: CacheService
     ) { }
 
-    /** Handle API errors */
     private handleError(error: any) {
         console.error('TMDB API Error:', error);
         return throwError(() => new Error('Something went wrong with the TMDB API.'));
     }
 
-    /** Helper to check cache or fetch */
     private getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number, skipCache: boolean = false): Observable<T> {
         if (skipCache) {
             return fetch$;
@@ -55,7 +53,6 @@ export class TmdbSearchService {
         });
     }
 
-    /** Search Movies */
     searchMovies(query: string, page = 1, year?: string, lang: string = 'en-US'): Observable<MovieSearchModel> {
         let params = new HttpParams()
             .set('query', query)
@@ -68,7 +65,6 @@ export class TmdbSearchService {
             .pipe(catchError(this.handleError));
     }
 
-    /** Search TV Shows */
     searchTV(query: string, page = 1, year?: string, lang: string = 'en-US'): Observable<TvSearchModel> {
         let params = new HttpParams()
             .set('query', query)
@@ -81,7 +77,6 @@ export class TmdbSearchService {
             .pipe(catchError(this.handleError));
     }
 
-    /** Generic Trending Movies */
     getTrendingMovies(page: number = 1): Observable<MovieSearchModel> {
         const key = `trending_movie_${page}`;
         return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/trending/movie/week`, {
@@ -89,7 +84,6 @@ export class TmdbSearchService {
         }).pipe(catchError(this.handleError)));
     }
 
-    /** Generic Trending TV */
     getTrendingTv(page: number = 1): Observable<TvSearchModel> {
         const key = `trending_tv_${page}`;
         return this.getWithCache(key, this.http.get<TvSearchModel>(`${this.BASE_URL}/trending/tv/week`, {
@@ -97,12 +91,9 @@ export class TmdbSearchService {
         }).pipe(catchError(this.handleError)));
     }
 
-    /** Trending Bollywood Movies */
     getTrendingBollywoodMovies(page: number = 1): Observable<MovieSearchModel> {
         const key = `trending_bollywood_${page}`;
         const discoveryUrl = `${this.BASE_URL}/discover/movie`;
-
-        // Dynamically get today's date in 'YYYY-MM-DD' format
         const today = new Date().toISOString().split('T')[0];
 
         const apiParams = new HttpParams()
@@ -118,14 +109,9 @@ export class TmdbSearchService {
             .pipe(catchError(this.handleError)));
     }
 
-    // --- Desi Hub Methods ---
-
-    // tmdb-search.service.ts
-
     getTrendingIndia(page = 1): Observable<MovieSearchModel> {
         const key = `trending_india_ultimate_${page}`;
 
-        // The "Ultimate Badass" Params
         const params = new HttpParams()
             .set('include_adult', 'false')
             .set('include_video', 'false')
@@ -133,10 +119,10 @@ export class TmdbSearchService {
             .set('page', page.toString())
             .set('region', 'IN')
             .set('sort_by', 'popularity.desc')
-            .set('vote_average.gte', '7.0') // Quality Control
-            .set('vote_count.gte', '300')   // Legitimacy Check
+            .set('vote_average.gte', '7.0')
+            .set('vote_count.gte', '300')
             .set('with_origin_country', 'IN')
-            .set('with_original_language', 'hi|te|ta|ml|kn'); // Pan-Indian Scope
+            .set('with_original_language', 'hi|te|ta|ml|kn');
 
         return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
             params: params
@@ -149,7 +135,7 @@ export class TmdbSearchService {
             params: new HttpParams()
                 .set('language', 'en-US')
                 .set('region', 'IN')
-                .set('with_release_type', '3|2') // Theatrical
+                .set('with_release_type', '3|2')
                 .set('page', page)
         }).pipe(catchError(this.handleError)));
     }
@@ -166,8 +152,6 @@ export class TmdbSearchService {
             params = params.set('with_origin_country', 'IN');
         } else {
             params = params.set('with_original_language', languageISO);
-            // Optionally filter by India region release too if needed, but language is usually enough
-            // params = params.set('region', 'IN');
         }
 
         return this.getWithCache(key, this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
@@ -175,7 +159,6 @@ export class TmdbSearchService {
         }).pipe(catchError(this.handleError)));
     }
 
-    /** Get Upcoming Movies */
     getUpcomingMovies(page: number = 1): Observable<MovieUpcomingModel> {
         const key = `upcoming_movies_${page}`;
         const today = new Date();
@@ -198,14 +181,12 @@ export class TmdbSearchService {
             .pipe(catchError(this.handleError)));
     }
 
-    /** Movie Details */
     getMovieDetail(movieId: number, skipCache: boolean = false): Observable<MovieDetailModel> {
         const key = `movie_detail_${movieId}`;
         const params = new HttpParams()
             .set('append_to_response', 'videos,recommendations,similar,images')
             .set('language', 'en-US');
 
-        // Cache details for 24 hours (86400000 ms)
         return this.getWithCache(key, this.http.get<MovieDetailModel>(`${this.BASE_URL}/movie/${movieId}`, { params })
             .pipe(catchError(this.handleError)), 86400000, skipCache);
     }
@@ -216,13 +197,12 @@ export class TmdbSearchService {
             .set('append_to_response', 'videos,recommendations,similar')
             .set('language', 'en-US');
 
-        // Cache details for 24 hours
         return this.getWithCache(key, this.http.get<TvDetailModel>(`${this.BASE_URL}/tv/${tvId}`, { params })
             .pipe(catchError(this.handleError)), 86400000, skipCache);
     }
 
     getPopularPersons(page = 1): Observable<PersonModel> {
-        const key = `trending_persons_${page}`; // Updated key
+        const key = `trending_persons_${page}`;
         return this.getWithCache(key, this.http.get<PersonModel>(`${this.BASE_URL}/trending/person/day`, {
             params: new HttpParams()
                 .set('language', 'en-US')
@@ -232,7 +212,6 @@ export class TmdbSearchService {
 
     getPersonDetail(id: number): Observable<PersonDetailModel> {
         const key = `person_detail_full_${id}`;
-        // Cache for 24 hours
         return this.getWithCache(key, this.http.get<PersonDetailModel>(`${this.BASE_URL}/person/${id}`, {
             params: new HttpParams()
                 .set('language', 'en-US')
@@ -259,13 +238,9 @@ export class TmdbSearchService {
     }
 
     getDiscoverMovies(params: any): Observable<MovieSearchModel> {
-        // Generate a unique cache key based on params
         const key = `discover_movie_${JSON.stringify(params)}`;
-
-        // Build URL
         const url = buildDiscoverMovieUrl(this.BASE_URL, params);
 
-        // Execute with Cache
         return this.getWithCache(key, this.http.get<MovieSearchModel>(url).pipe(
             catchError(this.handleError)
         ));
@@ -274,7 +249,6 @@ export class TmdbSearchService {
     getTrendingIndianStars(): Observable<PersonModel> {
         const key = 'trending_indian_stars_v1';
 
-        // Define the source streams (Movies and TV)
         const movies$ = this.http.get<MovieSearchModel>(`${this.BASE_URL}/discover/movie`, {
             params: new HttpParams()
                 .set('language', 'en-US')
@@ -292,40 +266,31 @@ export class TmdbSearchService {
                 .set('page', '1')
         });
 
-        // The Complex Construction
         const fetchLogic$ = forkJoin([movies$, tv$]).pipe(
             switchMap(([movieData, tvData]) => {
-                // 1. Get Top 3 Movies and Top 3 TV Shows
                 const topMovies = (movieData.results || []).slice(0, 3);
                 const topTV = (tvData.results || []).slice(0, 3);
 
-                // 2. Create an array of API calls for their credits
                 const creditsCalls = [
                     ...topMovies.map(m => this.http.get<any>(`${this.BASE_URL}/movie/${m.id}/credits`)),
                     ...topTV.map(t => this.http.get<any>(`${this.BASE_URL}/tv/${t.id}/credits`))
                 ];
 
-                // 3. Execute all credit calls in parallel
                 return forkJoin(creditsCalls).pipe(
                     map((creditsResponses: any[]) => {
                         let allActors: any[] = [];
-
-                        // 4. Extract Top 4 Cast members from each result
                         creditsResponses.forEach(credit => {
                             if (credit.cast) {
                                 allActors.push(...credit.cast.slice(0, 4));
                             }
                         });
 
-                        // 5. Deduplicate by ID (Actors appear in multiple movies)
                         const uniqueActors = Array.from(new Map(allActors.map(item => [item.id, item])).values());
 
-                        // 6. Filter valid images and Popularity check (keep only known stars)
                         const validStars = uniqueActors
                             .filter(a => a.profile_path && a.popularity > 5)
-                            .sort((a, b) => b.popularity - a.popularity); // Sort by star power
+                            .sort((a, b) => b.popularity - a.popularity);
 
-                        // Return as PersonModel structure
                         return {
                             page: 1,
                             results: validStars,
@@ -337,6 +302,6 @@ export class TmdbSearchService {
             })
         );
 
-        return this.getWithCache(key, fetchLogic$, 12 * 60 * 60 * 1000); // Cache for 12 hours
+        return this.getWithCache(key, fetchLogic$, 12 * 60 * 60 * 1000);
     }
 }

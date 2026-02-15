@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   IonContent,
   IonSegment,
@@ -15,15 +15,12 @@ import {
   IonLabel
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { StorageService } from 'src/services/storage.service';
-import { TmdbSearchService } from 'src/services/tmdb-search.service';
-import { filter, firstValueFrom, Subscription } from 'rxjs';
-import { ContentModel } from 'src/models/content.model';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
 
 @Component({
@@ -48,15 +45,13 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
     IonContent,
     HeaderComponent],
 })
-export class MoviePage implements OnInit, OnDestroy {
+export class MoviePage implements OnInit {
   segment: 'watchlist' | 'watched' = 'watchlist';
   watchlist: MovieDetailModel[] = [];
   watched: MovieDetailModel[] = [];
 
   selectionMode = false;
   selectedIds = new Set<number>();
-
-  private routerSubscription!: Subscription;
 
   filterOpen = false;
   popoverEvent: any = null;
@@ -77,11 +72,6 @@ export class MoviePage implements OnInit, OnDestroy {
     this.loadMovies();
   }
 
-  ngOnDestroy() {
-    // Subscription handled automatically or need explicit unzip? 
-    // Ideally subscription should be stored and unsubscribed.
-  }
-
   async loadMovies() {
     this.watchlist = [];
     this.watched = [];
@@ -91,7 +81,6 @@ export class MoviePage implements OnInit, OnDestroy {
       this.storageService.getWatched()
     ]);
 
-    // Filter for Movies
     const movieWatchlist = watchlistItems.filter(item => item.isMovie);
     const movieWatched = watchedItems.filter(item => item.isMovie);
 
@@ -156,7 +145,6 @@ export class MoviePage implements OnInit, OnDestroy {
   toggleSelectionMode() {
     console.log('Pressed toggleSelectionMode', this.selectionMode);
     this.selectionMode = !this.selectionMode;
-    //this.toggleSelect(movieId!);
   }
 
   toggleSelect(movieId: number) {
@@ -169,7 +157,7 @@ export class MoviePage implements OnInit, OnDestroy {
 
   onMovieClick(movieId?: number | string) {
     if (this.selectionMode) {
-      this.toggleSelect(Number(movieId)); // just toggle selection
+      this.toggleSelect(Number(movieId));
     } else {
       this.goToMovieDetail(movieId);
     }

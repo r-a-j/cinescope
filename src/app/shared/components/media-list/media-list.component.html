@@ -11,13 +11,12 @@
           <div class="details">
             <span class="vote">Rating: {{ item.vote_average | number:'1.1-1' }}</span>
             <span class="release-date" *ngIf="item.release_date || item.first_air_date">
-                Release: {{ (item.release_date || item.first_air_date) | date:'MMM d, y' }}
+              Release: {{ (item.release_date || item.first_air_date) | date:'MMM d, y' }}
             </span>
           </div>
         </div>
       </div>
     </div>
-    <!-- Poster is placed outside the clipped banner -->
     <div class="poster animate__animated animate__flipInX animate__fast">
       <img
         [src]="(item.poster_path || item.profile_path) ? ('https://image.tmdb.org/t/p/w300' + (item.poster_path || item.profile_path)) : 'assets/placeholder.png'"

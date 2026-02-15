@@ -1,19 +1,15 @@
 <app-header></app-header>
 
-<!-- GENRE POP-OVER -->
 <ion-popover [isOpen]="filterOpen" [event]="popoverEvent" (didDismiss)="filterOpen = false" translucent="true">
   <ng-template>
     <ion-list>
-
-      <!-- GENRE ROW -->
       <ion-item *ngFor="let g of genres" button="true" lines="none" (click)="toggleGenre(g)"
         [class.active]="selectedGenres.has(g)" class="popover-genre-item">
-        <ion-label>{{ g }}</ion-label>        
+        <ion-label>{{ g }}</ion-label>
         <ion-checkbox slot="end" [checked]="selectedGenres.has(g)" (click)="$event.stopPropagation(); toggleGenre(g)">
         </ion-checkbox>
       </ion-item>
 
-      <!-- ACTION ROW -->
       <ion-item lines="none">
         <ion-button expand="block" size="small" (click)="applyFilter()">Apply</ion-button>
         <ion-button expand="block" size="small" fill="clear" (click)="clearFilter()">Clear</ion-button>
@@ -27,7 +23,6 @@
 
   <div class="segment-wrapper">
     <div class="left-slot">
-      <!-- If in selection mode, show action buttons -->
       <ion-buttons *ngIf="selectionMode">
         <ion-button color="danger" (click)="removeSelected()">Remove</ion-button>
         <ion-button color="primary" (click)="moveSelectedToWatched()">Watched</ion-button>
@@ -52,26 +47,21 @@
         [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
         [alt]="movie.title" />
 
-      <!-- Checkbox overlay -->
       <ion-checkbox *ngIf="selectionMode" [checked]="selectedIds.has(movie.id!)" (click)="toggleSelect(movie.id!)"
         class="media-checkbox">
       </ion-checkbox>
     </div>
   </div>
 
-  <!-- FILTER (bottom-most) -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
     <ion-fab-button class="fab-filter" (click)="openFilter($event)">
       <ion-icon name="options"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
-  <!-- EDIT / SELECTION -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="fab-edit" *ngIf="!selectionMode">
     <ion-fab-button class="fab-edit-btn" (click)="toggleSelectionMode()">
       <ion-icon name="trash"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-
-
 </ion-content>

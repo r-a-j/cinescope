@@ -21,7 +21,6 @@ export class LanguageService {
             }
         }
 
-        // fuzzy match fallback
         for (const key of this.languageMap.keys()) {
             if (query.toLowerCase().includes(key)) {
                 return this.languageMap.get(key)!;

@@ -20,8 +20,7 @@ import {
   IonSelectOption,
   IonText,
   LoadingController,
-  AlertController,
-  ToastController
+  AlertController
 } from '@ionic/angular/standalone';
 import { Toast } from '@capacitor/toast';
 import { Clipboard } from '@capacitor/clipboard';
@@ -84,13 +83,11 @@ import { Browser } from '@capacitor/browser';
   ],
 })
 export class SettingPage implements OnInit {
-  inputApiKey: string = ''; // Only for inputting a NEW key
+  inputApiKey: string = '';
   isKeyConfigured: boolean = false;
-  showKeyInput: boolean = false; // Toggle to show input field
-
+  showKeyInput: boolean = false;
   allowAdultContent: boolean = false;
   theme: 'system' | 'light' | 'dark' = 'system';
-
   invalidAttempts: number = 0;
   showGetNewKey: boolean = false;
 
@@ -98,22 +95,33 @@ export class SettingPage implements OnInit {
     private router: Router,
     private storageService: StorageService,
     private loadingCtrl: LoadingController,
-    private alertCtrl: AlertController,
-    private toastCtrl: ToastController,) {
+    private alertCtrl: AlertController) {
     addIcons({
-      arrowBackOutline, moonOutline, sunnyOutline, contrastOutline,
-      trashOutline, cloudDownloadOutline, cloudUploadOutline,
-      logoGithub, mailOutline, informationCircleOutline,
-      shieldCheckmarkOutline, documentTextOutline, openOutline,
-      keyOutline, warningOutline, checkmarkCircleOutline,
-      closeCircleOutline, eyeOutline, eyeOffOutline
+      arrowBackOutline,
+      moonOutline,
+      sunnyOutline,
+      contrastOutline,
+      trashOutline,
+      cloudDownloadOutline,
+      cloudUploadOutline,
+      logoGithub,
+      mailOutline,
+      informationCircleOutline,
+      shieldCheckmarkOutline,
+      documentTextOutline,
+      openOutline,
+      keyOutline,
+      warningOutline,
+      checkmarkCircleOutline,
+      closeCircleOutline,
+      eyeOutline,
+      eyeOffOutline
     });
   }
 
   ngOnInit() {
     this.storageService.getSettings().then((settings: SettingModel | null) => {
       if (settings) {
-        // Check if key exists but DO NOT load it into a bound variable
         this.isKeyConfigured = !!settings.tmdbApiKey && settings.tmdbApiKey.length > 0;
 
         this.allowAdultContent = settings.allowAdultContent || false;
@@ -123,7 +131,6 @@ export class SettingPage implements OnInit {
   }
 
   async saveCurrentSettings(newKey?: string): Promise<void> {
-    // We need to retrieve existing settings first to preserve the key if we are not updating it
     const currentSettings = await this.storageService.getSettings();
     const keyToSave = newKey !== undefined ? newKey : (currentSettings?.tmdbApiKey || '');
 
@@ -134,7 +141,6 @@ export class SettingPage implements OnInit {
     };
     await this.storageService.saveSettings(content);
 
-    // Update local state
     this.isKeyConfigured = !!keyToSave && keyToSave.length > 0;
   }
 
@@ -143,7 +149,6 @@ export class SettingPage implements OnInit {
     await this.saveCurrentSettings();
   }
 
-  // Create & share a backup file
   async createBackup(): Promise<void> {
     try {
       const { fileName } = await this.storageService.exportBackupAndShare();
@@ -166,7 +171,6 @@ export class SettingPage implements OnInit {
 
       const f = result.files[0];
 
-      // 🟢 SCOPE FIX: Declare variable outside the if/else blocks
       let jsonText = '';
 
       if (f.data) {
@@ -180,7 +184,6 @@ export class SettingPage implements OnInit {
         throw new Error('No file data');
       }
 
-      // Now 'jsonText' is safe to use here
       const alert = await this.alertCtrl.create({
         header: 'Restore Backup',
         message: 'How would you like to restore your data?',
@@ -215,7 +218,6 @@ export class SettingPage implements OnInit {
     }
   }
 
-  // Helper method for the "Cool" Loading
   async processRestore(jsonText: string, mode: 'merge' | 'replace') {
     const loader = await this.loadingCtrl.create({
       message: mode === 'merge' ? 'Merging your world...' : 'Restoring backup...',
@@ -226,13 +228,11 @@ export class SettingPage implements OnInit {
     await loader.present();
 
     const progressSub = this.storageService.restoreProgress$.subscribe((msg) => {
-      // Direct DOM update for better performance or just rely on Ionic binding
       loader.message = msg;
     });
 
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-      // This  will take time to load the data
       await this.storageService.restoreFromBackupJson(jsonText, mode);
       progressSub.unsubscribe();
       await loader.dismiss();
@@ -264,8 +264,6 @@ export class SettingPage implements OnInit {
       });
       if (confirmed) {
         this.inputApiKey = value.trim();
-        // Don't auto-save, let user review it in the hidden field or just click save
-        // Actually, user experience might be better if we just fill the input
       }
     } else {
       await this.showToast('Clipboard is empty.', 'short', 'bottom');
@@ -293,7 +291,6 @@ export class SettingPage implements OnInit {
     await this.saveCurrentSettings();
   }
 
-  // Confirm before clearing the watchlist
   async confirmClearWatchlist(): Promise<void> {
     const { value } = await Dialog.confirm({
       title: 'Confirm Clear Watchlist',
@@ -302,7 +299,6 @@ export class SettingPage implements OnInit {
     if (value) await this.clearWatchlist();
   }
 
-  // Confirm before clearing the watched list
   async confirmClearWatchedList(): Promise<void> {
     const { value } = await Dialog.confirm({
       title: 'Confirm Clear Watched List',
@@ -335,19 +331,11 @@ export class SettingPage implements OnInit {
 
   isValidApiKey(key: string): boolean {
     if (!key || typeof key !== 'string') return false;
-    // Basic TMDB key validation (usually 32 chars hex, or v4 JWT which is much longer)
-    // The previous check was key.split('.').length !== 3 which implies checking for JWT format maybe?
-    // Let's stick to the previous simplified check but robust enough.
-    // TMDB v3 keys are hex strings approx 32 chars.
-    // TMDB v4/Read Access tokens are JWTs (3 parts separated by dots).
-
-    // If it has dots, assume JWT
     if (key.includes('.')) {
       const parts = key.split('.');
       return parts.length === 3;
     }
 
-    // If no dots, assume v3 hex key (usually 32 chars)
     if (key.length > 20) return true;
 
     return false;
@@ -363,8 +351,8 @@ export class SettingPage implements OnInit {
       await this.showToast('API Key saved', 'short', 'bottom');
       this.invalidAttempts = 0;
       this.showGetNewKey = false;
-      this.inputApiKey = ''; // Clear input after save
-      this.showKeyInput = false; // Hide input logic
+      this.inputApiKey = '';
+      this.showKeyInput = false;
     } else {
       this.invalidAttempts++;
       await this.showToast('Invalid key format', 'long', 'bottom');
@@ -378,7 +366,7 @@ export class SettingPage implements OnInit {
       message: 'Are you sure? This will disable TMDB integration.',
     });
     if (value) {
-      await this.saveCurrentSettings(''); // Save empty string
+      await this.saveCurrentSettings('');
       this.isKeyConfigured = false;
       await this.showToast('API Key removed', 'short', 'bottom');
     }

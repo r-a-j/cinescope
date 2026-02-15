@@ -123,10 +123,10 @@ export class SearchPage implements AfterViewInit {
 
   onSearchInput(event: any) {
     clearTimeout(this.searchTimeout);
-    
+
     this.searchTimeout = setTimeout(() => {
       this.search(true);
-    }, 500); // 500ms after user stops typing
+    }, 500);
   }
 
   async search(reset: boolean = false): Promise<void> {

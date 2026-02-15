@@ -6,17 +6,12 @@
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
-/* ========== OPTIONAL UTILITIES ========== */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/* ========== DARK MODE PALETTE (Manual Switch) ========== */
-/* @import "@ionic/angular/css/palettes/dark.system.css"; - REMOVED to prevent conflict */
-
-/* ========== TYPOGRAPHY ========== */
 body {
     font-family: "Bebas Neue", sans-serif;
     font-weight: 400;
@@ -44,7 +39,6 @@ h6 {
     letter-spacing: 0.5px;
 }
 
-/* ========== IONIC COMPONENT THEME OVERRIDES ========== */
 ion-back-button {
     color: #db0000;
 }
@@ -70,7 +64,6 @@ ion-content {
     --border-width: 0;
 }
 
-/* ========== CARD LAYOUT ========== */
 .horizontal-scroll {
     display: flex;
     overflow-x: auto;
@@ -81,8 +74,8 @@ ion-content {
 
     .item {
         flex: 0 0 auto;
-        width: 95px; // Smaller width
-        height: 142.5px; // Maintains 2:3 aspect ratio (95 * 1.5)
+        width: 95px;
+        height: 142.5px;
         scroll-snap-align: start;
         border-radius: 6px;
         overflow: hidden;
@@ -98,7 +91,6 @@ ion-content {
     }
 }
 
-/* ========== SECTION HEADERS ========== */
 .section-header,
 .genre-header {
     display: flex;
@@ -114,7 +106,6 @@ ion-content {
     }
 }
 
-/* ========== GRID LAYOUT ========== */
 .grid {
     display: flex;
     flex-wrap: wrap;
@@ -131,7 +122,6 @@ ion-content {
     }
 }
 
-/* ========== BUTTON UTILITY ========== */
 .button-container {
     display: flex;
     gap: 10px;
@@ -140,9 +130,6 @@ ion-content {
         flex: 1;
     }
 }
-
-/* ========== REUSABLE COMPONENTS ========== */
-
 
 .trailer-embed {
     position: relative;
@@ -160,7 +147,6 @@ ion-content {
     }
 }
 
-//-- ========== TOP RATED TV ========== */
 .media-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));

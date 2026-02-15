@@ -6,7 +6,7 @@ import { Preferences } from '@capacitor/preferences';
 })
 export class CacheService {
     private readonly CACHE_PREFIX = 'tmdb_cache_';
-    private readonly DEFAULT_TTL = 1000 * 60 * 60 * 6; // 6 hours
+    private readonly DEFAULT_TTL = 1000 * 60 * 60 * 6;
 
     constructor() { }
 
@@ -17,7 +17,6 @@ export class CacheService {
 
             const entry = JSON.parse(value);
             if (Date.now() > entry.expiry) {
-                // Fire and forget removal of expired item
                 this.remove(key).catch(e => console.warn('Cache cleanup failed', e));
                 return null;
             }
@@ -34,16 +33,13 @@ export class CacheService {
                 expiry: Date.now() + ttlMs,
                 data: data
             };
-            // 🛡️ CRITICAL FIX: Safe Set
             await Preferences.set({
                 key: this.CACHE_PREFIX + key,
                 value: JSON.stringify(entry)
             });
         } catch (e: any) {
-            // 🛡️ Handle Quota Exceeded Gracefully
             if (e.name === 'QuotaExceededError' || e.message?.includes('exceeded the quota')) {
                 console.warn('[Cache] Storage full! Item not cached:', key);
-                // Optional: Trigger a clear of expired items here if you want to be fancy
             } else {
                 console.error('[Cache] Set error', e);
             }

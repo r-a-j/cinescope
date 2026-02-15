@@ -17,14 +17,12 @@ import {
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { add, bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
-import { filter, firstValueFrom, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { StorageService } from 'src/services/storage.service';
-import { TmdbSearchService } from 'src/services/tmdb-search.service';
-import { ContentModel } from 'src/models/content.model';
 
 @Component({
   selector: 'app-tv',
@@ -53,24 +51,25 @@ export class TvPage implements OnInit, OnDestroy {
   segment: 'watchlist' | 'watched' = 'watchlist';
   watchlist: TvDetailModel[] = [];
   watched: TvDetailModel[] = [];
-
   selectionMode = false;
   selectedIds = new Set<number>();
-
-  private routerSubscription!: Subscription;
-
   filterOpen = false;
   popoverEvent: any = null;
   genres: string[] = [];
   selectedGenres = new Set<string>();
-
   storageSub!: Subscription;
 
   constructor(
     private router: Router,
     private storageService: StorageService
   ) {
-    addIcons({ add, trash, bookmark, checkmarkDone, options });
+    addIcons({
+      add,
+      trash,
+      bookmark,
+      checkmarkDone,
+      options
+    });
   }
 
   ngOnInit() {
@@ -93,7 +92,6 @@ export class TvPage implements OnInit, OnDestroy {
       this.storageService.getWatched()
     ]);
 
-    // Filter for TV
     const tvWatchlist = watchlistItems.filter(item => item.isTv);
     const tvWatched = watchedItems.filter(item => item.isTv);
 
@@ -137,7 +135,6 @@ export class TvPage implements OnInit, OnDestroy {
     this.filterOpen = false;
   }
 
-  /** returns TVs respecting active genre filter */
   getCurrentTv(): TvDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
     if (this.selectedGenres.size === 0) { return base; }
@@ -158,7 +155,6 @@ export class TvPage implements OnInit, OnDestroy {
   toggleSelectionMode() {
     console.log('Pressed toggleSelectionMode', this.selectionMode);
     this.selectionMode = !this.selectionMode;
-    //this.toggleSelect(tvId!);
   }
 
   toggleSelect(tvId: number) {
@@ -171,7 +167,7 @@ export class TvPage implements OnInit, OnDestroy {
 
   onTvClick(tvId?: number | string) {
     if (this.selectionMode) {
-      this.toggleSelect(Number(tvId)); // just toggle selection
+      this.toggleSelect(Number(tvId));
     } else {
       this.goToTvDetail(tvId);
     }

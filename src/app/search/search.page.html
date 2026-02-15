@@ -7,7 +7,6 @@
     </ion-buttons>
     <ion-title>Search</ion-title>
   </ion-toolbar>
-  <!-- Segment Toggle -->
   <ion-toolbar>
     <ion-segment [(ngModel)]="segmentValue" (ionChange)="segmentChanged($event)">
       <ion-segment-button value="movies">
@@ -19,15 +18,10 @@
     </ion-segment>
   </ion-toolbar>
 
-  <!-- Searchbar Toolbar with Paste Button -->
   <ion-toolbar class="search-toolbar">
     <div class="search-wrapper">
-      <ion-searchbar [(ngModel)]="searchQuery"
-        placeholder="Search here..."
-        show-clear-button="always"
-        (ionInput)="onSearchInput($event)"
-        (ionClear)="clearSearch()"
-        (keyup.enter)="search(true)">
+      <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search here..." show-clear-button="always"
+        (ionInput)="onSearchInput($event)" (ionClear)="clearSearch()" (keyup.enter)="search(true)">
       </ion-searchbar>
       <button *ngIf="!searchQuery" class="paste-btn" (click)="pasteFromClipboard()">
         PASTE
@@ -37,7 +31,6 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- Results -->
   <div class="grid" *ngIf="segmentValue === 'movies'">
     <div class="grid-item animate__animated animate__fadeIn animate__fast" *ngFor="let item of movieResults"
       (click)="openMovieDetail(item.id)">
@@ -54,12 +47,9 @@
     </div>
   </div>
 
-  <!-- Infinite Scroll -->
   <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)">
     <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more..."></ion-infinite-scroll-content>
   </ion-infinite-scroll>
-
-  <!-- Loading and Error -->
   <div class="ion-padding" *ngIf="isLoading">Loading...</div>
   <div class="ion-padding" *ngIf="error">
     <ion-text color="danger">{{ error }}</ion-text>

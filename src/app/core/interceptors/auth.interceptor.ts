@@ -6,7 +6,6 @@ import { StorageService } from 'src/services/storage.service';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const storageService = inject(StorageService);
 
-    // Only intercept requests to the TMDB API
     if (req.url.includes('api.themoviedb.org')) {
         return from(storageService.getSettings()).pipe(
             switchMap(settings => {

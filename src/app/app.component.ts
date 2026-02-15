@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { StorageService } from 'src/services/storage.service';
-import { SettingModel } from 'src/models/setting.model';
 
 @Component({
   selector: 'app-root',

@@ -16,10 +16,8 @@ export class StorageService {
   private readonly WATCHED_KEY = 'watched_contents';
   private readonly SETTINGS_KEY = 'settings';
   private lastMovedContents: ContentModel[] = [];
-
   private storageChangedSource = new BehaviorSubject<void>(undefined);
   storageChanged$ = this.storageChangedSource.asObservable();
-
   public restoreProgress$ = new BehaviorSubject<string>('');
 
   constructor(private tmdbService: TmdbSearchService) { }
@@ -159,7 +157,6 @@ export class StorageService {
     for (let i = 0; i < total; i += BATCH_SIZE) {
       const batch = items.slice(i, i + BATCH_SIZE);
 
-      // 1. Process the Batch
       const tasks = batch.map(async (item) => {
         try {
           if (item.isMovie) {
@@ -184,28 +181,22 @@ export class StorageService {
 
       await Promise.all(tasks);
 
-      // 2. Update Progress
       processed += batch.length;
       const percent = Math.min(100, Math.round((processed / total) * 100));
       const msg = `Restoring images: ${percent}% (${processed}/${total})`;
 
       this.restoreProgress$.next(msg);
 
-      // 3. Polite Delay
       if (i + BATCH_SIZE < total) {
         await new Promise(resolve => setTimeout(resolve, DELAY_MS));
       }
     }
   }
 
-  /**
-   * Retrieves the list and performs "lazy hydration" if items are missing critical display data.
-   */
   private async getList(key: string): Promise<ContentModel[]> {
     const { value } = await Preferences.get({ key });
     let list: ContentModel[] = value ? JSON.parse(value) : [];
 
-    // De-duplicate first
     const seen = new Set<string>();
     list = list.filter(item => {
       const k = `${item.contentId}-${item.isMovie}`;
@@ -214,24 +205,18 @@ export class StorageService {
       return true;
     });
 
-    // LAZY HYDRATION CHECK
     const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
 
     if (needsUpdate) {
       console.log(`[Storage] Hydrating missing data for list: ${key}`);
       await this.hydrateList(list);
-      // Save the hydrated list back to storage
       await this.setList(key, list);
     }
 
     return list;
   }
 
-  /**
-   * SECURE HYDRATION: Process items in batches to avoid Rate Limiting (DoS).
-   */
   private async hydrateList(list: ContentModel[]) {
-    // 1. Identify items that actually need updates
     const itemsToUpdate = list.filter(item =>
       (item.isMovie && !item.title) || (item.isTv && !item.name)
     );
@@ -242,11 +227,9 @@ export class StorageService {
 
     console.log(`[Storage] Starting batch hydration for ${itemsToUpdate.length} items...`);
 
-    // 2. Define Batch Size (TMDB generally tolerates ~30-40 requests/10s, keeping it safe at 5 concurrent)
     const BATCH_SIZE = 5;
-    const DELAY_MS = 250; // Quarter second delay between batches
+    const DELAY_MS = 250;
 
-    // 3. Process chunks
     for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
       const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
 
@@ -269,13 +252,11 @@ export class StorageService {
           }
         } catch (e) {
           console.error(`[Storage] Failed to hydrate item ${item.contentId}`, e);
-          // We intentionally catch here so one failure doesn't stop the whole batch
         }
       });
 
       await Promise.all(tasks);
 
-      // Polite delay between batches
       if (i + BATCH_SIZE < itemsToUpdate.length) {
         await new Promise(resolve => setTimeout(resolve, DELAY_MS));
       }

@@ -1,7 +1,18 @@
 import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonToolbar, IonSegmentButton, IonLabel, IonSegment, IonChip, IonSkeletonText, IonFab, IonFabButton, IonIcon } from '@ionic/angular/standalone';
+import {
+  IonContent,
+  IonToolbar,
+  IonSegmentButton,
+  IonLabel,
+  IonSegment,
+  IonChip,
+  IonSkeletonText,
+  IonFab,
+  IonFabButton,
+  IonIcon
+} from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { MediaCarouselComponent } from '../shared/components/media-carousel/media-carousel.component';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
@@ -52,7 +63,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
     }
   }
 
-  // Touch Tracking Variables
   private touchStartX = 0;
   private touchStartY = 0;
   private activeHeroElement: HTMLElement | null = null;
@@ -62,13 +72,11 @@ export class DiscoverPage implements OnInit, OnDestroy {
   selectedLanguage: string = 'hi';
   showScrollBtn: boolean = false;
 
-  // HERO LOGIC
   heroItem: any = null;
   validHeroItems: any[] = [];
   heroRotationInterval: any;
   currentHeroIndex: number = 0;
 
-  // Double-Buffer
   heroBackdrops: string[] = ['', ''];
   activeBackdropIndex: number = 0;
 
@@ -76,6 +84,7 @@ export class DiscoverPage implements OnInit, OnDestroy {
     { label: 'Hindi', value: 'hi' },
     { label: 'Marathi', value: 'mr' },
     { label: 'Gujarati', value: 'gu' },
+    { label: 'Punjabi', value: 'pa' },
     { label: 'Telugu', value: 'te' },
     { label: 'Tamil', value: 'ta' },
     { label: 'Malayalam', value: 'ml' },
@@ -87,7 +96,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
   desiSections: DiscoverSection[] = [];
   actorSections: DiscoverSection[] = [];
 
-  // Static Definitions
   bollywoodSections: DiscoverSection[] = [
     {
       title: 'Trending Bollywood',
@@ -168,10 +176,9 @@ export class DiscoverPage implements OnInit, OnDestroy {
   }
 
   private attachNativeListeners(el: HTMLElement) {
-    this.detachNativeListeners(); // Safety cleanup
+    this.detachNativeListeners();
     this.activeHeroElement = el;
 
-    // { passive: true } is the magic. It tells browser "I promise not to block scroll"
     el.addEventListener('touchstart', this.onTouchStart, { passive: true });
     el.addEventListener('touchend', this.onTouchEnd, { passive: true });
   }
@@ -184,7 +191,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
     }
   }
 
-  // Bound Arrow Functions to preserve 'this' context
   private onTouchStart = (e: TouchEvent) => {
     this.touchStartX = e.changedTouches[0].screenX;
     this.touchStartY = e.changedTouches[0].screenY;
@@ -197,16 +203,13 @@ export class DiscoverPage implements OnInit, OnDestroy {
     const diffX = endX - this.touchStartX;
     const diffY = endY - this.touchStartY;
 
-    // 🧠 LOGIC: If vertical scroll was dominant, IGNORE swipe.
-    // This allows the user to scroll down without accidentally changing the movie.
     if (Math.abs(diffY) > Math.abs(diffX)) return;
 
-    // 50px threshold for horizontal swipe
     if (Math.abs(diffX) > 50) {
       if (diffX < 0) {
-        this.manualChange(1); // Swipe Left -> Next
+        this.manualChange(1);
       } else {
-        this.manualChange(-1); // Swipe Right -> Prev
+        this.manualChange(-1);
       }
     }
   }
@@ -378,7 +381,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
         if (section.method === 'getDiscoverMovies') {
           obs = this.tmdbService.getDiscoverMovies(section.params);
         } else if ((this.tmdbService as any)[section.method]) {
-          // FIX: Extract args and call dynamically using 'as any'
           const args = section.params ? Object.values(section.params) : [];
           obs = (this.tmdbService as any)[section.method](...args);
         } else {
@@ -402,7 +404,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
           }
         });
       } else {
-        // If data exists, just init hero if it's the top section
         if (index === 0 && section.items.length > 0) {
           this.initHeroRotation(section.items, section.type);
         }
@@ -413,29 +414,22 @@ export class DiscoverPage implements OnInit, OnDestroy {
   }
 
   private getHeroBackdropUrl(item: any): string {
-    // If it's a person, grab the backdrop from their first 'known_for' movie
     if (item.known_for && item.known_for.length > 0 && item.known_for[0].backdrop_path) {
       return 'https://image.tmdb.org/t/p/original' + item.known_for[0].backdrop_path;
     }
-    // Otherwise standard item backdrop
     return 'https://image.tmdb.org/t/p/original' + (item.backdrop_path || item.poster_path);
   }
 
-  // REPLACED METHOD
   private initHeroRotation(items: any[], type: 'movie' | 'tv' | 'person') {
     if (!items || items.length === 0) return;
 
     if (type === 'person') {
-      // For Persons: Filter those who actually have a movie backdrop in 'known_for'
-      // This prevents showing actors with no good background image
       this.validHeroItems = items.filter(p => p.known_for && p.known_for.length > 0 && p.known_for[0].backdrop_path);
     } else {
-      // For Movies/TV: Must have direct backdrop
       this.validHeroItems = items.filter(i => !!i.backdrop_path);
     }
 
     if (this.validHeroItems.length === 0) {
-      // Fallback: If filtering removed everyone, just take the first raw item
       this.heroItem = items[0];
       this.heroItem.media_type = type;
       const url = 'https://image.tmdb.org/t/p/original' + (this.heroItem.backdrop_path || this.heroItem.poster_path || this.heroItem.profile_path);
@@ -448,7 +442,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
     this.heroItem = this.validHeroItems[0];
     this.heroItem.media_type = type;
 
-    // Use the helper to get the correct URL (Profile vs Backdrop)
     const firstUrl = this.getHeroBackdropUrl(this.heroItem);
 
     this.heroBackdrops[0] = firstUrl;

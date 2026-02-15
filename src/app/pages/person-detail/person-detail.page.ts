@@ -9,10 +9,6 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonText,
   IonChip,
   IonIcon,
   IonLabel,
@@ -26,7 +22,18 @@ import { PersonCreditsModel } from 'src/models/person-credits.model';
 import { MediaCarouselComponent } from 'src/app/shared/components/media-carousel/media-carousel.component';
 import { Browser } from '@capacitor/browser';
 import { addIcons } from 'ionicons';
-import { calendarOutline, locationOutline, personOutline, logoInstagram, logoTwitter, logoFacebook, globeOutline, logoTiktok, logoYoutube, closeOutline } from 'ionicons/icons';
+import {
+  calendarOutline,
+  locationOutline,
+  personOutline,
+  logoInstagram,
+  logoTwitter,
+  logoFacebook,
+  globeOutline,
+  logoTiktok,
+  logoYoutube,
+  closeOutline
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-person-detail',
@@ -57,8 +64,6 @@ export class PersonDetailPage implements OnInit {
   knownFor: any[] = [];
   isLoading = true;
   error = false;
-
-  // Image Viewer
   isImageModalOpen = false;
   selectedImage: string | null = null;
 
@@ -66,7 +71,18 @@ export class PersonDetailPage implements OnInit {
     private route: ActivatedRoute,
     private tmdbService: TmdbSearchService
   ) {
-    addIcons({ calendarOutline, locationOutline, personOutline, logoInstagram, logoTwitter, logoFacebook, globeOutline, logoTiktok, logoYoutube, closeOutline });
+    addIcons({
+      calendarOutline,
+      locationOutline,
+      personOutline,
+      logoInstagram,
+      logoTwitter,
+      logoFacebook,
+      globeOutline,
+      logoTiktok,
+      logoYoutube,
+      closeOutline
+    });
   }
 
   ngOnInit() {
@@ -84,10 +100,9 @@ export class PersonDetailPage implements OnInit {
     this.error = false;
 
     this.tmdbService.getPersonDetail(id).subscribe({
-      next: (data: any) => { // Using any cast to access combined properties easily without strict model extension for now if needed, or cast to updated model
+      next: (data: any) => {
         this.person = data;
 
-        // Process credits from append_to_response
         if (data.combined_credits) {
           const cast = data.combined_credits.cast || [];
           this.knownFor = cast
@@ -118,8 +133,6 @@ export class PersonDetailPage implements OnInit {
     this.isImageModalOpen = false;
     this.selectedImage = null;
   }
-
-  /* loadCredits removed as it is now part of detail call */
 
   getGender(genderId: number): string {
     switch (genderId) {

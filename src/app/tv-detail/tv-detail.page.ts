@@ -65,12 +65,10 @@ import {
 })
 export class TvDetailPage implements OnInit {
   bookmarkIcon: string = 'assets/bookmark-empty.png';
-
   tvId: string | null = null;
   tvDetail: TvDetailModel | null = null;
   safeYoutubeUrl: SafeResourceUrl | null = null;
   isScrolled = false;
-
   isInWatchlist: boolean = false;
   isInWatched: boolean = false;
   bookmarkColor: 'danger' | 'success' | 'medium' = 'medium';
@@ -109,10 +107,8 @@ export class TvDetailPage implements OnInit {
   async loadTvDetail(id: number) {
     this.tmdbService.getTvDetail(id).subscribe({
       next: (data) => {
-
         this.tvDetail = data;
         console.log(this.tvDetail);
-        // Prefer trailer video
         const trailer = data?.videos?.results?.find(
           (v) => v.type === 'Trailer' && v.site === 'YouTube'
         );
@@ -158,19 +154,16 @@ export class TvDetailPage implements OnInit {
     const id = this.tvDetail.id!;
 
     if (this.isInWatched) {
-      // Currently watched → remove it from watched
       await this.storageService.removeFromWatched(id, false, true);
       this.isInWatched = false;
       this.isInWatchlist = false;
     }
     else if (this.isInWatchlist) {
-      // Currently in watchlist → move it to watched
       await this.storageService.moveFromWatchlistToWatched(id, false, true);
       this.isInWatched = true;
       this.isInWatchlist = false;
     }
     else {
-      // Not in any list → add to watchlist
       const content: ContentModel = {
         contentId: id,
         isMovie: false,
@@ -188,7 +181,7 @@ export class TvDetailPage implements OnInit {
       this.isInWatched = false;
     }
 
-    this.refreshBookmarkState(); // Refresh icon
+    this.refreshBookmarkState();
     this.storageService.emitStorageChanged();
   }
 
@@ -212,7 +205,6 @@ export class TvDetailPage implements OnInit {
         genres: this.tvDetail.genres
       };
 
-      // Check if the tv is already in the watchlist before adding it
       const watchlist = await this.storageService.getWatchlist();
       const isDuplicate = watchlist.some(c => c.contentId === content.contentId && c.isTv === content.isTv);
 

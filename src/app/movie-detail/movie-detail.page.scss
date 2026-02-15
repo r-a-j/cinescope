@@ -141,10 +141,9 @@ ion-content .inner-scroll::-webkit-scrollbar {
 .trailer-embed {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%; // 16:9 Aspect Ratio
-    background: #111; // Deep dark background while loading
+    padding-bottom: 56.25%;
+    background: #111;
 
-    // The Loader Overlay
     .video-loader {
         position: absolute;
         inset: 0;
@@ -156,7 +155,7 @@ ion-content .inner-scroll::-webkit-scrollbar {
         animation: subtlePulse 1.5s infinite ease-in-out;
 
         ion-spinner {
-            transform: scale(1.5); // Make the spinner a bit more prominent
+            transform: scale(1.5);
         }
     }
 
@@ -167,7 +166,6 @@ ion-content .inner-scroll::-webkit-scrollbar {
         border: 0;
         z-index: 1;
 
-        // The Magic Fade-In
         opacity: 0;
         transition: opacity 0.5s ease-in;
 
@@ -177,7 +175,6 @@ ion-content .inner-scroll::-webkit-scrollbar {
     }
 }
 
-// Gives the background a sleek, breathing effect while loading
 @keyframes subtlePulse {
     0% {
         background: rgba(255, 255, 255, 0.02);
@@ -262,7 +259,6 @@ ion-header {
     }
 }
 
-// COLLECTION CARD
 .collection-wrapper {
     h2 {
         font-size: 1.4rem;
@@ -302,7 +298,6 @@ ion-header {
     }
 }
 
-// HORIZONTAL IMAGE GALLERY
 .gallery-wrapper {
     h2 {
         font-size: 1.4rem;
@@ -315,7 +310,7 @@ ion-header {
     display: flex;
     overflow-x: auto;
     gap: 12px;
-    padding-bottom: 8px; // Space for native scrollbar if forced
+    padding-bottom: 8px;
     scroll-snap-type: x mandatory;
 
     &::-webkit-scrollbar {
@@ -333,7 +328,6 @@ ion-header {
     }
 }
 
-// PRODUCTION COMPANIES
 .production-wrapper {
     h2 {
         font-size: 1.4rem;
@@ -360,7 +354,6 @@ ion-header {
             max-height: 35px;
             max-width: 100px;
             object-fit: contain;
-            // Many TMDB logos are black. This trick inverts them to white for dark mode apps.
             filter: brightness(0) invert(1);
             opacity: 0.8;
         }

@@ -34,15 +34,14 @@
     <ion-list-header>
       <ion-label>API Configuration</ion-label>
     </ion-list-header>
-    
-    <!-- Status Indicator -->
     <ion-item>
       <ion-icon slot="start" name="key-outline" color="warning"></ion-icon>
       <ion-label>
         <h2>TMDB API Key</h2>
         <p>
           <ion-text [color]="isKeyConfigured ? 'success' : 'medium'">
-            <ion-icon [name]="isKeyConfigured ? 'checkmark-circle-outline' : 'warning-outline'" style="vertical-align: middle;"></ion-icon>
+            <ion-icon [name]="isKeyConfigured ? 'checkmark-circle-outline' : 'warning-outline'"
+              style="vertical-align: middle;"></ion-icon>
             {{ isKeyConfigured ? 'Configured & Secured' : 'Not Configured' }}
           </ion-text>
         </p>
@@ -55,31 +54,24 @@
       </ion-button>
     </ion-item>
 
-    <!-- Secure Input Field (Collapsible) -->
     <ion-item *ngIf="showKeyInput">
-      <!-- <ion-icon slot="start" name="key-outline" color="medium"></ion-icon> -->
-       <!-- Indent slightly or use no icon to distinguish -->
-      <ion-input 
-        type="password" 
-        label="Enter New Key" 
-        labelPlacement="stacked" 
-        [(ngModel)]="inputApiKey" 
-        placeholder="Past key here..."
-        [clearInput]="true">
+      <ion-input type="password" label="Enter New Key" labelPlacement="stacked" [(ngModel)]="inputApiKey"
+        placeholder="Past key here..." [clearInput]="true">
       </ion-input>
       <ion-button slot="end" fill="clear" (click)="pasteApiKey()">Paste</ion-button>
     </ion-item>
 
-    <!-- Action Buttons for Input -->
     <ion-item lines="none" *ngIf="showKeyInput">
-      <ion-button slot="start" fill="clear" color="medium" (click)="showKeyInput = false; inputApiKey = ''">Cancel</ion-button>
+      <ion-button slot="start" fill="clear" color="medium"
+        (click)="showKeyInput = false; inputApiKey = ''">Cancel</ion-button>
       <ion-button slot="end" (click)="saveApiKey()" [disabled]="!inputApiKey">Save Key</ion-button>
     </ion-item>
-    
+
     <ion-item lines="none" *ngIf="showGetNewKey || (!isKeyConfigured && !showKeyInput)">
-       <ion-button fill="outline" size="small" slot="start" (click)="openUrl('https://developer.themoviedb.org/reference/intro/getting-started')">
-         Get API Key <ion-icon name="open-outline" slot="end"></ion-icon>
-       </ion-button>
+      <ion-button fill="outline" size="small" slot="start"
+        (click)="openUrl('https://developer.themoviedb.org/reference/intro/getting-started')">
+        Get API Key <ion-icon name="open-outline" slot="end"></ion-icon>
+      </ion-button>
     </ion-item>
   </ion-list>
 
@@ -91,7 +83,8 @@
       <ion-icon slot="start" name="shield-checkmark-outline" color="danger"></ion-icon>
       <ion-toggle [(ngModel)]="allowAdultContent" (ionChange)="toggleAllowAdultContent()">
         <ion-label>Allow Adult Content</ion-label>
-        <ion-note color="medium" class="ion-text-wrap" style="display: block; font-size: 0.8em;">Requires 18+ confirmation</ion-note>
+        <ion-note color="medium" class="ion-text-wrap" style="display: block; font-size: 0.8em;">Requires 18+
+          confirmation</ion-note>
       </ion-toggle>
     </ion-item>
   </ion-list>
@@ -145,13 +138,17 @@
   </ion-list>
 
   <div class="ion-padding ion-text-center">
-    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB Logo" style="width: 100px; opacity: 0.7;">
+    <img
+      src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+      alt="TMDB Logo" style="width: 100px; opacity: 0.7;">
     <p class="ion-text-small" style="color: var(--ion-color-medium); margin-top: 10px;">
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </p>
-    <ion-button fill="clear" size="small" (click)="openUrl('https://www.themoviedb.org/documentation/api/terms-of-use')">Terms of Use</ion-button>
-    <ion-button fill="clear" size="small" (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy Policy</ion-button>
+    <ion-button fill="clear" size="small"
+      (click)="openUrl('https://www.themoviedb.org/documentation/api/terms-of-use')">Terms of Use</ion-button>
+    <ion-button fill="clear" size="small" (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy
+      Policy</ion-button>
   </div>
-  
+
   <br><br>
 </ion-content>
