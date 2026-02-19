@@ -59,6 +59,12 @@
     </ion-fab-button>
   </ion-fab>
 
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="fab-test" *ngIf="!selectionMode">
+    <ion-fab-button (click)="goToSkeletonTest()" color="secondary">
+      <ion-icon name="construct"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
   <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="fab-edit" *ngIf="!selectionMode">
     <ion-fab-button class="fab-edit-btn" (click)="toggleSelectionMode()">
       <ion-icon name="trash"></ion-icon>

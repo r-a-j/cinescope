@@ -102,3 +102,5 @@ crash_log.txt
 
 # Local Helper Scripts
 connect-phone.ps1
+.vscode/settings.json
+android/keystore.properties

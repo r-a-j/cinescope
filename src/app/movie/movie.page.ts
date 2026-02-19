@@ -16,7 +16,7 @@ import {
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
-import { bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
+import { bookmark, checkmarkDone, options, trash, construct } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -62,7 +62,7 @@ export class MoviePage implements OnInit {
     private router: Router,
     private storageService: StorageService
   ) {
-    addIcons({ trash, bookmark, checkmarkDone, options });
+    addIcons({ trash, bookmark, checkmarkDone, options, construct });
   }
 
   ngOnInit() {
@@ -140,6 +140,10 @@ export class MoviePage implements OnInit {
 
   goToMovieDetail(id?: number | string) {
     this.router.navigate(['/movie-detail', id]);
+  }
+
+  goToSkeletonTest() {
+    this.router.navigate(['/skeleton-test']);
   }
 
   toggleSelectionMode() {
