@@ -12,6 +12,8 @@ import { BottomSheetComponent } from 'src/app/shared/components/bottom-sheet/bot
 })
 export class SkeletonTestPage implements OnInit {
 
+    items = Array.from({ length: 50 }, (_, i) => i + 1);
+
     constructor() { }
 
     ngOnInit() {

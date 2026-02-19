@@ -11,6 +11,10 @@ import { IonicModule, GestureController, GestureDetail } from '@ionic/angular';
 })
 export class BottomSheetComponent implements AfterViewInit {
     @ViewChild('sheet', { read: ElementRef }) sheet!: ElementRef;
+    @ViewChild('contentEl', { read: ElementRef }) contentEl!: ElementRef;
+
+    public isExpanded: boolean = false;
+    public items = Array.from({ length: 100 }, (_, i) => i + 1);
 
     private startY: number = 0;
 
@@ -29,15 +33,19 @@ export class BottomSheetComponent implements AfterViewInit {
     ngAfterViewInit() {
         this.calculateSnapPoints();
 
-        // Initialize at peeking
-        this.currentY = this.snapPoints.peeking;
+        // Initialize at anchored
+        this.currentY = this.snapPoints.anchored;
+        this.isExpanded = false;
+        this.renderer.removeClass(this.contentEl.nativeElement, 'scrollable');
         this.updateTransform(this.currentY);
 
         const gesture = this.gestureCtrl.create({
             el: this.sheet.nativeElement,
             gestureName: 'bottom-sheet-swipe',
-            threshold: 0,
+            direction: 'y',
+            threshold: 5,
             capture: true,
+            canStart: (ev) => this.canStart(ev),
             onStart: () => this.onStart(),
             onMove: (ev) => this.onMove(ev),
             onEnd: (ev) => this.onEnd(ev)
@@ -84,6 +92,37 @@ export class BottomSheetComponent implements AfterViewInit {
         this.snapPoints.peeking = (height * 0.9) - this.safeAreaBottom;
 
         console.log('SnapPoints calculated:', this.snapPoints);
+    }
+
+    private canStart(ev: GestureDetail): boolean {
+        const target = ev.event.target as HTMLElement;
+        const isDragHandleArea = target.closest('.drag-handle-area');
+
+        // Rule 1: Always intercept if dragging handle area
+        if (isDragHandleArea) {
+            return true;
+        }
+
+        // Rule 2: If not expanded (Peeking or Anchored), we ALWAYS lock scroll and drag the sheet
+        if (!this.isExpanded) {
+            return true;
+        }
+
+        // Rule 3 & 4 (The Handoff Edge Case):
+        // Crucial Edge Case for canStart: When the sheet is in the Expanded state and the user's scrollTop is 0,
+        // if they swipe DOWN (which corresponds to ev.deltaY > 0), the GestureController MUST return true in canStart
+        // to hijack the touch and pull the sheet down. However, if they swipe UP (ev.deltaY < 0), canStart MUST
+        // return false so the native browser scrolling can take over and scroll the list down. Use a @ViewChild to
+        // reference the .sheet-content element to accurately read its scrollTop property inside the gesture's canStart method.
+        if (this.isExpanded && this.contentEl) {
+            const scrollTop = this.contentEl.nativeElement.scrollTop;
+            if (scrollTop === 0 && ev.deltaY > 0) {
+                return true; // Hijack touch, pull sheet down
+            }
+        }
+
+        // Return false so native browser scrolling can take over
+        return false;
     }
 
     private onStart() {
@@ -137,6 +176,12 @@ export class BottomSheetComponent implements AfterViewInit {
         }
 
         this.currentY = targetY;
+        this.isExpanded = (this.currentY === this.snapPoints.expanded);
+        if (this.isExpanded) {
+            this.renderer.addClass(this.contentEl.nativeElement, 'scrollable');
+        } else {
+            this.renderer.removeClass(this.contentEl.nativeElement, 'scrollable');
+        }
         this.updateTransform(this.currentY);
     }
 

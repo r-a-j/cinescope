@@ -1,7 +1,12 @@
 <div class="bottom-sheet-container" #sheet>
-    <div class="drag-handle"></div>
-    <div class="content">
+    <div class="drag-handle-area">
+        <div class="drag-handle"></div>
+    </div>
+    <div class="sheet-content" #contentEl>
         <h2>Bottom Sheet</h2>
-        <p>Drag me up and down!</p>
+        <p>Scroll me when expanded!</p>
+        <div class="dummy-sheet-item" *ngFor="let item of items">
+            Sheet Item {{ item }}
+        </div>
     </div>
 </div>

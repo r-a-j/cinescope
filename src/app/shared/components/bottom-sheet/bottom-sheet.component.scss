@@ -22,26 +22,50 @@
     box-shadow: 0px -5px 20px rgba(0, 0, 0, 0.3);
     pointer-events: auto; // Re-enable pointer events for the sheet
     will-change: transform;
-    touch-action: none; // CRITICAL: Prevents browser scrolling from interfering with drag
-
-    // Padding for handle area
-    padding-top: 20px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    .drag-handle-area {
+        width: 100%;
+        padding: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        touch-action: none;
+    }
 
     .drag-handle {
         width: 40px;
         height: 5px;
         background-color: rgba(0, 0, 0, 0.2);
         border-radius: 5px;
-        margin-bottom: 20px;
     }
 
-    .content {
+    // CSS & Touch Action (The Scroll Lock Edge Case):
+    // Update the CSS rules for .sheet-content: When the sheet is in Peeking or Anchored states, 
+    // the .sheet-content must have overflow-y: hidden; AND touch-action: none; to ensure the 
+    // gesture controller gets 100% of the touches. When transitioning to the Expanded state, 
+    // you must dynamically swap it to overflow-y: auto; AND touch-action: pan-y; so the 
+    // browser's native scrolling engine is allowed to work.
+    .sheet-content {
         width: 100%;
-        padding: 20px;
+        padding: 0 20px 20px 20px;
         color: #333;
+        flex: 1;
+        overflow-y: hidden;
+        touch-action: none;
+
+        &.scrollable {
+            overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .dummy-sheet-item {
+            padding: 15px;
+            border-bottom: 1px solid #ccc;
+        }
     }
 }
