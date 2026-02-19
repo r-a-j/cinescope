@@ -313,6 +313,7 @@ export class StorageService {
           c.isTv === content.isTv
       )
     ) {
+      content.watchedAt = new Date().toISOString();
       watched.push(content);
       await this.setList(this.WATCHED_KEY, watched);
     }
@@ -371,6 +372,7 @@ export class StorageService {
       await this.removeFromWatchlist(contentId, isMovie, isTv);
 
       content.isWatched = true;
+      content.watchedAt = new Date().toISOString();
       content.isWatchlist = false;
 
       if (
