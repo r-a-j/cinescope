@@ -20,6 +20,29 @@
     margin: 40px auto 0;
     padding-top: 20px;
     padding-bottom: 60px;
+
+    .timeline-date {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        z-index: 4;
+
+        span {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 51, 51, 0.3);
+            color: #ff3333;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 51, 51, 0.1);
+        }
+    }
 }
 
 .timeline-axis {
@@ -55,13 +78,80 @@
     z-index: 3;
 }
 
-/* Single Row */
-.single-row {
+.movie-title {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    line-height: 1.1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.movie-meta {
+    font-size: 13px;
+    opacity: 0.95;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .imdb-badge {
+        display: flex;
+        align-items: center;
+        background: #f5c518;
+        border-radius: 4px;
+        padding: 2px 6px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
+
+        .imdb-text {
+            color: #000000;
+            font-family: 'Arial Black', Impact, sans-serif;
+            font-weight: 900;
+            font-size: 11px;
+            letter-spacing: -0.5px;
+        }
+
+        .imdb-rating {
+            color: #000000;
+            font-weight: 900;
+            font-size: 12px;
+            line-height: 1;
+        }
+    }
+
+    .dot-separator {
+        opacity: 0.5;
+        font-size: 10px;
+    }
+
+    .year {
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: 1px;
+    }
+}
+
+.alternating-row {
     align-items: center;
 
-    .timeline-content {
+    .timeline-content,
+    .timeline-info {
         width: 50%;
         position: relative;
+        z-index: 2;
+    }
+
+    .timeline-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         padding: 0 20px;
     }
 
@@ -70,57 +160,61 @@
         position: absolute;
         top: 50%;
         height: 2px;
-        background-color: #ff3333;
-        box-shadow: 0 0 10px red, 0 0 20px red;
         z-index: 1;
     }
 
     &.left-align {
-        justify-content: flex-start;
+        flex-direction: row;
 
         &::after {
             right: 50%;
             width: calc(50% - 90px);
-            /* adjusted line span */
+            background: linear-gradient(to left, #ff3333, rgba(255, 51, 51, 0));
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
         }
 
         .timeline-content {
             padding-right: 30px;
             display: flex;
-            justify-content: flex-end;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .timeline-info {
+            align-items: flex-start;
+            text-align: left;
         }
     }
 
     &.right-align {
-        justify-content: flex-end;
+        flex-direction: row-reverse;
 
         &::after {
             left: 50%;
             width: calc(50% - 90px);
+            background: linear-gradient(to right, #ff3333, rgba(255, 51, 51, 0));
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
         }
 
         .timeline-content {
             padding-left: 30px;
             display: flex;
-            justify-content: flex-start;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .timeline-info {
+            align-items: flex-end;
+            text-align: right;
+
+            .movie-meta {
+                flex-direction: row-reverse;
+            }
         }
     }
 }
 
-/* Stacked Row */
-.stacked-row {
-    flex-direction: column;
-    align-items: center;
-
-    .intersect-dot {
-        top: 0;
-    }
-
-    .timeline-content {
-        width: 100%;
-        padding-top: 20px;
-    }
-
+.timeline-content.stacked-node-ui {
     .carousel {
         position: relative;
         width: 140px;
@@ -133,7 +227,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* 1. THE PREMIUM CURVE: Fast start, buttery smooth deceleration */
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
                 opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
                 filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -143,7 +236,6 @@
                 transform: scale(1) translateY(0);
                 opacity: 1;
                 filter: brightness(1);
-                /* Fully lit */
             }
 
             &.card-1 {
@@ -151,7 +243,6 @@
                 transform: scale(0.95) translateY(-15px) rotate(3deg);
                 opacity: 0.9;
                 filter: brightness(0.7);
-                /* Slightly in the shadows */
             }
 
             &.card-2 {
@@ -159,46 +250,29 @@
                 transform: scale(0.90) translateY(-30px) rotate(-3deg);
                 opacity: 0.5;
                 filter: brightness(0.4);
-                /* Deep in the shadows */
-            }
-        }
-    }
-
-    .pagination-dots {
-        display: flex;
-        justify-content: center;
-        gap: 6px;
-        margin-top: 10px;
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.3);
-
-            &.active {
-                background-color: #ff3333;
-                box-shadow: 0 0 5px red;
             }
         }
     }
 }
 
-/* Poster Placeholder */
 .poster-placeholder {
     width: 120px;
     height: 180px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     text-align: center;
-    padding: 10px;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     touch-action: pan-y;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+        pointer-events: none;
+    }
 
     span {
         font-size: 14px;

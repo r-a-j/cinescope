@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, AfterViewInit, NgZone } from '@angular/core';
+import { Component, OnInit, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, GestureController, Gesture } from '@ionic/angular';
 import { BottomSheetComponent } from 'src/app/shared/components/bottom-sheet/bottom-sheet.component';
 import { TimelineService, TimelineNode, SingleNode, StackedNode } from 'src/services/timeline.service';
 import { ContentModel } from 'src/models/content.model';
-
+import { StorageService } from 'src/services/storage.service';
 @Component({
     selector: 'app-skeleton-test',
     templateUrl: './skeleton-test.page.html',
@@ -12,34 +12,24 @@ import { ContentModel } from 'src/models/content.model';
     standalone: true,
     imports: [IonicModule, CommonModule, BottomSheetComponent]
 })
-export class SkeletonTestPage implements OnInit, AfterViewInit {
+export class SkeletonTestPage implements OnInit {
     private timelineService = inject(TimelineService);
     private gestureCtrl = inject(GestureController);
     private ngZone = inject(NgZone);
+    private storageService = inject(StorageService);
     public timelineNodes: TimelineNode[] = [];
     private gestures: Gesture[] = [];
     private isDragging = false;
 
     constructor() { }
 
-    ngOnInit() {
-        const mockData: ContentModel[] = [
-            { contentId: 1, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Single Node Day', watchedAt: '2023-11-01T14:30:00Z' },
-            { contentId: 2, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Stacked Node Day 1 - Item 1', watchedAt: '2023-11-05T10:00:00Z' },
-            { contentId: 3, isMovie: false, isTv: true, isWatched: true, isWatchlist: false, title: 'Stacked Node Day 1 - Item 2', watchedAt: '2023-11-05T18:00:00Z' },
-            { contentId: 4, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Single Node Day 2', watchedAt: '2023-11-10T20:45:00Z' },
-            { contentId: 5, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Stacked Node Day 2 - Item 1', watchedAt: '2023-11-15T09:15:00Z' },
-            { contentId: 6, isMovie: false, isTv: true, isWatched: true, isWatchlist: false, title: 'Stacked Node Day 2 - Item 2', watchedAt: '2023-11-15T21:00:00Z' },
-            { contentId: 7, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Stacked Node Day 2 - Item 3', watchedAt: '2023-11-15T23:59:00Z' },
-            { contentId: 8, isMovie: true, isTv: false, isWatched: true, isWatchlist: false, title: 'Single Node Day 3', watchedAt: '2023-12-01T08:00:00Z' },
-            { contentId: 9, isMovie: false, isTv: true, isWatched: true, isWatchlist: false, title: 'Single Node Day 4', watchedAt: '2024-01-01T14:00:00Z' }
-        ];
+    async ngOnInit() {
+        const watchedItems = await this.storageService.getWatched();
+        this.timelineNodes = this.timelineService.generateTimeline(watchedItems);
 
-        this.timelineNodes = this.timelineService.generateTimeline(mockData);
-    }
-
-    ngAfterViewInit() {
-        this.initGestures();
+        setTimeout(() => {
+            this.initGestures();
+        }, 100);
     }
 
     initGestures() {
@@ -56,7 +46,7 @@ export class SkeletonTestPage implements OnInit, AfterViewInit {
 
                 const gesture = this.gestureCtrl.create({
                     el: cardEl,
-                    gestureName: 'swipe-card' + nodeIndex,
+                    gestureName: 'swipe-card-' + nodeIndex,
                     direction: 'x',
                     threshold: 5,
                     onStart: () => {
@@ -65,17 +55,25 @@ export class SkeletonTestPage implements OnInit, AfterViewInit {
                         cardEl.style.transition = 'none'; // remove transition during drag
                     },
                     onMove: (ev) => {
+                        // 1. DYNAMIC FADE: Card fades out as it reaches ~120px away from origin
+                        const opacity = Math.max(0, 1 - (Math.abs(ev.deltaX) / 120));
+
                         cardEl.style.transform = `translateX(${ev.deltaX}px) rotate(${ev.deltaX / 15}deg)`;
+                        cardEl.style.opacity = opacity.toString(); // Apply real-time fade
                     },
                     onEnd: (ev) => {
                         if (bgContent) bgContent.style.overflowY = 'auto';
-                        cardEl.style.transition = 'transform 0.3s ease';
 
-                        // Swipe away threshold
-                        if (Math.abs(ev.deltaX) > 50) {
+                        // 2. PREMIUM SNAP TRANSITION: Animate both transform AND opacity back
+                        cardEl.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                        // 3. THE LOCK: Only swipe away IF moved > 50px AND there are multiple items!
+                        if (Math.abs(ev.deltaX) > 50 && node.items.length > 1) {
                             const moveOutWidth = document.body.clientWidth;
                             const direction = ev.deltaX > 0 ? 1 : -1;
+
                             cardEl.style.transform = `translateX(${direction * moveOutWidth}px) rotate(${direction * 30}deg)`;
+                            cardEl.style.opacity = '0'; // Ensure it fully fades out
 
                             setTimeout(() => {
                                 // WAKE UP ANGULAR: Force it to see the array change!
@@ -83,6 +81,7 @@ export class SkeletonTestPage implements OnInit, AfterViewInit {
                                     // Instantly clear the swiped card's styles so it can go to the back of the deck
                                     cardEl.style.transition = 'none';
                                     cardEl.style.transform = '';
+                                    cardEl.style.opacity = ''; // Reset opacity so SCSS takes over
 
                                     // Cycle the data
                                     const newItems = [...node.items];
@@ -97,10 +96,11 @@ export class SkeletonTestPage implements OnInit, AfterViewInit {
                                     setTimeout(() => this.isDragging = false, 50); // Unlock click
                                 }, 50);
 
-                            }, 300);
+                            }, 400);
                         } else {
-                            // Snap back to center
+                            // Snap back to center (Didn't swipe far enough, OR it's a single locked card)
                             cardEl.style.transform = '';
+                            cardEl.style.opacity = ''; // Restores 100% opacity smoothly
                             setTimeout(() => this.isDragging = false, 50);
                         }
                     }

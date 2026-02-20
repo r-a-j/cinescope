@@ -13,20 +13,15 @@
             <div class="timeline-axis"></div>
 
             <ng-container *ngFor="let node of timelineNodes; let i = index">
-                <!-- Single Node UI -->
-                <div *ngIf="node.type === 'single'" class="timeline-row single-row" [class.left-align]="i % 2 === 0"
-                    [class.right-align]="i % 2 !== 0">
-                    <div class="intersect-dot"></div>
-                    <div class="timeline-content single-node-ui">
-                        <div class="poster-placeholder">
-                            <span>{{ asSingle(node).item.title || 'Movie Title' }}</span>
-                        </div>
-                    </div>
+
+                <div class="timeline-date">
+                    <span>{{ node.date | date:'mediumDate' }}</span>
                 </div>
 
-                <!-- Stacked Node UI -->
-                <div *ngIf="node.type === 'stacked'" class="timeline-row stacked-row">
+                <div class="timeline-row alternating-row" [class.left-align]="i % 2 === 0"
+                    [class.right-align]="i % 2 !== 0">
                     <div class="intersect-dot"></div>
+
                     <div class="timeline-content stacked-node-ui">
                         <div class="carousel">
                             <div class="poster-placeholder"
@@ -34,14 +29,29 @@
                                 [class.card-0]="cardIndex === 0" [class.card-1]="cardIndex === 1"
                                 [class.card-2]="cardIndex === 2" [class.top-card]="cardIndex === 0"
                                 [attr.data-node-index]="i" (click)="onCardClick(item)">
-                                <span>{{ item.title || 'Movie Title' }}</span>
+                                <img [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
+                                    [alt]="item.title || item.name" />
                             </div>
                         </div>
-                        <div class="pagination-dots">
-                            <span class="dot" *ngFor="let item of asStacked(node).items; let first = first"
-                                [class.active]="first"></span>
+                    </div>
+
+                    <div class="timeline-info">
+                        <h3 class="movie-title">{{ asStacked(node).items[0].title || asStacked(node).items[0].name
+                            }}</h3>
+                        <div class="movie-meta">
+                            <span class="year">
+                                {{ (asStacked(node).items[0].release_date || asStacked(node).items[0].first_air_date) |
+                                slice:0:4 }}
+                            </span>
+                            <span class="dot-separator">•</span>
+                            <div class="imdb-badge">
+                                <span class="imdb-text">IMDb</span>
+                            </div>
+                            <span class="imdb-rating">{{ asStacked(node).items[0].vote_average | number:'1.1-1'
+                                }}</span>
                         </div>
                     </div>
+
                 </div>
             </ng-container>
 
