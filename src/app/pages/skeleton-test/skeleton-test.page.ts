@@ -5,12 +5,13 @@ import { BottomSheetComponent } from 'src/app/shared/components/bottom-sheet/bot
 import { TimelineService, TimelineNode, SingleNode, StackedNode } from 'src/services/timeline.service';
 import { ContentModel } from 'src/models/content.model';
 import { StorageService } from 'src/services/storage.service';
+import { HeaderComponent } from 'src/app/header/header.component';
 @Component({
     selector: 'app-skeleton-test',
     templateUrl: './skeleton-test.page.html',
     styleUrls: ['./skeleton-test.page.scss'],
     standalone: true,
-    imports: [IonicModule, CommonModule, BottomSheetComponent]
+    imports: [IonicModule, CommonModule, BottomSheetComponent, HeaderComponent]
 })
 export class SkeletonTestPage implements OnInit {
     private timelineService = inject(TimelineService);

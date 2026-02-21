@@ -1,5 +1,6 @@
 .background-content {
-    padding: 20px 0 15vh 0;
+    padding: 0 0 15vh 0;
+    /* Removed top padding to let the fade start at the absolute edge */
     height: 100vh;
     background-color: #000000;
     color: white;
@@ -7,10 +8,67 @@
     overflow-x: hidden;
     position: relative;
 
-    h1,
-    p {
-        padding: 0 20px;
-        text-align: center;
+    .cinematic-header {
+        position: relative;
+        width: 100%;
+        padding: 80px 20px 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+
+        .origin-flare {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            /* Perfectly centers the flare */
+            transform: translateX(-50%);
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(255, 51, 51, 0.25) 0%, rgba(255, 51, 51, 0) 65%);
+            border-radius: 50%;
+            pointer-events: none;
+            /* Makes the light bleed over the text like a real lens flare */
+            mix-blend-mode: screen;
+            animation: breathe 5s ease-in-out infinite alternate;
+        }
+
+        .title-card {
+            /* BESPOKE UPGRADE: High-end Cinema Serif Font Stack */
+            font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 16px;
+            text-transform: uppercase;
+            color: #ffffff;
+            margin: 0 0 12px 0;
+            /* CRITICAL: Offsets the heavy letter-spacing so it actually centers perfectly */
+            padding-left: 16px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .subtitle {
+            font-family: 'Helvetica Neue', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+    }
+}
+
+@keyframes breathe {
+    0% {
+        opacity: 0.5;
+        transform: translateX(-50%) scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
     }
 }
 
@@ -55,6 +113,12 @@
     transform: translateX(-50%);
     box-shadow: 0 0 10px red, 0 0 20px red;
     z-index: 1;
+
+    /* BESPOKE UPGRADE: The Emission Fade 
+       This makes the top 150px of the line slowly fade to 0% opacity,
+       so it emerges from the darkness instead of hitting a ceiling. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0px, transparent 40px, black 150px, black 100%);
+    mask-image: linear-gradient(to bottom, transparent 0px, transparent 40px, black 150px, black 100%);
 }
 
 .timeline-row {
@@ -266,12 +330,35 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     touch-action: pan-y;
 
-    img {
+    /* The Crisp Front Poster */
+    img.main-poster {
+        position: relative;
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: inherit;
         pointer-events: none;
+        z-index: 2;
+        /* Sits on top of the glow */
+    }
+
+    /* The YouTube-Style Ambient Glow */
+    img.ambient-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        /* FIX: Centered perfectly and reduced the massive scale */
+        transform: translate(-50%, -50%) scale(1.05);
+        object-fit: cover;
+        /* FIX: Increased blur slightly, toned down the brightness */
+        filter: blur(20px) saturate(140%) brightness(0.8);
+        opacity: 0.35;
+        /* FIX: Dropped opacity for a much softer, premium aura */
+        pointer-events: none;
+        z-index: 1;
+        border-radius: inherit;
     }
 
     span {

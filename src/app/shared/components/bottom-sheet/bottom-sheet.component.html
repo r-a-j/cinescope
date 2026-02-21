@@ -1,12 +1,46 @@
 <div class="bottom-sheet-container" #sheet>
     <div class="drag-handle-area">
         <div class="drag-handle"></div>
+        <div class="drag-hint">Swipe up for your next obsession</div>
     </div>
+
     <div class="sheet-content" #contentEl>
-        <h2>Bottom Sheet</h2>
-        <p>Scroll me when expanded!</p>
-        <div class="dummy-sheet-item" *ngFor="let item of items">
-            Sheet Item {{ item }}
+
+        <!-- Module 1: Vibe Check -->
+        <div class="module-section vibe-check-module">
+            <div class="horizontal-scroll hide-scrollbar">
+                <button class="vibe-pill active">🤯 Mind-bending</button>
+                <button class="vibe-pill">😂 Comedy</button>
+                <button class="vibe-pill">❤️ Romance</button>
+                <button class="vibe-pill">👽 Sci-Fi</button>
+                <button class="vibe-pill">🔪 Thriller</button>
+            </div>
         </div>
+
+        <!-- Module 2: Quick Watches -->
+        <div class="module-section quick-watches-module">
+            <h3 class="section-title">Continue Watching</h3>
+            <div class="horizontal-scroll hide-scrollbar posters-scroll">
+                <img class="poster-card" src="assets/placeholder.png" alt="Movie 1">
+                <img class="poster-card" src="assets/placeholder.png" alt="Movie 2">
+                <img class="poster-card" src="assets/placeholder.png" alt="Movie 3">
+                <img class="poster-card" src="assets/placeholder.png" alt="Movie 4">
+            </div>
+        </div>
+
+        <!-- Module 3: Hero Spotlight -->
+        <div class="module-section hero-spotlight-module">
+            <h3 class="section-title">Weekend Watchlist</h3>
+            <div class="hero-card">
+                <div class="hero-content">
+                    <h2 class="hero-title">Epic Movie Title</h2>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary">Play Trailer</button>
+                        <button class="btn btn-secondary">Add to List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>

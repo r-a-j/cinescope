@@ -1,13 +1,13 @@
-<ion-header>
-    <ion-toolbar>
-        <ion-title>Skeleton Test</ion-title>
-    </ion-toolbar>
-</ion-header>
+<app-header></app-header>
 
 <ion-content [fullscreen]="true" [scrollY]="false">
     <div class="background-content">
-        <h1>Background Timeline</h1>
-        <p>This timeline sits behind the sheet.</p>
+
+        <div class="cinematic-header">
+            <div class="origin-flare"></div>
+            <h1 class="title-card">The Archive</h1>
+            <p class="subtitle">Cinematic history etched in time</p>
+        </div>
 
         <div class="timeline-container">
             <div class="timeline-axis"></div>
@@ -29,7 +29,11 @@
                                 [class.card-0]="cardIndex === 0" [class.card-1]="cardIndex === 1"
                                 [class.card-2]="cardIndex === 2" [class.top-card]="cardIndex === 0"
                                 [attr.data-node-index]="i" (click)="onCardClick(item)">
-                                <img [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
+                                <img class="ambient-glow"
+                                    [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'" />
+
+                                <img class="main-poster"
+                                    [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
                                     [alt]="item.title || item.name" />
                             </div>
                         </div>

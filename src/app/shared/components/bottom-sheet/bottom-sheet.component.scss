@@ -14,13 +14,21 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 95vh; // OR calc(100vh - env(safe-area-inset-top));
-    background: rgba(255, 255, 255, 0.9);
+    height: 95vh;
+
+    /* FIX 1: A subtle gradient that catches "light" at the top edge */
+    background: linear-gradient(to bottom, rgba(35, 35, 35, 0.7) 0%, rgba(15, 15, 15, 0.8) 15%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0px -5px 20px rgba(0, 0, 0, 0.3);
-    pointer-events: auto; // Re-enable pointer events for the sheet
+
+    /* FIX 2: Softer flagship corners and a slightly sharper top reflection */
+    border-radius: 28px 28px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+
+    /* FIX 3: Replaced the invisible black shadow with a faint ambient rim-light */
+    box-shadow: 0 -4px 30px rgba(255, 255, 255, 0.06);
+
+    pointer-events: auto;
     will-change: transform;
 
     display: flex;
@@ -29,8 +37,9 @@
 
     .drag-handle-area {
         width: 100%;
-        padding: 20px 0;
+        padding: 12px 0 16px 0;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         touch-action: none;
@@ -39,8 +48,16 @@
     .drag-handle {
         width: 40px;
         height: 5px;
-        background-color: rgba(0, 0, 0, 0.2);
+        background-color: rgba(255, 255, 255, 0.3);
         border-radius: 5px;
+        margin-bottom: 6px;
+    }
+
+    .drag-hint {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 1px;
     }
 
     // CSS & Touch Action (The Scroll Lock Edge Case):
@@ -51,8 +68,8 @@
     // browser's native scrolling engine is allowed to work.
     .sheet-content {
         width: 100%;
-        padding: 0 20px 20px 20px;
-        color: #333;
+        padding: 0 20px calc(50px + env(safe-area-inset-bottom)) 20px;
+        color: #fff;
         flex: 1;
         overflow-y: hidden;
         touch-action: none;
@@ -63,9 +80,136 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .dummy-sheet-item {
-            padding: 15px;
-            border-bottom: 1px solid #ccc;
+        .module-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+            color: #fff;
+        }
+
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 16px;
+            padding-bottom: 10px;
+
+            /* Snapping Physics */
+            scroll-snap-type: x mandatory;
+            touch-action: pan-x;
+            -webkit-overflow-scrolling: touch;
+
+            /* FIX: Moved these standard properties ABOVE the nested rules */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+
+            >* {
+                scroll-snap-align: start;
+            }
+
+            /* Nested rules must come last */
+            &.hide-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+        }
+
+        .vibe-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+
+            &.active {
+                border-color: rgba(255, 51, 51, 0.8);
+                color: #ff3333;
+                box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
+            }
+        }
+
+        .poster-card {
+            width: 120px;
+            height: 180px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .hero-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            background-image: url('https://image.tmdb.org/t/p/w780/1X7vow16X7CnCoexXh4H4F2yDJv.jpg');
+            background-size: cover;
+            background-position: center;
+
+            .hero-content {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                padding: 20px;
+            }
+
+            .hero-title {
+                margin: 0 0 15px 0;
+                font-size: 24px;
+                font-weight: 800;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            }
+
+            .hero-actions {
+                display: flex;
+                gap: 12px;
+                margin-top: 10px;
+
+                .btn {
+                    padding: 10px 24px;
+                    border-radius: 30px;
+                    /* Perfect pill shape */
+                    font-weight: 800;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    border: none;
+                    transition: transform 0.2s ease, opacity 0.2s ease;
+
+                    &:active {
+                        transform: scale(0.95);
+                        /* Tactile press effect */
+                        opacity: 0.8;
+                    }
+                }
+
+                .btn-primary {
+                    background: #ffffff;
+                    color: #000000;
+                    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+                }
+
+                .btn-secondary {
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(15px);
+                    -webkit-backdrop-filter: blur(15px);
+                    color: #ffffff;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+            }
         }
     }
 }
