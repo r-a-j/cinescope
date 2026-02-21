@@ -77,16 +77,13 @@ export class TvPage implements OnInit, OnDestroy {
   }
 
   async loadTv() {
-    this.watchlist = [];
-    this.watched = [];
-
     const [watchlistItems, watchedItems] = await Promise.all([
       this.storageService.getWatchlist(),
       this.storageService.getWatched()
     ]);
 
-    const tvWatchlist = watchlistItems.filter(item => item.isTv);
-    const tvWatched = watchedItems.filter(item => item.isTv);
+    const tvWatchlist = watchlistItems.filter(item => item.isTv).reverse();
+    const tvWatched = watchedItems.filter(item => item.isTv).reverse();
 
     this.watchlist = tvWatchlist.map(item => ({
       id: item.contentId,
@@ -206,5 +203,9 @@ export class TvPage implements OnInit, OnDestroy {
     await this.storageService.bulkMoveFromWatchlistToWatched(ids, false, true);
     this.clearSelection();
     this.loadTv();
+  }
+
+  trackById(index: number, item: any) {
+    return item.id;
   }
 }

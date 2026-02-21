@@ -78,16 +78,13 @@ export class MoviePage implements OnInit {
   }
 
   async loadMovies() {
-    this.watchlist = [];
-    this.watched = [];
-
     const [watchlistItems, watchedItems] = await Promise.all([
       this.storageService.getWatchlist(),
       this.storageService.getWatched()
     ]);
 
-    const movieWatchlist = watchlistItems.filter(item => item.isMovie);
-    const movieWatched = watchedItems.filter(item => item.isMovie);
+    const movieWatchlist = watchlistItems.filter(item => item.isMovie).reverse();
+    const movieWatched = watchedItems.filter(item => item.isMovie).reverse();
 
     this.watchlist = movieWatchlist.map(item => ({
       id: item.contentId,
@@ -214,5 +211,9 @@ export class MoviePage implements OnInit {
     await this.storageService.bulkMoveFromWatchlistToWatched(ids, true, false);
     this.clearSelection();
     this.loadMovies();
+  }
+
+  trackById(index: number, item: any) {
+    return item.id;
   }
 }

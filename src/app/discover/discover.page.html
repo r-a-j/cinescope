@@ -10,21 +10,25 @@
   </ion-segment>
 </ion-toolbar>
 
-<ion-content fullscreen [scrollEvents]="true" (ionScroll)="handleScroll($event)">
-  
+<ion-content [scrollEvents]="true" (ionScroll)="handleScroll($event)">
+
   <div class="content-layer animate__animated animate__fadeIn" *ngIf="!isLoading">
-    
+
     <div class="hero-wrapper" *ngIf="heroItem" #heroWrapper
-         [routerLink]="heroItem.media_type === 'person' || segmentValue === 'actors' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
-      
+      [routerLink]="heroItem.media_type === 'person' || segmentValue === 'actors' ? ['/person-detail', heroItem.id] : (heroItem.media_type === 'tv' ? ['/tv-detail', heroItem.id] : ['/movie-detail', heroItem.id])">
+
       <div class="hero-image-container">
-         <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[0] + ')'" [class.visible]="activeBackdropIndex === 0"></div>
-         <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[1] + ')'" [class.visible]="activeBackdropIndex === 1"></div>
+        <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[0] + ')'"
+          [class.visible]="activeBackdropIndex === 0"></div>
+        <div class="hero-layer" [style.backgroundImage]="'url(' + heroBackdrops[1] + ')'"
+          [class.visible]="activeBackdropIndex === 1"></div>
       </div>
-        
-      <div class="filter-overlay animate__animated animate__fadeInDown" *ngIf="segmentValue === 'desi'" (click)="$event.stopPropagation()">
+
+      <div class="filter-overlay animate__animated animate__fadeInDown" *ngIf="segmentValue === 'desi'"
+        (click)="$event.stopPropagation()">
         <div class="filter-chips-scroll">
-          <ion-chip *ngFor="let lang of languageChips" [class.selected]="selectedLanguage === lang.value" (click)="languageChanged(lang.value)">
+          <ion-chip *ngFor="let lang of languageChips" [class.selected]="selectedLanguage === lang.value"
+            (click)="languageChanged(lang.value)">
             <ion-label>{{ lang.label }}</ion-label>
           </ion-chip>
         </div>
@@ -33,48 +37,48 @@
       <div class="hero-gradient-overlay">
         <div class="hero-text animate__animated animate__fadeIn">
           <ng-container *ngFor="let item of [heroItem]">
-             
-             <div class="hero-actor-layout" *ngIf="segmentValue === 'actors'; else standardLayout">
-                <div class="hero-actor-thumb">
-                    <img [src]="'https://image.tmdb.org/t/p/w200' + item.profile_path" />
+
+            <div class="hero-actor-layout" *ngIf="segmentValue === 'actors'; else standardLayout">
+              <div class="hero-actor-thumb">
+                <img [src]="'https://image.tmdb.org/t/p/w200' + item.profile_path" />
+              </div>
+              <div class="hero-info-col">
+                <div class="hero-badge actor-badge">
+                  #{{ currentHeroIndex + 1 }} TRENDING STAR
                 </div>
-                <div class="hero-info-col">
-                    <div class="hero-badge actor-badge">
-                        #{{ currentHeroIndex + 1 }} TRENDING STAR
-                    </div>
-                    <h1 class="truncate-title">{{ item.name }}</h1>
-                    <p class="hero-subtitle" *ngIf="item.known_for && item.known_for[0]">
-                        Known for: <span class="highlight">{{ item.known_for[0].title || item.known_for[0].name }}</span>
-                    </p>
+                <h1 class="truncate-title">{{ item.name }}</h1>
+                <p class="hero-subtitle" *ngIf="item.known_for && item.known_for[0]">
+                  Known for: <span class="highlight">{{ item.known_for[0].title || item.known_for[0].name }}</span>
+                </p>
+              </div>
+            </div>
+
+            <ng-template #standardLayout>
+              <div class="hero-standard-layout">
+                <div class="badge-row">
+                  <div class="hero-badge standard-badge">
+                    #{{ currentHeroIndex + 1 }} TRENDING
+                  </div>
+                  <div class="rating-badge" *ngIf="item.vote_average">
+                    <ion-icon name="star" color="warning"></ion-icon> {{ item.vote_average | number:'1.1-1' }}
+                  </div>
                 </div>
-             </div>
 
-             <ng-template #standardLayout>
-                <div class="hero-standard-layout">
-                    <div class="badge-row">
-                        <div class="hero-badge standard-badge">
-                            #{{ currentHeroIndex + 1 }} TRENDING
-                        </div>
-                        <div class="rating-badge" *ngIf="item.vote_average">
-                            <ion-icon name="star" color="warning"></ion-icon> {{ item.vote_average | number:'1.1-1' }}
-                        </div>
-                    </div>
+                <h1 class="truncate-title">{{ item.title || item.name }}</h1>
 
-                    <h1 class="truncate-title">{{ item.title || item.name }}</h1>
-
-                    <div class="meta-row">
-                        <span>{{ (item.release_date || item.first_air_date) | date:'yyyy' }}</span>
-                        <span class="dot">•</span>
-                        <span class="lang-text">{{ item.original_language | uppercase }}</span>
-                        <ng-container *ngIf="!item.overview">
-                            <span class="dot">•</span>
-                            <span>{{ item.media_type === 'tv' ? 'TV Series' : 'Movie' }}</span>
-                        </ng-container>
-                    </div>
-
-                    <p class="hero-desc">{{ item.overview }}</p>
+                <div class="meta-row">
+                  <span>{{ (item.release_date || item.first_air_date) | date:'yyyy' }}</span>
+                  <span class="dot">•</span>
+                  <span class="lang-text">{{ item.original_language | uppercase }}</span>
+                  <ng-container *ngIf="!item.overview">
+                    <span class="dot">•</span>
+                    <span>{{ item.media_type === 'tv' ? 'TV Series' : 'Movie' }}</span>
+                  </ng-container>
                 </div>
-             </ng-template>
+
+                <p class="hero-desc">{{ item.overview }}</p>
+              </div>
+            </ng-template>
 
           </ng-container>
         </div>
@@ -82,28 +86,26 @@
     </div>
 
     <ng-container *ngFor="let section of currentSections">
-      <app-media-carousel
-        [title]="section.title"
-        [items]="section.items"
-        viewAllRoute="/view-all"
-        [viewAllParams]="getQueryParams(section)" 
-        [type]="section.type">
+      <app-media-carousel [title]="section.title" [items]="section.items" viewAllRoute="/view-all"
+        [viewAllParams]="getQueryParams(section)" [type]="section.type">
       </app-media-carousel>
     </ng-container>
-    
+
     <div *ngIf="currentSections.length === 0" class="empty-state">
-        <ion-label color="medium">No content found.</ion-label>
+      <ion-label color="medium">No content found.</ion-label>
     </div>
   </div>
 
   <div *ngIf="isLoading" class="skeleton-wrapper">
-      <ion-skeleton-text animated style="width: 100%; aspect-ratio: 16/9; margin-bottom: 20px; border-radius: 0;"></ion-skeleton-text>
-      <div *ngFor="let i of [1,2,3]" class="skeleton-section">
-          <ion-skeleton-text animated style="width: 40%; height: 20px; margin-bottom: 12px; border-radius: 4px;"></ion-skeleton-text>
-          <div class="skeleton-row">
-              <ion-skeleton-text animated class="skeleton-card" *ngFor="let j of [1,2,3,4]"></ion-skeleton-text>
-          </div>
+    <ion-skeleton-text animated
+      style="width: 100%; aspect-ratio: 16/9; margin-bottom: 20px; border-radius: 0;"></ion-skeleton-text>
+    <div *ngFor="let i of [1,2,3]" class="skeleton-section">
+      <ion-skeleton-text animated
+        style="width: 40%; height: 20px; margin-bottom: 12px; border-radius: 4px;"></ion-skeleton-text>
+      <div class="skeleton-row">
+        <ion-skeleton-text animated class="skeleton-card" *ngFor="let j of [1,2,3,4]"></ion-skeleton-text>
       </div>
+    </div>
   </div>
 
   <div style="height: 80px;"></div>

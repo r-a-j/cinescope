@@ -71,8 +71,8 @@
   </div>
 
   <div class="media-grid">
-    <div class="media-item animate__animated animate__flipInY animate__faster" *ngFor="let movie of getCurrentMovies()"
-      (click)="onMovieClick(movie.id)">
+    <div class="media-item animate__animated animate__flipInY animate__faster"
+      *ngFor="let movie of getCurrentMovies(); trackBy: trackById" (click)="onMovieClick(movie.id)">
       <img
         [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
         [alt]="movie.title" />

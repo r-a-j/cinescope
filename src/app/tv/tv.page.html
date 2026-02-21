@@ -71,8 +71,8 @@
   </div>
 
   <div class="media-grid">
-    <div class="media-item animate__animated animate__flipInY animate__faster" *ngFor="let tv of getCurrentTv()"
-      (click)="onTvClick(tv.id)">
+    <div class="media-item animate__animated animate__flipInY animate__faster"
+      *ngFor="let tv of getCurrentTv(); trackBy: trackById" (click)="onTvClick(tv.id)">
       <img [src]="tv.poster_path ? ('https://image.tmdb.org/t/p/w300' + tv.poster_path) : 'assets/placeholder.png'"
         [alt]="tv.name" />
 

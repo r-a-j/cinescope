@@ -1,6 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, GestureController, GestureDetail } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { sparkles, star } from 'ionicons/icons';
 
 @Component({
     selector: 'app-bottom-sheet',
@@ -28,7 +30,9 @@ export class BottomSheetComponent implements AfterViewInit {
     private safeAreaTop = 0;
     private safeAreaBottom = 0;
 
-    constructor(private gestureCtrl: GestureController, private renderer: Renderer2) { }
+    constructor(private gestureCtrl: GestureController, private renderer: Renderer2) {
+        addIcons({ sparkles });
+    }
 
     ngAfterViewInit() {
         this.calculateSnapPoints();
