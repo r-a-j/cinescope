@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, NgZone } from '@angular/core';
+import { Component, OnInit, inject, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, GestureController, Gesture } from '@ionic/angular';
 import { BottomSheetComponent } from 'src/app/shared/components/bottom-sheet/bottom-sheet.component';
@@ -6,6 +6,7 @@ import { TimelineService, TimelineNode, SingleNode, StackedNode } from 'src/serv
 import { ContentModel } from 'src/models/content.model';
 import { StorageService } from 'src/services/storage.service';
 import { HeaderComponent } from 'src/app/header/header.component';
+import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-skeleton-test',
     templateUrl: './skeleton-test.page.html',
@@ -13,7 +14,7 @@ import { HeaderComponent } from 'src/app/header/header.component';
     standalone: true,
     imports: [IonicModule, CommonModule, BottomSheetComponent, HeaderComponent]
 })
-export class SkeletonTestPage implements OnInit {
+export class SkeletonTestPage implements OnInit, OnDestroy {
     private timelineService = inject(TimelineService);
     private gestureCtrl = inject(GestureController);
     private ngZone = inject(NgZone);
@@ -21,10 +22,26 @@ export class SkeletonTestPage implements OnInit {
     public timelineNodes: TimelineNode[] = [];
     private gestures: Gesture[] = [];
     private isDragging = false;
+    private storageSub!: Subscription;
 
     constructor() { }
 
-    async ngOnInit() {
+    ngOnInit() {
+        this.loadTimeline();
+
+        this.storageSub = this.storageService.storageChanged$.subscribe(() => {
+            this.loadTimeline();
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.storageSub) {
+            this.storageSub.unsubscribe();
+        }
+        this.gestures.forEach(g => g.destroy());
+    }
+
+    async loadTimeline() {
         const watchedItems = await this.storageService.getWatched();
         this.timelineNodes = this.timelineService.generateTimeline(watchedItems);
 
