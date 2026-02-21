@@ -114,3 +114,95 @@ ion-fab-button.fab-filter,
 ion-fab-button.fab-edit-btn {
     --background: var(--ion-color-primary-shade);
 }
+
+/* --- PREMIUM FILTER MODAL STYLING --- */
+
+/* 1. The Shadow-DOM Glass Injection */
+ion-modal.glass-modal {
+    --background: rgba(18, 18, 18, 0.65);
+    /* Dark translucent base */
+
+    /* Reaches into the modal's internal structure to apply the blur */
+    &::part(content) {
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        /* Sleek top reflection */
+        border-radius: 28px 28px 0 0;
+        /* Premium Apple-style curve */
+        box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5);
+    }
+}
+
+.filter-content {
+    --background: transparent;
+    /* Allows the modal's glass background to show through */
+    --padding-start: 20px;
+    --padding-end: 20px;
+    --padding-bottom: 40px;
+
+    .filter-heading {
+        font-size: 14px;
+        font-weight: 800;
+        margin-top: 24px;
+        margin-bottom: 14px;
+        color: #ffffff;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .chip-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        /* Slightly wider gap for better touch targets */
+
+        ion-chip {
+            /* PERFECT ALIGNMENT & SIZING */
+            margin: 0;
+            min-height: 36px;
+            padding: 0 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+
+            /* Using Ionic's native variables avoids shadow-DOM conflicts */
+            --background: rgba(255, 255, 255, 0.05);
+            --color: rgba(255, 255, 255, 0.7);
+
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+            ion-label {
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin: 0;
+                transform: translateY(1px);
+                /* The optical nudge to center the text perfectly */
+            }
+
+            &.active-chip {
+                --background: rgba(255, 51, 51, 0.15);
+                /* Soft red glow */
+                --color: #ff3333;
+                border-color: rgba(255, 51, 51, 0.4);
+                box-shadow: 0 4px 15px rgba(255, 51, 51, 0.15);
+
+                ion-label {
+                    font-weight: 800;
+                    /* Bold active state */
+                }
+            }
+        }
+    }
+
+    .clear-action {
+        margin-top: 40px;
+
+        ion-button {
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    }
+}

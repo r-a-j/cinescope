@@ -9,10 +9,7 @@ import {
   IonCheckbox,
   IonFab,
   IonFabButton,
-  IonPopover,
-  IonList,
-  IonItem,
-  IonLabel
+  IonModal, IonHeader, IonToolbar, IonTitle, IonChip, IonLabel
 } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
@@ -28,11 +25,7 @@ import { StorageService } from 'src/services/storage.service';
   selector: 'app-tv',
   templateUrl: 'tv.page.html',
   styleUrls: ['tv.page.scss'],
-  imports: [
-    IonPopover,
-    IonList,
-    IonItem,
-    IonLabel,
+  imports: [IonLabel, IonChip, IonTitle, IonToolbar, IonHeader, IonModal,
     IonFabButton,
     IonFab,
     IonCheckbox,
@@ -44,8 +37,7 @@ import { StorageService } from 'src/services/storage.service';
     IonSegmentButton,
     IonSegment,
     IonContent,
-    HeaderComponent
-  ],
+    HeaderComponent],
 })
 export class TvPage implements OnInit, OnDestroy {
   segment: 'watchlist' | 'watched' = 'watchlist';
@@ -58,6 +50,7 @@ export class TvPage implements OnInit, OnDestroy {
   genres: string[] = [];
   selectedGenres = new Set<string>();
   storageSub!: Subscription;
+  sortBy: 'default' | 'title' | 'rating' | 'date' = 'default';
 
   constructor(
     private router: Router,
@@ -132,16 +125,28 @@ export class TvPage implements OnInit, OnDestroy {
 
   clearFilter() {
     this.selectedGenres.clear();
-    this.filterOpen = false;
+    this.sortBy = 'default'; // Reset sort as well
+    // Don't close the modal immediately so the user sees the chips clear
   }
 
   getCurrentTv(): TvDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
-    if (this.selectedGenres.size === 0) { return base; }
 
-    return base.filter(tv =>
-      tv.genres?.some(g => this.selectedGenres.has(g.name!))
-    );
+    let filtered = base;
+    if (this.selectedGenres.size > 0) {
+      filtered = base.filter(tv => tv.genres?.some(g => this.selectedGenres.has(g.name!)));
+    }
+
+    return filtered.sort((a, b) => {
+      if (this.sortBy === 'title') {
+        return (a.name || '').localeCompare(b.name || ''); // Uses name
+      } else if (this.sortBy === 'rating') {
+        return (b.vote_average || 0) - (a.vote_average || 0);
+      } else if (this.sortBy === 'date') {
+        return new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime(); // Uses first_air_date
+      }
+      return 0;
+    });
   }
 
   goToSearch() {

@@ -74,142 +74,81 @@
         overflow-y: hidden;
         touch-action: none;
 
+        /* Flex setup to perfectly center the Coming Soon text */
+        display: flex;
+        flex-direction: column;
+
         &.scrollable {
             overflow-y: auto;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
-        .module-section {
-            margin-bottom: 30px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 0 0 15px 0;
-            color: #fff;
-        }
-
-        .horizontal-scroll {
+        /* PREMIUM COMING SOON STYLES */
+        .coming-soon-wrapper {
+            flex: 1;
             display: flex;
-            overflow-x: auto;
-            gap: 16px;
-            padding-bottom: 10px;
-
-            /* Snapping Physics */
-            scroll-snap-type: x mandatory;
-            touch-action: pan-x;
-            -webkit-overflow-scrolling: touch;
-
-            /* FIX: Moved these standard properties ABOVE the nested rules */
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
-
-            >* {
-                scroll-snap-align: start;
-            }
-
-            /* Nested rules must come last */
-            &.hide-scrollbar::-webkit-scrollbar {
-                display: none;
-            }
-        }
-
-        .vibe-pill {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 8px 16px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-
-            &.active {
-                border-color: rgba(255, 51, 51, 0.8);
-                color: #ff3333;
-                box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
-            }
-        }
-
-        .poster-card {
-            width: 120px;
-            height: 180px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-
-        .hero-card {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-bottom: 25vh;
+            /* Pushes it slightly up so it looks perfectly centered when fully expanded */
             position: relative;
-            width: 100%;
-            aspect-ratio: 16/9;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-            background-image: url('https://image.tmdb.org/t/p/w780/1X7vow16X7CnCoexXh4H4F2yDJv.jpg');
-            background-size: cover;
-            background-position: center;
 
-            .hero-content {
+            .glow-orb {
                 position: absolute;
-                inset: 0;
-                background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                padding: 20px;
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(circle, rgba(255, 51, 51, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                animation: pulse 4s infinite alternate ease-in-out;
             }
 
-            .hero-title {
-                margin: 0 0 15px 0;
-                font-size: 24px;
-                font-weight: 800;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            ion-icon {
+                font-size: 42px;
+                color: #ff3333;
+                margin-bottom: 16px;
+                z-index: 1;
+                filter: drop-shadow(0 0 10px rgba(255, 51, 51, 0.5));
             }
 
-            .hero-actions {
-                display: flex;
-                gap: 12px;
-                margin-top: 10px;
+            h2 {
+                font-size: 22px;
+                font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                margin: 0 0 12px 0;
+                z-index: 1;
+                color: #ffffff;
+            }
 
-                .btn {
-                    padding: 10px 24px;
-                    border-radius: 30px;
-                    /* Perfect pill shape */
-                    font-weight: 800;
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    border: none;
-                    transition: transform 0.2s ease, opacity 0.2s ease;
-
-                    &:active {
-                        transform: scale(0.95);
-                        /* Tactile press effect */
-                        opacity: 0.8;
-                    }
-                }
-
-                .btn-primary {
-                    background: #ffffff;
-                    color: #000000;
-                    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
-                }
-
-                .btn-secondary {
-                    background: rgba(255, 255, 255, 0.15);
-                    backdrop-filter: blur(15px);
-                    -webkit-backdrop-filter: blur(15px);
-                    color: #ffffff;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                }
+            p {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.5);
+                max-width: 260px;
+                line-height: 1.6;
+                margin: 0;
+                z-index: 1;
+                font-weight: 500;
+                letter-spacing: 0.5px;
             }
         }
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
     }
 }

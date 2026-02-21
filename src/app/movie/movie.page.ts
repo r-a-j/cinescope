@@ -9,10 +9,11 @@ import {
   IonButtons,
   IonButton,
   IonCheckbox,
-  IonPopover,
-  IonList,
-  IonItem,
-  IonLabel
+  IonModal,
+  IonChip,
+  IonHeader,
+  IonToolbar,
+  IonTitle, IonLabel
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
@@ -27,11 +28,12 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
   selector: 'app-movie',
   templateUrl: 'movie.page.html',
   styleUrls: ['movie.page.scss'],
-  imports: [
-    IonPopover,
-    IonList,
-    IonItem,
-    IonLabel,
+  imports: [IonLabel,
+    IonModal,
+    IonChip,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
     IonCheckbox,
     IonButton,
     IonButtons,
@@ -43,7 +45,8 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
     IonSegmentButton,
     IonSegment,
     IonContent,
-    HeaderComponent],
+    HeaderComponent
+  ],
 })
 export class MoviePage implements OnInit {
   segment: 'watchlist' | 'watched' = 'watchlist';
@@ -57,6 +60,8 @@ export class MoviePage implements OnInit {
   popoverEvent: any = null;
   genres: string[] = [];
   selectedGenres = new Set<string>();
+
+  sortBy: 'default' | 'title' | 'rating' | 'date' = 'default';
 
   constructor(
     private router: Router,
@@ -121,17 +126,31 @@ export class MoviePage implements OnInit {
   }
 
   clearFilter() {
-    this.selectedGenres.clear(); this.filterOpen = false;
+    this.selectedGenres.clear();
+    this.sortBy = 'default'; // Reset sort as well
+    // Don't close the modal immediately so the user sees the chips clear
   }
 
   getCurrentMovies(): MovieDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
 
-    if (this.selectedGenres.size === 0) {
-      return base;
+    // 1. First, apply Genre Filtering
+    let filtered = base;
+    if (this.selectedGenres.size > 0) {
+      filtered = base.filter(m => m.genres?.some(g => this.selectedGenres.has(g.name!)));
     }
 
-    return base.filter(m => m.genres?.some(g => this.selectedGenres.has(g.name!)));
+    // 2. Then, apply Sorting
+    return filtered.sort((a, b) => {
+      if (this.sortBy === 'title') {
+        return (a.title || '').localeCompare(b.title || '');
+      } else if (this.sortBy === 'rating') {
+        return (b.vote_average || 0) - (a.vote_average || 0); // High to Low
+      } else if (this.sortBy === 'date') {
+        return new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime(); // Newest first
+      }
+      return 0; // Default (Order they were saved)
+    });
   }
 
   goToSearch() {

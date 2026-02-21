@@ -5,9 +5,7 @@ import {
   IonToolbar,
   IonButton,
   IonIcon,
-  IonButtons,
-  IonImg,
-  IonTabButton
+  IonButtons
 } from "@ionic/angular/standalone";
 import { addIcons } from 'ionicons';
 import { searchOutline, settingsOutline, camera } from 'ionicons/icons';
@@ -17,8 +15,6 @@ import { searchOutline, settingsOutline, camera } from 'ionicons/icons';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
   imports: [
-    IonTabButton,
-    IonImg,
     IonButtons,
     IonIcon,
     IonButton,

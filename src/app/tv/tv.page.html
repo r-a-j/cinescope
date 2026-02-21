@@ -1,23 +1,53 @@
 <app-header></app-header>
 
-<ion-popover [isOpen]="filterOpen" [event]="popoverEvent" (didDismiss)="filterOpen = false" translucent="true">
+<ion-modal class="glass-modal" [isOpen]="filterOpen" [initialBreakpoint]="0.65" [breakpoints]="[0, 0.65, 0.9]"
+  (didDismiss)="filterOpen = false">
   <ng-template>
-    <ion-list>
-      <ion-item *ngFor="let g of genres" button="true" lines="none" (click)="toggleGenre(g)"
-        [class.active]="selectedGenres.has(g)" class="popover-genre-item">
-        <ion-label>{{ g }}</ion-label>
-        <ion-checkbox slot="end" [checked]="selectedGenres.has(g)" (click)="$event.stopPropagation(); toggleGenre(g)">
-        </ion-checkbox>
-      </ion-item>
 
-      <ion-item lines="none">
-        <ion-button expand="block" size="small" (click)="applyFilter()">Apply</ion-button>
-        <ion-button expand="block" size="small" fill="clear" (click)="clearFilter()">Clear</ion-button>
-      </ion-item>
+    <ion-header class="ion-no-border">
+      <ion-toolbar style="--background: transparent;">
+        <ion-title style="font-weight: 700; font-size: 16px; letter-spacing: 1px;">SORT & FILTER</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="filterOpen = false" color="light" style="font-weight: 700;">DONE</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
 
-    </ion-list>
+    <ion-content class="filter-content">
+
+      <h3 class="filter-heading">Sort By</h3>
+      <div class="chip-group">
+        <ion-chip [class.active-chip]="sortBy === 'default'" (click)="sortBy = 'default'">
+          <ion-label>Recently Added</ion-label>
+        </ion-chip>
+        <ion-chip [class.active-chip]="sortBy === 'title'" (click)="sortBy = 'title'">
+          <ion-label>A-Z</ion-label>
+        </ion-chip>
+        <ion-chip [class.active-chip]="sortBy === 'rating'" (click)="sortBy = 'rating'">
+          <ion-label>Highest Rated</ion-label>
+        </ion-chip>
+        <ion-chip [class.active-chip]="sortBy === 'date'" (click)="sortBy = 'date'">
+          <ion-label>Newest Release</ion-label>
+        </ion-chip>
+      </div>
+
+      <h3 class="filter-heading">Genres</h3>
+      <div class="chip-group">
+        <ion-chip *ngFor="let g of genres" [class.active-chip]="selectedGenres.has(g)" (click)="toggleGenre(g)">
+          <ion-label>{{ g }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <div class="clear-action">
+        <ion-button expand="block" color="medium" fill="clear" (click)="clearFilter()"
+          [disabled]="selectedGenres.size === 0 && sortBy === 'default'">
+          Reset All Filters
+        </ion-button>
+      </div>
+
+    </ion-content>
   </ng-template>
-</ion-popover>
+</ion-modal>
 
 <ion-content class="ion-padding">
 
