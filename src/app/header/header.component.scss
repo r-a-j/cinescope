@@ -1,5 +1,44 @@
+/* 1. THE CLEAN GLOBAL BASE */
+:host {
+    display: block;
+    position: relative;
+    z-index: 100;
+    background-color: #000000;
+    /* Pure black, flush against content. No shadows. */
+}
+
+ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+    --min-height: 56px;
+}
+
 .header-logo {
-    height: 50px;
-    width: 100px;
+    height: 26px;
+    /* Crisper, flagship sizing */
+    width: auto;
     object-fit: contain;
+    margin-left: 8px;
+}
+
+/* Kills the white focus rings instantly */
+.logo-btn::part(native),
+.icon-btn::part(native) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.icon-btn {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --color: rgba(255, 255, 255, 0.85);
+
+    ion-icon {
+        font-size: 22px;
+    }
+
+    &:hover,
+    &:active {
+        --color: #ffffff;
+    }
 }

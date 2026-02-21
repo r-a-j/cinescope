@@ -1,17 +1,18 @@
-<ion-header [translucent]="true">
+<ion-header class="ion-no-border">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-tab-button (click)="goToMovie()">
-        <ion-img src="assets/logo.png" class="header-logo" aria-label="Cinescope"></ion-img>
-      </ion-tab-button>
+      <ion-button class="logo-btn" fill="clear" (click)="goToMovie()" tabindex="-1">
+        <img src="assets/logo.png" class="header-logo" alt="Cinescope" />
+      </ion-button>
     </ion-buttons>
+
     <ion-buttons slot="end">
-      <ion-button (click)="goToSearch()">
-        <ion-icon md="search-outline" aria-label="Search"></ion-icon>
+      <ion-button class="icon-btn" fill="clear" (click)="goToSearch()" tabindex="-1">
+        <ion-icon name="search-outline" aria-label="Search"></ion-icon>
       </ion-button>
-      <ion-button (click)="goToSetting()">
-        <ion-icon md="settings-outline" aria-label="Settings"></ion-icon>
+      <ion-button class="icon-btn" fill="clear" (click)="goToSetting()" tabindex="-1">
+        <ion-icon name="settings-outline" aria-label="Settings"></ion-icon>
       </ion-button>
     </ion-buttons>
-  </ion-toolbar>  
+  </ion-toolbar>
 </ion-header>

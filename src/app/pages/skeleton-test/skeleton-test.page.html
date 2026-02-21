@@ -1,6 +1,7 @@
-<app-header></app-header>
+<app-header class="timeline-header"></app-header>
 
-<ion-content [fullscreen]="true" [scrollY]="false">
+<ion-content [fullscreen]="true" [scrollY]="false" class="timeline-content">
+
     <div class="background-content">
 
         <div class="cinematic-header">
@@ -29,35 +30,24 @@
                                 [class.card-0]="cardIndex === 0" [class.card-1]="cardIndex === 1"
                                 [class.card-2]="cardIndex === 2" [class.top-card]="cardIndex === 0"
                                 [attr.data-node-index]="i" (click)="onCardClick(item)">
-                                <img class="ambient-glow"
-                                    [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'" />
 
-                                <img class="main-poster"
-                                    [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
+                                <img [src]="item.poster_path ? ('https://image.tmdb.org/t/p/w300' + item.poster_path) : 'assets/placeholder.png'"
                                     [alt]="item.title || item.name" />
+
                             </div>
                         </div>
                     </div>
-
                     <div class="timeline-info">
-                        <h3 class="movie-title">{{ asStacked(node).items[0].title || asStacked(node).items[0].name
-                            }}</h3>
-                        <div class="movie-meta">
-                            <span class="year">
-                                {{ (asStacked(node).items[0].release_date || asStacked(node).items[0].first_air_date) |
-                                slice:0:4 }}
-                            </span>
-                            <span class="dot-separator">•</span>
-                            <div class="imdb-badge">
-                                <span class="imdb-text">IMDb</span>
-                            </div>
-                            <span class="imdb-rating">{{ asStacked(node).items[0].vote_average | number:'1.1-1'
-                                }}</span>
-                        </div>
+                        <h2 class="movie-title">{{ asStacked(node).items[0].title || asStacked(node).items[0].name }}
+                        </h2>
                     </div>
-
                 </div>
             </ng-container>
+
+            <div class="timeline-end">
+                <div class="end-ring"></div>
+                <span class="end-text">Origin</span>
+            </div>
 
         </div>
     </div>

@@ -1,17 +1,45 @@
+/* LOCAL TIMELINE HEADER OVERRIDE */
+::ng-deep .timeline-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+
+    /* THE PERFECT DISSOLVE: 
+       Creates an extended gradient overlay. The top 35% is pure black to protect the logo.
+       The rest smoothly fades out over the cards. */
+    height: 140px !important;
+    background: linear-gradient(to bottom, #000000 35%, rgba(0, 0, 0, 0) 100%) !important;
+    pointer-events: none;
+    /* Allows scrolling touches to pass through the fade */
+
+    ion-toolbar {
+        pointer-events: auto;
+        /* Re-enables clicking on the actual buttons */
+    }
+}
+
+ion-content.timeline-content {
+    --background: #000000;
+}
+
 .background-content {
     padding: 0 0 15vh 0;
-    /* Removed top padding to let the fade start at the absolute edge */
     height: 100vh;
-    background-color: #000000;
+    background-color: transparent;
     color: white;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
 
+    /* REMOVED THE HORRIBLE MASK-IMAGE ENTIRELY */
+
     .cinematic-header {
         position: relative;
         width: 100%;
-        padding: 80px 20px 40px 20px;
+        /* Adjusted padding so the text starts perfectly below the solid black zone */
+        padding: 90px 20px 20px 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -20,40 +48,41 @@
 
         .origin-flare {
             position: absolute;
-            top: 0;
+            top: 30px;
+            /* Shifted down to match the new padding */
             left: 50%;
-            /* Perfectly centers the flare */
             transform: translateX(-50%);
-            width: 250px;
-            height: 250px;
+            width: 200px;
+            /* ... rest of the flare CSS stays exactly the same ... */
+            /* Slightly smaller flare */
+            height: 200px;
             background: radial-gradient(circle, rgba(255, 51, 51, 0.25) 0%, rgba(255, 51, 51, 0) 65%);
             border-radius: 50%;
             pointer-events: none;
-            /* Makes the light bleed over the text like a real lens flare */
             mix-blend-mode: screen;
             animation: breathe 5s ease-in-out infinite alternate;
         }
 
         .title-card {
-            /* BESPOKE UPGRADE: High-end Cinema Serif Font Stack */
             font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
-            font-size: 26px;
+            font-size: 22px;
+            /* Scaled down from 26px */
             font-weight: 400;
-            letter-spacing: 16px;
+            letter-spacing: 12px;
+            /* Tighter cinematic tracking */
             text-transform: uppercase;
             color: #ffffff;
-            margin: 0 0 12px 0;
-            /* CRITICAL: Offsets the heavy letter-spacing so it actually centers perfectly */
-            padding-left: 16px;
+            margin: 0 0 6px 0;
+            padding-left: 12px;
             text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
 
         .subtitle {
             font-family: 'Helvetica Neue', sans-serif;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.35);
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             margin: 0;
         }
@@ -75,16 +104,17 @@
 .timeline-container {
     position: relative;
     max-width: 100%;
-    margin: 40px auto 0;
-    padding-top: 20px;
-    padding-bottom: 60px;
+    /* COMPACT FIX: Slashed top margins from 40px to 10px */
+    margin: 10px auto 0;
+    padding-top: 0;
 
     .timeline-date {
         position: relative;
         width: 100%;
         display: flex;
         justify-content: center;
-        margin-bottom: 20px;
+        /* COMPACT FIX: Reduced gap below date from 20px to 12px */
+        margin-bottom: 12px;
         z-index: 4;
 
         span {
@@ -92,9 +122,10 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 51, 51, 0.3);
             color: #ff3333;
-            padding: 6px 16px;
+            padding: 4px 12px;
+            /* Tighter date pill */
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -114,17 +145,60 @@
     box-shadow: 0 0 10px red, 0 0 20px red;
     z-index: 1;
 
-    /* BESPOKE UPGRADE: The Emission Fade 
-       This makes the top 150px of the line slowly fade to 0% opacity,
-       so it emerges from the darkness instead of hitting a ceiling. */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0px, transparent 40px, black 150px, black 100%);
-    mask-image: linear-gradient(to bottom, transparent 0px, transparent 40px, black 150px, black 100%);
+    /* BESPOKE UPGRADE: Dual Emission Fade 
+       Now fades out smoothly at BOTH the top and the bottom! */
+    -webkit-mask-image: linear-gradient(to bottom,
+            transparent 0px,
+            transparent 40px,
+            black 150px,
+            black calc(100% - 150px),
+            /* Keeps the line solid until 150px from the bottom edge */
+            transparent 100%
+            /* Fades entirely into darkness */
+        );
+    mask-image: linear-gradient(to bottom, transparent 0px, transparent 40px, black 150px, black calc(100% - 150px), transparent 100%);
+}
+
+/* THE CINEMATIC CAPSTONE */
+.timeline-end {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+    /* Gentle spacing after the final movie */
+    padding-bottom: 120px;
+    /* Pushes the end of the scroll area way down so the user can easily pull this up above the Bottom Sheet */
+    z-index: 2;
+
+    .end-ring {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 51, 51, 0.4);
+        background: #000000;
+        box-shadow: 0 0 15px rgba(255, 51, 51, 0.2), inset 0 0 5px rgba(255, 51, 51, 0.2);
+        margin-bottom: 12px;
+    }
+
+    .end-text {
+        font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+        font-size: 11px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.25);
+        letter-spacing: 8px;
+        text-transform: uppercase;
+        padding-left: 8px;
+        /* Optical center fix for the heavy letter-spacing */
+    }
 }
 
 .timeline-row {
     position: relative;
     width: 100%;
-    margin-bottom: 50px;
+    /* COMPACT FIX: Slashed massive 50px gap between rows down to 25px */
+    margin-bottom: 25px;
     display: flex;
     z-index: 2;
 }
@@ -143,63 +217,23 @@
 }
 
 .movie-title {
-    font-size: 17px;
+    font-size: 22px;
+    /* UPGRADED: Increased from 17px for a bold, flagship look */
     font-weight: 800;
     letter-spacing: -0.5px;
     text-transform: uppercase;
     color: #ffffff;
-    margin: 0 0 8px 0;
+    margin: 0;
+    /* CRITICAL FIX: Removed bottom margin to perfectly center it with the red laser line */
     line-height: 1.1;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    /* Keeps long titles from breaking the layout */
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.movie-meta {
-    font-size: 13px;
-    opacity: 0.95;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    .imdb-badge {
-        display: flex;
-        align-items: center;
-        background: #f5c518;
-        border-radius: 4px;
-        padding: 2px 6px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-        flex-shrink: 0;
-
-        .imdb-text {
-            color: #000000;
-            font-family: 'Arial Black', Impact, sans-serif;
-            font-weight: 900;
-            font-size: 11px;
-            letter-spacing: -0.5px;
-        }
-
-        .imdb-rating {
-            color: #000000;
-            font-weight: 900;
-            font-size: 12px;
-            line-height: 1;
-        }
-    }
-
-    .dot-separator {
-        opacity: 0.5;
-        font-size: 10px;
-    }
-
-    .year {
-        font-weight: 700;
-        color: #ffffff;
-        letter-spacing: 1px;
-    }
+    transform: translateY(2px);
 }
 
 .alternating-row {
@@ -270,10 +304,6 @@
         .timeline-info {
             align-items: flex-end;
             text-align: right;
-
-            .movie-meta {
-                flex-direction: row-reverse;
-            }
         }
     }
 }
@@ -281,8 +311,9 @@
 .timeline-content.stacked-node-ui {
     .carousel {
         position: relative;
-        width: 140px;
-        height: 200px;
+        /* COMPACT FIX: Shrunk carousel wrapper to fit new smaller cards */
+        width: 110px;
+        height: 160px;
         margin: 0 auto;
 
         .poster-placeholder {
@@ -304,14 +335,16 @@
 
             &.card-1 {
                 z-index: 2;
-                transform: scale(0.95) translateY(-15px) rotate(3deg);
+                /* COMPACT FIX: Tucked the card closer (-10px instead of -15px) */
+                transform: scale(0.95) translateY(-10px) rotate(3deg);
                 opacity: 0.9;
                 filter: brightness(0.7);
             }
 
             &.card-2 {
                 z-index: 1;
-                transform: scale(0.90) translateY(-30px) rotate(-3deg);
+                /* COMPACT FIX: Tucked the card closer (-20px instead of -30px) */
+                transform: scale(0.90) translateY(-20px) rotate(-3deg);
                 opacity: 0.5;
                 filter: brightness(0.4);
             }
@@ -320,55 +353,23 @@
 }
 
 .poster-placeholder {
-    width: 120px;
-    height: 180px;
+    /* COMPACT FIX: Scaled posters down from 120x180 to 100x150 */
+    width: 100px;
+    height: 150px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 10px;
+    /* Slightly sharper corners for smaller size */
     text-align: center;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     touch-action: pan-y;
 
-    /* The Crisp Front Poster */
-    img.main-poster {
-        position: relative;
+    img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: inherit;
         pointer-events: none;
-        z-index: 2;
-        /* Sits on top of the glow */
-    }
-
-    /* The YouTube-Style Ambient Glow */
-    img.ambient-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        /* FIX: Centered perfectly and reduced the massive scale */
-        transform: translate(-50%, -50%) scale(1.05);
-        object-fit: cover;
-        /* FIX: Increased blur slightly, toned down the brightness */
-        filter: blur(20px) saturate(140%) brightness(0.8);
-        opacity: 0.35;
-        /* FIX: Dropped opacity for a much softer, premium aura */
-        pointer-events: none;
-        z-index: 1;
-        border-radius: inherit;
-    }
-
-    span {
-        font-size: 14px;
-        font-weight: 600;
-        color: #eee;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
     }
 }
