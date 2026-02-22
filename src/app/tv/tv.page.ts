@@ -47,6 +47,10 @@ export class TvPage implements OnInit, OnDestroy {
   selectedGenres = new Set<string>();
   storageSub!: Subscription;
   sortBy: 'default' | 'title' | 'rating' | 'date' = 'default';
+  pressTimer: any;
+  wasLongPressed = false;
+  private touchStartX = 0;
+  private touchStartY = 0;
 
   constructor(
     private router: Router,
@@ -71,6 +75,56 @@ export class TvPage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.storageSub?.unsubscribe();
+  }
+
+  onHoldStart(event: Event, contentId: number | string) {
+    if (this.selectionMode) return;
+    this.wasLongPressed = false;
+
+    // 1. Record the exact pixel where the finger/mouse landed
+    if (window.TouchEvent && event instanceof TouchEvent) {
+      this.touchStartX = event.touches[0].clientX;
+      this.touchStartY = event.touches[0].clientY;
+    } else if (event instanceof MouseEvent) {
+      this.touchStartX = event.clientX;
+      this.touchStartY = event.clientY;
+    }
+
+    this.pressTimer = setTimeout(() => {
+      this.selectionMode = true;
+      this.selectedIds.add(Number(contentId));
+      this.wasLongPressed = true;
+
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+  }
+
+  onHoldMove(event: Event) {
+    if (!this.pressTimer) return; // Ignore if timer is already dead
+
+    let currentX = 0;
+    let currentY = 0;
+
+    // 2. Find out where the finger is right now
+    if (window.TouchEvent && event instanceof TouchEvent) {
+      currentX = event.touches[0].clientX;
+      currentY = event.touches[0].clientY;
+    } else if (event instanceof MouseEvent) {
+      currentX = event.clientX;
+      currentY = event.clientY;
+    }
+
+    // 3. THE DEADZONE: Only cancel the hold if the finger moved more than 15px (a real scroll)
+    if (Math.abs(currentX - this.touchStartX) > 15 || Math.abs(currentY - this.touchStartY) > 15) {
+      this.onHoldEnd();
+    }
+  }
+
+  onHoldEnd() {
+    if (this.pressTimer) {
+      clearTimeout(this.pressTimer);
+      this.pressTimer = null;
+    }
   }
 
   async loadTv() {
@@ -201,6 +255,11 @@ export class TvPage implements OnInit, OnDestroy {
   }
 
   onTvClick(tvId?: number | string) {
+    if (this.wasLongPressed) {
+      this.wasLongPressed = false;
+      return;
+    }
+
     if (this.selectionMode) {
       this.toggleSelect(Number(tvId));
     } else {

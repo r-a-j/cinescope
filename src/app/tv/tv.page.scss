@@ -80,6 +80,22 @@
     font-size: 14px;
     text-transform: uppercase;
 
+    /* FIX: Kills the cheap grey background flash/ripple */
+    --background-activated: transparent;
+    --background-hover: transparent;
+    --background-focused: transparent;
+    --ripple-color: transparent;
+
+    /* PREMIUM: Adds a subtle press physics instead */
+    transition: opacity 0.2s ease, transform 0.1s ease;
+
+    &:active {
+        opacity: 0.6;
+        /* Dims slightly on press */
+        transform: scale(0.96);
+        /* Tiny tactile shrink */
+    }
+
     ion-icon {
         font-size: 22px;
     }
@@ -119,6 +135,10 @@
 
 .media-item {
     position: relative;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 
     ion-checkbox.media-checkbox {
         position: absolute;

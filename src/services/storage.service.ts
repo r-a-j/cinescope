@@ -414,7 +414,7 @@ export class StorageService {
 
       const updatedWatched = [
         ...watched,
-        ...moving.map((c) => ({ ...c, isWatched: true, isWatchlist: false })),
+        ...moving.map((c) => ({ ...c, isWatched: true, isWatchlist: false, watchedAt: new Date().toISOString() })),
       ];
 
       await this.setList(this.WATCHLIST_KEY, updatedWatchlist);

@@ -53,8 +53,9 @@
 
   <!-- Sticky Control Bar -->
   <div class="control-bar">
-    <ion-button fill="clear" color="light" class="control-btn" (click)="toggleSelectionMode()">
-      {{ selectionMode ? 'Cancel' : 'Select' }}
+    <ion-button fill="clear" color="light" class="control-btn" (click)="clearSelection()"
+      [style.visibility]="selectionMode ? 'visible' : 'hidden'">
+      Cancel
     </ion-button>
 
     <ion-segment [(ngModel)]="segment" class="custom-segment">
@@ -73,8 +74,12 @@
 
   <div class="media-grid">
     <div class="media-item animate__animated animate__flipInY animate__faster"
-      *ngFor="let movie of getCurrentMovies(); trackBy: trackById" (click)="onMovieClick(movie.id)">
-      <img
+      *ngFor="let movie of getCurrentMovies(); trackBy: trackById" (touchstart)="onHoldStart($event, movie.id!)"
+      (touchend)="onHoldEnd()" (touchcancel)="onHoldEnd()" (touchmove)="onHoldMove($event)"
+      (mousedown)="onHoldStart($event, movie.id!)" (mouseup)="onHoldEnd()" (mouseleave)="onHoldEnd()"
+      (mousemove)="onHoldMove($event)" (click)="onMovieClick(movie.id)">
+
+      <img draggable="false"
         [src]="movie.poster_path ? ('https://image.tmdb.org/t/p/w300' + movie.poster_path) : 'assets/placeholder.png'"
         [alt]="movie.title" />
 
