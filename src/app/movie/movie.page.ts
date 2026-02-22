@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
   IonContent,
   IonSegment,
@@ -21,6 +21,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { StorageService } from 'src/services/storage.service';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-movie',
@@ -45,7 +46,7 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
     HeaderComponent
   ],
 })
-export class MoviePage implements OnInit {
+export class MoviePage implements OnInit, OnDestroy {
   segment: 'watchlist' | 'watched' = 'watchlist';
   watchlist: MovieDetailModel[] = [];
   watched: MovieDetailModel[] = [];
@@ -60,10 +61,13 @@ export class MoviePage implements OnInit {
 
   sortBy: 'default' | 'title' | 'rating' | 'date' = 'default';
 
+  @ViewChild('mainContent', { static: false }) content!: IonContent;
+
   pressTimer: any;
   wasLongPressed = false;
   private touchStartX = 0;
   private touchStartY = 0;
+  private storageSub!: Subscription;
 
   constructor(
     private router: Router,
@@ -73,10 +77,27 @@ export class MoviePage implements OnInit {
   }
 
   ngOnInit() {
-    this.storageService.storageChanged$.subscribe(() => {
+    // FIX: Assign the subscription to the variable so we can kill it later
+    this.storageSub = this.storageService.storageChanged$.subscribe(() => {
       this.loadMovies();
     });
     this.loadMovies();
+  }
+
+  ngOnDestroy() {
+    if (this.storageSub) {
+      this.storageSub.unsubscribe();
+    }
+  }
+
+  segmentChanged() {
+    // 1. Premium UX: Automatically cancel selection mode if the user switches lists
+    this.clearSelection();
+
+    // 2. Smoothly scroll back to the absolute top of the page over 300 milliseconds
+    if (this.content) {
+      this.content.scrollToTop(300);
+    }
   }
 
   onHoldStart(event: Event, contentId: number | string) {

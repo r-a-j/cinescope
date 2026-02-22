@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   IonContent,
   IonSegment,
@@ -47,6 +47,7 @@ export class TvPage implements OnInit, OnDestroy {
   selectedGenres = new Set<string>();
   storageSub!: Subscription;
   sortBy: 'default' | 'title' | 'rating' | 'date' = 'default';
+  @ViewChild('mainContent', { static: false }) content!: IonContent;
   pressTimer: any;
   wasLongPressed = false;
   private touchStartX = 0;
@@ -75,6 +76,16 @@ export class TvPage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.storageSub?.unsubscribe();
+  }
+
+  segmentChanged() {
+    // 1. Premium UX: Automatically cancel selection mode if the user switches lists
+    this.clearSelection();
+
+    // 2. Smoothly scroll back to the absolute top of the page over 300 milliseconds
+    if (this.content) {
+      this.content.scrollToTop(300);
+    }
   }
 
   onHoldStart(event: Event, contentId: number | string) {

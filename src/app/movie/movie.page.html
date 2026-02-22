@@ -49,7 +49,7 @@
   </ng-template>
 </ion-modal>
 
-<ion-content>
+<ion-content #mainContent>
 
   <!-- Sticky Control Bar -->
   <div class="control-bar">
@@ -58,7 +58,7 @@
       Cancel
     </ion-button>
 
-    <ion-segment [(ngModel)]="segment" class="custom-segment">
+    <ion-segment [(ngModel)]="segment" (ionChange)="segmentChanged()" class="custom-segment">
       <ion-segment-button value="watchlist">
         <ion-icon name="bookmark"></ion-icon>
       </ion-segment-button>
