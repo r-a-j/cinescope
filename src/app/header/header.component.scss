@@ -16,13 +16,11 @@ ion-toolbar {
 
 .header-logo {
     height: 24px;
-    /* Slightly sleeker */
     width: auto;
     object-fit: contain;
     margin-left: 8px;
 }
 
-/* Kills the white focus rings instantly */
 .logo-btn::part(native),
 .icon-btn::part(native) {
     outline: none !important;
