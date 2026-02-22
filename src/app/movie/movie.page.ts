@@ -15,7 +15,7 @@ import {
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
-import { bookmark, checkmarkDone, options, trash, construct, optionsOutline } from 'ionicons/icons';
+import { bookmark, checkmarkDone, trash, construct, optionsSharp } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -73,7 +73,7 @@ export class MoviePage implements OnInit, OnDestroy {
     private router: Router,
     private storageService: StorageService
   ) {
-    addIcons({ trash, bookmark, checkmarkDone, options, construct, optionsOutline });
+    addIcons({ trash, bookmark, checkmarkDone, construct, optionsSharp });
   }
 
   ngOnInit() {

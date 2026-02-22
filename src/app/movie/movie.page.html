@@ -67,8 +67,11 @@
       </ion-segment-button>
     </ion-segment>
 
-    <ion-button fill="clear" color="light" class="control-btn" (click)="openFilter($event)">
-      <ion-icon name="options-outline"></ion-icon>
+    <ion-button fill="clear" color="light" class="control-btn filter-btn" (click)="openFilter($event)">
+      <div class="icon-wrapper">
+        <ion-icon name="options-sharp"></ion-icon>
+        <div class="active-badge" *ngIf="selectedGenres.size > 0 || sortBy !== 'default'"></div>
+      </div>
     </ion-button>
   </div>
 

@@ -13,7 +13,7 @@ import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { add, bookmark, checkmarkDone, options, trash, optionsOutline } from 'ionicons/icons';
+import { add, bookmark, checkmarkDone, trash, optionsSharp } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
 import { Subscription } from 'rxjs';
@@ -62,8 +62,7 @@ export class TvPage implements OnInit, OnDestroy {
       trash,
       bookmark,
       checkmarkDone,
-      options,
-      optionsOutline
+      optionsSharp
     });
   }
 
