@@ -3,8 +3,6 @@ import {
   IonContent,
   IonSegment,
   IonSegmentButton,
-  IonFabButton,
-  IonFab,
   IonIcon,
   IonButtons,
   IonButton,
@@ -13,11 +11,11 @@ import {
   IonChip,
   IonHeader,
   IonToolbar,
-  IonTitle, IonLabel
+  IonTitle, IonLabel, IonFooter
 } from "@ionic/angular/standalone";
 import { HeaderComponent } from '../header/header.component';
 import { Router } from '@angular/router';
-import { bookmark, checkmarkDone, options, trash, construct } from 'ionicons/icons';
+import { bookmark, checkmarkDone, options, trash, construct, optionsOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -30,6 +28,7 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
   styleUrls: ['movie.page.scss'],
   imports: [IonLabel,
     IonModal,
+    IonFooter,
     IonChip,
     IonHeader,
     IonToolbar,
@@ -40,8 +39,6 @@ import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
     FormsModule,
     CommonModule,
     IonIcon,
-    IonFab,
-    IonFabButton,
     IonSegmentButton,
     IonSegment,
     IonContent,
@@ -67,7 +64,7 @@ export class MoviePage implements OnInit {
     private router: Router,
     private storageService: StorageService
   ) {
-    addIcons({ trash, bookmark, checkmarkDone, options, construct });
+    addIcons({ trash, bookmark, checkmarkDone, options, construct, optionsOutline });
   }
 
   ngOnInit() {
@@ -107,6 +104,12 @@ export class MoviePage implements OnInit {
     const gSet = new Set<string>();
     [...this.watchlist, ...this.watched].forEach(m => m.genres?.forEach(g => gSet.add(g.name!)));
     this.genres = Array.from(gSet).sort();
+
+    for (const selected of this.selectedGenres) {
+      if (!this.genres.includes(selected)) {
+        this.selectedGenres.delete(selected);
+      }
+    }
   }
 
   openFilter(ev: Event) {
@@ -131,22 +134,48 @@ export class MoviePage implements OnInit {
   getCurrentMovies(): MovieDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
 
-    // 1. First, apply Genre Filtering
+    // 1. GENRE FILTERING (Gracefully handles missing genres)
     let filtered = base;
     if (this.selectedGenres.size > 0) {
-      filtered = base.filter(m => m.genres?.some(g => this.selectedGenres.has(g.name!)));
+      filtered = base.filter(m => m.genres && m.genres.some(g => this.selectedGenres.has(g.name!)));
     }
 
-    // 2. Then, apply Sorting
-    return filtered.sort((a, b) => {
+    // 2. PERFORMANCE BOOST: If default, skip the expensive sort entirely!
+    if (this.sortBy === 'default') {
+      return filtered;
+    }
+
+    // 3. BULLETPROOF SORTING WITH TIE-BREAKERS
+    return [...filtered].sort((a, b) => {
+
       if (this.sortBy === 'title') {
-        return (a.title || '').localeCompare(b.title || '');
-      } else if (this.sortBy === 'rating') {
-        return (b.vote_average || 0) - (a.vote_average || 0); // High to Low
-      } else if (this.sortBy === 'date') {
-        return new Date(b.release_date || 0).getTime() - new Date(a.release_date || 0).getTime(); // Newest first
+        return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true, sensitivity: 'base' });
       }
-      return 0; // Default (Order they were saved)
+
+      else if (this.sortBy === 'rating') {
+        const diff = (b.vote_average || 0) - (a.vote_average || 0);
+        // TIE-BREAKER: If ratings are exactly the same, sort them alphabetically instead of randomizing
+        if (diff === 0) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true, sensitivity: 'base' });
+        }
+        return diff;
+      }
+
+      else if (this.sortBy === 'date') {
+        const timeA = a.release_date ? new Date(a.release_date).getTime() : 0;
+        const timeB = b.release_date ? new Date(b.release_date).getTime() : 0;
+        const safeTimeA = isNaN(timeA) ? 0 : timeA;
+        const safeTimeB = isNaN(timeB) ? 0 : timeB;
+
+        const diff = safeTimeB - safeTimeA;
+        // TIE-BREAKER: If released on the exact same day, sort alphabetically
+        if (diff === 0) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true, sensitivity: 'base' });
+        }
+        return diff;
+      }
+
+      return 0;
     });
   }
 
@@ -163,8 +192,10 @@ export class MoviePage implements OnInit {
   }
 
   toggleSelectionMode() {
-    console.log('Pressed toggleSelectionMode', this.selectionMode);
     this.selectionMode = !this.selectionMode;
+    if (!this.selectionMode) {
+      this.selectedIds.clear();
+    }
   }
 
   toggleSelect(movieId: number) {

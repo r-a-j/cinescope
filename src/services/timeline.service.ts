@@ -41,6 +41,7 @@ export class TimelineService {
         const timelineNodes: TimelineNode[] = [];
 
         for (const [date, items] of Array.from(grouped.entries())) {
+            items.sort((a, b) => new Date(b.watchedAt!).getTime() - new Date(a.watchedAt!).getTime());
             timelineNodes.push({
                 date,
                 type: 'stacked',

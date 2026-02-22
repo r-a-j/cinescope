@@ -49,16 +49,13 @@
   </ng-template>
 </ion-modal>
 
-<ion-content class="ion-padding">
+<ion-content>
 
-  <div class="segment-wrapper">
-    <div class="left-slot">
-      <ion-buttons *ngIf="selectionMode">
-        <ion-button color="danger" (click)="removeSelected()">Remove</ion-button>
-        <ion-button color="primary" (click)="moveSelectedToWatched()">Watched</ion-button>
-        <ion-button color="medium" (click)="clearSelection()">Cancel</ion-button>
-      </ion-buttons>
-    </div>
+  <!-- Sticky Control Bar -->
+  <div class="control-bar">
+    <ion-button fill="clear" color="light" class="control-btn" (click)="toggleSelectionMode()">
+      {{ selectionMode ? 'Cancel' : 'Select' }}
+    </ion-button>
 
     <ion-segment [(ngModel)]="segment" class="custom-segment">
       <ion-segment-button value="watchlist">
@@ -68,6 +65,10 @@
         <ion-icon name="checkmark-done"></ion-icon>
       </ion-segment-button>
     </ion-segment>
+
+    <ion-button fill="clear" color="light" class="control-btn" (click)="openFilter($event)">
+      <ion-icon name="options-outline"></ion-icon>
+    </ion-button>
   </div>
 
   <div class="media-grid">
@@ -82,16 +83,17 @@
     </div>
   </div>
 
-  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="!selectionMode">
-    <ion-fab-button class="fab-filter" (click)="openFilter($event)">
-      <ion-icon name="options"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
-  <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="fab-edit" *ngIf="!selectionMode">
-    <ion-fab-button class="fab-edit-btn" (click)="toggleSelectionMode()">
-      <ion-icon name="trash"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
-
 </ion-content>
+
+<!-- Action Footer -->
+<ion-footer *ngIf="selectionMode" class="selection-footer ion-no-border">
+  <ion-toolbar>
+    <ion-button expand="block" color="danger" slot="start" fill="clear" (click)="removeSelected()" class="action-btn">
+      Remove
+    </ion-button>
+    <ion-button expand="block" color="primary" slot="end" fill="clear" (click)="moveSelectedToWatched()"
+      class="action-btn">
+      Move to Watched
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

@@ -7,15 +7,13 @@ import {
   IonButton,
   IonButtons,
   IonCheckbox,
-  IonFab,
-  IonFabButton,
-  IonModal, IonHeader, IonToolbar, IonTitle, IonChip, IonLabel
+  IonModal, IonHeader, IonToolbar, IonTitle, IonChip, IonLabel, IonFooter
 } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { add, bookmark, checkmarkDone, options, trash } from 'ionicons/icons';
+import { add, bookmark, checkmarkDone, options, trash, optionsOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
 import { Subscription } from 'rxjs';
@@ -25,9 +23,7 @@ import { StorageService } from 'src/services/storage.service';
   selector: 'app-tv',
   templateUrl: 'tv.page.html',
   styleUrls: ['tv.page.scss'],
-  imports: [IonLabel, IonChip, IonTitle, IonToolbar, IonHeader, IonModal,
-    IonFabButton,
-    IonFab,
+  imports: [IonLabel, IonChip, IonTitle, IonToolbar, IonHeader, IonModal, IonFooter,
     IonCheckbox,
     IonButtons,
     IonButton,
@@ -61,7 +57,8 @@ export class TvPage implements OnInit, OnDestroy {
       trash,
       bookmark,
       checkmarkDone,
-      options
+      options,
+      optionsOutline
     });
   }
 
@@ -106,6 +103,12 @@ export class TvPage implements OnInit, OnDestroy {
     const gSet = new Set<string>();
     [...this.watchlist, ...this.watched].forEach(tv => tv.genres?.forEach(g => gSet.add(g.name!)));
     this.genres = Array.from(gSet).sort();
+
+    for (const selected of this.selectedGenres) {
+      if (!this.genres.includes(selected)) {
+        this.selectedGenres.delete(selected);
+      }
+    }
   }
 
   openFilter(ev: Event) {
@@ -129,19 +132,47 @@ export class TvPage implements OnInit, OnDestroy {
   getCurrentTv(): TvDetailModel[] {
     const base = this.segment === 'watchlist' ? this.watchlist : this.watched;
 
+    // 1. GENRE FILTERING (Gracefully handles missing genres)
     let filtered = base;
     if (this.selectedGenres.size > 0) {
-      filtered = base.filter(tv => tv.genres?.some(g => this.selectedGenres.has(g.name!)));
+      filtered = base.filter(tv => tv.genres && tv.genres.some(g => this.selectedGenres.has(g.name!)));
     }
 
-    return filtered.sort((a, b) => {
+    // 2. PERFORMANCE BOOST: If default, skip the expensive sort entirely!
+    if (this.sortBy === 'default') {
+      return filtered;
+    }
+
+    // 3. BULLETPROOF SORTING WITH TIE-BREAKERS
+    return [...filtered].sort((a, b) => {
+
       if (this.sortBy === 'title') {
-        return (a.name || '').localeCompare(b.name || ''); // Uses name
-      } else if (this.sortBy === 'rating') {
-        return (b.vote_average || 0) - (a.vote_average || 0);
-      } else if (this.sortBy === 'date') {
-        return new Date(b.first_air_date || 0).getTime() - new Date(a.first_air_date || 0).getTime(); // Uses first_air_date
+        return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
       }
+
+      else if (this.sortBy === 'rating') {
+        const diff = (b.vote_average || 0) - (a.vote_average || 0);
+        // TIE-BREAKER
+        if (diff === 0) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+        }
+        return diff;
+      }
+
+      else if (this.sortBy === 'date') {
+        const timeA = a.first_air_date ? new Date(a.first_air_date).getTime() : 0;
+        const timeB = b.first_air_date ? new Date(b.first_air_date).getTime() : 0;
+        const safeTimeA = isNaN(timeA) ? 0 : timeA;
+        const safeTimeB = isNaN(timeB) ? 0 : timeB;
+
+        const diff = safeTimeB - safeTimeA;
+        // TIE-BREAKER
+        if (diff === 0) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+        }
+        return diff;
+      }
+
       return 0;
     });
   }
@@ -155,8 +186,10 @@ export class TvPage implements OnInit, OnDestroy {
   }
 
   toggleSelectionMode() {
-    console.log('Pressed toggleSelectionMode', this.selectionMode);
     this.selectionMode = !this.selectionMode;
+    if (!this.selectionMode) {
+      this.selectedIds.clear();
+    }
   }
 
   toggleSelect(tvId: number) {

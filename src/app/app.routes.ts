@@ -28,9 +28,5 @@ export const routes: Routes = [
   {
     path: 'view-all',
     loadComponent: () => import('./pages/generic-discover/generic-discover.page').then(m => m.GenericDiscoverPage)
-  },
-  {
-    path: 'skeleton-test',
-    loadComponent: () => import('./pages/skeleton-test/skeleton-test.page').then(m => m.SkeletonTestPage)
-  },
+  }
 ];

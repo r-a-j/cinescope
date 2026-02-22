@@ -10,7 +10,9 @@ import { addIcons } from 'ionicons';
 import {
   flame,
   filmSharp,
-  tvSharp
+  tvSharp,
+  hourglassOutline,
+  hourglassSharp
 } from 'ionicons/icons';
 
 @Component({
@@ -29,6 +31,6 @@ export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
-    addIcons({ filmSharp, tvSharp, flame });
+    addIcons({ filmSharp, tvSharp, flame, hourglassSharp });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, NgZone, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, NgZone, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, GestureController, Gesture } from '@ionic/angular';
 import { BottomSheetComponent } from 'src/app/shared/components/bottom-sheet/bottom-sheet.component';
@@ -7,6 +7,8 @@ import { ContentModel } from 'src/models/content.model';
 import { StorageService } from 'src/services/storage.service';
 import { HeaderComponent } from 'src/app/header/header.component';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+
 @Component({
     selector: 'app-skeleton-test',
     templateUrl: './skeleton-test.page.html',
@@ -23,8 +25,14 @@ export class SkeletonTestPage implements OnInit, OnDestroy {
     private gestures: Gesture[] = [];
     private isDragging = false;
     private storageSub!: Subscription;
+    private router = inject(Router);
+    private el = inject(ElementRef);
 
     constructor() { }
+
+    ionViewDidEnter() {
+        this.initGestures();
+    }
 
     ngOnInit() {
         this.loadTimeline();
@@ -55,8 +63,8 @@ export class SkeletonTestPage implements OnInit, OnDestroy {
             this.gestures.forEach(g => g.destroy());
             this.gestures = [];
 
-            const cards = document.querySelectorAll('.top-card');
-            const bgContent = document.querySelector('.background-content') as HTMLElement;
+            const cards = this.el.nativeElement.querySelectorAll('.top-card');
+            const bgContent = this.el.nativeElement.querySelector('.background-content') as HTMLElement;
 
             cards.forEach((cardEl: any) => {
                 const nodeIndex = parseInt(cardEl.getAttribute('data-node-index'), 10);
@@ -130,8 +138,15 @@ export class SkeletonTestPage implements OnInit, OnDestroy {
     }
 
     onCardClick(item: ContentModel) {
+        // Prevents a click from registering if the user was just swiping/dragging the card
         if (this.isDragging) return;
-        console.log('Navigate to details for:', item.title);
+
+        // Route dynamically based on the content type
+        if (item.isMovie) {
+            this.router.navigate(['/movie-detail', item.contentId]);
+        } else if (item.isTv) {
+            this.router.navigate(['/tv-detail', item.contentId]);
+        }
     }
 
     // Helpers to cast node for the template without using $any

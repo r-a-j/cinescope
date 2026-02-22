@@ -55,24 +55,66 @@
     }
 }
 
-.segment-wrapper {
+/* --- UNIFIED CONTROL BAR --- */
+.control-bar {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+
+    /* FIX: Completely deep black, no blur, no transparency */
+    background: #000000;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-left: 16px;
-    margin-top: 0;
-    margin-bottom: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.left-slot {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.control-btn {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 0;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+
+    ion-icon {
+        font-size: 22px;
+    }
 }
 
-.left-slot::after {
-    content: "";
+.media-grid {
+    padding: 16px;
+}
+
+/* --- PREMIUM SELECTION FOOTER --- */
+.selection-footer {
+    /* FIX: Removed position fixed/bottom/width to fix device safe-area gaps natively */
+    z-index: 100;
+
+    /* FIX: Maximum blur physics */
+    background: rgba(18, 18, 18, 0.55);
+    /* Lighter base allows more blur through */
+    backdrop-filter: blur(40px);
+    /* Max blur */
+    -webkit-backdrop-filter: blur(40px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    /* ARCHITECTURAL FIX: Forces the nested toolbar to be transparent */
+    ion-toolbar {
+        --background: transparent;
+        --border-width: 0;
+    }
+
+    /* Clean, non-inline button styling */
+    .action-btn {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
 }
 
 .media-item {
@@ -92,9 +134,7 @@ ion-popover ion-item:last-child {
     justify-content: space-between;
 }
 
-ion-fab.fab-edit {
-    bottom: 72px;
-}
+
 
 ion-popover .popover-genre-item {
     --padding-start: 16px;
@@ -106,10 +146,7 @@ ion-popover .popover-genre-item.active {
     color: var(--ion-color-primary);
 }
 
-ion-fab-button.fab-filter,
-ion-fab-button.fab-edit-btn {
-    --background: var(--ion-color-primary-shade);
-}
+
 
 /* --- PREMIUM FILTER MODAL STYLING --- */
 

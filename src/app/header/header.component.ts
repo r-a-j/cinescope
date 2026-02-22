@@ -8,7 +8,7 @@ import {
   IonButtons
 } from "@ionic/angular/standalone";
 import { addIcons } from 'ionicons';
-import { searchOutline, settingsOutline, camera } from 'ionicons/icons';
+import { searchOutline, settingsOutline, camera, settings, search, searchSharp, settingsSharp } from 'ionicons/icons';
 
 @Component({
   selector: 'app-header',
@@ -26,7 +26,7 @@ import { searchOutline, settingsOutline, camera } from 'ionicons/icons';
 export class HeaderComponent {
 
   constructor(private router: Router) {
-    addIcons({ camera, searchOutline, settingsOutline });
+    addIcons({ camera, searchSharp, settingsSharp });
   }
 
   goToMovie() {

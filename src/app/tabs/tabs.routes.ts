@@ -22,6 +22,11 @@ export const routes: Routes = [
           import('../discover/discover.page').then((m) => m.DiscoverPage),
       },
       {
+        path: 'archive',
+        loadComponent: () =>
+          import('../pages/skeleton-test/skeleton-test.page').then((m) => m.SkeletonTestPage),
+      },
+      {
         path: '',
         redirectTo: '/tabs/movie',
         pathMatch: 'full',
