@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -10,11 +10,11 @@ import {
   IonToolbar,
   IonButtons,
   IonTitle,
-  NavController,
   IonLabel,
-  IonSpinner
+  IonSpinner,
+  IonThumbnail
 } from '@ionic/angular/standalone';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
   bookmark,
@@ -26,12 +26,10 @@ import {
 } from 'ionicons/icons';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { MovieDetailModel } from 'src/models/movie/movie-detail.model';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { NumberSuffixPipe } from "../../pipes/number-suffix.pipe";
-import { StorageService } from 'src/services/storage.service';
 import { ContentModel } from 'src/models/content.model';
-import { ToastController } from '@ionic/angular';
-import { IonThumbnail } from '@ionic/angular/standalone';
+import { BaseMediaDetailPage } from '../core/classes/base-media-detail.page';
 
 @Component({
   selector: 'app-movie-detail',
@@ -54,29 +52,18 @@ import { IonThumbnail } from '@ionic/angular/standalone';
     IonSpinner
   ],
 })
-export class MovieDetailPage implements OnInit {
-  bookmarkIcon: string = 'assets/bookmark-empty.png';
-
-  movieId: string | null = null;
+export class MovieDetailPage extends BaseMediaDetailPage implements OnInit {
+  readonly mediaType = 'movie';
+  mediaId: number | null = null;
   movieDetail: MovieDetailModel | null = null;
-  safeYoutubeUrl: SafeResourceUrl | null = null;
-  isScrolled = false;
-
-  isInWatchlist: boolean = false;
-  isInWatched: boolean = false;
-  bookmarkColor: 'danger' | 'success' | 'medium' = 'medium';
-
   isVideoLoading: boolean = true;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private tmdbService: TmdbSearchService,
-    private storageService: StorageService,
-    private sanitizer: DomSanitizer,
-    private toastController: ToastController,
-    private navCtrl: NavController
-  ) {
+  private route = inject(ActivatedRoute);
+  private tmdbService = inject(TmdbSearchService);
+  private sanitizer = inject(DomSanitizer);
+
+  constructor() {
+    super();
     addIcons({
       arrowBackOutline,
       bookmark,
@@ -88,10 +75,11 @@ export class MovieDetailPage implements OnInit {
   }
 
   async ngOnInit() {
-    this.movieId = this.route.snapshot.paramMap.get('id');
-    if (!this.movieId) return;
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) return;
 
-    await this.loadMovieDetail(+this.movieId);
+    this.mediaId = +idParam;
+    await this.loadMovieDetail(this.mediaId);
     await this.refreshBookmarkState();
   }
 
@@ -99,16 +87,11 @@ export class MovieDetailPage implements OnInit {
     this.isVideoLoading = false;
   }
 
-  goBack(): void {
-    this.navCtrl.back();
-  }
-
   async loadMovieDetail(id: number) {
     this.tmdbService.getMovieDetail(id).subscribe({
       next: (data) => {
         this.movieDetail = data;
 
-        // Prefer trailer video
         const trailer = data?.videos?.results?.find(
           (v) => v.type === 'Trailer' && v.site === 'YouTube'
         );
@@ -124,109 +107,19 @@ export class MovieDetailPage implements OnInit {
     });
   }
 
-  onScroll(event: any) {
-    const scrollTop = event.detail.scrollTop;
-    this.isScrolled = scrollTop > 150;
-  }
-
-  async refreshBookmarkState() {
-    if (!this.movieId) return;
-
-    const id = +this.movieId!;
-    const watchlist = await this.storageService.getWatchlist();
-    const watched = await this.storageService.getWatched();
-
-    this.isInWatchlist = !!watchlist.find(c => c.contentId === id && c.isMovie);
-    this.isInWatched = !!watched.find(c => c.contentId === id && c.isMovie);
-
-    if (this.isInWatched) {
-      this.bookmarkIcon = 'assets/bookmark-watched.png';
-    } else if (this.isInWatchlist) {
-      this.bookmarkIcon = 'assets/bookmark-watchlist.png';
-    } else {
-      this.bookmarkIcon = 'assets/bookmark-empty.png';
-    }
-  }
-
-  async toggleBookmarkState() {
-    if (!this.movieDetail) return;
-
-    const id = this.movieDetail.id!;
-
-    if (this.isInWatched) {
-      await this.storageService.removeFromWatched(id, true, false);
-      this.isInWatched = false;
-      this.isInWatchlist = false;
-    }
-    else if (this.isInWatchlist) {
-      await this.storageService.moveFromWatchlistToWatched(id, true, false);
-      this.isInWatched = true;
-      this.isInWatchlist = false;
-    }
-    else {
-      const content: ContentModel = {
-        contentId: id,
-        isMovie: true,
-        isTv: false,
-        isWatched: false,
-        isWatchlist: true,
-        title: this.movieDetail.title,
-        poster_path: this.movieDetail.poster_path,
-        vote_average: this.movieDetail.vote_average,
-        release_date: this.movieDetail.release_date,
-        genres: this.movieDetail.genres
-      };
-      await this.storageService.addToWatchlist(content);
-      this.isInWatchlist = true;
-      this.isInWatched = false;
-    }
-
-    this.refreshBookmarkState();
-    this.storageService.emitStorageChanged();
-  }
-
-  async toggleWatchlist() {
-    if (!this.movieDetail) return;
-
-    if (this.isInWatchlist) {
-      await this.storageService.removeFromWatchlist(this.movieDetail.id!, true, false);
-      this.showToast('Removed from Watchlist', 'danger');
-    } else {
-      const content: ContentModel = {
-        contentId: this.movieDetail.id!,
-        isMovie: true,
-        isTv: false,
-        isWatched: false,
-        isWatchlist: true,
-        title: this.movieDetail.title,
-        poster_path: this.movieDetail.poster_path,
-        vote_average: this.movieDetail.vote_average,
-        release_date: this.movieDetail.release_date,
-        genres: this.movieDetail.genres
-      };
-
-      const watchlist = await this.storageService.getWatchlist();
-      const isDuplicate = watchlist.some(c => c.contentId === content.contentId && c.isMovie === content.isMovie);
-
-      if (!isDuplicate) {
-        await this.storageService.addToWatchlist(content);
-        this.showToast('Added to Watchlist', 'success');
-      } else {
-        this.showToast('Movie already in Watchlist', 'danger');
-      }
-    }
-
-    await this.refreshBookmarkState();
-    this.storageService.emitStorageChanged();
-  }
-
-  async showToast(message: string, color: 'success' | 'danger') {
-    const toast = await this.toastController.create({
-      message,
-      duration: 2000,
-      position: 'bottom',
-      color
-    });
-    toast.present();
+  createContentModel(): ContentModel {
+    if (!this.movieDetail) throw new Error('Movie Detail not loaded');
+    return {
+      contentId: this.movieDetail.id!,
+      isMovie: true,
+      isTv: false,
+      isWatched: false,
+      isWatchlist: true,
+      title: this.movieDetail.title,
+      poster_path: this.movieDetail.poster_path,
+      vote_average: this.movieDetail.vote_average,
+      release_date: this.movieDetail.release_date,
+      genres: this.movieDetail.genres
+    };
   }
 }

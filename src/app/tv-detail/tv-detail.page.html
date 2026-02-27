@@ -155,7 +155,8 @@
       </div>
       <div class="horizontal-scroll">
         <div class="item animate__animated animate__flipInY animate__fast"
-          *ngFor="let tv of tvDetail.recommendations?.results" (click)="navigateToDetail('tv', tv.id!)">
+          *ngFor="let tv of tvDetail.recommendations?.results; trackBy: trackById"
+          (click)="navigateToDetail('tv', tv.id!)">
           <img [src]="tv.poster_path
               ? 'https://image.tmdb.org/t/p/w300' + tv.poster_path
               : 'assets/placeholder.png'" />

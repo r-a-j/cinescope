@@ -15,6 +15,7 @@ export class StorageService {
   private readonly WATCHLIST_KEY = 'watchlist_contents';
   private readonly WATCHED_KEY = 'watched_contents';
   private readonly SETTINGS_KEY = 'settings';
+  private isCurrentlyHydrating = false;
   private lastMovedContents: ContentModel[] = [];
   private storageChangedSource = new BehaviorSubject<void>(undefined);
   storageChanged$ = this.storageChangedSource.asObservable();
@@ -207,10 +208,15 @@ export class StorageService {
 
     const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
 
-    if (needsUpdate) {
-      console.log(`[Storage] Hydrating missing data for list: ${key}`);
-      await this.hydrateList(list);
-      await this.setList(key, list);
+    if (needsUpdate && !this.isCurrentlyHydrating) {
+      this.isCurrentlyHydrating = true; // Lock
+      try {
+        console.log(`[Storage] Hydrating missing data for list: ${key}`);
+        await this.hydrateList(list);
+        await this.setList(key, list);
+      } finally {
+        this.isCurrentlyHydrating = false; // Unlock
+      }
     }
 
     return list;
@@ -446,5 +452,21 @@ export class StorageService {
       this.lastMovedContents = [];
       this.emitStorageChanged();
     }
+  }
+
+  async bulkRemove(contentIds: number[], isMovie: boolean, isTv: boolean, fromWatchlist: boolean): Promise<void> {
+    const key = fromWatchlist ? this.WATCHLIST_KEY : this.WATCHED_KEY;
+    const list = await this.getList(key);
+
+    // Filter out everything that is in the contentIds array
+    const updated = list.filter(c =>
+      !(contentIds.includes(c.contentId) && c.isMovie === isMovie && c.isTv === isTv)
+    );
+
+    // Save to disk ONCE
+    await this.setList(key, updated);
+
+    // Emit to the UI ONCE
+    this.emitStorageChanged();
   }
 }

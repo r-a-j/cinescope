@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,8 +11,6 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  NavController,
-  ToastController,
   IonThumbnail,
   IonCol,
   IonCard,
@@ -24,8 +22,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
 import { TvDetailModel } from 'src/models/tv/tv-detail.model';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { StorageService } from 'src/services/storage.service';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ContentModel } from 'src/models/content.model';
 import { addIcons } from 'ionicons';
 import {
@@ -36,6 +33,7 @@ import {
   timeOutline,
   close
 } from 'ionicons/icons';
+import { BaseMediaDetailPage } from '../core/classes/base-media-detail.page';
 
 @Component({
   selector: 'app-tv-detail',
@@ -63,25 +61,18 @@ import {
     IonThumbnail
   ],
 })
-export class TvDetailPage implements OnInit {
-  bookmarkIcon: string = 'assets/bookmark-empty.png';
-  tvId: string | null = null;
+export class TvDetailPage extends BaseMediaDetailPage implements OnInit {
+  readonly mediaType = 'tv';
+  mediaId: number | null = null;
   tvDetail: TvDetailModel | null = null;
-  safeYoutubeUrl: SafeResourceUrl | null = null;
-  isScrolled = false;
-  isInWatchlist: boolean = false;
-  isInWatched: boolean = false;
-  bookmarkColor: 'danger' | 'success' | 'medium' = 'medium';
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private tmdbService: TmdbSearchService,
-    private storageService: StorageService,
-    private sanitizer: DomSanitizer,
-    private toastController: ToastController,
-    private navCtrl: NavController
-  ) {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private tmdbService = inject(TmdbSearchService);
+  private sanitizer = inject(DomSanitizer);
+
+  constructor() {
+    super();
     addIcons({
       arrowBackOutline,
       bookmark,
@@ -93,22 +84,18 @@ export class TvDetailPage implements OnInit {
   }
 
   async ngOnInit() {
-    this.tvId = this.route.snapshot.paramMap.get('id');
-    if (!this.tvId) return;
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) return;
 
-    await this.loadTvDetail(+this.tvId);
+    this.mediaId = +idParam;
+    await this.loadTvDetail(this.mediaId);
     await this.refreshBookmarkState();
-  }
-
-  goBack(): void {
-    this.navCtrl.back();
   }
 
   async loadTvDetail(id: number) {
     this.tmdbService.getTvDetail(id).subscribe({
       next: (data) => {
         this.tvDetail = data;
-        console.log(this.tvDetail);
         const trailer = data?.videos?.results?.find(
           (v) => v.type === 'Trailer' && v.site === 'YouTube'
         );
@@ -124,110 +111,20 @@ export class TvDetailPage implements OnInit {
     });
   }
 
-  onScroll(event: any) {
-    const scrollTop = event.detail.scrollTop;
-    this.isScrolled = scrollTop > 150;
-  }
-
-  async refreshBookmarkState() {
-    if (!this.tvId) return;
-
-    const id = +this.tvId!;
-    const watchlist = await this.storageService.getWatchlist();
-    const watched = await this.storageService.getWatched();
-
-    this.isInWatchlist = !!watchlist.find(c => c.contentId === id && c.isTv);
-    this.isInWatched = !!watched.find(c => c.contentId === id && c.isTv);
-
-    if (this.isInWatched) {
-      this.bookmarkIcon = 'assets/bookmark-watched.png';
-    } else if (this.isInWatchlist) {
-      this.bookmarkIcon = 'assets/bookmark-watchlist.png';
-    } else {
-      this.bookmarkIcon = 'assets/bookmark-empty.png';
-    }
-  }
-
-  async toggleBookmarkState() {
-    if (!this.tvDetail) return;
-
-    const id = this.tvDetail.id!;
-
-    if (this.isInWatched) {
-      await this.storageService.removeFromWatched(id, false, true);
-      this.isInWatched = false;
-      this.isInWatchlist = false;
-    }
-    else if (this.isInWatchlist) {
-      await this.storageService.moveFromWatchlistToWatched(id, false, true);
-      this.isInWatched = true;
-      this.isInWatchlist = false;
-    }
-    else {
-      const content: ContentModel = {
-        contentId: id,
-        isMovie: false,
-        isTv: true,
-        isWatched: false,
-        isWatchlist: true,
-        name: this.tvDetail.name,
-        poster_path: this.tvDetail.poster_path,
-        vote_average: this.tvDetail.vote_average,
-        first_air_date: this.tvDetail.first_air_date,
-        genres: this.tvDetail.genres
-      };
-      await this.storageService.addToWatchlist(content);
-      this.isInWatchlist = true;
-      this.isInWatched = false;
-    }
-
-    this.refreshBookmarkState();
-    this.storageService.emitStorageChanged();
-  }
-
-  async toggleWatchlist() {
-    if (!this.tvDetail) return;
-
-    if (this.isInWatchlist) {
-      await this.storageService.removeFromWatchlist(this.tvDetail.id!, false, true);
-      this.showToast('Removed from Watchlist', 'danger');
-    } else {
-      const content: ContentModel = {
-        contentId: this.tvDetail.id!,
-        isMovie: false,
-        isTv: true,
-        isWatched: false,
-        isWatchlist: true,
-        name: this.tvDetail.name,
-        poster_path: this.tvDetail.poster_path,
-        vote_average: this.tvDetail.vote_average,
-        first_air_date: this.tvDetail.first_air_date,
-        genres: this.tvDetail.genres
-      };
-
-      const watchlist = await this.storageService.getWatchlist();
-      const isDuplicate = watchlist.some(c => c.contentId === content.contentId && c.isTv === content.isTv);
-
-      if (!isDuplicate) {
-        await this.storageService.addToWatchlist(content);
-        this.showToast('Added to Watchlist', 'success');
-      } else {
-        this.showToast('TV already in Watchlist', 'danger');
-      }
-    }
-
-    await this.refreshBookmarkState();
-    this.storageService.emitStorageChanged();
-  }
-
-  async showToast(message: string, color: 'success' | 'danger') {
-    const toast = await this.toastController.create({
-      message,
-      duration: 2000,
-      position: 'bottom',
-      color
-    });
-    toast.present();
+  createContentModel(): ContentModel {
+    if (!this.tvDetail) throw new Error('TV Detail not loaded');
+    return {
+      contentId: this.tvDetail.id!,
+      isMovie: false,
+      isTv: true,
+      isWatched: false,
+      isWatchlist: true,
+      name: this.tvDetail.name,
+      poster_path: this.tvDetail.poster_path,
+      vote_average: this.tvDetail.vote_average,
+      first_air_date: this.tvDetail.first_air_date,
+      genres: this.tvDetail.genres
+    };
   }
 
   navigateToDetail(category: 'movie' | 'tv', id: number | string): void {
