@@ -58,10 +58,24 @@ export class StorageService {
     this.emitStorageChanged();
   }
 
+  private async getRawList(key: string): Promise<ContentModel[]> {
+    const { value } = await Preferences.get({ key });
+    let list: ContentModel[] = value ? JSON.parse(value) : [];
+
+    const seen = new Set<string>();
+    list = list.filter(item => {
+      const k = `${item.contentId}-${item.isMovie}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    return list;
+  }
+
   private async buildBackupObject(): Promise<BackupModel> {
     const [watchlist, watched, settings] = await Promise.all([
-      this.getWatchlist(),
-      this.getWatched(),
+      this.getRawList(this.WATCHLIST_KEY),
+      this.getRawList(this.WATCHED_KEY),
       this.getSettings(),
     ]);
     return {
@@ -226,43 +240,25 @@ export class StorageService {
   }
 
   private async getList(key: string): Promise<ContentModel[]> {
-    const { value } = await Preferences.get({ key });
-    let list: ContentModel[] = value ? JSON.parse(value) : [];
-
-    const seen = new Set<string>();
-    list = list.filter(item => {
-      const k = `${item.contentId}-${item.isMovie}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-
+    const list = await this.getRawList(key);
     const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
 
     if (needsUpdate && !this.isCurrentlyHydrating) {
-      this.isCurrentlyHydrating = true; // Lock
-      try {
-        console.log(`[Storage] Hydrating missing data for list: ${key}`);
-        await this.hydrateList(list);
-        await this.setList(key, list);
-      } finally {
-        this.isCurrentlyHydrating = false; // Unlock
-      }
+      this.isCurrentlyHydrating = true;
+      console.log(`[Storage] Hydrating missing data for list: ${key} in background...`);
+
+      this.hydrateListInBackground(key, JSON.parse(JSON.stringify(list)))
+        .catch(e => console.error('[Storage] Background hydration failed', e))
+        .finally(() => this.isCurrentlyHydrating = false);
     }
 
     return list;
   }
 
-  private async hydrateList(list: ContentModel[]) {
+  private async hydrateListInBackground(key: string, list: ContentModel[]) {
     const itemsToUpdate = list.filter(item =>
       (item.isMovie && !item.title) || (item.isTv && !item.name)
     );
-
-    if (itemsToUpdate.length > 0) {
-      await this.hydrateItemsWithProgress(itemsToUpdate);
-    }
-
-    console.log(`[Storage] Starting batch hydration for ${itemsToUpdate.length} items...`);
 
     const BATCH_SIZE = 5;
     const DELAY_MS = 250;
@@ -299,7 +295,8 @@ export class StorageService {
       }
     }
 
-    console.log('[Storage] Hydration complete.');
+    await this.setList(key, list);
+    this.emitStorageChanged();
   }
 
   private async setList(key: string, list: ContentModel[]): Promise<void> {
@@ -489,15 +486,10 @@ export class StorageService {
     const key = fromWatchlist ? this.WATCHLIST_KEY : this.WATCHED_KEY;
     const list = await this.getList(key);
 
-    // Filter out everything that is in the contentIds array
     const updated = list.filter(c =>
       !(contentIds.includes(c.contentId) && c.isMovie === isMovie && c.isTv === isTv)
     );
-
-    // Save to disk ONCE
     await this.setList(key, updated);
-
-    // Emit to the UI ONCE
     this.emitStorageChanged();
   }
 }

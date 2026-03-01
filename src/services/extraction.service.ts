@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { CapacitorShareTarget } from '@capgo/capacitor-share-target';
 import { Ocr, TextDetections } from '@capacitor-community/image-to-text';
 import { Filesystem } from '@capacitor/filesystem';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { environment } from '../environments/environment';
 import { TmdbSearchService } from './tmdb-search.service';
 import { firstValueFrom } from 'rxjs';
@@ -11,19 +10,19 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { App } from '@capacitor/app';
 import { StorageService } from './storage.service';
 import { ContentModel } from 'src/models/content.model';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ExtractionService {
 
-    private ai = new GoogleGenerativeAI(environment.geminiApiKey);
-
     constructor(
         private ngZone: NgZone,
         private tmdbService: TmdbSearchService,
         private storageService: StorageService,
-        private router: Router
+        private router: Router,
+        private http: HttpClient
     ) { }
 
     initNotificationTapListener() {
@@ -84,23 +83,13 @@ export class ExtractionService {
 
     private async extractViaGeminiBatch(massiveText: string): Promise<string[]> {
         try {
-            console.log('[AI] Sending massive batch to Gemini...');
-            const model = this.ai.getGenerativeModel({ model: environment.geminiModel });
-            const prompt = `
-              You are a movie extraction assistant. Read the following massive text compiled from several Instagram screenshots.
-              Identify any valid movie or TV show titles across all the text.
-              Ignore actor names, director names, years, and UI elements.
-              Return ONLY a JSON array of strings containing the unique titles. If you find nothing, return [].
-              Text: "${massiveText}"
-            `;
+            const response = await firstValueFrom(
+                this.http.post<string[]>(`${environment.apiUrl}/extract`, { text: massiveText })
+            );
 
-            const result = await model.generateContent(prompt);
-            let responseText = result.response.text().trim();
-            responseText = responseText.replace(/```json/g, '').replace(/```/g, '');
-
-            return JSON.parse(responseText);
+            return response || [];
         } catch (error) {
-            console.warn('[AI] Gemini failed or rate limited:', error);
+            console.warn('[AI] Proxy extraction failed or rate limited:', error);
             return [];
         }
     }

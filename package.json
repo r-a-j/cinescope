@@ -38,7 +38,6 @@
     "@capacitor/toast": "^7.0.1",
     "@capawesome/capacitor-file-picker": "^7.0.0",
     "@capgo/capacitor-share-target": "^7.0.8",
-    "@google/generative-ai": "^0.24.1",
     "@ionic/angular": "^8.0.0",
     "animate.css": "^4.1.1",
     "ionicons": "^7.0.0",

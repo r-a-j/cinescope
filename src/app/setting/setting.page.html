@@ -32,51 +32,6 @@
 
   <ion-list inset="true">
     <ion-list-header>
-      <ion-label>API Configuration</ion-label>
-    </ion-list-header>
-    <ion-item>
-      <ion-icon slot="start" name="key-outline" color="warning"></ion-icon>
-      <ion-label>
-        <h2>TMDB API Key</h2>
-        <p>
-          <ion-text [color]="isKeyConfigured ? 'success' : 'medium'">
-            <ion-icon [name]="isKeyConfigured ? 'checkmark-circle-outline' : 'warning-outline'"
-              style="vertical-align: middle;"></ion-icon>
-            {{ isKeyConfigured ? 'Configured & Secured' : 'Not Configured' }}
-          </ion-text>
-        </p>
-      </ion-label>
-      <ion-button slot="end" fill="clear" *ngIf="isKeyConfigured" color="danger" (click)="removeApiKey()">
-        Remove
-      </ion-button>
-      <ion-button slot="end" fill="clear" *ngIf="!showKeyInput" (click)="showKeyInput = true">
-        {{ isKeyConfigured ? 'Update' : 'Set Key' }}
-      </ion-button>
-    </ion-item>
-
-    <ion-item *ngIf="showKeyInput">
-      <ion-input type="password" label="Enter New Key" labelPlacement="stacked" [(ngModel)]="inputApiKey"
-        placeholder="Past key here..." [clearInput]="true">
-      </ion-input>
-      <ion-button slot="end" fill="clear" (click)="pasteApiKey()">Paste</ion-button>
-    </ion-item>
-
-    <ion-item lines="none" *ngIf="showKeyInput">
-      <ion-button slot="start" fill="clear" color="medium"
-        (click)="showKeyInput = false; inputApiKey = ''">Cancel</ion-button>
-      <ion-button slot="end" (click)="saveApiKey()" [disabled]="!inputApiKey">Save Key</ion-button>
-    </ion-item>
-
-    <ion-item lines="none" *ngIf="showGetNewKey || (!isKeyConfigured && !showKeyInput)">
-      <ion-button fill="outline" size="small" slot="start"
-        (click)="openUrl('https://developer.themoviedb.org/reference/intro/getting-started')">
-        Get API Key <ion-icon name="open-outline" slot="end"></ion-icon>
-      </ion-button>
-    </ion-item>
-  </ion-list>
-
-  <ion-list inset="true">
-    <ion-list-header>
       <ion-label>Content & Privacy</ion-label>
     </ion-list-header>
     <ion-item>
