@@ -1,18 +1,23 @@
-import { Component, EnvironmentInjector, inject } from '@angular/core';
+import { Component, EnvironmentInjector, inject, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { StorageService } from 'src/services/storage.service';
+import { Subscription } from 'rxjs';
 import {
   IonTabs,
   IonTabBar,
   IonTabButton,
   IonIcon,
-  IonLabel
+  IonLabel,
+  IonBadge
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   flame,
   filmSharp,
   tvSharp,
-  hourglassOutline,
-  hourglassSharp
+  hourglassSharp,
+  mailSharp,
+  mailOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -20,17 +25,39 @@ import {
   templateUrl: 'tabs.page.html',
   styleUrls: ['tabs.page.scss'],
   imports: [
+    CommonModule,
     IonTabs,
     IonTabBar,
     IonTabButton,
     IonIcon,
-    IonLabel
+    IonLabel,
+    IonBadge
   ],
 })
-export class TabsPage {
+export class TabsPage implements OnInit, OnDestroy {
   public environmentInjector = inject(EnvironmentInjector);
+  public inboxCount: number = 0;
+  private storageSub?: Subscription;
 
-  constructor() {
-    addIcons({ filmSharp, tvSharp, flame, hourglassSharp });
+  constructor(private storageService: StorageService) {
+    addIcons({ filmSharp, tvSharp, flame, hourglassSharp, mailSharp, mailOutline });
+  }
+
+  async ngOnInit() {
+    await this.updateInboxCount();
+    this.storageSub = this.storageService.storageChanged$.subscribe(() => {
+      this.updateInboxCount();
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.storageSub) {
+      this.storageSub.unsubscribe();
+    }
+  }
+
+  private async updateInboxCount() {
+    const inboxList = await this.storageService.getInbox();
+    this.inboxCount = inboxList.length;
   }
 }

@@ -17,6 +17,11 @@ export const routes: Routes = [
           import('../tv/tv.page').then((m) => m.TvPage),
       },
       {
+        path: 'inbox',
+        loadComponent: () =>
+          import('../inbox/inbox.component').then((m) => m.InboxComponent),
+      },
+      {
         path: 'discover',
         loadComponent: () =>
           import('../discover/discover.page').then((m) => m.DiscoverPage),

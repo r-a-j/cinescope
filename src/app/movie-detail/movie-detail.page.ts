@@ -11,8 +11,7 @@ import {
   IonButtons,
   IonTitle,
   IonLabel,
-  IonSpinner,
-  IonThumbnail
+  IonSpinner
 } from '@ionic/angular/standalone';
 import { ActivatedRoute } from '@angular/router';
 import { addIcons } from 'ionicons';
@@ -48,9 +47,7 @@ import { BaseMediaDetailPage } from '../core/classes/base-media-detail.page';
     CommonModule,
     FormsModule,
     NumberSuffixPipe,
-    IonThumbnail,
-    IonSpinner
-  ],
+    IonSpinner],
 })
 export class MovieDetailPage extends BaseMediaDetailPage implements OnInit {
   readonly mediaType = 'movie';

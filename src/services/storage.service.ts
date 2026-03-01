@@ -15,6 +15,7 @@ export class StorageService {
   private readonly WATCHLIST_KEY = 'watchlist_contents';
   private readonly WATCHED_KEY = 'watched_contents';
   private readonly SETTINGS_KEY = 'settings';
+  private readonly INBOX_KEY = 'inbox_contents';
   private isCurrentlyHydrating = false;
   private lastMovedContents: ContentModel[] = [];
   private storageChangedSource = new BehaviorSubject<void>(undefined);
@@ -25,6 +26,36 @@ export class StorageService {
 
   emitStorageChanged() {
     this.storageChangedSource.next();
+  }
+
+  async getInbox(): Promise<ContentModel[]> {
+    return this.getList(this.INBOX_KEY);
+  }
+
+  async addToInbox(contents: ContentModel[]): Promise<void> {
+    const inbox = await this.getList(this.INBOX_KEY);
+    let added = false;
+
+    for (const content of contents) {
+      if (!inbox.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie)) {
+        inbox.unshift(content);
+        added = true;
+      }
+    }
+
+    if (added) {
+      await this.setList(this.INBOX_KEY, inbox);
+      this.emitStorageChanged();
+    }
+  }
+
+  async removeFromInbox(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
+    const inbox = await this.getList(this.INBOX_KEY);
+    const updated = inbox.filter(
+      (c) => !(c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv)
+    );
+    await this.setList(this.INBOX_KEY, updated);
+    this.emitStorageChanged();
   }
 
   private async buildBackupObject(): Promise<BackupModel> {

@@ -1,0 +1,219 @@
+.inbox-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  background-color: var(--ion-color-step-50, #121212);
+  overflow: hidden;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--ion-color-medium);
+  height: 100%;
+
+  ion-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 16px;
+    opacity: 0.8;
+  }
+}
+
+.card-stack {
+  position: relative;
+  width: 90%;
+  max-width: 400px;
+  height: 65vh;
+  margin-top: 20px;
+  perspective: 1000px;
+}
+
+.tinder-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background-color: var(--ion-color-step-100, #1e1e1e);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease-out;
+  display: flex;
+  flex-direction: column;
+
+  &.animating {
+    pointer-events: none;
+  }
+
+  &.swipe-left {
+    transform: translateX(-150%) rotate(-30deg) !important;
+    opacity: 0;
+  }
+
+  &.swipe-right {
+    transform: translateX(150%) rotate(30deg) !important;
+    opacity: 0;
+  }
+
+  &.swipe-up {
+    transform: translateY(-150%) rotate(10deg) !important;
+    opacity: 0;
+  }
+
+  .poster-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .placeholder-image {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--ion-color-medium);
+      text-align: center;
+
+      ion-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      p {
+        font-size: 16px;
+        font-weight: 500;
+      }
+    }
+
+    .gradient-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+      pointer-events: none;
+    }
+  }
+
+  .info-container {
+    padding: 20px;
+    background-color: var(--ion-color-step-100, #1e1e1e);
+    flex-shrink: 0;
+
+    h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .year {
+        color: var(--ion-color-medium);
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .rating-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+
+        ion-icon {
+          color: #ffc409;
+          margin-right: 4px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 90%;
+  max-width: 400px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+
+  .fab-discard {
+    --background: var(--ion-color-danger);
+    --background-hover: var(--ion-color-danger-tint);
+    width: 64px;
+    height: 64px;
+  }
+
+  .fab-watched {
+    --background: var(--ion-color-success);
+    --background-hover: var(--ion-color-success-tint);
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+  }
+
+  .fab-watchlist {
+    --background: var(--ion-color-primary);
+    --background-hover: var(--ion-color-primary-tint);
+    width: 64px;
+    height: 64px;
+  }
+
+  ion-fab-button {
+    transition: transform 0.1s ease-in-out;
+
+    &:active {
+      transform: scale(0.9);
+    }
+
+    ion-icon {
+      font-size: 28px;
+    }
+  }
+
+  .fab-watched ion-icon {
+    font-size: 36px;
+  }
+}

@@ -4,6 +4,7 @@ import { NavController } from '@ionic/angular/standalone';
 import { ToastController } from '@ionic/angular';
 import { StorageService } from 'src/services/storage.service';
 import { ContentModel } from 'src/models/content.model';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 @Directive()
 export abstract class BaseMediaDetailPage {
@@ -17,7 +18,7 @@ export abstract class BaseMediaDetailPage {
     abstract mediaId: number | null;
     abstract createContentModel(): ContentModel;
 
-    bookmarkIcon: string = 'assets/bookmark-empty.png';
+    bookmarkIcon: string = 'assets/bookmark-empty.svg';
     safeYoutubeUrl: SafeResourceUrl | null = null;
     isScrolled = false;
 
@@ -48,16 +49,18 @@ export abstract class BaseMediaDetailPage {
         this.isInWatched = !!watched.find(c => c.contentId === id && ((isMovie && c.isMovie) || (isTv && c.isTv)));
 
         if (this.isInWatched) {
-            this.bookmarkIcon = 'assets/bookmark-watched.png';
+            this.bookmarkIcon = 'assets/bookmark-watched.svg';
         } else if (this.isInWatchlist) {
-            this.bookmarkIcon = 'assets/bookmark-watchlist.png';
+            this.bookmarkIcon = 'assets/bookmark-watchlist.svg';
         } else {
-            this.bookmarkIcon = 'assets/bookmark-empty.png';
+            this.bookmarkIcon = 'assets/bookmark-empty.svg';
         }
     }
 
     async toggleBookmarkState() {
         if (!this.mediaId || this.isTogglingBookmark) return;
+
+        await Haptics.impact({ style: ImpactStyle.Light });
 
         this.isTogglingBookmark = true;
 

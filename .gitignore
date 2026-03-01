@@ -104,3 +104,6 @@ crash_log.txt
 connect-phone.ps1
 .vscode/settings.json
 android/keystore.properties
+
+src/environments/
+.env*

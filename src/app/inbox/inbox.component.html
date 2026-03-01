@@ -1,0 +1,59 @@
+<ion-header class="ion-no-border">
+    <ion-toolbar color="transparent">
+        <ion-title>Inbox</ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+    <div class="inbox-container">
+        <div *ngIf="inboxItems.length === 0" class="empty-state">
+            <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+            <h2>Inbox Zero</h2>
+            <p>You're all caught up!</p>
+        </div>
+
+        <div *ngIf="inboxItems.length > 0 && currentItem" class="card-stack">
+            <div class="tinder-card" [ngClass]="swipeClass" [class.animating]="isAnimating">
+
+                <div class="poster-container">
+                    <img *ngIf="currentItem.poster_path"
+                        [src]="'https://image.tmdb.org/t/p/w500' + currentItem.poster_path" alt="Poster">
+
+                    <div *ngIf="!currentItem.poster_path" class="placeholder-image">
+                        <ion-icon name="image-outline"></ion-icon>
+                        <p>No Image Available</p>
+                    </div>
+
+                    <div class="gradient-overlay"></div>
+                </div>
+
+                <div class="info-container">
+                    <h2>{{ currentItem.title || currentItem.name }}</h2>
+                    <div class="meta-row">
+                        <span class="year">{{ getYear(currentItem) }}</span>
+                        <span class="rating-badge" *ngIf="currentItem.vote_average">
+                            <ion-icon name="star"></ion-icon>
+                            {{ currentItem.vote_average | number:'1.1-1' }}
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="action-buttons" *ngIf="inboxItems.length > 0">
+            <ion-fab-button class="fab-discard" (click)="discard()" [disabled]="isAnimating">
+                <ion-icon name="close"></ion-icon>
+            </ion-fab-button>
+
+            <ion-fab-button class="fab-watched" (click)="markWatched()" [disabled]="isAnimating">
+                <ion-icon name="checkmark-done"></ion-icon>
+            </ion-fab-button>
+
+            <ion-fab-button class="fab-watchlist" (click)="markWatchlist()" [disabled]="isAnimating">
+                <ion-icon name="bookmark"></ion-icon>
+            </ion-fab-button>
+        </div>
+
+    </div>
+</ion-content>

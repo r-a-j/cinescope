@@ -19,9 +19,9 @@
       [src]="movieDetail.poster_path ? 'https://image.tmdb.org/t/p/w300' + movieDetail.poster_path : 'assets/placeholder.png'"
       [alt]="movieDetail.title" />
     <div class="floating-bookmark" (click)="toggleBookmarkState()">
-      <ion-thumbnail>
-        <img alt="Bookmark" [src]="bookmarkIcon" />
-      </ion-thumbnail>
+      <div class="icon-container">
+        <img alt="Bookmark Status" [src]="bookmarkIcon" />
+      </div>
     </div>
   </div>
 

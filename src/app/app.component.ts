@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { ExtractionService } from 'src/services/extraction.service';
 import { StorageService } from 'src/services/storage.service';
 
 @Component({
@@ -8,13 +10,20 @@ import { StorageService } from 'src/services/storage.service';
   imports: [IonApp, IonRouterOutlet],
 })
 export class AppComponent implements OnInit {
-  constructor(private storageService: StorageService) { }
+  private extractionService = inject(ExtractionService);
 
-  ngOnInit() {
+  constructor(private storageService: StorageService) {
+    this.extractionService.initShareListener();
+    this.extractionService.initNotificationTapListener();
+  }
+
+  async ngOnInit() {
     this.storageService.storageChanged$.subscribe(() => {
       this.applyTheme();
     });
     this.applyTheme();
+
+    await LocalNotifications.requestPermissions();
   }
 
   private async applyTheme() {

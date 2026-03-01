@@ -49,9 +49,9 @@ export abstract class BaseMediaPage {
 
         this.backButtonSub = this.platform.backButton.subscribeWithPriority(10, (processNextHandler) => {
             if (this.selectionMode) {
-                this.clearSelection(); // If selecting, just cancel selection
+                this.clearSelection();
             } else {
-                processNextHandler();  // Otherwise, behave normally
+                processNextHandler();
             }
         });
     }
@@ -81,7 +81,7 @@ export abstract class BaseMediaPage {
         if (this.selectionMode) {
             this.toggleSelect(Number(mediaId));
         } else {
-            this.navigateToDetail(mediaId!); // Ask the child where to go!
+            this.navigateToDetail(mediaId!);
         }
     }
 

@@ -19,5 +19,11 @@
       <ion-icon md="hourglass-sharp" aria-label="Archive"></ion-icon>
       <ion-label class="tabs-label">Archive</ion-label>
     </ion-tab-button>
+
+    <ion-tab-button tab="inbox" href="/tabs/inbox">
+      <ion-icon md="mail-sharp" aria-label="Inbox"></ion-icon>
+      <ion-label class="tabs-label">Inbox</ion-label>
+      <ion-badge color="danger" *ngIf="inboxCount > 0">{{ inboxCount }}</ion-badge>
+    </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>
