@@ -16,7 +16,7 @@ export class StorageService {
   private readonly WATCHED_KEY = 'watched_contents';
   private readonly SETTINGS_KEY = 'settings';
   private readonly INBOX_KEY = 'inbox_contents';
-  private isCurrentlyHydrating = false;
+  private hydratingKeys = new Set<string>();
   private lastMovedContents: ContentModel[] = [];
   private storageChangedSource = new BehaviorSubject<void>(undefined);
   storageChanged$ = this.storageChangedSource.asObservable();
@@ -54,6 +54,14 @@ export class StorageService {
     const updated = inbox.filter(
       (c) => !(c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv)
     );
+    await this.setList(this.INBOX_KEY, updated);
+    this.emitStorageChanged();
+  }
+
+  async bulkRemoveFromInbox(contents: ContentModel[]): Promise<void> {
+    const inbox = await this.getList(this.INBOX_KEY);
+    const idsToRemove = contents.map(c => this.uniqKey(c));
+    const updated = inbox.filter((c) => !idsToRemove.includes(this.uniqKey(c)));
     await this.setList(this.INBOX_KEY, updated);
     this.emitStorageChanged();
   }
@@ -243,13 +251,13 @@ export class StorageService {
     const list = await this.getRawList(key);
     const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
 
-    if (needsUpdate && !this.isCurrentlyHydrating) {
-      this.isCurrentlyHydrating = true;
+    if (needsUpdate && !this.hydratingKeys.has(key)) {
+      this.hydratingKeys.add(key);
       console.log(`[Storage] Hydrating missing data for list: ${key} in background...`);
 
       this.hydrateListInBackground(key, JSON.parse(JSON.stringify(list)))
         .catch(e => console.error('[Storage] Background hydration failed', e))
-        .finally(() => this.isCurrentlyHydrating = false);
+        .finally(() => this.hydratingKeys.delete(key));
     }
 
     return list;
@@ -295,7 +303,25 @@ export class StorageService {
       }
     }
 
-    await this.setList(key, list);
+    const latestList = await this.getRawList(key);
+    const mergedList = latestList.map(latestItem => {
+      const hydratedMatch = list.find(h => h.contentId === latestItem.contentId && h.isMovie === latestItem.isMovie);
+      if (hydratedMatch && (hydratedMatch.title || hydratedMatch.name)) {
+        return {
+          ...latestItem,
+          title: hydratedMatch.title,
+          name: hydratedMatch.name,
+          poster_path: hydratedMatch.poster_path,
+          vote_average: hydratedMatch.vote_average,
+          release_date: hydratedMatch.release_date,
+          first_air_date: hydratedMatch.first_air_date,
+          genres: hydratedMatch.genres
+        };
+      }
+      return latestItem;
+    });
+
+    await this.setList(key, mergedList);
     this.emitStorageChanged();
   }
 
@@ -317,6 +343,23 @@ export class StorageService {
       await this.setList(this.WATCHLIST_KEY, watchlist);
     }
     this.emitStorageChanged();
+  }
+
+  async bulkAddToWatchlist(contents: ContentModel[]): Promise<void> {
+    const watchlist = await this.getList(this.WATCHLIST_KEY);
+    let added = false;
+
+    for (const content of contents) {
+      if (!watchlist.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie && c.isTv === content.isTv)) {
+        watchlist.push(content);
+        added = true;
+      }
+    }
+
+    if (added) {
+      await this.setList(this.WATCHLIST_KEY, watchlist);
+      this.emitStorageChanged();
+    }
   }
 
   async removeFromWatchlist(
@@ -352,6 +395,24 @@ export class StorageService {
       await this.setList(this.WATCHED_KEY, watched);
     }
     this.emitStorageChanged();
+  }
+
+  async bulkAddToWatched(contents: ContentModel[]): Promise<void> {
+    const watched = await this.getList(this.WATCHED_KEY);
+    let added = false;
+
+    for (const content of contents) {
+      if (!watched.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie && c.isTv === content.isTv)) {
+        content.watchedAt = new Date().toISOString();
+        watched.push(content);
+        added = true;
+      }
+    }
+
+    if (added) {
+      await this.setList(this.WATCHED_KEY, watched);
+      this.emitStorageChanged();
+    }
   }
 
   async removeFromWatched(

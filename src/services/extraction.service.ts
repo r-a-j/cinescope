@@ -10,12 +10,20 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { App } from '@capacitor/app';
 import { StorageService } from './storage.service';
 import { ContentModel } from 'src/models/content.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ExtractionService {
+    private imageQueue: { uri: string }[] = [];
+    private isProcessingQueue = false;
+    private isCoolingDown = false;
+    private readonly BATCH_SIZE = 5;
+    private readonly GEMINI_BATCH_SIZE = 20;
+    private readonly RATE_LIMIT_RETRY_MS = 5 * 60 * 1000;
+    public extractionState$ = new BehaviorSubject<{ isExtracting: boolean; text: string }>({ isExtracting: false, text: '' });
 
     constructor(
         private ngZone: NgZone,
@@ -40,34 +48,142 @@ export class ExtractionService {
     initShareListener() {
         CapacitorShareTarget.addListener('shareReceived', (event) => {
             this.ngZone.run(async () => {
-                if (event.files && event.files.length > 0) {
+                try {
                     await App.minimizeApp();
 
-                    await LocalNotifications.schedule({
-                        notifications: [{
-                            id: 999,
-                            title: 'CineScope AI',
-                            body: `Received ${event.files.length} image(s). Processing... will notify shortly.`,
-                            smallIcon: 'ic_stat_icon_config_sample'
-                        }]
-                    });
+                    if (event.files && event.files.length > 0) {
+                        const imageFiles = event.files.filter(f => f.mimeType && f.mimeType.startsWith('image/'));
 
-                    let massiveTextPile = '';
-                    for (const file of event.files) {
-                        const text = await this.performLocalOCR(file.uri);
-                        massiveTextPile += text + '\n\n---NEXT SCREENSHOT---\n\n';
-                    }
+                        if (imageFiles.length === 0) {
+                            await this.sendFinalNotification(0, 'Received unsupported file types. Only images are supported.');
+                            return;
+                        }
 
-                    const extractedTitles = await this.extractViaGeminiBatch(massiveTextPile);
+                        this.imageQueue.push(...imageFiles.map(f => ({ uri: f.uri })));
 
-                    if (extractedTitles.length > 0) {
-                        await this.resolveAndSaveBatch(extractedTitles);
+                        await LocalNotifications.schedule({
+                            notifications: [{
+                                id: 999,
+                                title: 'CineScope AI',
+                                body: `Queued ${imageFiles.length} image(s). Processing in background...`,
+                                smallIcon: 'ic_stat_icon_config_sample'
+                            }]
+                        });
+
+                        this.processQueue();
                     } else {
-                        await this.sendFinalNotification(0, 'No movies found in those images.');
+                        await this.sendFinalNotification(0, 'Unsupported share format received.');
                     }
+                } catch (error) {
+                    console.error('[Extraction] Shared item processing failed', error);
+                    await this.sendFinalNotification(0, 'An error occurred during extraction.');
                 }
             });
         });
+    }
+
+    private async processQueue() {
+        if (this.isProcessingQueue || this.imageQueue.length === 0 || this.isCoolingDown) {
+            return;
+        }
+
+        this.isProcessingQueue = true;
+
+        let processedImagesCount = 0;
+        const totalImagesInQueue = this.imageQueue.length;
+
+        try {
+            while (this.imageQueue.length > 0) {
+                const geminiBatch = this.imageQueue.splice(0, this.GEMINI_BATCH_SIZE);
+                let massiveTextPile = '';
+
+                for (let i = 0; i < geminiBatch.length; i += this.BATCH_SIZE) {
+                    const ocrBatch = geminiBatch.slice(i, i + this.BATCH_SIZE);
+
+                    for (const file of ocrBatch) {
+                        processedImagesCount++;
+
+                        this.extractionState$.next({
+                            isExtracting: true,
+                            text: `Processing image ${processedImagesCount} of ${totalImagesInQueue}...`
+                        });
+
+                        const text = await this.performLocalOCR(file.uri);
+                        if (text && text.trim()) {
+                            massiveTextPile += text + '\n\n---NEXT SCREENSHOT---\n\n';
+                        }
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (!massiveTextPile.trim()) {
+                    console.warn('[Extraction] Failed to extract text from batch. Skipping.');
+                    this.extractionState$.next({ isExtracting: true, text: `No text found in batch. Continuing...` });
+                    continue;
+                }
+
+                try {
+                    this.extractionState$.next({
+                        isExtracting: true,
+                        text: `Analyzing extracted text for batch of ${geminiBatch.length}...`
+                    });
+
+                    const extractedTitles = await this.extractViaGeminiBatch(massiveTextPile);
+
+                    if (extractedTitles && extractedTitles.length > 0) {
+                        await this.resolveAndSaveBatch(extractedTitles);
+                    } else {
+                        console.log('[Extraction] No recognizable movies or TV shows found in this batch.');
+                    }
+                } catch (error: any) {
+                    const isRateLimit = error instanceof HttpErrorResponse && error.status === 429;
+                    if (isRateLimit) {
+                        console.warn('[Extraction] Rate limit hit. Pausing queue.');
+
+                        await LocalNotifications.schedule({
+                            notifications: [{
+                                id: 999,
+                                title: 'CineScope AI',
+                                body: `API Limit reached. Pausing for 5 minutes...`,
+                                smallIcon: 'ic_stat_icon_config_sample'
+                            }]
+                        });
+
+                        this.imageQueue.unshift(...geminiBatch);
+                        this.isCoolingDown = true;
+                        this.isProcessingQueue = false;
+
+                        this.extractionState$.next({
+                            isExtracting: true,
+                            text: `API Rate Limit hit. Pausing for 5 minutes...`
+                        });
+
+                        setTimeout(() => {
+                            console.log('[Extraction] Resuming queue after rate limit cooldown.');
+                            this.isCoolingDown = false;
+                            this.processQueue();
+                        }, this.RATE_LIMIT_RETRY_MS);
+
+                        return;
+                    } else {
+                        console.error('[Extraction] Gemini extraction failed for batch', error);
+                    }
+                }
+            }
+
+            if (this.imageQueue.length === 0) {
+                this.extractionState$.next({ isExtracting: false, text: '' });
+                await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+            }
+
+        } catch (error) {
+            console.error('[Extraction] Fatal error processing queue', error);
+            this.extractionState$.next({ isExtracting: false, text: '' });
+            await this.sendFinalNotification(0, 'An error occurred while processing the image queue.');
+        } finally {
+            this.isProcessingQueue = false;
+        }
     }
 
     private async performLocalOCR(imageUri: string): Promise<string> {
@@ -82,16 +198,11 @@ export class ExtractionService {
     }
 
     private async extractViaGeminiBatch(massiveText: string): Promise<string[]> {
-        try {
-            const response = await firstValueFrom(
-                this.http.post<string[]>(`${environment.apiUrl}/extract`, { text: massiveText })
-            );
+        const response = await firstValueFrom(
+            this.http.post<string[]>(`${environment.apiUrl}/extract`, { text: massiveText })
+        );
 
-            return response || [];
-        } catch (error) {
-            console.warn('[AI] Proxy extraction failed or rate limited:', error);
-            return [];
-        }
+        return response || [];
     }
 
     private async resolveAndSaveBatch(titles: string[]) {
@@ -121,7 +232,8 @@ export class ExtractionService {
                             vote_average: topHit.vote_average,
                             genres: topHit.genre_ids || topHit.genres,
                             isWatchlist: false,
-                            isWatched: false
+                            isWatched: false,
+                            addedAt: new Date().toISOString()
                         } as ContentModel);
                     }
                 }

@@ -39,7 +39,8 @@ export class CacheService {
             });
         } catch (e: any) {
             if (e.name === 'QuotaExceededError' || e.message?.includes('exceeded the quota')) {
-                console.warn('[Cache] Storage full! Item not cached:', key);
+                console.warn('[Cache] Storage full! Clearing cache to make room...');
+                await this.clearAll();
             } else {
                 console.error('[Cache] Set error', e);
             }

@@ -14,4 +14,5 @@ export interface ContentModel {
     first_air_date?: string;
     genres?: Genre[];
     watchedAt?: string;
+    addedAt?: string;
 }

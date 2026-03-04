@@ -1,47 +1,85 @@
 <ion-header class="ion-no-border">
     <ion-toolbar color="transparent">
-        <ion-title>Inbox</ion-title>
+        <ion-title>Inbox <span *ngIf="inboxItems.length > 0">({{ inboxItems.length }})</span></ion-title>
+        <ion-buttons slot="end">
+            <ion-button *ngIf="inboxItems.length > 0" (click)="toggleViewMode()">
+                <ion-icon slot="icon-only" [name]="viewMode === 'swipe' ? 'list-outline' : 'albums-outline'"></ion-icon>
+            </ion-button>
+            <ion-button class="icon-btn" fill="clear" (click)="goToSearch()">
+                <ion-icon md="search-sharp" aria-label="Search"></ion-icon>
+            </ion-button>
+            <ion-button class="icon-btn" fill="clear" (click)="goToSetting()">
+                <ion-icon md="settings-sharp" aria-label="Settings"></ion-icon>
+            </ion-button>
+        </ion-buttons>
     </ion-toolbar>
+    <div *ngIf="extractionState$ | async as state">
+        <div class="extraction-banner" *ngIf="state.isExtracting">
+            <ion-progress-bar type="indeterminate"></ion-progress-bar>
+            <div class="extraction-text">
+                <span class="pulse-dot"></span>
+                <span class="status-msg">{{ state.text }}</span>
+            </div>
+        </div>
+    </div>
 </ion-header>
 
 <ion-content [fullscreen]="true">
     <div class="inbox-container">
         <div *ngIf="inboxItems.length === 0" class="empty-state">
             <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
-            <h2>Inbox Zero</h2>
             <p>You're all caught up!</p>
         </div>
 
-        <div *ngIf="inboxItems.length > 0 && currentItem" class="card-stack">
-            <div class="tinder-card" [ngClass]="swipeClass" [class.animating]="isAnimating">
+        <div *ngIf="viewMode === 'swipe' && inboxItems.length > 0" class="card-stack">
 
+            <div class="tinder-card next-card" *ngIf="inboxItems.length > 1">
                 <div class="poster-container">
-                    <img *ngIf="currentItem.poster_path"
-                        [src]="'https://image.tmdb.org/t/p/w500' + currentItem.poster_path" alt="Poster">
-
-                    <div *ngIf="!currentItem.poster_path" class="placeholder-image">
+                    <img *ngIf="inboxItems[1].poster_path"
+                        [src]="'https://image.tmdb.org/t/p/w500' + inboxItems[1].poster_path" alt="Poster">
+                    <div *ngIf="!inboxItems[1].poster_path" class="placeholder-image">
                         <ion-icon name="image-outline"></ion-icon>
                         <p>No Image Available</p>
                     </div>
-
                     <div class="gradient-overlay"></div>
                 </div>
-
                 <div class="info-container">
-                    <h2>{{ currentItem.title || currentItem.name }}</h2>
+                    <h2>{{ inboxItems[1].title || inboxItems[1].name }}</h2>
                     <div class="meta-row">
-                        <span class="year">{{ getYear(currentItem) }}</span>
-                        <span class="rating-badge" *ngIf="currentItem.vote_average">
+                        <span class="year">{{ getYear(inboxItems[1]) }}</span>
+                        <span class="rating-badge" *ngIf="inboxItems[1].vote_average">
                             <ion-icon name="star"></ion-icon>
-                            {{ currentItem.vote_average | number:'1.1-1' }}
+                            {{ inboxItems[1].vote_average | number:'1.1-1' }}
                         </span>
                     </div>
                 </div>
-
             </div>
+
+            <div #tinderCard class="tinder-card top-card" [ngClass]="swipeClass" [class.animating]="isAnimating">
+                <div class="poster-container">
+                    <img *ngIf="inboxItems[0].poster_path"
+                        [src]="'https://image.tmdb.org/t/p/w500' + inboxItems[0].poster_path" alt="Poster">
+                    <div *ngIf="!inboxItems[0].poster_path" class="placeholder-image">
+                        <ion-icon name="image-outline"></ion-icon>
+                        <p>No Image Available</p>
+                    </div>
+                    <div class="gradient-overlay"></div>
+                </div>
+                <div class="info-container">
+                    <h2>{{ inboxItems[0].title || inboxItems[0].name }}</h2>
+                    <div class="meta-row">
+                        <span class="year">{{ getYear(inboxItems[0]) }}</span>
+                        <span class="rating-badge" *ngIf="inboxItems[0].vote_average">
+                            <ion-icon name="star"></ion-icon>
+                            {{ inboxItems[0].vote_average | number:'1.1-1' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="action-buttons" *ngIf="inboxItems.length > 0">
+        <div class="action-buttons" *ngIf="viewMode === 'swipe' && inboxItems.length > 0">
             <ion-fab-button class="fab-discard" (click)="discard()" [disabled]="isAnimating">
                 <ion-icon name="close"></ion-icon>
             </ion-fab-button>
@@ -55,5 +93,66 @@
             </ion-fab-button>
         </div>
 
+        <div *ngIf="viewMode === 'list' && inboxItems.length > 0" class="list-view-container">
+            <ion-list class="inbox-list" lines="none">
+                <ion-item class="select-all-item" lines="full" (click)="selectAll()" button detail="false">
+                    <ion-checkbox slot="start"
+                        [checked]="selectedIds.size === inboxItems.length && inboxItems.length > 0"
+                        [indeterminate]="selectedIds.size > 0 && selectedIds.size < inboxItems.length"
+                        style="pointer-events: none;">
+                    </ion-checkbox>
+                    <ion-label>
+                        <h3 class="select-all-title">Select All</h3>
+                        <p class="select-all-subtitle" *ngIf="selectedIds.size > 0">{{ selectedIds.size }} items
+                            selected</p>
+                    </ion-label>
+                </ion-item>
+
+                <ion-item *ngFor="let item of inboxItems" [class.selected]="isSelected(item)"
+                    (click)="toggleSelection(item)">
+                    <ion-checkbox slot="start" [checked]="isSelected(item)"></ion-checkbox>
+                    <ion-thumbnail slot="start">
+                        <img *ngIf="item.poster_path" [src]="'https://image.tmdb.org/t/p/w200' + item.poster_path" />
+                        <div *ngIf="!item.poster_path" class="placeholder-thumbnail">
+                            <ion-icon name="image-outline"></ion-icon>
+                        </div>
+                    </ion-thumbnail>
+                    <ion-label>
+                        <div class="title-row">
+                            <h2 class="title">{{ item.title || item.name }}</h2>
+                            <span *ngIf="isNew(item)" class="new-badge">NEW</span>
+                        </div>
+                        <p class="subtitle">
+                            <span class="type">{{ item.isTv ? 'TV Series' : 'Movie' }}</span>
+                            <span class="dot">•</span>
+                            <span class="year">{{ getYear(item) }}</span>
+                            <span class="dot" *ngIf="item.vote_average">•</span>
+                            <span class="rating" *ngIf="item.vote_average">
+                                <ion-icon name="star"></ion-icon>
+                                {{ item.vote_average | number:'1.1-1' }}
+                            </span>
+                        </p>
+                    </ion-label>
+                </ion-item>
+            </ion-list>
+
+            <div class="bulk-action-bar">
+                <ion-button class="discard-btn" fill="clear" color="danger" (click)="discardSelected()"
+                    [disabled]="selectedIds.size === 0">
+                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
+                <div class="spacer"></div>
+                <ion-button class="watched-btn" fill="clear" color="success" (click)="watchedSelected()"
+                    [disabled]="selectedIds.size === 0">
+                    <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
+                    Watched Selected
+                </ion-button>
+                <ion-button class="watchlist-btn" fill="clear" color="primary" (click)="watchlistSelected()"
+                    [disabled]="selectedIds.size === 0">
+                    <ion-icon slot="start" name="bookmark-outline"></ion-icon>
+                    Watchlist Selected
+                </ion-button>
+            </div>
+        </div>
     </div>
 </ion-content>
