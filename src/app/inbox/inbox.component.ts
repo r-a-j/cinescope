@@ -98,7 +98,7 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
 
     async loadInbox() {
         const fullInbox = await this.storageService.getInbox();
-        this.inboxItems = fullInbox.filter(item => !this.pendingCommitIds.has(this.storageService['uniqKey'](item)));
+        this.inboxItems = fullInbox.filter(item => !this.pendingCommitIds.has(this.getItemKey(item)));
         this.updateCurrentItem();
     }
 
@@ -114,6 +114,10 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
         return item.contentId + '-' + item.isMovie;
     }
 
+    getItemKey(item: ContentModel): string {
+        return `${item.isMovie ? 'movie' : (item.isTv ? 'tv' : 'person')}_${item.contentId}`;
+    }
+
     isNew(item: ContentModel): boolean {
         if (!item.addedAt) return false;
         const added = new Date(item.addedAt).getTime();
@@ -123,7 +127,7 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     toggleSelection(item: ContentModel) {
-        const key = this.storageService['uniqKey'](item);
+        const key = this.getItemKey(item);
         if (this.selectedIds.has(key)) {
             this.selectedIds.delete(key);
         } else {
@@ -138,13 +142,13 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
         } else {
             // If NOTHING is selected, select everything.
             this.inboxItems.forEach(item => {
-                this.selectedIds.add(this.storageService['uniqKey'](item));
+                this.selectedIds.add(this.getItemKey(item));
             });
         }
     }
 
     isSelected(item: ContentModel): boolean {
-        return this.selectedIds.has(this.storageService['uniqKey'](item));
+        return this.selectedIds.has(this.getItemKey(item));
     }
 
     getYear(item: ContentModel): string {
@@ -345,11 +349,11 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     private async processBulkAction(items: ContentModel[], toastMessage: string, commitFn: () => Promise<void>) {
-        const actionItemIds = items.map(i => this.storageService['uniqKey'](i));
+        const actionItemIds = items.map(i => this.getItemKey(i));
 
         actionItemIds.forEach(id => this.pendingCommitIds.add(id));
 
-        this.inboxItems = this.inboxItems.filter(item => !actionItemIds.includes(this.storageService['uniqKey'](item)));
+        this.inboxItems = this.inboxItems.filter(item => !actionItemIds.includes(this.getItemKey(item)));
         this.selectedIds.clear();
         this.updateCurrentItem();
 
@@ -369,11 +373,11 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
 
             const fullInbox = await this.storageService.getInbox();
 
-            const restoredItems = fullInbox.filter(item => actionItemIds.includes(this.storageService['uniqKey'](item)));
-            const untouchedItems = fullInbox.filter(item => !actionItemIds.includes(this.storageService['uniqKey'](item)) && !this.pendingCommitIds.has(this.storageService['uniqKey'](item)));
+            const restoredItems = fullInbox.filter(item => actionItemIds.includes(this.getItemKey(item)));
+            const untouchedItems = fullInbox.filter(item => !actionItemIds.includes(this.getItemKey(item)) && !this.pendingCommitIds.has(this.getItemKey(item)));
 
             this.inboxItems = [...restoredItems, ...untouchedItems];
-            restoredItems.forEach(item => this.selectedIds.add(this.storageService['uniqKey'](item)));
+            restoredItems.forEach(item => this.selectedIds.add(this.getItemKey(item)));
             this.updateCurrentItem();
         } else {
             await commitFn();

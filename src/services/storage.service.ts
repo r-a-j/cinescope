@@ -1,122 +1,79 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
-import { Preferences } from '@capacitor/preferences';
 import { Share } from '@capacitor/share';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
-import { BackupModel } from 'src/models/backup.model';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ContentModel } from 'src/models/content.model';
 import { SettingModel } from 'src/models/setting.model';
 import { TmdbSearchService } from './tmdb-search.service';
+import { RxdbService } from './rxdb.service';
+import { ContentDocType } from '../app/core/database/content.schema';
+
+// Zone.js defensive custom operator to ensure UI reactivity
+import { OperatorFunction } from 'rxjs';
+export function enterZone<T>(zone: NgZone): OperatorFunction<T, T> {
+  return (source) => new Observable<T>((subscriber) => {
+    return source.subscribe({
+      next: (value) => zone.run(() => subscriber.next(value)),
+      error: (err) => zone.run(() => subscriber.error(err)),
+      complete: () => zone.run(() => subscriber.complete())
+    });
+  });
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class StorageService {
-  private readonly WATCHLIST_KEY = 'watchlist_contents';
-  private readonly WATCHED_KEY = 'watched_contents';
-  private readonly SETTINGS_KEY = 'settings';
-  private readonly INBOX_KEY = 'inbox_contents';
-  private hydratingKeys = new Set<string>();
   private lastMovedContents: ContentModel[] = [];
+
+  // We keep the original BehaviorSubject as an event bus for legacy component compatibility.
+  // We will bridge RxDB's reactive streams into this subject defensively inside the constructor.
   private storageChangedSource = new BehaviorSubject<void>(undefined);
   storageChanged$ = this.storageChangedSource.asObservable();
+
   public restoreProgress$ = new BehaviorSubject<string>('');
 
-  constructor(private tmdbService: TmdbSearchService) { }
+  constructor(
+    private tmdbService: TmdbSearchService,
+    private rxdb: RxdbService,
+    private ngZone: NgZone
+  ) {
+    // Pipeline RxDB stream directly through NgZone into legacy UI change detection.
+    // This allows instant cross-tab reactivity while preventing Angular change-detection failure!
+    setTimeout(() => {
+      if (this.rxdb.db) {
+        this.rxdb.db.collections.content.$.pipe(enterZone(this.ngZone)).subscribe(() => {
+          this.emitStorageChanged();
+        });
+        this.rxdb.db.collections.settings.$.pipe(enterZone(this.ngZone)).subscribe(() => {
+          this.emitStorageChanged();
+        });
+      }
+    }, 2000); // Give APP_INITIALIZER a sec to spin up RxDB
+  }
 
   emitStorageChanged() {
     this.storageChangedSource.next();
   }
 
-  async getInbox(): Promise<ContentModel[]> {
-    return this.getList(this.INBOX_KEY);
-  }
+  // === EXPORT / IMPORT LOGIC WITH RXDB ===
 
-  async addToInbox(contents: ContentModel[]): Promise<void> {
-    const inbox = await this.getList(this.INBOX_KEY);
-    let added = false;
+  async exportBackupAndShare(): Promise<{ fileName: string; uri: string }> {
+    const contentDump = await this.rxdb.db.collections.content.exportJSON();
+    const settingsDump = await this.rxdb.db.collections.settings.exportJSON();
 
-    for (const content of contents) {
-      if (!inbox.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie)) {
-        inbox.unshift(content);
-        added = true;
-      }
-    }
-
-    if (added) {
-      await this.setList(this.INBOX_KEY, inbox);
-      this.emitStorageChanged();
-    }
-  }
-
-  async removeFromInbox(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
-    const inbox = await this.getList(this.INBOX_KEY);
-    const updated = inbox.filter(
-      (c) => !(c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv)
-    );
-    await this.setList(this.INBOX_KEY, updated);
-    this.emitStorageChanged();
-  }
-
-  async bulkRemoveFromInbox(contents: ContentModel[]): Promise<void> {
-    const inbox = await this.getList(this.INBOX_KEY);
-    const idsToRemove = contents.map(c => this.uniqKey(c));
-    const updated = inbox.filter((c) => !idsToRemove.includes(this.uniqKey(c)));
-    await this.setList(this.INBOX_KEY, updated);
-    this.emitStorageChanged();
-  }
-
-  private async getRawList(key: string): Promise<ContentModel[]> {
-    const { value } = await Preferences.get({ key });
-    let list: ContentModel[] = value ? JSON.parse(value) : [];
-
-    const seen = new Set<string>();
-    list = list.filter(item => {
-      const k = `${item.contentId}-${item.isMovie}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    return list;
-  }
-
-  private async buildBackupObject(): Promise<BackupModel> {
-    const [watchlist, watched, settings] = await Promise.all([
-      this.getRawList(this.WATCHLIST_KEY),
-      this.getRawList(this.WATCHED_KEY),
-      this.getSettings(),
-    ]);
-    return {
-      version: 1,
+    const payload = {
+      version: 2,
       createdAt: new Date().toISOString(),
       app: 'CineScope',
       data: {
-        watchlist_contents: watchlist ?? [],
-        watched_contents: watched ?? [],
-        settings: settings ?? null,
-      },
+        content: contentDump,
+        settings: settingsDump
+      }
     };
-  }
 
-  private uniqKey(c: ContentModel) {
-    return `${c.contentId}|${c.isMovie ? 'm' : ''}|${c.isTv ? 't' : ''}`;
-  }
-
-  private mergeLists(a: ContentModel[], b: ContentModel[]): ContentModel[] {
-    const map = new Map<string, ContentModel>();
-    for (const item of [...(a ?? []), ...(b ?? [])]) {
-      map.set(this.uniqKey(item), item);
-    }
-    return Array.from(map.values());
-  }
-
-  async exportBackupAndShare(): Promise<{ fileName: string; uri: string }> {
-    const payload = await this.buildBackupObject();
     const json = JSON.stringify(payload, null, 2);
-
-    const fileName = `cinescope-backup-${new Date()
-      .toISOString()
-      .replace(/[:.]/g, '-')}.json`;
+    const fileName = `cinescope-backup-v2-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
 
     await Filesystem.writeFile({
       path: fileName,
@@ -131,426 +88,246 @@ export class StorageService {
     });
 
     await Share.share({
-      title: 'CineScope Backup',
-      text: 'Backup file for your CineScope data.',
+      title: 'CineScope RxDB Backup',
+      text: 'Offline fault-tolerant backup for CineScope.',
       files: [uri],
     });
 
     return { fileName, uri };
   }
 
-  async restoreFromBackupPayload(
-    payload: BackupModel,
-    mode: 'merge' | 'replace' = 'merge'
-  ): Promise<void> {
-    if (!payload || payload.version !== 1 || !payload.data) {
-      throw new Error('Invalid backup format');
-    }
-
-    const incoming = payload.data;
-
-    let finalWatchlist: ContentModel[] = [];
-    let finalWatched: ContentModel[] = [];
-
-    this.restoreProgress$.next('Merging data...');
-
-    if (mode === 'replace') {
-      await Preferences.remove({ key: this.WATCHLIST_KEY });
-      await Preferences.remove({ key: this.WATCHED_KEY });
-      await Preferences.remove({ key: this.SETTINGS_KEY });
-
-      finalWatchlist = incoming.watchlist_contents ?? [];
-      finalWatched = incoming.watched_contents ?? [];
-
-      if (incoming.settings) {
-        await this.saveSettings(incoming.settings);
-      }
-    } else {
-      const [curWatchlist, curWatched, curSettings] = await Promise.all([
-        this.getWatchlist(),
-        this.getWatched(),
-        this.getSettings(),
-      ]);
-
-      finalWatchlist = this.mergeLists(curWatchlist ?? [], incoming.watchlist_contents ?? []);
-      finalWatched = this.mergeLists(curWatched ?? [], incoming.watched_contents ?? []);
-
-      await this.saveSettings({ ...(curSettings ?? {} as SettingModel), ...(incoming.settings ?? {}) });
-    }
-
-    const allItemsToHydrate = [
-      ...finalWatchlist.filter(i => (i.isMovie && !i.title) || (i.isTv && !i.name)),
-      ...finalWatched.filter(i => (i.isMovie && !i.title) || (i.isTv && !i.name))
-    ];
-
-    if (allItemsToHydrate.length > 0) {
-      await this.hydrateItemsWithProgress(allItemsToHydrate);
-    } else {
-      this.restoreProgress$.next('Finalizing...');
-    }
-
-    await this.setList(this.WATCHLIST_KEY, finalWatchlist);
-    await this.setList(this.WATCHED_KEY, finalWatched);
-
-    this.emitStorageChanged();
-  }
-
   async restoreFromBackupJson(jsonText: string, mode: 'merge' | 'replace' = 'merge'): Promise<void> {
-    const parsed = JSON.parse(jsonText) as BackupModel;
+    const parsed = JSON.parse(jsonText);
     await this.restoreFromBackupPayload(parsed, mode);
   }
 
-  private async hydrateItemsWithProgress(items: ContentModel[]) {
-    const total = items.length;
-    let processed = 0;
-    const BATCH_SIZE = 5;
-    const DELAY_MS = 250;
+  async restoreFromBackupPayload(payload: any, mode: 'merge' | 'replace' = 'merge'): Promise<void> {
+    if (!payload || !payload.data) throw new Error('Invalid backup format');
 
-    console.log(`[Storage] Hydrating ${total} items with progress tracking...`);
+    this.restoreProgress$.next('Restoring robust database...');
 
-    for (let i = 0; i < total; i += BATCH_SIZE) {
-      const batch = items.slice(i, i + BATCH_SIZE);
-
-      const tasks = batch.map(async (item) => {
-        try {
-          if (item.isMovie) {
-            const detail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId, true));
-            item.title = detail.title;
-            item.poster_path = detail.poster_path;
-            item.vote_average = detail.vote_average;
-            item.release_date = detail.release_date;
-            item.genres = detail.genres;
-          } else if (item.isTv) {
-            const detail = await firstValueFrom(this.tmdbService.getTvDetail(item.contentId, true));
-            item.name = detail.name;
-            item.poster_path = detail.poster_path;
-            item.vote_average = detail.vote_average;
-            item.first_air_date = detail.first_air_date;
-            item.genres = detail.genres;
-          }
-        } catch (e) {
-          console.error(`[Storage] Failed to hydrate item ${item.contentId}`, e);
-        }
-      });
-
-      await Promise.all(tasks);
-
-      processed += batch.length;
-      const percent = Math.min(100, Math.round((processed / total) * 100));
-      const msg = `Restoring images: ${percent}% (${processed}/${total})`;
-
-      this.restoreProgress$.next(msg);
-
-      if (i + BATCH_SIZE < total) {
-        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-      }
-    }
-  }
-
-  private async getList(key: string): Promise<ContentModel[]> {
-    const list = await this.getRawList(key);
-    const needsUpdate = list.some(item => (item.isMovie && !item.title) || (item.isTv && !item.name));
-
-    if (needsUpdate && !this.hydratingKeys.has(key)) {
-      this.hydratingKeys.add(key);
-      console.log(`[Storage] Hydrating missing data for list: ${key} in background...`);
-
-      this.hydrateListInBackground(key, JSON.parse(JSON.stringify(list)))
-        .catch(e => console.error('[Storage] Background hydration failed', e))
-        .finally(() => this.hydratingKeys.delete(key));
+    if (mode === 'replace') {
+      await this.rxdb.db.collections.content.find().remove();
+      await this.rxdb.db.collections.settings.find().remove();
     }
 
-    return list;
-  }
-
-  private async hydrateListInBackground(key: string, list: ContentModel[]) {
-    const itemsToUpdate = list.filter(item =>
-      (item.isMovie && !item.title) || (item.isTv && !item.name)
-    );
-
-    const BATCH_SIZE = 5;
-    const DELAY_MS = 250;
-
-    for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
-      const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
-
-      const tasks = batch.map(async (item) => {
-        try {
-          if (item.isMovie) {
-            const detail = await firstValueFrom(this.tmdbService.getMovieDetail(item.contentId, true));
-            item.title = detail.title;
-            item.poster_path = detail.poster_path;
-            item.vote_average = detail.vote_average;
-            item.release_date = detail.release_date;
-            item.genres = detail.genres;
-          } else if (item.isTv) {
-            const detail = await firstValueFrom(this.tmdbService.getTvDetail(item.contentId, true));
-            item.name = detail.name;
-            item.poster_path = detail.poster_path;
-            item.vote_average = detail.vote_average;
-            item.first_air_date = detail.first_air_date;
-            item.genres = detail.genres;
-          }
-        } catch (e) {
-          console.error(`[Storage] Failed to hydrate item ${item.contentId}`, e);
-        }
-      });
-
-      await Promise.all(tasks);
-
-      if (i + BATCH_SIZE < itemsToUpdate.length) {
-        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-      }
+    if (payload.version === 2) {
+      await this.rxdb.db.collections.content.importJSON(payload.data.content);
+      await this.rxdb.db.collections.settings.importJSON(payload.data.settings);
+    } else if (payload.version === 1 || !payload.version) {
+      await this.restoreLegacyV1Adapter(payload.data);
     }
 
-    const latestList = await this.getRawList(key);
-    const mergedList = latestList.map(latestItem => {
-      const hydratedMatch = list.find(h => h.contentId === latestItem.contentId && h.isMovie === latestItem.isMovie);
-      if (hydratedMatch && (hydratedMatch.title || hydratedMatch.name)) {
-        return {
-          ...latestItem,
-          title: hydratedMatch.title,
-          name: hydratedMatch.name,
-          poster_path: hydratedMatch.poster_path,
-          vote_average: hydratedMatch.vote_average,
-          release_date: hydratedMatch.release_date,
-          first_air_date: hydratedMatch.first_air_date,
-          genres: hydratedMatch.genres
-        };
-      }
-      return latestItem;
-    });
-
-    await this.setList(key, mergedList);
+    this.restoreProgress$.next('Finalizing display...');
     this.emitStorageChanged();
   }
 
-  private async setList(key: string, list: ContentModel[]): Promise<void> {
-    await Preferences.set({ key, value: JSON.stringify(list) });
-  }
+  private async restoreLegacyV1Adapter(incoming: any): Promise<void> {
+    const mergedMap = new Map<string, ContentDocType>();
+    const mergeItem = (item: any, listName: string) => {
+      const mediaType = item.isMovie ? 'movie' : (item.isTv ? 'tv' : 'person');
+      const id = `${mediaType}_${item.contentId}`;
+      const existing = mergedMap.get(id);
+      if (existing) {
+        if (!existing.lists.includes(listName)) existing.lists.push(listName);
+        if (listName === 'watched' && item.watchedAt) existing.watchedAt = item.watchedAt;
+      } else {
+        mergedMap.set(id, {
+          id,
+          tmdbId: item.contentId,
+          mediaType,
+          lists: [listName],
+          addedAt: item.addedAt || new Date().toISOString(),
+          watchedAt: listName === 'watched' ? item.watchedAt : undefined,
+          payload: item
+        });
+      }
+    };
 
-  async addToWatchlist(content: ContentModel): Promise<void> {
-    const watchlist = await this.getList(this.WATCHLIST_KEY);
-    if (
-      !watchlist.find(
-        (c) =>
-          c.contentId === content.contentId &&
-          c.isMovie === content.isMovie &&
-          c.isTv === content.isTv
-      )
-    ) {
-      watchlist.push(content);
-      await this.setList(this.WATCHLIST_KEY, watchlist);
+    if (incoming.watchlist_contents) incoming.watchlist_contents.forEach((i: any) => mergeItem(i, 'watchlist'));
+    if (incoming.watched_contents) incoming.watched_contents.forEach((i: any) => mergeItem(i, 'watched'));
+
+    const allContent = Array.from(mergedMap.values());
+    if (allContent.length > 0) {
+      await this.rxdb.db.collections.content.bulkUpsert(allContent);
     }
-    this.emitStorageChanged();
+    if (incoming.settings) {
+      await this.rxdb.db.collections.settings.bulkUpsert([{
+        id: 'user_preferences',
+        allowAdultContent: incoming.settings.allowAdultContent ?? false,
+        theme: incoming.settings.theme ?? 'system'
+      }]);
+    }
   }
 
+  // === HELPERS & QUERIES ===
+
+  // Mapper transforming RxDB generic documents back into UI-friendly ContentModels.
+  private mapToContentModel(doc: ContentDocType): ContentModel {
+    return {
+      ...(doc.payload as any),
+      isWatched: doc.lists.includes('watched'),
+      isWatchlist: doc.lists.includes('watchlist'),
+      watchedAt: doc.watchedAt
+    };
+  }
+
+  private async getList(listName: string): Promise<ContentModel[]> {
+    const docs = await this.rxdb.db.collections.content.find({
+      selector: { lists: { $elemMatch: { $eq: listName } } }
+    }).exec();
+    return docs.map((d: any) => this.mapToContentModel(d.toJSON()));
+  }
+
+  private async upsertItemToList(content: ContentModel, listName: string) {
+    const mediaType = content.isMovie ? 'movie' : (content.isTv ? 'tv' : 'person');
+    const id = `${mediaType}_${content.contentId}`;
+
+    const existing = await this.rxdb.db.collections.content.findOne({ selector: { id } }).exec();
+    if (existing) {
+      const doc = existing.toJSON() as ContentDocType;
+      if (!doc.lists.includes(listName)) {
+        doc.lists.push(listName);
+        if (listName === 'watched') doc.watchedAt = new Date().toISOString();
+        await this.rxdb.db.collections.content.upsert(doc);
+      }
+    } else {
+      await this.rxdb.db.collections.content.insert({
+        id,
+        tmdbId: content.contentId,
+        mediaType,
+        lists: [listName],
+        addedAt: new Date().toISOString(),
+        watchedAt: listName === 'watched' ? new Date().toISOString() : undefined,
+        payload: content
+      });
+    }
+  }
+
+  private async removeItemFromList(contentId: number, isMovie: boolean, isTv: boolean, listName: string) {
+    const mediaType = isMovie ? 'movie' : (isTv ? 'tv' : 'person');
+    const id = `${mediaType}_${contentId}`;
+    const existing = await this.rxdb.db.collections.content.findOne({ selector: { id } }).exec();
+    if (existing) {
+      const doc = existing.toJSON() as ContentDocType;
+      doc.lists = doc.lists.filter(l => l !== listName);
+      if (doc.lists.length === 0) {
+        await existing.remove(); // Prune completely if orphan
+      } else {
+        await this.rxdb.db.collections.content.upsert(doc);
+      }
+    }
+  }
+
+  // === API CONTRACT ===
+
+  async getInbox(): Promise<ContentModel[]> { return this.getList('inbox'); }
+  async getWatchlist(): Promise<ContentModel[]> { return this.getList('watchlist'); }
+  async getWatched(): Promise<ContentModel[]> { return this.getList('watched'); }
+
+  async addToInbox(contents: ContentModel[]): Promise<void> {
+    for (const c of contents) await this.upsertItemToList(c, 'inbox');
+  }
   async bulkAddToWatchlist(contents: ContentModel[]): Promise<void> {
-    const watchlist = await this.getList(this.WATCHLIST_KEY);
-    let added = false;
-
-    for (const content of contents) {
-      if (!watchlist.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie && c.isTv === content.isTv)) {
-        watchlist.push(content);
-        added = true;
-      }
-    }
-
-    if (added) {
-      await this.setList(this.WATCHLIST_KEY, watchlist);
-      this.emitStorageChanged();
-    }
+    for (const c of contents) await this.upsertItemToList(c, 'watchlist');
   }
-
-  async removeFromWatchlist(
-    contentId: number,
-    isMovie: boolean,
-    isTv: boolean
-  ): Promise<void> {
-    const watchlist = await this.getList(this.WATCHLIST_KEY);
-    const updated = watchlist.filter(
-      (c) =>
-        !(c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv)
-    );
-    await this.setList(this.WATCHLIST_KEY, updated);
-    this.emitStorageChanged();
-  }
-
-  async getWatchlist(): Promise<ContentModel[]> {
-    return this.getList(this.WATCHLIST_KEY);
-  }
-
-  async addToWatched(content: ContentModel): Promise<void> {
-    const watched = await this.getList(this.WATCHED_KEY);
-    if (
-      !watched.find(
-        (c) =>
-          c.contentId === content.contentId &&
-          c.isMovie === content.isMovie &&
-          c.isTv === content.isTv
-      )
-    ) {
-      content.watchedAt = new Date().toISOString();
-      watched.push(content);
-      await this.setList(this.WATCHED_KEY, watched);
-    }
-    this.emitStorageChanged();
-  }
-
   async bulkAddToWatched(contents: ContentModel[]): Promise<void> {
-    const watched = await this.getList(this.WATCHED_KEY);
-    let added = false;
-
-    for (const content of contents) {
-      if (!watched.find(c => c.contentId === content.contentId && c.isMovie === content.isMovie && c.isTv === content.isTv)) {
-        content.watchedAt = new Date().toISOString();
-        watched.push(content);
-        added = true;
-      }
-    }
-
-    if (added) {
-      await this.setList(this.WATCHED_KEY, watched);
-      this.emitStorageChanged();
-    }
+    for (const c of contents) await this.upsertItemToList(c, 'watched');
   }
 
-  async removeFromWatched(
-    contentId: number,
-    isMovie: boolean,
-    isTv: boolean
-  ): Promise<void> {
-    const watched = await this.getList(this.WATCHED_KEY);
-    const updated = watched.filter(
-      (c) =>
-        !(c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv)
-    );
-    await this.setList(this.WATCHED_KEY, updated);
-    this.emitStorageChanged();
+  async addToWatchlist(content: ContentModel): Promise<void> { await this.upsertItemToList(content, 'watchlist'); }
+  async addToWatched(content: ContentModel): Promise<void> { await this.upsertItemToList(content, 'watched'); }
+
+  async removeFromInbox(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
+    await this.removeItemFromList(contentId, isMovie, isTv, 'inbox');
   }
-
-  async getWatched(): Promise<ContentModel[]> {
-    return this.getList(this.WATCHED_KEY);
+  async bulkRemoveFromInbox(contents: ContentModel[]): Promise<void> {
+    for (const c of contents) await this.removeItemFromList(c.contentId, c.isMovie, c.isTv, 'inbox');
   }
-
-  async saveSettings(settings: SettingModel): Promise<void> {
-    await Preferences.set({
-      key: this.SETTINGS_KEY,
-      value: JSON.stringify(settings),
-    });
-    this.emitStorageChanged();
+  async removeFromWatchlist(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
+    await this.removeItemFromList(contentId, isMovie, isTv, 'watchlist');
   }
-
-  async getSettings(): Promise<SettingModel | null> {
-    const { value } = await Preferences.get({ key: this.SETTINGS_KEY });
-    return value ? JSON.parse(value) : null;
-  }
-
-  async clearAll(): Promise<void> {
-    await Preferences.clear();
-    this.emitStorageChanged();
-  }
-
-  async moveFromWatchlistToWatched(
-    contentId: number,
-    isMovie: boolean,
-    isTv: boolean
-  ): Promise<void> {
-    const watchlist = await this.getList(this.WATCHLIST_KEY);
-    const watched = await this.getList(this.WATCHED_KEY);
-
-    const content = watchlist.find(
-      (c) =>
-        c.contentId === contentId && c.isMovie === isMovie && c.isTv === isTv
-    );
-    if (content) {
-      await this.removeFromWatchlist(contentId, isMovie, isTv);
-
-      content.isWatched = true;
-      content.watchedAt = new Date().toISOString();
-      content.isWatchlist = false;
-
-      if (
-        !watched.find(
-          (w) =>
-            w.contentId === content.contentId &&
-            w.isMovie === content.isMovie &&
-            w.isTv === content.isTv
-        )
-      ) {
-        watched.push(content);
-        await this.setList(this.WATCHED_KEY, watched);
-      }
-
-      this.lastMovedContents = [content];
-    }
-    this.emitStorageChanged();
-  }
-
-  async bulkMoveFromWatchlistToWatched(
-    contentIds: number[],
-    isMovie: boolean,
-    isTv: boolean
-  ): Promise<void> {
-    const watchlist = await this.getList(this.WATCHLIST_KEY);
-    const watched = await this.getList(this.WATCHED_KEY);
-
-    const moving = watchlist.filter(
-      (c) =>
-        contentIds.includes(c.contentId) &&
-        c.isMovie === isMovie &&
-        c.isTv === isTv
-    );
-
-    if (moving.length > 0) {
-      const updatedWatchlist = watchlist.filter(
-        (c) => !contentIds.includes(c.contentId)
-      );
-
-      const updatedWatched = [
-        ...watched,
-        ...moving.map((c) => ({ ...c, isWatched: true, isWatchlist: false, watchedAt: new Date().toISOString() })),
-      ];
-
-      await this.setList(this.WATCHLIST_KEY, updatedWatchlist);
-      await this.setList(this.WATCHED_KEY, updatedWatched);
-
-      this.lastMovedContents = moving;
-    }
-    this.emitStorageChanged();
-  }
-
-  async undoLastMove(): Promise<void> {
-    if (this.lastMovedContents.length > 0) {
-      const watchlist = await this.getList(this.WATCHLIST_KEY);
-      const watched = await this.getList(this.WATCHED_KEY);
-
-      const updatedWatched = watched.filter(
-        (w) => !this.lastMovedContents.some((m) => m.contentId === w.contentId)
-      );
-
-      const restored = this.lastMovedContents.map((c) => ({
-        ...c,
-        isWatched: false,
-        isWatchlist: true,
-      }));
-
-      await this.setList(this.WATCHED_KEY, updatedWatched);
-      await this.setList(this.WATCHLIST_KEY, [...watchlist, ...restored]);
-
-      this.lastMovedContents = [];
-      this.emitStorageChanged();
-    }
+  async removeFromWatched(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
+    await this.removeItemFromList(contentId, isMovie, isTv, 'watched');
   }
 
   async bulkRemove(contentIds: number[], isMovie: boolean, isTv: boolean, fromWatchlist: boolean): Promise<void> {
-    const key = fromWatchlist ? this.WATCHLIST_KEY : this.WATCHED_KEY;
-    const list = await this.getList(key);
+    const listName = fromWatchlist ? 'watchlist' : 'watched';
+    for (const id of contentIds) {
+      await this.removeItemFromList(id, isMovie, isTv, listName);
+    }
+  }
 
-    const updated = list.filter(c =>
-      !(contentIds.includes(c.contentId) && c.isMovie === isMovie && c.isTv === isTv)
-    );
-    await this.setList(key, updated);
-    this.emitStorageChanged();
+  async saveSettings(settings: SettingModel): Promise<void> {
+    await this.rxdb.db.collections.settings.upsert({
+      id: 'user_preferences',
+      allowAdultContent: settings.allowAdultContent,
+      theme: settings.theme
+    });
+  }
+
+  async getSettings(): Promise<SettingModel | null> {
+    const doc = await this.rxdb.db.collections.settings.findOne({ selector: { id: 'user_preferences' } }).exec();
+    if (doc) {
+      const j = doc.toJSON();
+      return { allowAdultContent: j.allowAdultContent, theme: j.theme };
+    }
+    return null;
+  }
+
+  async clearAll(): Promise<void> {
+    await this.rxdb.db.collections.content.find().remove();
+    await this.rxdb.db.collections.settings.find().remove();
+  }
+
+  async moveFromWatchlistToWatched(contentId: number, isMovie: boolean, isTv: boolean): Promise<void> {
+    const mediaType = isMovie ? 'movie' : (isTv ? 'tv' : 'person');
+    const id = `${mediaType}_${contentId}`;
+    const existing = await this.rxdb.db.collections.content.findOne({ selector: { id } }).exec();
+
+    if (existing) {
+      const doc = existing.toJSON() as ContentDocType;
+      doc.lists = doc.lists.filter(l => l !== 'watchlist');
+      if (!doc.lists.includes('watched')) doc.lists.push('watched');
+      doc.watchedAt = new Date().toISOString();
+      await this.rxdb.db.collections.content.upsert(doc);
+
+      const model = this.mapToContentModel(doc);
+      this.lastMovedContents = [model];
+    }
+  }
+
+  async bulkMoveFromWatchlistToWatched(contentIds: number[], isMovie: boolean, isTv: boolean): Promise<void> {
+    const mediaType = isMovie ? 'movie' : (isTv ? 'tv' : 'person');
+    const moved: ContentModel[] = [];
+
+    for (const cid of contentIds) {
+      const id = `${mediaType}_${cid}`;
+      const existing = await this.rxdb.db.collections.content.findOne({ selector: { id } }).exec();
+      if (existing) {
+        const doc = existing.toJSON() as ContentDocType;
+        doc.lists = doc.lists.filter(l => l !== 'watchlist');
+        if (!doc.lists.includes('watched')) doc.lists.push('watched');
+        doc.watchedAt = new Date().toISOString();
+        await this.rxdb.db.collections.content.upsert(doc);
+        moved.push(this.mapToContentModel(doc));
+      }
+    }
+    this.lastMovedContents = moved;
+  }
+
+  async undoLastMove(): Promise<void> {
+    for (const item of this.lastMovedContents) {
+      const mediaType = item.isMovie ? 'movie' : (item.isTv ? 'tv' : 'person');
+      const id = `${mediaType}_${item.contentId}`;
+      const existing = await this.rxdb.db.collections.content.findOne({ selector: { id } }).exec();
+      if (existing) {
+        const doc = existing.toJSON() as ContentDocType;
+        doc.lists = doc.lists.filter((l: string) => l !== 'watched');
+        if (!doc.lists.includes('watchlist')) doc.lists.push('watchlist');
+        await this.rxdb.db.collections.content.upsert(doc);
+      }
+    }
+    this.lastMovedContents = [];
   }
 }

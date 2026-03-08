@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -21,7 +21,8 @@ export class TmdbSearchService {
 
     constructor(
         private http: HttpClient,
-        private cacheService: CacheService
+        private cacheService: CacheService,
+        private ngZone: NgZone
     ) { }
 
     private handleError(error: any) {
@@ -29,7 +30,7 @@ export class TmdbSearchService {
         return throwError(() => new Error('Something went wrong with the TMDB API.'));
     }
 
-    private getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number, skipCache: boolean = false): Observable<T> {
+    public getWithCache<T>(key: string, fetch$: Observable<T>, ttl?: number, skipCache: boolean = false): Observable<T> {
         if (skipCache) {
             return fetch$;
         }
@@ -37,16 +38,24 @@ export class TmdbSearchService {
         return new Observable<T>(observer => {
             this.cacheService.get(key).then(cached => {
                 if (cached) {
-                    observer.next(cached);
-                    observer.complete();
+                    this.ngZone.run(() => {
+                        observer.next(cached);
+                        observer.complete();
+                    });
                 } else {
                     fetch$.subscribe({
                         next: (data) => {
                             this.cacheService.set(key, data, ttl);
-                            observer.next(data);
-                            observer.complete();
+                            this.ngZone.run(() => {
+                                observer.next(data);
+                                observer.complete();
+                            });
                         },
-                        error: (err) => observer.error(err)
+                        error: (err) => {
+                            this.ngZone.run(() => {
+                                observer.error(err);
+                            });
+                        }
                     });
                 }
             });

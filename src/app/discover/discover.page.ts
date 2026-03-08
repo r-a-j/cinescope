@@ -16,6 +16,11 @@ import {
 import { HeaderComponent } from '../header/header.component';
 import { MediaCarouselComponent } from '../shared/components/media-carousel/media-carousel.component';
 import { TmdbSearchService } from 'src/services/tmdb-search.service';
+import { TmdbDiscoverService } from '../core/api/tmdb/tmdb-discover.service';
+import { TmdbMoviesService } from '../core/api/tmdb/tmdb-movies.service';
+import { TmdbTrendingService } from '../core/api/tmdb/tmdb-trending.service';
+import { TmdbPeopleService } from '../core/api/tmdb/tmdb-people.service';
+import { TmdbTvService } from '../core/api/tmdb/tmdb-tv.service';
 import { Observable } from 'rxjs';
 import { addIcons } from 'ionicons';
 import { arrowUpOutline, star } from 'ionicons/icons';
@@ -23,11 +28,10 @@ import { RouterModule } from '@angular/router';
 
 interface DiscoverSection {
   title: string;
-  method: string;
+  fetch$: Observable<any>;
   viewAllRoute?: string;
   type: 'movie' | 'tv' | 'person';
   items: any[];
-  params?: any;
 }
 
 @Component({
@@ -96,73 +100,26 @@ export class DiscoverPage implements OnInit, OnDestroy {
   desiSections: DiscoverSection[] = [];
   actorSections: DiscoverSection[] = [];
 
-  bollywoodSections: DiscoverSection[] = [
-    {
-      title: 'Trending Bollywood',
-      method: 'getTrendingBollywoodMovies',
-      type: 'movie',
-      items: []
-    },
-    {
-      title: 'Top Rated Hindi',
-      method: 'getDiscoverMovies',
-      params: {
-        with_original_language: 'hi',
-        with_origin_country: 'IN',
-        sort_by: 'vote_average.desc',
-        'vote_count.gte': 300
-      },
-      type: 'movie',
-      items: []
-    },
-    {
-      title: 'Upcoming Hindi',
-      method: 'getUpcomingMovies',
-      type: 'movie',
-      items: []
-    }
-  ];
+  bollywoodSections: DiscoverSection[] = [];
+  topRatedSections: DiscoverSection[] = [];
+  trendingSections: DiscoverSection[] = [];
 
-  topRatedSections: DiscoverSection[] = [
-    {
-      title: 'Top Rated Movies',
-      method: 'getTopRatedMovies',
-      type: 'movie',
-      items: []
-    },
-    {
-      title: 'Top Rated TV Shows',
-      method: 'getTopRatedTV',
-      type: 'tv',
-      items: []
-    }
-  ];
-
-  trendingSections: DiscoverSection[] = [
-    {
-      title: 'Trending Movies',
-      method: 'getTrendingMovies',
-      type: 'movie',
-      items: []
-    },
-    {
-      title: 'Trending TV',
-      method: 'getTrendingTv',
-      type: 'tv',
-      items: []
-    }
-  ];
-
-  constructor(private tmdbService: TmdbSearchService) {
+  constructor(
+    private legacySearchService: TmdbSearchService,
+    private tmdbDiscover: TmdbDiscoverService,
+    private tmdbMovies: TmdbMoviesService,
+    private tmdbTrending: TmdbTrendingService,
+    private tmdbPeople: TmdbPeopleService,
+    private tmdbTv: TmdbTvService
+  ) {
     addIcons({ star, arrowUpOutline });
   }
 
   getQueryParams(section: DiscoverSection) {
     return {
       title: section.title,
-      method: section.method,
       type: section.type,
-      extraParams: section.params ? JSON.stringify(section.params) : null
+      // Note: We might need a different approach for view-all routing since we removed string methods
     };
   }
 
@@ -236,14 +193,17 @@ export class DiscoverPage implements OnInit, OnDestroy {
 
     switch (this.segmentValue) {
       case 'bollywood':
+        this.generateBollywoodSections();
         this.currentSections = this.bollywoodSections;
         break;
 
       case 'topRated':
+        this.generateTopRatedSections();
         this.currentSections = this.topRatedSections;
         break;
 
       case 'trending':
+        this.generateTrendingSections();
         this.currentSections = this.trendingSections;
         break;
 
@@ -272,32 +232,102 @@ export class DiscoverPage implements OnInit, OnDestroy {
     }
   }
 
+  generateBollywoodSections() {
+    this.bollywoodSections = [
+      {
+        title: 'Trending Bollywood',
+        fetch$: this.tmdbDiscover.discoverMovies({
+          with_original_language: 'hi',
+          with_origin_country: 'IN',
+          sort_by: 'popularity.desc',
+        }),
+        type: 'movie',
+        items: []
+      },
+      {
+        title: 'Top Rated Hindi',
+        fetch$: this.tmdbDiscover.discoverMovies({
+          with_original_language: 'hi',
+          with_origin_country: 'IN',
+          sort_by: 'vote_average.desc',
+          'vote_count.gte': 300
+        }),
+        type: 'movie',
+        items: []
+      },
+      {
+        title: 'Upcoming Hindi',
+        fetch$: this.tmdbDiscover.discoverMovies({
+          with_original_language: 'hi',
+          with_origin_country: 'IN',
+          sort_by: 'popularity.desc',
+          with_release_type: '2|3',
+          'primary_release_date.gte': new Date().toISOString().split('T')[0],
+          'primary_release_date.lte': new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString().split('T')[0]
+        }),
+        type: 'movie',
+        items: []
+      }
+    ];
+  }
+
+  generateTopRatedSections() {
+    this.topRatedSections = [
+      {
+        title: 'Top Rated Movies',
+        fetch$: this.tmdbMovies.getTopRatedMovies('en-US', 1),
+        type: 'movie',
+        items: []
+      },
+      {
+        title: 'Top Rated TV Shows',
+        fetch$: this.tmdbTv.getTopRatedTvShows('en-US', 1),
+        type: 'tv',
+        items: []
+      }
+    ];
+  }
+
+  generateTrendingSections() {
+    this.trendingSections = [
+      {
+        title: 'Trending Movies',
+        fetch$: this.tmdbTrending.getTrendingMovies('week'),
+        type: 'movie',
+        items: []
+      },
+      {
+        title: 'Trending TV',
+        fetch$: this.tmdbTrending.getTrendingTvShows('week'),
+        type: 'tv',
+        items: []
+      }
+    ];
+  }
+
   generateActorSections() {
     this.actorSections = [
       {
-        title: 'Desi Icons 🔥',
-        method: 'getTrendingIndianStars',
+        title: 'Trending Worldwide',
+        fetch$: this.tmdbTrending.getTrendingPeople('week'),
         type: 'person',
         items: []
       },
       {
-        title: 'Trending Worldwide',
-        method: 'getPopularPersons',
-        params: { page: 2 },
+        title: 'Popular Actors',
+        fetch$: this.tmdbPeople.getPopularPeople('en-US', 1),
         type: 'person',
         items: []
       },
       {
         title: 'Next Gen & Rising 🚀',
-        method: 'getPopularPersons',
-        params: { page: 3 },
+        fetch$: this.tmdbPeople.getPopularPeople('en-US', 2),
         type: 'person',
         items: []
       },
       {
         title: 'The G.O.A.T.s 🌟',
-        method: 'getPopularPersons',
-        params: { page: 1 },
+        fetch$: this.tmdbPeople.getPopularPeople('en-US', 3),
         type: 'person',
         items: []
       },
@@ -310,59 +340,60 @@ export class DiscoverPage implements OnInit, OnDestroy {
     this.desiSections = [
       {
         title: `🔥 Trending Pan-India`,
-        method: 'getTrendingIndia',
+        fetch$: this.tmdbDiscover.discoverMovies({
+          with_origin_country: 'IN',
+          sort_by: 'popularity.desc',
+          'vote_count.gte': 50
+        }),
         type: 'movie',
         items: [],
         viewAllRoute: `/view-all/trending-pan-india`
       },
       {
         title: `New ${langLabel} Releases`,
-        method: 'getDiscoverMovies',
-        type: 'movie',
-        items: [],
-        params: {
+        fetch$: this.tmdbDiscover.discoverMovies({
           with_original_language: this.selectedLanguage,
           sort_by: 'primary_release_date.desc',
           'primary_release_date.lte': new Date().toISOString().split('T')[0],
-          with_origin_country: 'IN'
-        },
+          with_origin_country: 'IN',
+          'vote_count.gte': 5 // Added this to prevent obscure results
+        }),
+        type: 'movie',
+        items: [],
         viewAllRoute: `/view-all/new-releases/${this.selectedLanguage}`
       },
       {
         title: `Popular in ${langLabel}`,
-        method: 'getDiscoverMovies',
-        type: 'movie',
-        items: [],
-        params: {
+        fetch$: this.tmdbDiscover.discoverMovies({
           with_original_language: this.selectedLanguage,
           sort_by: 'popularity.desc',
           with_origin_country: 'IN'
-        },
+        }),
+        type: 'movie',
+        items: [],
         viewAllRoute: `/view-all/popular/${this.selectedLanguage}`
       },
       {
         title: `Top Rated ${langLabel}`,
-        method: 'getDiscoverMovies',
-        type: 'movie',
-        items: [],
-        params: {
+        fetch$: this.tmdbDiscover.discoverMovies({
           with_original_language: this.selectedLanguage,
           sort_by: 'vote_average.desc',
           'vote_count.gte': 50,
           with_origin_country: 'IN'
-        },
+        }),
+        type: 'movie',
+        items: [],
         viewAllRoute: `/view-all/top-rated/${this.selectedLanguage}`
       },
       {
         title: `${langLabel} Action Hits`,
-        method: 'getDiscoverMovies',
-        type: 'movie',
-        items: [],
-        params: {
+        fetch$: this.tmdbDiscover.discoverMovies({
           with_original_language: this.selectedLanguage,
           with_genres: '28',
           sort_by: 'popularity.desc'
-        },
+        }),
+        type: 'movie',
+        items: [],
         viewAllRoute: `/view-all/action-hits/${this.selectedLanguage}`
       }
     ];
@@ -376,33 +407,24 @@ export class DiscoverPage implements OnInit, OnDestroy {
       if (section.items.length === 0) {
         pendingCalls++;
 
-        let obs: Observable<any>;
+        // Generate a unique cache key based on the segment and section tile to leverage Capacitor Cache
+        const cacheKey = `discover_${this.segmentValue}_${this.selectedLanguage}_${section.title.replace(/\s+/g, '_')}`;
 
-        if (section.method === 'getDiscoverMovies') {
-          obs = this.tmdbService.getDiscoverMovies(section.params);
-        } else if ((this.tmdbService as any)[section.method]) {
-          const args = section.params ? Object.values(section.params) : [];
-          obs = (this.tmdbService as any)[section.method](...args);
-        } else {
-          console.warn(`Method ${section.method} not found in TmdbSearchService`);
-          pendingCalls--;
-          return;
-        }
-
-        obs.subscribe({
-          next: (data: any) => {
-            section.items = data.results || [];
-            if (index === 0 && section.items.length > 0) {
-              this.initHeroRotation(section.items, section.type);
+        this.legacySearchService.getWithCache(cacheKey, section.fetch$)
+          .subscribe({
+            next: (data: any) => {
+              section.items = data.results || [];
+              if (index === 0 && section.items.length > 0) {
+                this.initHeroRotation(section.items, section.type);
+              }
+              pendingCalls--;
+              if (pendingCalls <= 0) this.isLoading = false;
+            },
+            error: () => {
+              pendingCalls--;
+              if (pendingCalls <= 0) this.isLoading = false;
             }
-            pendingCalls--;
-            if (pendingCalls <= 0) this.isLoading = false;
-          },
-          error: () => {
-            pendingCalls--;
-            if (pendingCalls <= 0) this.isLoading = false;
-          }
-        });
+          });
       } else {
         if (index === 0 && section.items.length > 0) {
           this.initHeroRotation(section.items, section.type);

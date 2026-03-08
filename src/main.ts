@@ -7,6 +7,16 @@ import { AppComponent } from './app/app.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+import { APP_INITIALIZER } from '@angular/core';
+import { RxdbService } from './services/rxdb.service';
+import { MigrationService } from './services/migration.service';
+
+function initializeApp(rxdbService: RxdbService, migrationService: MigrationService) {
+  return async () => {
+    await rxdbService.initDb();
+    await migrationService.runMigration();
+  };
+}
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -17,5 +27,11 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(
       withInterceptors([authInterceptor])
     ),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [RxdbService, MigrationService],
+      multi: true
+    }
   ],
 });
