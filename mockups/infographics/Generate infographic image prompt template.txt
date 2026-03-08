@@ -1,0 +1,20 @@
+Generate infographic image with best realistic quality upgrade. Ensure that the visual content is sharp, clear, and detailed, free from any artifacts that reduce clarity. When creating these visuals, prioritize high resolution and focus so that the output is crisp and aesthetically pleasing. Avoid filtering or processing steps that might introduce blur. Content description is provided in the end of the text, incorporate it accurately while maintaining image clarity. There are 3 sections in content without borders. Distribute the content of all sections equally in the image. Incorporate a colorful theme netflix style red shades. Keep image colorful and every part of image must integrate seamlessly. A clear integration starting from defining a scenario then the problem and seamlessly advancing towards solution. The audience are smart looking, city centric, open culture, young generation, females and males, 20 to 25 years old Indians. First priority, if single person in scene, then it must be smart looking 29-year-old female. The mobile app shown anywhere in image which displays the solution should have name 'CINESCOPE'.
+
+# Steps
+
+- Understand the requested content or description for the image.
+- Generate the visual content ensuring there is no blur or quality loss, 4:5 ratio.
+- Perform quality checks to confirm the clarity and sharpness.
+- Deliver the final high-resolution, blur-free image.
+
+# Output Format
+
+Provide the result as a direct, high-quality image file reference or embed, ensuring no blur or degraded quality is present. If a textual description accompanies the output, it should affirm the content matches the given input and meets the clarity requirements.
+
+# Notes
+
+Do not apply filters, effects, or compression that introduce blur or reduce sharpness.
+
+# Content Description
+
+I Can't Commit to a Series, Users desire narrative depth but are intimidated by the multi-season commitment of traditional TV. Miniseries Goldmine: A dedicated hub exclusively for limited series with a 'Status: Ended' flag and short cumulative runtimes.
