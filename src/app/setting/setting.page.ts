@@ -22,6 +22,7 @@ import { Filesystem } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { Browser } from '@capacitor/browser';
+import { App, AppInfo } from '@capacitor/app';
 
 @Component({
   selector: 'app-setting',
@@ -37,6 +38,7 @@ import { Browser } from '@capacitor/browser';
 export class SettingPage implements OnInit {
   allowAdultContent: boolean = false;
   theme: 'system' | 'light' | 'dark' = 'system';
+  appVersion: string = '';
 
   constructor(
     private router: Router,
@@ -58,6 +60,18 @@ export class SettingPage implements OnInit {
         this.theme = settings.theme || 'system';
       }
     });
+
+    this.loadAppVersion();
+  }
+
+  async loadAppVersion() {
+    try {
+      const info: AppInfo = await App.getInfo();
+      this.appVersion = info.version;
+    } catch (e) {
+      console.warn('Could not load app version', e);
+      this.appVersion = '3.2.0'; // Fallback
+    }
   }
 
   async saveCurrentSettings(): Promise<void> {

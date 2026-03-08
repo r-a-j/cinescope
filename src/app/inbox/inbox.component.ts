@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChildren, QueryList, AfterViewInit, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChildren, QueryList, AfterViewInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController, GestureController, GestureDetail, Gesture } from '@ionic/angular';
 import { Router } from '@angular/router';
@@ -54,7 +54,8 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
         private toastController: ToastController,
         private gestureCtrl: GestureController,
         private router: Router,
-        private ngZone: NgZone
+        private ngZone: NgZone,
+        private cdr: ChangeDetectorRef
     ) {
         addIcons({ checkmarkCircleOutline, imageOutline, close, checkmarkDone, bookmark, star, listOutline, albumsOutline, trashOutline, checkmarkDoneOutline, bookmarkOutline, searchSharp, settingsSharp });
     }
@@ -109,6 +110,10 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
         }
     }
 
+    trackById(index: number, item: ContentModel) {
+        return item.contentId + '-' + item.isMovie;
+    }
+
     isNew(item: ContentModel): boolean {
         if (!item.addedAt) return false;
         const added = new Date(item.addedAt).getTime();
@@ -127,9 +132,11 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     selectAll() {
-        if (this.selectedIds.size === this.inboxItems.length) {
+        // ✨ FIX: If ANY items are selected (partially or fully), clear them all.
+        if (this.selectedIds.size > 0) {
             this.selectedIds.clear();
         } else {
+            // If NOTHING is selected, select everything.
             this.inboxItems.forEach(item => {
                 this.selectedIds.add(this.storageService['uniqKey'](item));
             });
@@ -158,10 +165,21 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const itemToProcess = this.inboxItems[0];
 
+        // 🚨 1. CAPTURE THE EXACT DOM NODE BEFORE IT DELETES
+        const swipedNode = this.tinderCards.first?.nativeElement;
+
         setTimeout(async () => {
+            // 🚨 2. SCRUB IT CLEAN SO IT IS SAFE TO RECYCLE
+            if (swipedNode) {
+                swipedNode.style.transition = 'none';
+                swipedNode.style.transform = '';
+            }
+
+            // 3. Now shift the array safely
             this.inboxItems.shift();
             this.updateCurrentItem();
             this.resetAnimationState();
+
             await this.storageService.removeFromInbox(itemToProcess.contentId, itemToProcess.isMovie, itemToProcess.isTv);
         }, 300);
     }
@@ -174,7 +192,16 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const itemToProcess = this.inboxItems[0];
 
+        // 🚨 1. CAPTURE
+        const swipedNode = this.tinderCards.first?.nativeElement;
+
         setTimeout(async () => {
+            // 🚨 2. SCRUB
+            if (swipedNode) {
+                swipedNode.style.transition = 'none';
+                swipedNode.style.transform = '';
+            }
+
             this.inboxItems.shift();
             this.updateCurrentItem();
             this.resetAnimationState();
@@ -192,7 +219,16 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const itemToProcess = this.inboxItems[0];
 
+        // 🚨 1. CAPTURE
+        const swipedNode = this.tinderCards.first?.nativeElement;
+
         setTimeout(async () => {
+            // 🚨 2. SCRUB
+            if (swipedNode) {
+                swipedNode.style.transition = 'none';
+                swipedNode.style.transform = '';
+            }
+
             this.inboxItems.shift();
             this.updateCurrentItem();
             this.resetAnimationState();
@@ -205,13 +241,6 @@ export class InboxComponent implements OnInit, OnDestroy, AfterViewInit {
     private resetAnimationState() {
         this.swipeClass = '';
         this.isAnimating = false;
-
-        if (this.tinderCards && this.tinderCards.first) {
-            const el = this.tinderCards.first.nativeElement;
-            el.style.transition = 'none';
-            el.style.transform = '';
-            void el.offsetWidth;
-        }
     }
 
     toggleViewMode() {

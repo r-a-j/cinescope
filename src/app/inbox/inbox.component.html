@@ -31,66 +31,57 @@
             <p>You're all caught up!</p>
         </div>
 
-        <div *ngIf="viewMode === 'swipe' && inboxItems.length > 0" class="card-stack">
+        <div *ngIf="viewMode === 'swipe' && inboxItems.length > 0" class="card-stack"
+            [class.is-animating]="isAnimating">
 
-            <div class="tinder-card next-card" *ngIf="inboxItems.length > 1">
+            <div *ngFor="let item of inboxItems.slice(0, 2); let i = index; trackBy: trackById" #tinderCard
+                class="tinder-card" [class.top-card]="i === 0" [class.next-card]="i === 1"
+                [ngClass]="i === 0 ? swipeClass : ''" [class.animating]="isAnimating && i === 0">
+
                 <div class="poster-container">
-                    <img *ngIf="inboxItems[1].poster_path"
-                        [src]="'https://image.tmdb.org/t/p/w500' + inboxItems[1].poster_path" alt="Poster">
-                    <div *ngIf="!inboxItems[1].poster_path" class="placeholder-image">
-                        <ion-icon name="image-outline"></ion-icon>
-                        <p>No Image Available</p>
-                    </div>
+                    <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholder.png'"
+                        alt="Poster">
                     <div class="gradient-overlay"></div>
                 </div>
+
                 <div class="info-container">
-                    <h2>{{ inboxItems[1].title || inboxItems[1].name }}</h2>
+                    <h2>{{ item.title || item.name }}</h2>
                     <div class="meta-row">
-                        <span class="year">{{ getYear(inboxItems[1]) }}</span>
-                        <span class="rating-badge" *ngIf="inboxItems[1].vote_average">
+                        <span class="year">{{ getYear(item) }}</span>
+                        <span class="rating-badge" *ngIf="item.vote_average">
                             <ion-icon name="star"></ion-icon>
-                            {{ inboxItems[1].vote_average | number:'1.1-1' }}
+                            {{ item.vote_average | number:'1.1-1' }}
                         </span>
                     </div>
                 </div>
-            </div>
 
-            <div #tinderCard class="tinder-card top-card" [ngClass]="swipeClass" [class.animating]="isAnimating">
-                <div class="poster-container">
-                    <img *ngIf="inboxItems[0].poster_path"
-                        [src]="'https://image.tmdb.org/t/p/w500' + inboxItems[0].poster_path" alt="Poster">
-                    <div *ngIf="!inboxItems[0].poster_path" class="placeholder-image">
-                        <ion-icon name="image-outline"></ion-icon>
-                        <p>No Image Available</p>
-                    </div>
-                    <div class="gradient-overlay"></div>
-                </div>
-                <div class="info-container">
-                    <h2>{{ inboxItems[0].title || inboxItems[0].name }}</h2>
-                    <div class="meta-row">
-                        <span class="year">{{ getYear(inboxItems[0]) }}</span>
-                        <span class="rating-badge" *ngIf="inboxItems[0].vote_average">
-                            <ion-icon name="star"></ion-icon>
-                            {{ inboxItems[0].vote_average | number:'1.1-1' }}
-                        </span>
-                    </div>
-                </div>
             </div>
 
         </div>
 
         <div class="action-buttons" *ngIf="viewMode === 'swipe' && inboxItems.length > 0">
-            <ion-fab-button class="fab-discard" (click)="discard()" [disabled]="isAnimating">
-                <ion-icon name="close"></ion-icon>
-            </ion-fab-button>
 
-            <ion-fab-button class="fab-watched" (click)="markWatched()" [disabled]="isAnimating">
-                <ion-icon name="checkmark-done"></ion-icon>
-            </ion-fab-button>
+            <div class="glass-btn-wrapper">
+                <div class="glass-btn discard" (click)="discard()" [class.disabled]="isAnimating">
+                    <ion-icon name="close"></ion-icon>
+                </div>
+                <span class="swipe-hint">Swipe Left</span>
+            </div>
 
-            <ion-fab-button class="fab-watchlist" (click)="markWatchlist()" [disabled]="isAnimating">
-                <ion-icon name="bookmark"></ion-icon>
-            </ion-fab-button>
+            <div class="glass-btn-wrapper center-up">
+                <div class="glass-btn watched" (click)="markWatched()" [class.disabled]="isAnimating">
+                    <ion-icon name="checkmark-done"></ion-icon>
+                </div>
+                <span class="swipe-hint">Swipe Up</span>
+            </div>
+
+            <div class="glass-btn-wrapper">
+                <div class="glass-btn watchlist" (click)="markWatchlist()" [class.disabled]="isAnimating">
+                    <ion-icon name="bookmark"></ion-icon>
+                </div>
+                <span class="swipe-hint">Swipe Right</span>
+            </div>
+
         </div>
 
         <div *ngIf="viewMode === 'list' && inboxItems.length > 0" class="list-view-container">
@@ -112,10 +103,8 @@
                     (click)="toggleSelection(item)">
                     <ion-checkbox slot="start" [checked]="isSelected(item)"></ion-checkbox>
                     <ion-thumbnail slot="start">
-                        <img *ngIf="item.poster_path" [src]="'https://image.tmdb.org/t/p/w200' + item.poster_path" />
-                        <div *ngIf="!item.poster_path" class="placeholder-thumbnail">
-                            <ion-icon name="image-outline"></ion-icon>
-                        </div>
+                        <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w200' + item.poster_path : 'assets/placeholder.png'"
+                            alt="Thumbnail" />
                     </ion-thumbnail>
                     <ion-label>
                         <div class="title-row">
@@ -136,21 +125,21 @@
                 </ion-item>
             </ion-list>
 
-            <div class="bulk-action-bar">
-                <ion-button class="discard-btn" fill="clear" color="danger" (click)="discardSelected()"
-                    [disabled]="selectedIds.size === 0">
+            <div class="bulk-action-bar glass-dock" [class.visible]="selectedIds.size > 0">
+                <ion-button class="dock-btn danger" fill="clear" (click)="discardSelected()">
                     <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
                 </ion-button>
-                <div class="spacer"></div>
-                <ion-button class="watched-btn" fill="clear" color="success" (click)="watchedSelected()"
-                    [disabled]="selectedIds.size === 0">
-                    <ion-icon slot="start" name="checkmark-done-outline"></ion-icon>
-                    Watched Selected
+
+                <div class="divider"></div>
+
+                <ion-button class="dock-btn success" fill="clear" (click)="watchedSelected()">
+                    <ion-icon slot="icon-only" name="checkmark-done-outline"></ion-icon>
                 </ion-button>
-                <ion-button class="watchlist-btn" fill="clear" color="primary" (click)="watchlistSelected()"
-                    [disabled]="selectedIds.size === 0">
-                    <ion-icon slot="start" name="bookmark-outline"></ion-icon>
-                    Watchlist Selected
+
+                <div class="divider"></div>
+
+                <ion-button class="dock-btn primary" fill="clear" (click)="watchlistSelected()">
+                    <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
                 </ion-button>
             </div>
         </div>
