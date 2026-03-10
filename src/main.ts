@@ -6,6 +6,8 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { DatabaseService } from "./app/core/database/database.service";
+import { provideHttpClient, withInterceptors } from "@angular/common/http";
+import { authInterceptor } from "./app/core/interceptors/auth.interceptor";
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -13,6 +15,7 @@ bootstrapApplication(AppComponent, {
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => {
       const dbService = inject(DatabaseService);
       return dbService.initDatabase().catch(err => {

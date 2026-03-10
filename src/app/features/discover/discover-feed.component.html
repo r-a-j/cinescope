@@ -1,0 +1,36 @@
+@if (isLoading()) {
+<div class="mobile-grid">
+    @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+    <div class="skeleton-poster"></div>
+    }
+</div>
+}
+
+@else if (hasError()) {
+<div class="state-container">
+    <h2>🎬 Oops! Studio lost the tapes.</h2>
+    <p>We couldn't reach the servers. Check your connection.</p>
+    <button (click)="fetchFeed()" class="retry-btn">Try Again</button>
+</div>
+}
+
+@else if (isEmpty()) {
+<div class="state-container">
+    <h2>No Movies Found</h2>
+    <p>Try adjusting your search filters.</p>
+</div>
+}
+
+@else {
+<div class="mobile-grid">
+    @for (movie of movies(); track movie.id) {
+    <div class="movie-card">
+        <img [src]="getImageUrl(movie.poster_path)" [alt]="movie.title" loading="lazy" class="poster-img" />
+        <div class="movie-info">
+            <h3>{{ movie.title }}</h3>
+            <span class="rating">⭐ {{ movie.vote_average | number:'1.1-1' }}</span>
+        </div>
+    </div>
+    }
+</div>
+}
