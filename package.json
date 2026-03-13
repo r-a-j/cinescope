@@ -28,11 +28,13 @@
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@ionic/angular": "^8.8.1",
+    "@ngrx/signals": "^21.0.1",
     "dexie": "^4.3.0",
     "ionicons": "^7.0.0",
     "js-sha256": "^0.11.1",
     "rxdb": "^16.21.1",
     "rxjs": "~7.8.0",
+    "swiper": "^12.1.2",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },

@@ -8,11 +8,11 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
-    filmOutline,
-    tvOutline,
-    flameOutline,
-    hourglassOutline,
-    mailOutline
+    film,
+    tv,
+    flame,
+    hourglass,
+    mail
 } from 'ionicons/icons';
 
 @Component({
@@ -26,13 +26,12 @@ export class TabsComponent {
     public environmentInjector = inject(EnvironmentInjector);
 
     constructor() {
-        // Register the specific icons from your mockups
         addIcons({
-            filmOutline,
-            tvOutline,
-            flameOutline,
-            hourglassOutline,
-            mailOutline
+            film,
+            tv,
+            flame,
+            hourglass,
+            mail
         });
     }
 }

@@ -1,51 +1,87 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit, AfterViewInit } from '@angular/core';
+import { IonContent, IonToolbar, IonSegment, IonSegmentButton, IonLabel, SegmentCustomEvent, IonSkeletonText } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { HeroBannerComponent } from '../../shared/components/hero-banner/hero-banner.component';
 import { SwimlaneComponent } from '../../shared/components/swimlane/swimlane.component';
-import { SwimlaneItem } from 'src/app/shared/models/swimlane-item.interface';
+import { TrendingStore } from 'src/app/core/store/trending.store';
+
+export type DiscoverSection = 'desi-hub' | 'bollywood' | 'trending' | 'top-rated' | 'actors' | 'news';
+
+export interface DiscoverTab {
+    value: DiscoverSection;
+    label: string;
+}
 
 @Component({
     selector: 'app-discover',
     standalone: true,
-    imports: [IonContent, HeaderComponent, HeroBannerComponent, SwimlaneComponent],
+    imports: [
+        IonSkeletonText,
+        IonLabel,
+        IonSegmentButton,
+        IonSegment,
+        IonToolbar,
+        IonContent,
+        HeaderComponent,
+        HeroBannerComponent,
+        SwimlaneComponent,
+        IonSkeletonText
+    ],
+    providers: [TrendingStore],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './discover.page.html',
     styleUrls: ['./discover.page.scss'],
 })
-export class DiscoverPage {
+export class DiscoverPage implements OnInit, AfterViewInit {
+    public store = inject(TrendingStore);
 
-    // ToDo: Remove dummy data to test the horizontal scrolling
-    public dummyMovies: SwimlaneItem[] = [
-        {
-            id: 1,
-            title: 'Prem Pujari',
-            posterUrl: 'assets/placeholders/placeholder.png',
-            bookmarkState: 'none'
-        },
-        {
-            id: 2,
-            title: 'The Night of Life',
-            posterUrl: 'assets/placeholders/placeholder.png',
-            bookmarkState: 'watchlist' // Should show the Red SVG
-        },
-        {
-            id: 3,
-            title: 'Manque',
-            posterUrl: 'assets/placeholders/placeholder.png',
-            bookmarkState: 'watched' // Should show the Teal SVG
-        },
-        {
-            id: 4,
-            title: 'Shatak',
-            posterUrl: 'assets/placeholders/placeholder.png',
-            bookmarkState: 'none'
-        },
-        {
-            id: 5,
-            title: 'Another Hit',
-            posterUrl: 'assets/placeholders/placeholder.png',
-            bookmarkState: 'watchlist'
-        }
+    public activeSection = signal<DiscoverSection>('trending');
+
+    public discoverTabs: DiscoverTab[] = [
+        { value: 'desi-hub', label: 'DESI HUB' },
+        { value: 'bollywood', label: 'BOLLYWOOD' },
+        { value: 'top-rated', label: 'TOP RATED' },
+        { value: 'trending', label: 'TRENDING' },
+        { value: 'actors', label: 'ACTORS' },
+        { value: 'news', label: 'NEWS' }
     ];
+
+    ngOnInit(): void {
+        this.store.loadTrendingData();
+    }
+
+    // NEW: Fire the centering logic right after the DOM initially paints
+    ngAfterViewInit(): void {
+        this.centerActiveTab(this.activeSection());
+    }
+
+    public onSectionChange(event: Event): void {
+        const segmentEvent = event as SegmentCustomEvent;
+        if (segmentEvent.detail.value) {
+            const newSection = segmentEvent.detail.value as DiscoverSection;
+            this.activeSection.set(newSection);
+
+            // NEW: Recenter the scrollbar whenever the user taps a different tab
+            this.centerActiveTab(newSection);
+        }
+    }
+
+    // NEW: The core centering logic
+    private centerActiveTab(section: DiscoverSection): void {
+        // We use requestAnimationFrame to guarantee Angular has finished 
+        // applying the 'active' classes before we calculate the scroll math
+        requestAnimationFrame(() => {
+            // Find the specific segment button in the DOM
+            const button = document.querySelector(`ion-segment-button[value="${section}"]`);
+
+            if (button) {
+                // Command the browser engine to smoothly glide it to the center
+                button.scrollIntoView({
+                    behavior: 'smooth',
+                    inline: 'center', // This is the magic property!
+                    block: 'nearest'
+                });
+            }
+        });
+    }
 }

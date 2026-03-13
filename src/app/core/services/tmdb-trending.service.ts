@@ -44,7 +44,7 @@ export class TmdbTrendingService extends BaseMediaService {
      */
     getTrendingMovies(
         timeWindow: 'day' | 'week' = 'day',
-        language = 'e   n-US'
+        language = 'en-US'
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
         const params = this.buildParams({ language });
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/trending/movie/${timeWindow}`, { params });

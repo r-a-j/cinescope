@@ -1,39 +1,32 @@
 <div class="hero-container">
 
-    <img src="assets/placeholders/placeholder-backdrop.webp" alt="Hero Movie" class="hero-backdrop"
-        fetchpriority="high" />
-    <div class="gradient-overlay"></div>
+    <swiper-container #swiper init="false" effect="fade"
+        [autoplay]="{ delay: 8000, disableOnInteraction: false, pauseOnMouseEnter: true }" speed="800" loop="true"
+        class="hero-swiper">
 
-    <div class="hero-content">
+        @for (item of trendingItems(); track item.id; let i = $index) {
+        <swiper-slide>
 
-        <div class="badge-row">
+            <img [src]="item.backdropUrl" [alt]="item.title" class="hero-backdrop"
+                [attr.loading]="i === 0 ? 'eager' : 'lazy'" />
 
-            @if (true) {
-            <app-badge text="#1 TRENDING" variant="primary"></app-badge>
-            }
+            <div class="gradient-overlay"></div>
 
-            <app-badge text="7.2" variant="dark" iconUrl="assets/badges/imdb.svg">
-            </app-badge>
+            <div class="hero-content">
+                <div class="badge-row">
+                    <app-badge [text]="'#' + (i + 1) + ' TRENDING'" variant="primary"></app-badge>
+                    <app-badge [text]="item.rating.toString()" variant="gold" icon="star"></app-badge>
+                </div>
 
-            <app-badge text="88%" variant="dark" iconUrl="assets/badges/popcornmeter.svg">
-            </app-badge>
+                <h1 class="movie-title">{{ item.title }}</h1>
 
-        </div>
+                <p class="movie-overview">
+                    {{ item.overview }}
+                </p>
+            </div>
 
-        <h1 class="movie-title">WAR MACHINE</h1>
+        </swiper-slide>
+        }
 
-        <div class="metadata-row">
-            <span>2026</span>
-            <span class="dot-separator">•</span>
-            <app-badge text="EN" variant="outline"></app-badge>
-            <span class="dot-separator">•</span>
-            <span>110 MIN</span>
-        </div>
-
-        <p class="movie-overview">
-            On one last grueling mission during Army Ranger training, a combat engineer must lead his unit in a fight
-            against a giant otherworldly killing machine.
-        </p>
-    </div>
-
+    </swiper-container>
 </div>
