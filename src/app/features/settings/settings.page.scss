@@ -1,0 +1,66 @@
+ion-title {
+    font-family: var(--font-display);
+    letter-spacing: 1px;
+}
+
+// Custom Styling for the inset lists to match our dark theme
+.cinescope-list {
+    background: #111111; // Dark card background
+    margin-bottom: 24px;
+
+    ion-list-header {
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        color: var(--ion-color-step-300);
+        letter-spacing: 1px;
+        padding-bottom: 8px;
+    }
+
+    ion-item {
+        --background: #111111;
+        --color: #ffffff;
+        --border-color: #222222;
+        font-weight: 500;
+
+        ion-icon {
+            font-size: 1.2rem;
+        }
+    }
+}
+
+// Footer Styling
+.tmdb-footer {
+    text-align: center;
+    padding: 32px 24px;
+
+    .tmdb-logo {
+        width: 80px;
+        opacity: 0.6;
+        margin-bottom: 12px;
+    }
+
+    .tmdb-disclaimer {
+        color: var(--ion-color-medium);
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-bottom: 16px;
+    }
+
+    .footer-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+
+        .divider {
+            color: var(--ion-color-medium);
+            font-size: 0.8rem;
+        }
+
+        ion-button {
+            --padding-start: 4px;
+            --padding-end: 4px;
+            font-size: 0.8rem;
+        }
+    }
+}

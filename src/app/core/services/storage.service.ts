@@ -55,6 +55,14 @@ export class StorageService {
     // ✍️ MUTATIONS (Write, Update, Delete)
     // ==========================================
 
+    public async updateSettings(updates: Partial<SettingsDocType>): Promise<void> {
+        const doc = await this.dbService.db.settings.findOne('user_preferences').exec();
+        if (doc) {
+            // incrementalPatch safely updates only the provided fields without overwriting the rest
+            await doc.incrementalPatch(updates);
+        }
+    }
+
     public async addToWatchlist(tmdbId: number, mediaType: 'movie' | 'tv' | 'person', payload: TmdbPayload): Promise<void> {
         const docId: string = this.generateId(tmdbId, mediaType);
 

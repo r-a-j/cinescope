@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { IonHeader, IonToolbar, IonButtons, IonButton, IonIcon } from '@ionic/angular/standalone';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { searchOutline, settingsOutline } from 'ionicons/icons';
 
@@ -12,7 +12,13 @@ import { searchOutline, settingsOutline } from 'ionicons/icons';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent {
+  private navCtrl = inject(NavController);
+
   constructor() {
     addIcons({ searchOutline, settingsOutline });
+  }
+
+  public openSettings(): void {
+    this.navCtrl.navigateForward('/settings');
   }
 }
