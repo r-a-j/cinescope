@@ -1,0 +1,75 @@
+// ==========================================
+// 🎬 CINESCOPE TOAST SYSTEM
+// ==========================================
+
+ion-toast.cinescope-toast {
+  // Positioning adjustments
+  --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+
+  &::part(message) {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 14px 16px;
+    color: var(--ion-text-color);
+  }
+
+  &::part(button) {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+  }
+
+  &::part(container) {
+    // OLED Dark Mode Base
+    background: #1a1a1a;
+    border-radius: 8px;
+    border: 1px solid #333333;
+    overflow: hidden;
+    position: relative;
+  }
+}
+
+// 🟢 SUCCESS: Subtle Green Accent
+ion-toast.toast-success {
+  &::part(container) {
+    border-left: 5px solid #2ecc71;
+  }
+
+  &::part(button) {
+    color: #2ecc71;
+  }
+}
+
+// 🔴 ERROR: Cinematic Crimson Accent
+ion-toast.toast-error {
+  &::part(container) {
+    border-left: 5px solid var(--ion-color-primary);
+  }
+
+  &::part(button) {
+    color: var(--ion-color-primary);
+  }
+}
+
+// 🟡 WARNING: Critic's Gold Accent
+ion-toast.toast-warning {
+  &::part(container) {
+    border-left: 5px solid var(--ion-color-secondary);
+  }
+
+  &::part(button) {
+    color: var(--ion-color-secondary);
+  }
+}
+
+// 🔵 INFO: Subtle Blue Accent
+ion-toast.toast-info {
+  &::part(container) {
+    border-left: 5px solid #3498db;
+  }
+
+  &::part(button) {
+    color: #3498db;
+  }
+}

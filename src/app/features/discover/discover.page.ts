@@ -52,7 +52,7 @@ export class DiscoverPage implements OnInit, AfterViewInit {
 
     // NEW: Fire the centering logic right after the DOM initially paints
     ngAfterViewInit(): void {
-        this.centerActiveTab(this.activeSection());
+        this.centerActiveTab(this.activeSection(), false); // instant centering
     }
 
     public onSectionChange(event: Event): void {
@@ -62,12 +62,12 @@ export class DiscoverPage implements OnInit, AfterViewInit {
             this.activeSection.set(newSection);
 
             // NEW: Recenter the scrollbar whenever the user taps a different tab
-            this.centerActiveTab(newSection);
+            this.centerActiveTab(newSection, true); // smooth centering
         }
     }
 
     // NEW: The core centering logic
-    private centerActiveTab(section: DiscoverSection): void {
+    private centerActiveTab(section: DiscoverSection, isSmooth = true): void {
         // We use requestAnimationFrame to guarantee Angular has finished 
         // applying the 'active' classes before we calculate the scroll math
         requestAnimationFrame(() => {
@@ -77,7 +77,7 @@ export class DiscoverPage implements OnInit, AfterViewInit {
             if (button) {
                 // Command the browser engine to smoothly glide it to the center
                 button.scrollIntoView({
-                    behavior: 'smooth',
+                    behavior: isSmooth ? 'smooth' : 'auto', // 'auto' removes the snap animation on initial load
                     inline: 'center', // This is the magic property!
                     block: 'nearest'
                 });

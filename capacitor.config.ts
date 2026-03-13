@@ -8,6 +8,14 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     iosScheme: 'https',
     cleartext: false
+  },
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: false,
+      splashFullScreen: true,
+      splashImmersive: true,
+      launchFadeOutDuration: 200
+    }
   }
 };
 

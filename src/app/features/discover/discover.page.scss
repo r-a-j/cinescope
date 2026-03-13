@@ -41,3 +41,17 @@ ion-segment-button {
         border-radius: 0; // Makes the red line sharp instead of rounded
     }
 }
+
+// Fade in animation for section changes
+.fade-in {
+    animation: softlyEmerge 300ms ease-out forwards;
+}
+
+@keyframes softlyEmerge {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
