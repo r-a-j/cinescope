@@ -11,6 +11,7 @@ import { sha256 } from 'js-sha256';
 // Import our Domain Schemas
 import { contentSchema, ContentDocType, contentMigrationStrategies } from './schemas/content.schema';
 import { settingsSchema, SettingsDocType, settingsMigrationStrategies } from './schemas/settings.schema';
+import { searchHistorySchema, SearchHistoryDocType, searchHistoryMigrationStrategies } from './schemas/search-history.schema';
 
 // 1. Core Plugins
 if (isDevMode()) {
@@ -24,6 +25,7 @@ addRxPlugin(RxDBMigrationPlugin);
 export interface CinescopeCollections {
     content: RxCollection<ContentDocType>;
     settings: RxCollection<SettingsDocType>;
+    searchHistory: RxCollection<SearchHistoryDocType>;
 }
 
 export type CinescopeDatabase = RxDatabase<CinescopeCollections>;
@@ -71,6 +73,10 @@ export class DatabaseService {
                     settings: {
                         schema: settingsSchema,
                         migrationStrategies: settingsMigrationStrategies
+                    },
+                    searchHistory: {
+                        schema: searchHistorySchema,
+                        migrationStrategies: searchHistoryMigrationStrategies
                     }
                 });
 

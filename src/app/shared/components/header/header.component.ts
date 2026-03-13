@@ -21,4 +21,8 @@ export class HeaderComponent {
   public openSettings(): void {
     this.navCtrl.navigateForward('/settings');
   }
+
+  public openSearch(): void {
+    this.navCtrl.navigateForward('/search', { animated: false }); // Instant open for search makes it feel snappy
+  }
 }

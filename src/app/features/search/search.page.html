@@ -1,0 +1,118 @@
+<ion-header class="ion-no-border search-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-searchbar 
+      placeholder="Search movies, tv, people..." 
+      [value]="store.query()"
+      (ionInput)="onSearchChange($event)"
+      (ionSearch)="onSearchSubmit()"
+      (ionClear)="clearSearch()"
+      animated="true"
+      debounce="0" 
+      class="custom-searchbar">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Loading State (Initial) -->
+  @if (store.isLoading() && store.results().length === 0) {
+    <div class="status-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Searching universe...</p>
+    </div>
+  }
+
+  <!-- Recent Searches (Empty state with history) -->
+  @if (!store.query() && store.recentSearches().length > 0) {
+    <div class="recent-searches">
+      <div class="recent-header">
+        <h3>Recent Searches</h3>
+        <ion-button fill="clear" size="small" (click)="clearHistory()">Clear</ion-button>
+      </div>
+      <ion-list lines="none" class="transparent-list">
+        @for (term of store.recentSearches(); track term) {
+          <ion-item button (click)="applyRecentSearch(term)">
+            <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
+            <ion-label>{{ term }}</ion-label>
+            <ion-button fill="clear" slot="end" (click)="removeRecentSearch(term, $event)">
+              <ion-icon name="close-circle" color="medium"></ion-icon>
+            </ion-button>
+          </ion-item>
+        }
+      </ion-list>
+    </div>
+  }
+
+  <!-- Initial Blank State -->
+  @if (!store.query() && store.recentSearches().length === 0) {
+    <div class="status-container empty-state">
+      <ion-icon name="search-outline"></ion-icon>
+      <h3>What to watch next?</h3>
+      <p>Find movies, TV shows, and your favorite actors.</p>
+    </div>
+  }
+
+  <!-- No Results Found -->
+  @if (store.query() && store.results().length === 0 && !store.isLoading()) {
+    <div class="status-container empty-state">
+      <ion-icon name="film-outline"></ion-icon>
+      <h3>No results found</h3>
+      <p>We couldn't find anything matching "{{store.query()}}".</p>
+    </div>
+  }
+
+  <!-- CSS Grid Content -->
+  @if (store.results().length > 0) {
+    <div class="search-grid">
+      @for (item of store.results(); track item.id) {
+        @switch (item.media_type) {
+          @case ('movie') {
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.title }}</h4>
+                <!-- Fallback to empty if release_date not there safely -->
+                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('tv') {
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <!-- Using type casting logically, item.name since it is tv -->
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('person') {
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ item.known_for_department || 'Person' }}</p>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore()">
+    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>
