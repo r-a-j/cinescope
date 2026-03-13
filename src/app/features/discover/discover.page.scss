@@ -1,0 +1,14 @@
+// Temporary styling just to center the text for your testing
+.placeholder-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+
+    h1 {
+        color: var(--ion-color-step-200); // Faded grey
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+}

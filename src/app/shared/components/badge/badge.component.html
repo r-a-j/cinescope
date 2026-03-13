@@ -1,0 +1,6 @@
+<span class="cinescope-badge" [ngClass]="variant()">
+    @if (iconUrl()) {
+    <img [src]="iconUrl()" class="badge-icon" alt="" />
+    }
+    {{ text() }}
+</span>

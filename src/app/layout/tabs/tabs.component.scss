@@ -1,0 +1,72 @@
+ion-tab-bar {
+    // Sets the background to pure OLED black for a seamless floor
+    --background: var(--ion-background-color);
+    --border: none; // Purge the hard line
+
+    height: 60px;
+    padding-bottom: var(--ion-safe-area-bottom);
+}
+
+// Keep the rest of your ion-tab-button CSS exactly as you have it!
+ion-tab-button {
+    --background: transparent;
+    --color: #737373;
+    --color-selected: var(--ion-color-primary, #e50914);
+
+    transition: all 0.3s ease;
+
+    ion-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    ion-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-top: 0;
+    }
+
+    &.tab-selected {
+        ion-icon {
+            transform: translateY(-2px);
+        }
+    }
+
+    --ripple-color: var(--ion-color-primary);
+}
+
+ion-tab-button {
+    --background: transparent;
+    --color: #737373;
+    --color-selected: var(--ion-color-primary, #e50914);
+
+    // Added for subtle interaction feel
+    transition: all 0.3s ease;
+
+    ion-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    ion-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-top: 0;
+    }
+
+    // Little pop up animation on active tab
+    &.tab-selected {
+        ion-icon {
+            transform: translateY(-2px);
+        }
+    }
+
+    // Define the click ripple effect color to match brand
+    --ripple-color: var(--ion-color-primary);
+}

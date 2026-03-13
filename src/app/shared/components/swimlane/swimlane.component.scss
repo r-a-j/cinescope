@@ -1,0 +1,53 @@
+.swimlane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 16px 12px 16px; // Native margins
+}
+
+.swimlane-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.swimlane-action {
+    background: transparent;
+    border: none;
+    color: var(--ion-color-primary); // Cinematic Crimson
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 4px 0;
+}
+
+.swimlane-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 12px; // Space between posters
+
+    // NATIVE FEEL: This is the magic that makes it snap
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+
+    // NOTE: Removed transform and will-change to prevent GPU texture memory bloat.
+
+    // Hides the scrollbar on mobile
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.swimlane-item {
+    scroll-snap-align: start; // Snaps to the left edge of each poster
+    flex: 0 0 auto;
+    width: 130px; // Standard width for a 2:3 poster on mobile
+}
+
+// These invisible spacers ensure the first and last posters align with the 16px page margin
+.scroll-spacer {
+    flex: 0 0 auto;
+    width: 4px; // 16px total when combined with the 12px gap
+}

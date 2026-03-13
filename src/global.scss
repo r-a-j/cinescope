@@ -1,12 +1,9 @@
-/* Core Ionic styling */
 @import "@ionic/angular/css/core.css";
 
-/* Basic styling and typography */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 
-/* Optional Ionic utilities */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
@@ -14,33 +11,62 @@
 @import "@ionic/angular/css/flex-utils.css";
 @import "@ionic/angular/css/display.css";
 
-// ==========================================
-// 🏗️ CINESCOPE GLOBAL OVERRIDES
-// ==========================================
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('./assets/fonts/BebasNeue-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
-// 1. Android Native Typography (Roboto)
-// Forces the app to use the native system font for maximum readability
+@font-face {
+    font-family: 'Inter';
+    src: url('./assets/fonts/Inter-Variable-Font-opsz-wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+// 1. Set the global default to Inter for standard reading text (like descriptions)
 body {
-    font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-// 2. Remove Web Tap Highlights
-// Prevents the ugly blue box from appearing when you tap a poster on Android
-* {
-    -webkit-tap-highlight-color: transparent;
+// 2. Force Bebas Neue onto ALL Ionic UI elements and headings (Ported from your old app)
+ion-title,
+ion-label,
+ion-segment-button,
+ion-segment-button::part(indicator),
+ion-segment-button::part(native),
+ion-chip,
+ion-button,
+ion-input,
+ion-textarea,
+ion-select,
+ion-card-title,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display) !important;
+    letter-spacing: 0.5px;
+    font-weight: 400; // Bebas is naturally bold, keep it at 400
 }
 
-// 3. Immersive Edge-to-Edge Scrolling
-// Hides the scrollbar to make it look like a native list
 ::-webkit-scrollbar {
     display: none;
 }
 
-// 4. Base Movie Card Surface Default
-// Any generic card or list item should use this elevated surface color
 .surface-card {
-    background: #121212; // Material Design standard for elevated dark surfaces
+    background: #121212;
     border-radius: 12px;
 }

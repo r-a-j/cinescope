@@ -2,12 +2,12 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: 'home',
-    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+    path: 'tabs',
+    loadChildren: () => import('./layout/tabs/tabs.routes').then((m) => m.routes),
   },
   {
     path: '',
-    redirectTo: 'home',
+    redirectTo: 'tabs/discover', // The moment they open the app, go to Discover
     pathMatch: 'full',
   },
 ];

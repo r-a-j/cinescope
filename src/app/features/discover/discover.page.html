@@ -1,0 +1,13 @@
+<app-header></app-header>
+
+<ion-content color="background" [fullscreen]="true" class="ion-no-padding">
+    <app-hero-banner></app-hero-banner>
+
+    <div style="margin-top: 24px;">
+        <app-swimlane title="Trending Bollywood" [items]="dummyMovies"></app-swimlane>
+        <div style="height: 32px;"></div>
+        <app-swimlane title="Top Rated Hindi" [items]="dummyMovies"></app-swimlane>
+    </div>
+
+    <div style="height: 100px;"></div>
+</ion-content>

@@ -1,0 +1,17 @@
+<div class="swimlane-header">
+    <h2 class="swimlane-title">{{ title() }}</h2>
+    <button class="swimlane-action" aria-label="View All">ALL</button>
+</div>
+
+<div class="swimlane-scroll-container">
+    <div class="scroll-spacer"></div>
+
+    @for (item of items(); track item.id) {
+    <div class="swimlane-item">
+        <app-poster-card [title]="item.title" [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
+            [showBookmark]="true" [bookmarkState]="item.bookmarkState || 'none'"> </app-poster-card>
+    </div>
+    }
+
+    <div class="scroll-spacer"></div>
+</div>

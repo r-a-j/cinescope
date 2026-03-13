@@ -1,0 +1,24 @@
+<div class="poster-container surface-card">
+
+    <img [src]="imageUrl()" [alt]="title() || 'Movie Poster'" class="poster-image" loading="lazy"
+        (error)="handleImageError($event)" />
+
+    @if (showBookmark()) {
+    <button class="bookmark-btn" aria-label="Toggle Bookmark">
+
+        @switch (bookmarkState()) {
+        @case ('none') {
+        <img src="assets/bookmarks/bookmark-empty.svg" alt="Add to Watchlist" class="custom-icon" />
+        }
+        @case ('watchlist') {
+        <img src="assets/bookmarks/bookmark-watchlist.svg" alt="In Watchlist" class="custom-icon" />
+        }
+        @case ('watched') {
+        <img src="assets/bookmarks/bookmark-watched.svg" alt="Watched" class="custom-icon" />
+        }
+        }
+
+    </button>
+    }
+
+</div>

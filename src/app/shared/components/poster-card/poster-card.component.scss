@@ -1,0 +1,49 @@
+.poster-container {
+    position: relative;
+    width: 100%; // Takes up 100% of whatever grid column it is placed in
+    aspect-ratio: 2 / 3; // INDUSTRY STANDARD: The golden ratio for movie posters
+    border-radius: 8px; // M3 standard for image cards
+    overflow: hidden;
+    background-color: var(--ion-color-step-100); // Faint gray while image loads
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); // Cinematic depth
+}
+
+.poster-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // Ensures the image perfectly fills the 2:3 box without stretching
+    display: block;
+}
+
+// Ensure the button has a massive, invisible 48px touch target
+.bookmark-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(15, 15, 15, 0.75);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        bottom: -6px;
+        left: -6px;
+    }
+
+    // NEW: Explicit sizing for your custom SVGs
+    .custom-icon {
+        width: 10px; // Adjust this pixel value if the icon looks too big/small
+        height: auto;
+        display: block;
+        // This ensures the SVG scales cleanly without blurring
+        image-rendering: -webkit-optimize-contrast;
+    }
+}

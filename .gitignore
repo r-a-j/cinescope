@@ -70,3 +70,5 @@ testem.log
 Thumbs.db
 .vscode/extensions.json
 .vscode/extensions.json
+
+resources/android/**/*
