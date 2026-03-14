@@ -48,6 +48,7 @@ export class SearchPage implements OnInit {
     const customEvent = event as CustomEvent;
     const query = customEvent.detail?.value;
     this.store.searchQuery(query || '');
+    this.store.smartSearchQuery(query || '');
   }
 
   clearSearch(): void {

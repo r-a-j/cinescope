@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { BaseMediaService } from './base-media.service';
 import { TmdbCollectionListItemDto } from '../dtos/collections/collection-list-item.dto';
@@ -309,5 +309,53 @@ Pay close attention to the difference between first_air_date_year and year in th
         }
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbTvListItemDto>>(`${this.apiPrefix}/search/tv`, { params });
+    }
+
+    /**
+     * Harvests a direct Wikimedia Commons image URL from an open Wikidata entity ID.
+     * Wikidata stores primary images under the `P18` property claim.
+     * @param wikidataId The "Q" ID (e.g., 'Q3292' for Tom Hanks).
+     */
+    getWikidataImage(wikidataId: string): Observable<string | null> {
+        // Hit the public, CORS-immune Wikidata API
+        const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wikidataId}&props=claims&format=json&origin=*`;
+        
+        interface WikidataResponse {
+            entities: Record<string, {
+                claims?: {
+                    P18?: {
+                        mainsnak?: {
+                            datavalue?: {
+                                value?: string;
+                            }
+                        }
+                    }[]
+                }
+            }>;
+        }
+
+        return this.http.get<WikidataResponse>(url).pipe(
+            map(response => {
+                try {
+                    const entity = response.entities[wikidataId];
+                    // Look for the P18 image claim
+                    const claims = entity?.claims?.P18;
+                    if (claims && claims.length > 0) {
+                        const filename = claims[0].mainsnak?.datavalue?.value;
+                        if (filename) {
+                            // Wikimedia Commons files use this standard hash directory path...
+                            // But MediaWiki actually provides a dedicated `Special:FilePath` redirect generator!
+                            // By replacing spaces with underscores, we get a reliable redirect to the raw JPG/PNG
+                            const safeFilename = filename.replace(/ /g, '_');
+                            return `https://commons.wikimedia.org/wiki/Special:FilePath/${safeFilename}`;
+                        }
+                    }
+                    return null;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                } catch (_e) {
+                    return null;
+                }
+            })
+        );
     }
 }

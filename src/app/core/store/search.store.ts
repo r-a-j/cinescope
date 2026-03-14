@@ -4,6 +4,10 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from '../services/tmdb-search.service';
+import { TmdbMoviesService } from '../services/tmdb-movies.service';
+import { TmdbPeopleService } from '../services/tmdb-people.service';
+import { TmdbTvService } from '../services/tmdb-tv.service';
+import { SmartSearchService } from '../services/smart-search.service';
 import { DatabaseService } from '../database/database.service';
 
 interface SearchState {
@@ -15,6 +19,11 @@ interface SearchState {
     page: number;
     hasMore: boolean;
     recentSearches: string[];
+    // Smart Search States
+    smartResults: TmdbMultiSearchResultDto[];
+    isSmartSearching: boolean;
+    smartSearchReady: boolean;
+    showSmartUI: boolean;
 }
 
 const initialState: SearchState = {
@@ -25,12 +34,25 @@ const initialState: SearchState = {
     error: null,
     page: 1,
     hasMore: false,
-    recentSearches: []
+    recentSearches: [],
+    // Smart Search States
+    smartResults: [],
+    isSmartSearching: false,
+    smartSearchReady: false,
+    showSmartUI: false
 };
 
 export const SearchStore = signalStore(
     withState(initialState),
-    withMethods((store, searchService = inject(TmdbSearchService), dbService = inject(DatabaseService)) => {
+    withMethods((
+        store, 
+        searchService = inject(TmdbSearchService), 
+        moviesService = inject(TmdbMoviesService),
+        peopleService = inject(TmdbPeopleService),
+        tvService = inject(TmdbTvService),
+        smartSearchService = inject(SmartSearchService),
+        dbService = inject(DatabaseService)
+    ) => {
         
         const saveRecentSearch = async (query: string): Promise<void> => {
             if (!query.trim()) return;
@@ -49,16 +71,63 @@ export const SearchStore = signalStore(
             }
         };
 
-        const sortResults = (results: TmdbMultiSearchResultDto[]): TmdbMultiSearchResultDto[] => {
-            if (!results) return [];
-            return [...results].sort((a, b) => {
-                const hasImageA = a.media_type === 'person' ? !!a.profile_path : !!(a as { poster_path?: string }).poster_path;
-                const hasImageB = b.media_type === 'person' ? !!b.profile_path : !!(b as { poster_path?: string }).poster_path;
-                
-                if (hasImageA && !hasImageB) return -1;
-                if (!hasImageA && hasImageB) return 1;
-                return 0;
+        const hydrateMissingImages = async (results: TmdbMultiSearchResultDto[]): Promise<void> => {
+            // Find "Ghost Records" (results that have no poster or profile path)
+            const ghostRecords = results.filter(item => {
+                if (item.media_type === 'person') return !item.profile_path;
+                return !(item as { poster_path?: string }).poster_path;
             });
+
+            if (!ghostRecords.length) return;
+
+            // In order to avoid hammering TMDB and Wikipedia, we run these lookups concurrently
+            // We use standard Promise.all here directly for the async block instead of heavy RxJS streams
+            await Promise.allSettled(
+                ghostRecords.map(async (ghost) => {
+                    try {
+                        let wikidataId: string | null = null;
+
+                        // 1. Fetch External IDs depending on media type
+                        if (ghost.media_type === 'movie') {
+                            const ids = await firstValueFrom(moviesService.getMovieExternalIds(ghost.id));
+                            wikidataId = ids.wikidata_id;
+                        } else if (ghost.media_type === 'tv') {
+                            const ids = await firstValueFrom(tvService.getTvExternalIds(ghost.id));
+                            wikidataId = ids.wikidata_id;
+                        } else if (ghost.media_type === 'person') {
+                            const ids = await firstValueFrom(peopleService.getPersonExternalIds(ghost.id));
+                            wikidataId = ids.wikidata_id;
+                        }
+
+                        // 2. Fetch Wikidata Image if ID exists
+                        if (wikidataId) {
+                            const wikiImageUrl = await firstValueFrom(searchService.getWikidataImage(wikidataId));
+                            
+                            // 3. Patch the specific record in memory if successful
+                            if (wikiImageUrl) {
+                                patchState(store, (state) => ({
+                                    results: state.results.map(item => {
+                                        if (item.id === ghost.id && item.media_type === ghost.media_type) {
+                                            return {
+                                                ...item,
+                                                // We hijack the TMDB properties and forcefully inject the Wiki URL
+                                                ...(item.media_type === 'person' 
+                                                    ? { profile_path: wikiImageUrl } 
+                                                    : { poster_path: wikiImageUrl })
+                                            };
+                                        }
+                                        return item;
+                                    })
+                                }));
+                            }
+                        }
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    } catch (_e) {
+                        // Silently fail if Wikidata/External IDs fails, leaving the placeholder intact!
+                        console.debug(`Hydration failed for ghost record ${ghost.id}`);
+                    }
+                })
+            );
         };
 
         return {
@@ -109,6 +178,12 @@ export const SearchStore = signalStore(
                 }
             },
 
+            toggleSmartSearch(): void {
+                if (store.smartSearchReady()) {
+                    patchState(store, { showSmartUI: !store.showSmartUI() });
+                }
+            },
+
             // RxMethod to elegantly handle rapid typing with debounce and cancellation
             searchQuery: rxMethod<string>(
                 pipe(
@@ -117,7 +192,10 @@ export const SearchStore = signalStore(
                     tap((query) => {
                         patchState(store, { query, page: 1, error: null });
                         if (!query.trim()) {
-                            patchState(store, { results: [], isLoading: false, hasMore: false });
+                            patchState(store, { 
+                                results: [], isLoading: false, hasMore: false,
+                                isSmartSearching: false, smartSearchReady: false, showSmartUI: false, smartResults: []
+                            });
                         } else {
                             patchState(store, { isLoading: true });
                         }
@@ -130,10 +208,13 @@ export const SearchStore = signalStore(
                             tap({
                                 next: (res) => {
                                     patchState(store, {
-                                        results: sortResults(res.results || []),
+                                        results: res.results || [],
                                         isLoading: false,
                                         hasMore: res.page < res.total_pages
                                     });
+                                    // Kick off the background hydration without awaiting it
+                                    // This lets the UI render the grid immediately, then fade-in wiki images later
+                                    hydrateMissingImages(res.results || []);
                                 },
                                 error: (err) => {
                                     console.error('Search error', err);
@@ -141,6 +222,78 @@ export const SearchStore = signalStore(
                                 }
                             }),
                             catchError(() => of(null))
+                        );
+                    })
+                )
+            ),
+
+            // Separate AI RxMethod to execute concurrently with standard search
+            smartSearchQuery: rxMethod<string>(
+                pipe(
+                    // Huge debounce so we don't spam expensive Gemini API until the user *really* pauses
+                    debounceTime(800),
+                    distinctUntilChanged(),
+                    tap((query) => {
+                        if (!query.trim() || query.trim().length < 5) {
+                            // Too short for AI inference, reset UI
+                            patchState(store, { isSmartSearching: false, smartSearchReady: false, showSmartUI: false, smartResults: [] });
+                        } else {
+                            patchState(store, { isSmartSearching: true, smartSearchReady: false, showSmartUI: false, smartResults: [] });
+                        }
+                    }),
+                    switchMap((query) => {
+                        if (!query.trim() || query.trim().length < 5) return of(null);
+                        
+                        return smartSearchService.getSmartSuggestions(query).pipe(
+                            switchMap(suggestionRes => {
+                                const titles = suggestionRes.titles || [];
+                                if (titles.length === 0) {
+                                    // Gemini returned no robust answers
+                                    patchState(store, { isSmartSearching: false, smartSearchReady: false });
+                                    return of(null);
+                                }
+
+                                // We have top-level titles (strings). Time to fetch explicit TMDB posters for them!
+                                // For precision, we use Promise.all to map over the array concurrently
+                                return [titles]; // Passing to mapping pipeline below
+                            }),
+                            tap({
+                                next: async (titlesArray) => {
+                                    if (!titlesArray) return;
+                                    
+                                    try {
+                                        // Execute consecutive multi-searches for each returned AI string, grabbing the very first (most relevant) match
+                                        const fetches = titlesArray.map(async title => {
+                                            const tmdbRes = await firstValueFrom(searchService.searchMulti(title, 1));
+                                            return tmdbRes.results && tmdbRes.results.length > 0 ? tmdbRes.results[0] : null;
+                                        });
+
+                                        const populatedEntities = (await Promise.all(fetches)).filter(i => i) as TmdbMultiSearchResultDto[];
+
+                                        patchState(store, {
+                                            smartResults: populatedEntities,
+                                            isSmartSearching: false,
+                                            smartSearchReady: populatedEntities.length > 0
+                                        });
+
+                                        hydrateMissingImages(populatedEntities);
+                                        
+                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                    } catch(_e) {
+                                        // Silent fail ensures normal search isn't interrupted
+                                        console.error('Failed to populate Gemini titles via TMDB');
+                                        patchState(store, { isSmartSearching: false, smartSearchReady: false });
+                                    }
+                                },
+                                error: (err) => {
+                                    console.error('Gemini API Error', err);
+                                    patchState(store, { isSmartSearching: false, smartSearchReady: false });
+                                }
+                            }),
+                            catchError(() => {
+                                patchState(store, { isSmartSearching: false });
+                                return of(null);
+                            })
                         );
                     })
                 )
@@ -159,11 +312,13 @@ export const SearchStore = signalStore(
                     const res = await firstValueFrom(searchService.searchMulti(store.query(), nextPage));
                     if (res) {
                         patchState(store, {
-                            results: sortResults([...store.results(), ...(res.results || [])]),
+                            results: [...store.results(), ...(res.results || [])],
                             page: nextPage,
                             hasMore: res.page < res.total_pages,
                             isAppending: false
                         });
+                        // Kick off append hydration
+                        hydrateMissingImages(res.results || []);
                     }
                 } catch (error) {
                     console.error('Failed to append search results', error);

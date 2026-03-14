@@ -17,6 +17,26 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
+  <!-- Smart Search AI Banner (Floating) -->
+  @if (store.query() && store.query().length >= 5) {
+    <div class="smart-search-banner">
+      @if (store.isSmartSearching()) {
+        <div class="banner-content loading">
+          <ion-spinner name="dots" color="primary"></ion-spinner>
+          <span>✨ Analyzing query with AI...</span>
+        </div>
+      }
+      @if (store.smartSearchReady() && !store.isSmartSearching()) {
+        <div class="banner-content ready" tabindex="0" (click)="store.toggleSmartSearch()" (keyup.enter)="store.toggleSmartSearch()">
+          <ion-icon [name]="store.showSmartUI() ? 'close-circle' : 'sparkles'" color="primary"></ion-icon>
+          <span>
+            {{ store.showSmartUI() ? 'Close Smart Results' : '✨ Smart advanced results ready! [Tap to View]' }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
   <!-- Loading State (Initial) -->
   @if (store.isLoading() && store.results().length === 0) {
     <div class="status-container">
@@ -64,8 +84,8 @@
     </div>
   }
 
-  <!-- CSS Grid Content -->
-  @if (store.results().length > 0) {
+  <!-- CSS Grid Content (Swaps based on Smart toggle) -->
+  @if (!store.showSmartUI() && store.results().length > 0) {
     <div class="search-grid">
       @for (item of store.results(); track item.id) {
         @switch (item.media_type) {
@@ -112,7 +132,41 @@
     </div>
   }
 
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore()">
+  <!-- Smart Results Grid -->
+  @if (store.showSmartUI() && store.smartResults().length > 0) {
+    <div class="search-grid smart-grid">
+      @for (item of store.smartResults(); track item.id) {
+        @switch (item.media_type) {
+          @case ('movie') {
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.title }}</h4>
+                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('tv') {
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore() || store.showSmartUI()">
     <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
   </ion-infinite-scroll>
 </ion-content>
