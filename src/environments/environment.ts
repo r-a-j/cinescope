@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
   apiUrl: 'https://cinescope-api-alpha.vercel.app/api',
-  geminiModel: 'gemini-2.5-flash'
+  geminiModels: [
+    'gemini-3.1-flash-lite-preview',
+  ]
 };

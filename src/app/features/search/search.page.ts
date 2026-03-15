@@ -8,7 +8,7 @@ import {
   IonSpinner, IonButton
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline } from 'ionicons/icons';
+import { timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle } from 'ionicons/icons';
 import { SearchStore } from '../../core/store/search.store';
 
 @Component({
@@ -37,7 +37,7 @@ export class SearchPage implements OnInit {
   }
 
   constructor() {
-    addIcons({ timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline });
+    addIcons({ timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle });
   }
 
   ngOnInit(): void {
@@ -48,11 +48,29 @@ export class SearchPage implements OnInit {
     const customEvent = event as CustomEvent;
     const query = customEvent.detail?.value;
     this.store.searchQuery(query || '');
-    this.store.smartSearchQuery(query || '');
   }
 
   clearSearch(): void {
     this.store.searchQuery('');
+  }
+
+  triggerSmartSearch(): void {
+    if (!this.store.query().trim() || this.store.smartSearchRetryTimer() > 0) {
+      return;
+    }
+
+    // Dismiss the virtual keyboard using standard Capacitor method (mobile)
+    Keyboard.hide().catch(() => console.debug('[UI - Search Page] Keyboard native hide skipped'));
+
+    // Always call native DOM blur for web/PWA/fallbacks natively
+    if (this.searchbar) {
+      this.searchbar.getInputElement().then((input: HTMLInputElement) => {
+        input.blur();
+      });
+    }
+
+    console.log('[UI - Search Page] Triggering Smart Search execution via Store');
+    this.store.executeSmartSearch();
   }
 
   onSearchSubmit(): void {
@@ -62,7 +80,7 @@ export class SearchPage implements OnInit {
     }
     // Dismiss the virtual keyboard using standard Capacitor method (mobile)
     Keyboard.hide().catch(() => console.debug('Keyboard native hide skipped'));
-    
+
     // Always call native DOM blur for web/PWA/fallbacks natively
     if (this.searchbar) {
       this.searchbar.getInputElement().then((input: HTMLInputElement) => {
@@ -84,13 +102,13 @@ export class SearchPage implements OnInit {
     if (this.store.hasMore() && !this.store.isLoading() && !this.store.isAppending()) {
       this.store.loadNextPage().then(() => {
         if (target) {
-            target.complete();
+          target.complete();
         }
       });
     } else {
-        if (target) {
-            target.complete();
-        }
+      if (target) {
+        target.complete();
+      }
     }
   }
 

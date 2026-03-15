@@ -1,5 +1,6 @@
-import { inject } from '@angular/core';
+import { inject, DestroyRef } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { HttpErrorResponse } from '@angular/common/http';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
@@ -22,8 +23,10 @@ interface SearchState {
     // Smart Search States
     smartResults: TmdbMultiSearchResultDto[];
     isSmartSearching: boolean;
-    smartSearchReady: boolean;
     showSmartUI: boolean;
+    smartSearchError: string | null;
+    lastSmartQuery: string | null;
+    smartSearchRetryTimer: number;
 }
 
 const initialState: SearchState = {
@@ -38,22 +41,25 @@ const initialState: SearchState = {
     // Smart Search States
     smartResults: [],
     isSmartSearching: false,
-    smartSearchReady: false,
-    showSmartUI: false
+    showSmartUI: false,
+    smartSearchError: null,
+    lastSmartQuery: null,
+    smartSearchRetryTimer: 0
 };
 
 export const SearchStore = signalStore(
     withState(initialState),
     withMethods((
-        store, 
-        searchService = inject(TmdbSearchService), 
+        store,
+        searchService = inject(TmdbSearchService),
         moviesService = inject(TmdbMoviesService),
         peopleService = inject(TmdbPeopleService),
         tvService = inject(TmdbTvService),
         smartSearchService = inject(SmartSearchService),
-        dbService = inject(DatabaseService)
+        dbService = inject(DatabaseService),
+        destroyRef = inject(DestroyRef)
     ) => {
-        
+
         const saveRecentSearch = async (query: string): Promise<void> => {
             if (!query.trim()) return;
             try {
@@ -102,7 +108,7 @@ export const SearchStore = signalStore(
                         // 2. Fetch Wikidata Image if ID exists
                         if (wikidataId) {
                             const wikiImageUrl = await firstValueFrom(searchService.getWikidataImage(wikidataId));
-                            
+
                             // 3. Patch the specific record in memory if successful
                             if (wikiImageUrl) {
                                 patchState(store, (state) => ({
@@ -111,8 +117,8 @@ export const SearchStore = signalStore(
                                             return {
                                                 ...item,
                                                 // We hijack the TMDB properties and forcefully inject the Wiki URL
-                                                ...(item.media_type === 'person' 
-                                                    ? { profile_path: wikiImageUrl } 
+                                                ...(item.media_type === 'person'
+                                                    ? { profile_path: wikiImageUrl }
                                                     : { poster_path: wikiImageUrl })
                                             };
                                         }
@@ -121,7 +127,7 @@ export const SearchStore = signalStore(
                                 }));
                             }
                         }
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (_e) {
                         // Silently fail if Wikidata/External IDs fails, leaving the placeholder intact!
                         console.debug(`Hydration failed for ghost record ${ghost.id}`);
@@ -141,7 +147,7 @@ export const SearchStore = signalStore(
                         sort: [{ timestamp: 'desc' }],
                         limit: 10
                     }).exec();
-                    
+
                     patchState(store, { recentSearches: docs.map(d => d.query) });
                 } catch (e) {
                     console.error('Failed to load recent searches', e);
@@ -152,8 +158,8 @@ export const SearchStore = signalStore(
                 try {
                     const docs = await dbService.db.searchHistory.find().exec();
                     if (docs.length > 0) {
-                        for(const doc of docs) {
-                           await doc.remove();
+                        for (const doc of docs) {
+                            await doc.remove();
                         }
                     }
                     patchState(store, { recentSearches: [] });
@@ -161,7 +167,7 @@ export const SearchStore = signalStore(
                     console.error('Failed to clear search history', error);
                 }
             },
-            
+
             async removeRecentSearch(query: string): Promise<void> {
                 try {
                     const doc = await dbService.db.searchHistory.findOne(query).exec();
@@ -179,7 +185,7 @@ export const SearchStore = signalStore(
             },
 
             toggleSmartSearch(): void {
-                if (store.smartSearchReady()) {
+                if (store.lastSmartQuery() === store.query() && store.smartResults().length > 0) {
                     patchState(store, { showSmartUI: !store.showSmartUI() });
                 }
             },
@@ -192,12 +198,17 @@ export const SearchStore = signalStore(
                     tap((query) => {
                         patchState(store, { query, page: 1, error: null });
                         if (!query.trim()) {
-                            patchState(store, { 
+                            patchState(store, {
                                 results: [], isLoading: false, hasMore: false,
-                                isSmartSearching: false, smartSearchReady: false, showSmartUI: false, smartResults: []
+                                isSmartSearching: false, showSmartUI: false, smartResults: [],
+                                smartSearchError: null, lastSmartQuery: null, smartSearchRetryTimer: 0
                             });
                         } else {
                             patchState(store, { isLoading: true });
+                            // Hide the smart UI if they change queries while it's active
+                            if (store.showSmartUI()) {
+                                patchState(store, { showSmartUI: false });
+                            }
                         }
                     }),
                     switchMap((query) => {
@@ -213,7 +224,6 @@ export const SearchStore = signalStore(
                                         hasMore: res.page < res.total_pages
                                     });
                                     // Kick off the background hydration without awaiting it
-                                    // This lets the UI render the grid immediately, then fade-in wiki images later
                                     hydrateMissingImages(res.results || []);
                                 },
                                 error: (err) => {
@@ -226,88 +236,132 @@ export const SearchStore = signalStore(
                     })
                 )
             ),
+            // Explicit AI execution method (triggered by button click, not debounce)
+            async executeSmartSearch(): Promise<void> {
+                console.log('[Store - Smart Search] Executing Smart Search for:', store.query());
 
-            // Separate AI RxMethod to execute concurrently with standard search
-            smartSearchQuery: rxMethod<string>(
-                pipe(
-                    // Huge debounce so we don't spam expensive Gemini API until the user *really* pauses
-                    debounceTime(800),
-                    distinctUntilChanged(),
-                    tap((query) => {
-                        if (!query.trim() || query.trim().length < 5) {
-                            // Too short for AI inference, reset UI
-                            patchState(store, { isSmartSearching: false, smartSearchReady: false, showSmartUI: false, smartResults: [] });
-                        } else {
-                            patchState(store, { isSmartSearching: true, smartSearchReady: false, showSmartUI: false, smartResults: [] });
+                // ChatGPT Style Guard: ONLY ONE click allowed per generation round, and obey quota locks.
+                if (store.isSmartSearching() || store.smartSearchRetryTimer() > 0) {
+                    console.warn('[Store - Smart Search] Execution blocked due to active search or quota lock.');
+                    return;
+                }
+
+                const currentQuery = store.query();
+                if (!currentQuery.trim() || currentQuery.trim().length < 5) return;
+
+                patchState(store, {
+                    isSmartSearching: true,
+                    showSmartUI: false,
+                    smartResults: [],
+                    smartSearchError: null,
+                    lastSmartQuery: currentQuery
+                });
+
+                try {
+                    const suggestionRes = await firstValueFrom(smartSearchService.getSmartSuggestions(currentQuery));
+                    const entities = suggestionRes.entities || [];
+
+                    if (entities.length === 0) {
+                        patchState(store, {
+                            isSmartSearching: false,
+                            smartSearchError: "AI couldn't find exact cinematic matches. Try rewording."
+                        });
+                        return;
+                    }
+
+                    // Concurrently route the AI's intent to the perfect TMDB endpoint
+                    const fetches = entities.map(async entity => {
+                        let tmdbRes;
+                        switch (entity.type) {
+                            case 'movie':
+                                tmdbRes = await firstValueFrom(
+                                    searchService.searchMovies(entity.query, 1, 'en-US', false, entity.year?.toString())
+                                );
+                                break;
+                            case 'tv':
+                                tmdbRes = await firstValueFrom(
+                                    searchService.searchTvShows(entity.query, 1, 'en-US', false, entity.year)
+                                );
+                                break;
+                            case 'person':
+                                tmdbRes = await firstValueFrom(
+                                    searchService.searchPerson(entity.query, 1)
+                                );
+                                break;
+                            default:
+                                tmdbRes = await firstValueFrom(searchService.searchMulti(entity.query, 1));
                         }
-                    }),
-                    switchMap((query) => {
-                        if (!query.trim() || query.trim().length < 5) return of(null);
+                        if (tmdbRes.results && tmdbRes.results.length > 0) {
+                            const match = tmdbRes.results[0] as TmdbMultiSearchResultDto;
+                            // Critical Fix: TMDB isolated endpoints (/movie, /tv) do not append 'media_type' natively.
+                            // We MUST append it manually so the Angular HTML @switch block can structurally render them!
+                            match.media_type = entity.type as 'movie' | 'tv' | 'person';
+                            return match;
+                        }
                         
-                        return smartSearchService.getSmartSuggestions(query).pipe(
-                            switchMap(suggestionRes => {
-                                const titles = suggestionRes.titles || [];
-                                if (titles.length === 0) {
-                                    // Gemini returned no robust answers
-                                    patchState(store, { isSmartSearching: false, smartSearchReady: false });
-                                    return of(null);
-                                }
+                        return null;
+                    });
 
-                                // We have top-level titles (strings). Time to fetch explicit TMDB posters for them!
-                                // For precision, we use Promise.all to map over the array concurrently
-                                return [titles]; // Passing to mapping pipeline below
-                            }),
-                            tap({
-                                next: async (titlesArray) => {
-                                    if (!titlesArray) return;
-                                    
-                                    try {
-                                        // Execute consecutive multi-searches for each returned AI string, grabbing the very first (most relevant) match
-                                        const fetches = titlesArray.map(async title => {
-                                            const tmdbRes = await firstValueFrom(searchService.searchMulti(title, 1));
-                                            return tmdbRes.results && tmdbRes.results.length > 0 ? tmdbRes.results[0] : null;
-                                        });
+                    const populatedEntities = (await Promise.all(fetches)).filter(i => i) as TmdbMultiSearchResultDto[];
 
-                                        const populatedEntities = (await Promise.all(fetches)).filter(i => i) as TmdbMultiSearchResultDto[];
+                    patchState(store, {
+                        smartResults: populatedEntities,
+                        isSmartSearching: false,
+                        showSmartUI: populatedEntities.length > 0
+                    });
 
-                                        patchState(store, {
-                                            smartResults: populatedEntities,
-                                            isSmartSearching: false,
-                                            smartSearchReady: populatedEntities.length > 0
-                                        });
+                    // Hydrate missing AI images too!
+                    hydrateMissingImages(populatedEntities);
 
-                                        hydrateMissingImages(populatedEntities);
-                                        
-                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                    } catch(_e) {
-                                        // Silent fail ensures normal search isn't interrupted
-                                        console.error('Failed to populate Gemini titles via TMDB');
-                                        patchState(store, { isSmartSearching: false, smartSearchReady: false });
-                                    }
-                                },
-                                error: (err) => {
-                                    console.error('Gemini API Error', err);
-                                    patchState(store, { isSmartSearching: false, smartSearchReady: false });
-                                }
-                            }),
-                            catchError(() => {
-                                patchState(store, { isSmartSearching: false });
-                                return of(null);
-                            })
-                        );
-                    })
-                )
-            ),
+                } catch (error: unknown) {
+                    console.error('[Store - Smart Search] Gemini Backend Request Failed:', error);
+
+                    let errorMsg = 'Failed to execute AI search.';
+                    let retryTimer = 0;
+
+                    if (error instanceof HttpErrorResponse) {
+                        if (error.status === 429) {
+                            errorMsg = 'Too many AI requests. Please slow down.';
+                            retryTimer = error.error?.retryAfter || 60; // Use exactly what Vercel sends, else 60s
+                        } else if (error.status === 500) {
+                            errorMsg = 'AI Backend experienced an issue.';
+                        } else if (error.status === 504) {
+                            errorMsg = 'AI Request timed out.';
+                        }
+                    }
+
+                    patchState(store, {
+                        isSmartSearching: false,
+                        smartSearchError: errorMsg,
+                        smartSearchRetryTimer: retryTimer
+                    });
+
+                    // ChatGPT Style Execution Lock: Start the live countdown!
+                    if (retryTimer > 0) {
+                        const intervalId = setInterval(() => {
+                            const current = store.smartSearchRetryTimer();
+                            if (current <= 1) {
+                                clearInterval(intervalId);
+                                patchState(store, { smartSearchRetryTimer: 0, smartSearchError: null });
+                            } else {
+                                patchState(store, { smartSearchRetryTimer: current - 1 });
+                            }
+                        }, 1000);
+
+                        destroyRef.onDestroy(() => clearInterval(intervalId));
+                    }
+                }
+            },
 
             // Method intended for an Infinite Scroll trigger
             async loadNextPage(): Promise<void> {
                 if (store.isLoading() || store.isAppending() || !store.hasMore() || !store.query().trim()) {
                     return;
                 }
-                
+
                 const nextPage = store.page() + 1;
                 patchState(store, { isAppending: true });
-                
+
                 try {
                     const res = await firstValueFrom(searchService.searchMulti(store.query(), nextPage));
                     if (res) {
