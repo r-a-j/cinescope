@@ -190,6 +190,18 @@
               </div>
             </div>
           }
+          @case ('person') {
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ item.known_for_department || 'Person' }}</p>
+              </div>
+            </div>
+          }
         }
       }
     </div>
