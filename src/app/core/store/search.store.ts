@@ -16,6 +16,8 @@ export type CategorizedSearchResult = TmdbMultiSearchResultDto & { smart_categor
 
 interface SearchState {
     query: string;
+    cleanQuery: string;
+    sortIntent: 'latest' | 'oldest' | 'rating' | null;
     results: TmdbMultiSearchResultDto[];
     isLoading: boolean;
     isAppending: boolean;
@@ -34,6 +36,8 @@ interface SearchState {
 
 const initialState: SearchState = {
     query: '',
+    cleanQuery: '',
+    sortIntent: null,
     results: [],
     isLoading: false,
     isAppending: false,
@@ -232,16 +236,60 @@ export const SearchStore = signalStore(
                         if (!query.trim()) {
                             return of(null);
                         }
-                        return searchService.searchMulti(query, 1).pipe(
+
+                        // --- V4 NLP DETERMINISTIC INTERCEPTOR ---
+                        let cleanQuery = query.toLowerCase();
+                        let sortIntent: 'latest' | 'oldest' | 'rating' | null = null;
+
+                        if (/\b(latest|newest|new)\b/i.test(cleanQuery)) {
+                            sortIntent = 'latest';
+                            cleanQuery = cleanQuery.replace(/\b(latest|newest|new)\b/ig, '').trim();
+                        } else if (/\b(oldest|first)\b/i.test(cleanQuery)) {
+                            sortIntent = 'oldest';
+                            cleanQuery = cleanQuery.replace(/\b(oldest|first)\b/ig, '').trim();
+                        } else if (/\b(best|top rated)\b/i.test(cleanQuery)) {
+                            sortIntent = 'rating';
+                            cleanQuery = cleanQuery.replace(/\b(best|top rated)\b/ig, '').trim();
+                        }
+
+                        if (!cleanQuery) cleanQuery = query;
+
+                        patchState(store, { sortIntent, cleanQuery });
+
+                        return searchService.searchMulti(cleanQuery, 1).pipe(
                             tap({
                                 next: (res) => {
+                                    let finalResults = res.results || [];
+
+                                    if (sortIntent && finalResults.length > 0) {
+                                        finalResults = [...finalResults].sort((a, b) => {
+                                            if (sortIntent === 'rating') {
+                                                const ratingA = a.media_type === 'person' ? 0 : (a.vote_average || 0);
+                                                const ratingB = b.media_type === 'person' ? 0 : (b.vote_average || 0);
+                                                return ratingB - ratingA;
+                                            } else {
+                                                const dateA = a.media_type === 'movie' ? a.release_date : (a.media_type === 'tv' ? a.first_air_date : '');
+                                                const dateB = b.media_type === 'movie' ? b.release_date : (b.media_type === 'tv' ? b.first_air_date : '');
+                                                const timeA = dateA ? new Date(dateA).getTime() : 0;
+                                                const timeB = dateB ? new Date(dateB).getTime() : 0;
+                                                
+                                                if (sortIntent === 'latest') return timeB - timeA;
+                                                
+                                                if (!timeA && !timeB) return 0;
+                                                if (!timeA) return 1;
+                                                if (!timeB) return -1;
+                                                return timeA - timeB;
+                                            }
+                                        });
+                                    }
+
                                     patchState(store, {
-                                        results: res.results || [],
+                                        results: finalResults,
                                         isLoading: false,
                                         hasMore: res.page < res.total_pages
                                     });
                                     // Kick off the background hydration without awaiting it
-                                    hydrateMissingImages(res.results || []);
+                                    hydrateMissingImages(finalResults);
                                 },
                                 error: (err) => {
                                     console.error('Search error', err);
@@ -419,16 +467,41 @@ export const SearchStore = signalStore(
                 patchState(store, { isAppending: true });
 
                 try {
-                    const res = await firstValueFrom(searchService.searchMulti(store.query(), nextPage));
+                    const res = await firstValueFrom(searchService.searchMulti(store.cleanQuery() || store.query(), nextPage));
                     if (res) {
+                        let newResults = res.results || [];
+                        const sortIntent = store.sortIntent();
+
+                        if (sortIntent && newResults.length > 0) {
+                            newResults = [...newResults].sort((a, b) => {
+                                if (sortIntent === 'rating') {
+                                    const ratingA = a.media_type === 'person' ? 0 : (a.vote_average || 0);
+                                    const ratingB = b.media_type === 'person' ? 0 : (b.vote_average || 0);
+                                    return ratingB - ratingA;
+                                } else {
+                                    const dateA = a.media_type === 'movie' ? a.release_date : (a.media_type === 'tv' ? a.first_air_date : '');
+                                    const dateB = b.media_type === 'movie' ? b.release_date : (b.media_type === 'tv' ? b.first_air_date : '');
+                                    const timeA = dateA ? new Date(dateA).getTime() : 0;
+                                    const timeB = dateB ? new Date(dateB).getTime() : 0;
+                                    
+                                    if (sortIntent === 'latest') return timeB - timeA;
+                                    
+                                    if (!timeA && !timeB) return 0;
+                                    if (!timeA) return 1;
+                                    if (!timeB) return -1;
+                                    return timeA - timeB;
+                                }
+                            });
+                        }
+
                         patchState(store, {
-                            results: [...store.results(), ...(res.results || [])],
+                            results: [...store.results(), ...newResults],
                             page: nextPage,
                             hasMore: res.page < res.total_pages,
                             isAppending: false
                         });
                         // Kick off append hydration
-                        hydrateMissingImages(res.results || []);
+                        hydrateMissingImages(newResults);
                     }
                 } catch (error) {
                     console.error('Failed to append search results', error);

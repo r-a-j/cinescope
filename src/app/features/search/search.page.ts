@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
-  IonSpinner, IonButton
+  IonSpinner, IonButton, NavController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle } from 'ionicons/icons';
@@ -26,6 +26,7 @@ import { SearchStore } from '../../core/store/search.store';
 })
 export class SearchPage implements OnInit {
   public store = inject(SearchStore);
+  private navCtrl = inject(NavController);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
@@ -42,6 +43,10 @@ export class SearchPage implements OnInit {
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
+  }
+
+  public goBack(): void {
+    this.navCtrl.back();
   }
 
   onSearchChange(event: Event | CustomEvent): void {
