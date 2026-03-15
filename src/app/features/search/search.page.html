@@ -162,10 +162,13 @@
   }
 
   <!-- Smart Results Grid -->
-  @if (store.showSmartUI() && store.smartResults().length > 0) {
-    <div class="search-grid smart-grid">
-      @for (item of store.smartResults(); track item.id) {
-        @switch (item.media_type) {
+  @if (store.showSmartUI() && store.smartResultGroups().length > 0) {
+    <div class="smart-categories">
+      @for (group of store.smartResultGroups(); track group.title) {
+        <h3 class="smart-category-title">{{ group.title }}</h3>
+        <div class="search-grid smart-grid">
+          @for (item of group.items; track item.id) {
+            @switch (item.media_type) {
           @case ('movie') {
             <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
               <div class="poster-container">
@@ -204,6 +207,8 @@
           }
         }
       }
+      </div>
+    }
     </div>
   }
 

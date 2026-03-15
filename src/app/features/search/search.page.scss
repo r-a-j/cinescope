@@ -203,3 +203,21 @@
     }
   }
 }
+
+// ==== V2: Categorical AI Curation Styles ====
+.smart-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 32px;
+}
+
+.smart-category-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 -8px 0; // Pulls grid slightly closer
+  padding: 0 16px;
+  color: var(--ion-text-color);
+  letter-spacing: -0.02em;
+  text-transform: capitalize;
+}

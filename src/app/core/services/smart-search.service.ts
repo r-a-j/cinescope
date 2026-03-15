@@ -3,14 +3,22 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export interface SmartSearchEntity {
-    type: 'movie' | 'tv' | 'person';
-    query: string;
-    year?: number;
+export interface SemanticIntentParameters {
+    person_name?: string;
+    genres?: number[];
+    keywords?: string[];
+    sort_by?: 'popularity.desc' | 'primary_release_date.desc' | 'primary_release_date.asc' | 'vote_average.desc';
+    query?: string;
+}
+
+export interface SemanticIntentSection {
+    title: string;
+    action: 'discover_movies' | 'discover_tv' | 'exact_match';
+    parameters: SemanticIntentParameters;
 }
 
 export interface SmartSearchResponseDto {
-    entities: SmartSearchEntity[];
+    sections: SemanticIntentSection[];
 }
 
 @Injectable({

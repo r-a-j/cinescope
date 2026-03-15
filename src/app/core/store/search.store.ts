@@ -1,5 +1,5 @@
-import { inject, DestroyRef } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { inject, DestroyRef, computed } from '@angular/core';
+import { patchState, signalStore, withMethods, withState, withComputed } from '@ngrx/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of } from 'rxjs';
@@ -8,8 +8,11 @@ import { TmdbSearchService, TmdbMultiSearchResultDto } from '../services/tmdb-se
 import { TmdbMoviesService } from '../services/tmdb-movies.service';
 import { TmdbPeopleService } from '../services/tmdb-people.service';
 import { TmdbTvService } from '../services/tmdb-tv.service';
-import { SmartSearchService } from '../services/smart-search.service';
+import { SmartSearchService, SemanticIntentSection } from '../services/smart-search.service';
 import { DatabaseService } from '../database/database.service';
+import { TmdbDiscoverService } from '../services/tmdb-discover.service';
+
+export type CategorizedSearchResult = TmdbMultiSearchResultDto & { smart_category?: string };
 
 interface SearchState {
     query: string;
@@ -21,7 +24,7 @@ interface SearchState {
     hasMore: boolean;
     recentSearches: string[];
     // Smart Search States
-    smartResults: TmdbMultiSearchResultDto[];
+    smartResults: CategorizedSearchResult[];
     isSmartSearching: boolean;
     showSmartUI: boolean;
     smartSearchError: string | null;
@@ -49,12 +52,26 @@ const initialState: SearchState = {
 
 export const SearchStore = signalStore(
     withState(initialState),
+    withComputed(({ smartResults }) => ({
+        smartResultGroups: computed(() => {
+            const groups = new Map<string, CategorizedSearchResult[]>();
+            smartResults().forEach(item => {
+                const category = item.smart_category || 'Top Results';
+                const items = groups.get(category) || [];
+                items.push(item);
+                groups.set(category, items);
+            });
+            // Re-map Map into iterable arrays for the Angular HTML loop
+            return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+        })
+    })),
     withMethods((
         store,
         searchService = inject(TmdbSearchService),
         moviesService = inject(TmdbMoviesService),
         peopleService = inject(TmdbPeopleService),
         tvService = inject(TmdbTvService),
+        discoverService = inject(TmdbDiscoverService),
         smartSearchService = inject(SmartSearchService),
         dbService = inject(DatabaseService),
         destroyRef = inject(DestroyRef)
@@ -259,50 +276,89 @@ export const SearchStore = signalStore(
 
                 try {
                     const suggestionRes = await firstValueFrom(smartSearchService.getSmartSuggestions(currentQuery));
-                    const entities = suggestionRes.entities || [];
+                    const sections: SemanticIntentSection[] = suggestionRes.sections || [];
 
-                    if (entities.length === 0) {
+                    if (sections.length === 0) {
                         patchState(store, {
                             isSmartSearching: false,
-                            smartSearchError: "AI couldn't find exact cinematic matches. Try rewording."
+                            smartSearchError: "AI couldn't deduce an actionable API execution graph. Try rewording."
                         });
                         return;
                     }
 
-                    // Concurrently route the AI's intent to the perfect TMDB endpoint
-                    const fetches = entities.map(async entity => {
-                        let tmdbRes;
-                        switch (entity.type) {
-                            case 'movie':
-                                tmdbRes = await firstValueFrom(
-                                    searchService.searchMovies(entity.query, 1, 'en-US', false, entity.year?.toString())
-                                );
-                                break;
-                            case 'tv':
-                                tmdbRes = await firstValueFrom(
-                                    searchService.searchTvShows(entity.query, 1, 'en-US', false, entity.year)
-                                );
-                                break;
-                            case 'person':
-                                tmdbRes = await firstValueFrom(
-                                    searchService.searchPerson(entity.query, 1)
-                                );
-                                break;
-                            default:
-                                tmdbRes = await firstValueFrom(searchService.searchMulti(entity.query, 1));
-                        }
-                        if (tmdbRes.results && tmdbRes.results.length > 0) {
-                            const match = tmdbRes.results[0] as TmdbMultiSearchResultDto;
-                            // Critical Fix: TMDB isolated endpoints (/movie, /tv) do not append 'media_type' natively.
-                            // We MUST append it manually so the Angular HTML @switch block can structurally render them!
-                            match.media_type = entity.type as 'movie' | 'tv' | 'person';
-                            return match;
-                        }
+                    // Concurrently route the AI's intent to the perfect TMDB endpoint based on the Execution Graph
+                    const fetches = sections.map(async (section: SemanticIntentSection) => {
+                        let tmdbItems: TmdbMultiSearchResultDto[] = [];
                         
-                        return null;
+                        // Scenario 1 & 2: Discover Engine
+                        if (section.action === 'discover_movies' || section.action === 'discover_tv') {
+                            const discoverParams: Record<string, string | number | boolean> = {
+                                sort_by: section.parameters.sort_by || 'popularity.desc',
+                                page: 1
+                            };
+
+                            // Resolve 'person_name' to TMDB Actor ID invisibly
+                            if (section.parameters.person_name) {
+                                const personSearch = await firstValueFrom(searchService.searchPerson(section.parameters.person_name, 1));
+                                if (personSearch.results && personSearch.results.length > 0) {
+                                    discoverParams['with_cast'] = personSearch.results[0].id.toString();
+                                }
+                            }
+
+                            if (section.parameters.genres?.length) {
+                                discoverParams['with_genres'] = section.parameters.genres.join(',');
+                            }
+
+                            // Resolve 'keywords' strings into TMDB Keyword IDs invisibly
+                            if (section.parameters.keywords?.length) {
+                                const keywordFetches = section.parameters.keywords.map(async kw => {
+                                    const kwRes = await firstValueFrom(searchService.searchKeywords(kw, 1));
+                                    return (kwRes.results && kwRes.results.length > 0) ? kwRes.results[0].id : null;
+                                });
+                                const keywordIds = (await Promise.all(keywordFetches)).filter(id => id !== null);
+                                if (keywordIds.length > 0) {
+                                    discoverParams['with_keywords'] = keywordIds.join('|'); // OR logic for keywords
+                                }
+                            }
+
+                            // Execute Final Orchestrated Graph
+                            if (section.action === 'discover_movies') {
+                                const discoverRes = await firstValueFrom(discoverService.discoverMovies(discoverParams));
+                                if (discoverRes.results) {
+                                  tmdbItems = discoverRes.results.map(movie => ({
+                                      ...movie,
+                                      media_type: 'movie' as const,
+                                      smart_category: section.title
+                                  })) as CategorizedSearchResult[];
+                                }
+                            } else {
+                                const discoverRes = await firstValueFrom(discoverService.discoverTv(discoverParams));
+                                if (discoverRes.results) {
+                                    tmdbItems = discoverRes.results.map(tv => ({
+                                        ...tv,
+                                        media_type: 'tv' as const,
+                                        smart_category: section.title
+                                    })) as CategorizedSearchResult[];
+                                }
+                            }
+                        } 
+                        // Scenario 3: Legacy Exact Title Match Override
+                        else if (section.action === 'exact_match' && section.parameters.query) {
+                            const exactMatchRes = await firstValueFrom(searchService.searchMulti(section.parameters.query, 1));
+                            if (exactMatchRes.results && exactMatchRes.results.length > 0) {
+                                const match = exactMatchRes.results[0] as CategorizedSearchResult;
+                                // Critical Fix: Manual schema padding for Angular Grid
+                                match.media_type = match.media_type || 'movie'; 
+                                match.smart_category = section.title;
+                                tmdbItems = [match];
+                            }
+                        }
+
+                        return tmdbItems;
                     });
 
-                    const populatedEntities = (await Promise.all(fetches)).filter(i => i) as TmdbMultiSearchResultDto[];
+                    // Flatten the array of arrays because Discover returns multiple items per section
+                    const populatedEntities = (await Promise.all(fetches)).flat() as CategorizedSearchResult[];
 
                     patchState(store, {
                         smartResults: populatedEntities,
