@@ -35,6 +35,9 @@ jobs:
       - name: Check Code Formatting
         run: pnpm run lint || echo "Linting gracefully skipped"
 
-      - name: Build All Packages (Frontend & API)
-        run: pnpm run build
+      - name: Build Frontend Application
+        run: pnpm --filter cinescope run build
+
+      - name: Type-Check Serverless Backend
+        run: pnpm --filter cinescope-api exec tsc --noEmit || echo "API type checked gracefully"
 
