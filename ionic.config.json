@@ -1,7 +1,0 @@
-{
-  "name": "cinescope",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular-standalone"
-}
