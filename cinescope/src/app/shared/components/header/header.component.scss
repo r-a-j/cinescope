@@ -1,0 +1,39 @@
+ion-toolbar {
+    // Highly performant gradient: Dark at top, fading to transparent
+    --background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.60) 60%, rgba(0, 0, 0, 0) 100%);
+
+    // Explicitly disable any blurs
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    --min-height: 56px;
+    --padding-start: 16px;
+    --padding-end: 12px;
+}
+
+// Keep the existing .logo-container, .header-logo, and .action-btn CSS
+.logo-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.header-logo {
+    height: 24px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.action-btn {
+    --color: var(--ion-text-color);
+    margin: 0;
+    min-width: 48px;
+    min-height: 48px;
+
+    ion-icon {
+        font-size: 1.5rem;
+    }
+}
+
+// DELETE the entire .glass-toolbar class from this file!

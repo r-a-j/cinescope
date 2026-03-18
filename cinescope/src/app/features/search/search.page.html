@@ -1,0 +1,218 @@
+<ion-header class="ion-no-border search-header">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-searchbar 
+      placeholder="Search movies, tv, people..." 
+      [value]="store.query()"
+      (ionInput)="onSearchChange($event)"
+      (ionSearch)="onSearchSubmit()"
+      (ionClear)="clearSearch()"
+      animated="true"
+      debounce="0" 
+      class="custom-searchbar">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Smart Search AI Banner (Floating) -->
+  @if (store.query() && store.query().length >= 5) {
+    <div class="smart-search-banner">
+      
+      <!-- Loading State: AI is actively executing -->
+      @if (store.isSmartSearching()) {
+        <div class="banner-content loading">
+          <ion-spinner name="dots" color="primary"></ion-spinner>
+          <span>✨ Analyzing query with AI...</span>
+        </div>
+      }
+
+      <!-- Quota Lock State: Active Countdown -->
+      @else if (store.smartSearchRetryTimer() > 0) {
+        <div class="banner-content error" tabindex="0">
+          <ion-icon name="time-outline" color="warning"></ion-icon>
+          <span>Quota Exceeded. Try again in {{ store.smartSearchRetryTimer() }}s...</span>
+        </div>
+      }
+
+      <!-- Error State: API failed for the exactly matched current query -->
+      @else if (store.smartSearchError() && store.lastSmartQuery() === store.query()) {
+        <div class="banner-content error" tabindex="0" (click)="triggerSmartSearch()" (keyup.enter)="triggerSmartSearch()">
+          <ion-icon name="alert-circle" color="danger"></ion-icon>
+          <span>{{ store.smartSearchError() }} Tap to retry.</span>
+        </div>
+      }
+
+      <!-- Success / Toggle State: Results match the exactly matched current query -->
+      @else if (store.lastSmartQuery() === store.query() && store.smartResults().length > 0) {
+        <div class="banner-content ready" tabindex="0" (click)="store.toggleSmartSearch()" (keyup.enter)="store.toggleSmartSearch()">
+          <ion-icon [name]="store.showSmartUI() ? 'close-circle' : 'sparkles'" color="primary"></ion-icon>
+          <span>
+            {{ store.showSmartUI() ? 'Close Smart Results' : '✨ Smart advanced results ready! [Tap to View]' }}
+          </span>
+        </div>
+      }
+
+      <!-- AI Search Action / CTA: Query has changed or hasn't been searched yet -->
+      @else {
+        <div class="banner-content ready" tabindex="0" (click)="triggerSmartSearch()" (keyup.enter)="triggerSmartSearch()">
+          <ion-icon name="sparkles" color="primary"></ion-icon>
+          <span>✨ AI Deep Search: Tap to analyze query!</span>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- Loading State (Initial) -->
+  @if (store.isLoading() && store.results().length === 0) {
+    <div class="status-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Searching universe...</p>
+    </div>
+  }
+
+  <!-- Recent Searches (Empty state with history) -->
+  @if (!store.query() && store.recentSearches().length > 0) {
+    <div class="recent-searches">
+      <div class="recent-header">
+        <h3>Recent Searches</h3>
+        <ion-button fill="clear" size="small" (click)="clearHistory()">Clear</ion-button>
+      </div>
+      <ion-list lines="none" class="transparent-list">
+        @for (term of store.recentSearches(); track term) {
+          <ion-item button (click)="applyRecentSearch(term)">
+            <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
+            <ion-label>{{ term }}</ion-label>
+            <ion-button fill="clear" slot="end" (click)="removeRecentSearch(term, $event)">
+              <ion-icon name="close-circle" color="medium"></ion-icon>
+            </ion-button>
+          </ion-item>
+        }
+      </ion-list>
+    </div>
+  }
+
+  <!-- Initial Blank State -->
+  @if (!store.query() && store.recentSearches().length === 0) {
+    <div class="status-container empty-state">
+      <ion-icon name="search-outline"></ion-icon>
+      <h3>What to watch next?</h3>
+      <p>Find movies, TV shows, and your favorite actors.</p>
+    </div>
+  }
+
+  <!-- No Results Found -->
+  @if (store.query() && store.results().length === 0 && !store.isLoading() && !store.showSmartUI()) {
+    <div class="status-container empty-state">
+      <ion-icon name="film-outline"></ion-icon>
+      <h3>NO RESULTS FOUND</h3>
+      <p>We couldn't find anything matching "{{store.query()}}".</p>
+    </div>
+  }
+
+  <!-- CSS Grid Content (Swaps based on Smart toggle) -->
+  @if (!store.showSmartUI() && store.results().length > 0) {
+    <div class="search-grid">
+      @for (item of store.results(); track item.id) {
+        @switch (item.media_type) {
+          @case ('movie') {
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.title }}</h4>
+                <!-- Fallback to empty if release_date not there safely -->
+                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('tv') {
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <!-- Using type casting logically, item.name since it is tv -->
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('person') {
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ item.known_for_department || 'Person' }}</p>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+
+  <!-- Smart Results Grid -->
+  @if (store.showSmartUI() && store.smartResultGroups().length > 0) {
+    <div class="smart-categories">
+      @for (group of store.smartResultGroups(); track group.title) {
+        <h3 class="smart-category-title">{{ group.title }}</h3>
+        <div class="search-grid smart-grid">
+          @for (item of group.items; track item.id) {
+            @switch (item.media_type) {
+          @case ('movie') {
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.title }}</h4>
+                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('tv') {
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+          @case ('person') {
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+              <div class="poster-container">
+                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+              </div>
+              <div class="content-info">
+                <h4>{{ item.name }}</h4>
+                <p>{{ item.known_for_department || 'Person' }}</p>
+              </div>
+            </div>
+          }
+        }
+      }
+      </div>
+    }
+    </div>
+  }
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore() || store.showSmartUI()">
+    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

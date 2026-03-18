@@ -1,0 +1,57 @@
+// Temporary styling just to center the text for your testing
+.placeholder-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+
+    h1 {
+        color: var(--ion-color-step-200); // Faded grey
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+}
+
+.segment-toolbar {
+    --background: #000000;
+    --border-width: 0;
+    --min-height: 48px;
+}
+
+ion-segment {
+    --background: #000000;
+}
+
+ion-segment-button {
+    --color: #888888; // Inactive gray
+    --color-checked: #ffffff; // Active white
+
+    // The red underline indicator from your mockup
+    --indicator-color: var(--ion-color-primary);
+    --indicator-height: 3px;
+
+    font-family: var(--font-display); // Forces Bebas Neue
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    min-width: max-content;
+    padding: 0 16px;
+
+    &::part(indicator-background) {
+        border-radius: 0; // Makes the red line sharp instead of rounded
+    }
+}
+
+// Fade in animation for section changes
+.fade-in {
+    animation: softlyEmerge 300ms ease-out forwards;
+}
+
+@keyframes softlyEmerge {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

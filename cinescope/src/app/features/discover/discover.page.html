@@ -1,0 +1,90 @@
+<app-header></app-header>
+
+<ion-toolbar class="segment-toolbar">
+    <ion-segment [scrollable]="true" [value]="activeSection()" (ionChange)="onSectionChange($event)">
+
+        @for (tab of discoverTabs; track tab.value) {
+        <ion-segment-button [value]="tab.value">
+            <ion-label>{{ tab.label }}</ion-label>
+        </ion-segment-button>
+        }
+
+    </ion-segment>
+</ion-toolbar>
+
+<ion-content color="background" class="ion-no-padding">
+
+    @switch (activeSection()) {
+
+    @case ('trending') {
+    <div class="fade-in">
+        @if (store.isLoading()) {
+
+        <ion-skeleton-text animated style="width: 100%; height: 60vh; border-radius: 0; margin: 0;"></ion-skeleton-text>
+
+        <div style="margin-top: 24px; padding: 0 16px;">
+            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
+            <div style="display: flex; gap: 16px; overflow: hidden;">
+                <ion-skeleton-text animated
+                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated
+                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated
+                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+            </div>
+        </div>
+
+        } @else {
+
+        @if (store.heroItems().length > 0) {
+        <app-hero-banner [trendingItems]="store.heroItems()"></app-hero-banner>
+        }
+
+        <div style="margin-top: 24px;">
+            <app-swimlane title="VIRAL MOVIES TODAY" [items]="store.movies()"></app-swimlane>
+            <div style="height: 32px;"></div>
+            <app-swimlane title="BINGE-WORTHY SHOWS" [items]="store.tvShows()"></app-swimlane>
+        </div>
+
+        }
+    </div>
+    }
+
+    @case ('desi-hub') {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">DESI HUB Feed Placeholder</h2>
+    </div>
+    }
+
+    @case ('bollywood') {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">Bollywood Feed Placeholder</h2>
+    </div>
+    }
+
+    @case ('top-rated') {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">Top Rated Feed Placeholder</h2>
+    </div>
+    }
+
+    @case ('actors') {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">Actors Feed Placeholder</h2>
+    </div>
+    }
+
+    @case ('news') {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">News Feed Placeholder</h2>
+    </div>
+    }
+
+    @default {
+    <div class="fade-in" style="padding-top: 20px;">
+        <h2 style="color: white; text-align: center;">Default Feed Placeholder</h2>
+    </div>
+    }
+
+    }
+</ion-content>

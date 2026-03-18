@@ -1,0 +1,58 @@
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px 12px 16px;
+}
+
+.skeleton-title {
+    width: 150px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+.skeleton-action {
+    width: 30px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.skeleton-scroll {
+    display: flex;
+    gap: 12px;
+    padding-left: 16px;
+    overflow: hidden;
+}
+
+.skeleton-poster {
+    flex: 0 0 auto;
+    width: 130px;
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+}
+
+// Premium Studio Shimmer Animation
+.shimmer {
+    background: #111;
+    background-image: linear-gradient(to right,
+            #111 0%,
+            #222 20%,
+            #111 40%,
+            #111 100%);
+    background-repeat: no-repeat;
+    background-size: 800px 100%;
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: shimmer;
+    animation-timing-function: linear;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -400px 0;
+    }
+
+    100% {
+        background-position: 400px 0;
+    }
+}

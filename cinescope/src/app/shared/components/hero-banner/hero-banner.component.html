@@ -1,0 +1,32 @@
+<div class="hero-container">
+
+    <swiper-container #swiper init="false" effect="fade"
+        [autoplay]="{ delay: 8000, disableOnInteraction: false, pauseOnMouseEnter: true }" speed="800" loop="true"
+        class="hero-swiper">
+
+        @for (item of trendingItems(); track item.id; let i = $index) {
+        <swiper-slide>
+
+            <img [src]="item.backdropUrl" [alt]="item.title" class="hero-backdrop"
+                [attr.loading]="i === 0 ? 'eager' : 'lazy'" />
+
+            <div class="gradient-overlay"></div>
+
+            <div class="hero-content">
+                <div class="badge-row">
+                    <app-badge [text]="'#' + (i + 1) + ' TRENDING'" variant="primary"></app-badge>
+                    <app-badge [text]="item.rating.toString()" variant="gold" icon="star"></app-badge>
+                </div>
+
+                <h1 class="movie-title">{{ item.title }}</h1>
+
+                <p class="movie-overview">
+                    {{ item.overview }}
+                </p>
+            </div>
+
+        </swiper-slide>
+        }
+
+    </swiper-container>
+</div>

@@ -1,0 +1,57 @@
+// ==========================================
+// 🎬 CINESCOPE: "The Director's Cut" Theme
+// ==========================================
+// Forced Dark Mode: OLED Optimized
+
+:root {
+    // 🔴 PRIMARY: Cinematic Crimson
+    // Used for active tabs, primary buttons, and loading indicators
+    --ion-color-primary: #e50914;
+    --ion-color-primary-rgb: 229, 9, 20;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #ca0812;
+    --ion-color-primary-tint: #e8222c;
+
+    // 🟡 SECONDARY: Critic's Gold 
+    // Reserved exclusively for ratings (⭐) and premium callouts
+    --ion-color-secondary: #f5c518;
+    --ion-color-secondary-rgb: 245, 197, 24;
+    --ion-color-secondary-contrast: #000000;
+    --ion-color-secondary-shade: #d8ad15;
+    --ion-color-secondary-tint: #f6cb2f;
+
+    // 🌑 BACKGROUNDS: OLED Black
+    // The absolute base layer of the app. Pixels are turned OFF.
+    --ion-background-color: #000000;
+    --ion-background-color-rgb: 0, 0, 0;
+
+    // 🌫️ SURFACES: Material Design Dark Elevated
+    // Used for cards, modals, and bottom navigation bars
+    --ion-color-step-50: #0d0d0d;
+    --ion-color-step-100: #1a1a1a;
+    --ion-color-step-150: #262626;
+    --ion-color-step-200: #333333;
+    --ion-color-step-250: #404040;
+
+    // 📝 TEXT: High Contrast
+    --ion-text-color: #ffffff;
+    --ion-text-color-rgb: 255, 255, 255;
+
+    // 📱 NATIVE APP FEEL: Android Safe Areas
+    // Ensures content doesn't bleed into the camera notch or gesture bar
+    --ion-safe-area-top: env(safe-area-inset-top);
+    --ion-safe-area-bottom: env(safe-area-inset-bottom);
+}
+
+// Force the app into Dark Mode regardless of system settings
+// (Because a movie theater is never bright white)
+@media (prefers-color-scheme: light),
+(prefers-color-scheme: dark) {
+    body {
+        --ion-background-color: #000000;
+        --ion-text-color: #ffffff;
+        background-color: var(--ion-background-color);
+        color: var(--ion-text-color);
+    }
+}

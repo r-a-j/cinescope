@@ -1,0 +1,49 @@
+.cinescope-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    gap: 6px;
+}
+
+.badge-icon {
+    height: 14px;
+    width: auto;
+    display: block;
+}
+
+.primary {
+    background-color: var(--ion-color-primary);
+    color: #ffffff;
+}
+
+.gold {
+    color: var(--ion-color-secondary);
+    font-weight: 900;
+    font-size: 0.8rem;
+}
+
+.outline {
+    border: 1px solid #888888;
+    color: #cccccc;
+}
+
+.danger {
+    background-color: #ff3b30;
+    color: #ffffff;
+}
+
+.dark {
+    background-color: rgba(25, 25, 25, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.badge-ion-icon {
+    font-size: 0.9rem;
+    margin-top: -1px;
+}

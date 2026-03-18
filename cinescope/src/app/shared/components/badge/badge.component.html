@@ -1,0 +1,12 @@
+<span class="cinescope-badge" [ngClass]="variant()">
+
+    @if (iconUrl()) {
+    <img [src]="iconUrl()" class="badge-icon" alt="" />
+    }
+
+    @if (icon()) {
+    <ion-icon [name]="icon()" class="badge-ion-icon"></ion-icon>
+    }
+
+    {{ text() }}
+</span>

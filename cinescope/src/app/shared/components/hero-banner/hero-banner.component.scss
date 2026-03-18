@@ -1,0 +1,106 @@
+.hero-container {
+    position: relative;
+    width: 100%;
+    // NATIVE ADAPTABILITY: Calculates height based on screen width, capping it so it doesn't break tablets
+    aspect-ratio: 4 / 5;
+    max-height: 70vh;
+    background-color: var(--ion-color-step-50);
+    overflow: hidden;
+}
+
+.hero-backdrop {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+.gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hero-content {
+    z-index: 2;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px 16px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2px;
+}
+
+.movie-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--ion-text-color);
+}
+
+.hero-swiper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+swiper-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.metadata-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+    font-weight: 700;
+
+    .dot-separator {
+        font-size: 1.2rem;
+        line-height: 0;
+    }
+}
+
+.movie-overview {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #d1d1d1;
+    margin: 4px 0 0 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.top-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 35%; // Fades down from the top
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+}
