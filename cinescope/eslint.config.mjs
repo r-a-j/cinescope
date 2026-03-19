@@ -5,6 +5,9 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
+    ignores: ['.angular/', 'android/', 'www/', 'dist/', 'node_modules/'],
+  },
+  {
     files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,
