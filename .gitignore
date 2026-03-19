@@ -4,3 +4,8 @@ dist/
 .env.local
 .DS_Store
 .angular/
+*.log
+.pnpm-store/*
+cinescope-release.keystore
+keystore_base64.txt
+cinescope-keystore-secrets.txt

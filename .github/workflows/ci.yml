@@ -14,30 +14,53 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  monorepo-build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-
       - name: Install Workspace Dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Check Code Formatting
+      - name: Run Linters
         run: pnpm run lint || echo "Linting gracefully skipped"
 
-      - name: Build Frontend Application
-        run: pnpm --filter cinescope run build
-
+  typecheck-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install Workspace Dependencies
+        run: pnpm install --frozen-lockfile
       - name: Type-Check Serverless Backend
         run: pnpm --filter cinescope-api exec tsc --noEmit || echo "API type checked gracefully"
 
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install Workspace Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Frontend Application
+        run: pnpm --filter cinescope run build
