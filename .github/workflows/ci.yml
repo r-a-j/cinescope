@@ -70,3 +70,41 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build Frontend Application
         run: pnpm --filter cinescope run build
+
+  typecheck-docs:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install Workspace Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type-Check Documentation
+        run: pnpm --filter docs run typecheck
+
+  build-docs:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install Workspace Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Documentation (Checks for broken links)
+        run: pnpm --filter docs run build
