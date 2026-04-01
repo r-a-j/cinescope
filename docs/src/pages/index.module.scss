@@ -1,0 +1,38 @@
+// docs/src/pages/index.module.scss
+
+.heroBanner {
+    // Center the content on the screen
+    min-height: calc(100vh - 60px); // Subtract navbar height
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--ion-background-color); // Uses the OLED black
+}
+
+.heroLogo {
+    height: 120px;
+    margin-bottom: 2rem;
+    // Optional: Add a subtle drop shadow to make the glitch pop against the black
+    filter: drop-shadow(0px 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+// Mobile responsiveness for the buttons
+@media screen and (max-width: 996px) {
+    .buttons {
+        flex-direction: column;
+        width: 100%;
+
+        a {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+}
