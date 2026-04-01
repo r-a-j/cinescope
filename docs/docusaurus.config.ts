@@ -47,8 +47,44 @@ const config: Config = {
     ],
   ],
 
+  themes: ['docusaurus-theme-openapi-docs'],
+
   plugins: [
     'docusaurus-plugin-sass',
+
+    function customWebpackPlugin() {
+      return {
+        name: 'custom-webpack-plugin',
+        configureWebpack() {
+          return {
+            resolve: {
+              fallback: {
+                // Tells Webpack to use the browserify version of 'path'
+                path: require.resolve('path-browserify'),
+              },
+            },
+          };
+        },
+      };
+    },
+
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'api-docs',
+        docsPluginId: 'dev-docs', // Inject this into the Developer Docs instance!
+        config: {
+          cinescope: { // "cinescope" is the ID of this specific API spec
+            specPath: 'cinescope-openapi.json',
+            outputDir: 'dev-docs/api', // Where it will generate the markdown files
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+              categoryLinkSource: 'tag',
+            },
+          },
+        },
+      },
+    ],
     [
       '@docusaurus/plugin-content-docs',
       {
@@ -58,6 +94,7 @@ const config: Config = {
         routeBasePath: 'developers', // The URL path (e.g., domain.com/developers)
         sidebarPath: './sidebarsDev.ts',
         editUrl: 'https://github.com/r-a-j/cinescope/tree/master/docs/',
+        docItemComponent: '@theme/ApiItem',
       },
     ],
   ],

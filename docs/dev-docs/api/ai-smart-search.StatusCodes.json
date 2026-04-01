@@ -1,0 +1,1 @@
+{"responses":{"200":{"description":"An Execution Graph of sections to query against TMDB.","content":{"application/json":{"schema":{"type":"object","properties":{"sections":{"type":"array","items":{"nullable":true}}},"required":["sections"]}}}},"429":{"description":"Too Many Requests - AI Quota Exceeded"}}}
