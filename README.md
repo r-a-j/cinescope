@@ -63,6 +63,14 @@ To regenerate all documentation across the entire stack, run this single command
 pnpm run docs:build-all
 ```
 
+### One-Click Development
+
+If you are actively developing and want to guarantee you are looking at the most up-to-date documentation, run the startup macro:
+
+```bash
+pnpm run docs:start
+```
+
 ### 4. Publishing & Hosting
 
 **Frontend App:** You can deploy the web version of the frontend to any static host (Firebase Hosting, Vercel, Netlify) by uploading the compiled `/cinescope/www` directory. 
