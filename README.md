@@ -2,13 +2,14 @@
 
 Welcome to the completely revamped Cinescope project! This repository has been structurally upgraded to a **Monorepo** architecture powered by **PNPM Workspaces**.
 
-## 🏗️ Repository Structure
+## Repository Structure
+
 This repository contains both the frontend application and the backend API, allowing them to share dependencies and exist harmoniously under one roof without long-path locking issues.
 
 - `/cinescope` - The Ionic/Angular frontend application.
 - `/cinescope-api` - The Node.js/Vercel serverless backend API.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Installation
 Because this is a PNPM workspace, you only need to run the install command once at the **root** of the repository:
@@ -51,6 +52,17 @@ npx cap sync android
 npx cap run android
 ```
 
+## Documentation Architecture
+
+This monorepo features a fully automated, self-generating documentation pipeline powered by **Docusaurus**, **Compodoc** (Frontend), and **OpenAPI** (Backend API).
+
+### Generating the Docs
+
+To regenerate all documentation across the entire stack, run this single command from the root:
+```bash
+pnpm run docs:build-all
+```
+
 ### 4. Publishing & Hosting
 
 **Frontend App:** You can deploy the web version of the frontend to any static host (Firebase Hosting, Vercel, Netlify) by uploading the compiled `/cinescope/www` directory. 
@@ -60,8 +72,3 @@ npx cap run android
 cd cinescope-api
 npx vercel --prod
 ```
-
----
-*Seamlessly migrated to Monorepo Architecture.*
-
-<!-- Automated E2E CI Pipeline Verification Test -->
