@@ -29,9 +29,19 @@
   --ifm-heading-font-family: 'Bebas Neue', sans-serif;
 
   // Docusaurus specific overrides to match Cinescope's flat, dark aesthetic
-  --ifm-navbar-background-color: var(--ion-color-step-50);
-  --ifm-footer-background-color: var(--ion-color-step-50);
+  --ifm-navbar-background-color: var(--ion-background-color);
+  --ifm-footer-background-color: var(--ion-background-color);
   --ifm-menu-color: var(--ion-text-color);
+}
+
+// 2.5 Force Dark Mode variables (Docusaurus uses data-theme='dark' which overrides :root)
+html[data-theme='dark'] {
+  --ifm-background-color: var(--ion-background-color) !important;
+  --ifm-background-surface-color: var(--ion-color-step-100) !important;
+  --ifm-navbar-background-color: var(--ion-background-color) !important;
+  --ifm-footer-background-color: var(--ion-background-color) !important;
+  --ifm-menu-color: var(--ion-text-color) !important;
+  --ifm-menu-color-background-active: rgba(229, 9, 20, 0.15) !important;
 }
 
 // 3. Import Fonts
