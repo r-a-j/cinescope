@@ -106,5 +106,7 @@ jobs:
           cache: 'pnpm'
       - name: Install Workspace Dependencies
         run: pnpm install --frozen-lockfile
-      - name: Build Documentation (Checks for broken links)
+      - name: Generate API & Frontend Structures
+        run: pnpm run docs:build-all
+      - name: Build Documentation Site (Checks for broken links)
         run: pnpm --filter docs run build

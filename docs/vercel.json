@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "docusaurus",
+  "buildCommand": "cd .. && pnpm run docs:build-all && pnpm --filter docs run build",
+  "outputDirectory": "build",
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet . ../cinescope ../cinescope-api"
+}
