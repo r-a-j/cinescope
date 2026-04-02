@@ -9,3 +9,5 @@ dist/
 cinescope-release.keystore
 keystore_base64.txt
 cinescope-keystore-secrets.txt
+.vscode/
+.vercel/

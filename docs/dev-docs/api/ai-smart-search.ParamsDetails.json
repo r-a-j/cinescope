@@ -1,0 +1,1 @@
+{"parameters":[{"schema":{"type":"string","description":"Must be exactly: CS-Mobile-App-2026","example":"CS-Mobile-App-2026"},"required":true,"description":"Must be exactly: CS-Mobile-App-2026","name":"x-cinescope-client","in":"header"}]}

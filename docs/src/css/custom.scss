@@ -1,0 +1,81 @@
+/* docs/src/css/custom.scss */
+
+// 1. Import the Single Source of Truth from the Angular Workspace
+// (Adjust this path if your variables.scss is located somewhere else in the cinescope folder)
+@import '../../../cinescope/src/theme/variables.scss';
+
+// 2. Map Ionic Variables to Docusaurus (Infima) Variables
+:root {
+  // --- COLORS ---
+  // Map "Cinematic Crimson" to the Docusaurus Primary Theme
+  --ifm-color-primary: var(--ion-color-primary);
+  --ifm-color-primary-dark: var(--ion-color-primary-shade);
+  --ifm-color-primary-darker: var(--ion-color-primary-shade);
+  --ifm-color-primary-darkest: #ca0812;
+  --ifm-color-primary-light: var(--ion-color-primary-tint);
+  --ifm-color-primary-lighter: var(--ion-color-primary-tint);
+  --ifm-color-primary-lightest: #ff333a;
+
+  // Map the OLED Black Backgrounds
+  --ifm-background-color: var(--ion-background-color);
+  --ifm-background-surface-color: var(--ion-color-step-100);
+
+  // High Contrast Text
+  --ifm-font-color-base: var(--ion-text-color);
+  --ifm-heading-color: var(--ion-text-color);
+
+  // --- FONTS ---
+  --ifm-font-family-base: 'Inter', sans-serif;
+  --ifm-heading-font-family: 'Bebas Neue', sans-serif;
+
+  // Docusaurus specific overrides to match Cinescope's flat, dark aesthetic
+  --ifm-navbar-background-color: var(--ion-background-color);
+  --ifm-footer-background-color: var(--ion-background-color);
+  --ifm-menu-color: var(--ion-text-color);
+}
+
+// 2.5 Force Dark Mode variables (Docusaurus uses data-theme='dark' which overrides :root)
+html[data-theme='dark'] {
+  --ifm-background-color: var(--ion-background-color) !important;
+  --ifm-background-surface-color: var(--ion-color-step-100) !important;
+  --ifm-navbar-background-color: var(--ion-background-color) !important;
+  --ifm-footer-background-color: var(--ion-background-color) !important;
+  --ifm-menu-color: var(--ion-text-color) !important;
+  --ifm-menu-color-background-active: rgba(229, 9, 20, 0.15) !important;
+}
+
+// 3. Import Fonts
+// We must declare the font-faces here so the browser can render them in the docs
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('/fonts/BebasNeue-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Variable-Font-opsz-wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+// ==========================================
+// BUTTON OVERRIDES
+// ==========================================
+
+.button--primary {
+  color: #ffffff !important;
+}
+
+.button--secondary {
+  background-color: var(--ion-color-step-150) !important;
+  color: #ffffff !important;
+  border-color: var(--ion-color-step-200) !important;
+}
+
+.button--secondary:hover {
+  background-color: var(--ion-color-step-200) !important;
+}

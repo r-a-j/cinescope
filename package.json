@@ -5,7 +5,15 @@
     "dev:api": "pnpm --filter cinescope-api run dev",
     "build": "pnpm --recursive --parallel run build",
     "lint": "pnpm --recursive --parallel run lint",
-    "test": "pnpm --recursive --parallel run test"
+    "test": "pnpm --recursive --parallel run test",
+    "docs:api": "pnpm --filter docs run gen-api",
+    "docs:frontend": "pnpm --filter cinescope run docs:generate",
+    "docs:build-all": "pnpm run docs:api && pnpm run docs:frontend",
+    "docs:dev": "pnpm --filter docs start",
+    "docs:build": "pnpm --filter docs build",
+    "docs:serve": "pnpm --filter docs serve",
+    "docs:clear": "pnpm --filter docs clear",
+    "docs:start": "pnpm run docs:build-all && pnpm run docs:dev"
   },
   "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
 }

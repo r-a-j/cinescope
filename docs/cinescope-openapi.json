@@ -1,0 +1,161 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Cinescope Serverless API",
+    "description": "Internal API routes for the Cinescope mobile application."
+  },
+  "servers": [
+    {
+      "url": "https://api.cinescope.app"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Used for the TMDB Proxy endpoint. Pass your TMDB Access Token."
+      }
+    },
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/api/extract": {
+      "post": {
+        "description": "Extracts movie titles from raw OCR text using Gemini 2.5 Flash.",
+        "summary": "Extract Movie Titles",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Must be exactly: CS-Mobile-App-2026",
+              "example": "CS-Mobile-App-2026"
+            },
+            "required": true,
+            "description": "Must be exactly: CS-Mobile-App-2026",
+            "name": "x-cinescope-client",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "example": "I watched Inception and Breaking Bad today."
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON array of extracted movie titles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "Inception",
+                    "Breaking Bad"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Missing text payload"
+          },
+          "403": {
+            "description": "Forbidden - Invalid Client Origin"
+          }
+        }
+      }
+    },
+    "/api/smart-search": {
+      "post": {
+        "description": "Executes a semantic search query using the Gemini fallback orchestrator.",
+        "summary": "AI Smart Search",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Must be exactly: CS-Mobile-App-2026",
+              "example": "CS-Mobile-App-2026"
+            },
+            "required": true,
+            "description": "Must be exactly: CS-Mobile-App-2026",
+            "name": "x-cinescope-client",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "example": "movies about space travel with matthew mcconaughey"
+                  },
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "gemini-3.1-flash-lite-preview"
+                    ]
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "An Execution Graph of sections to query against TMDB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sections": {
+                      "type": "array",
+                      "items": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "sections"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests - AI Quota Exceeded"
+          }
+        }
+      }
+    }
+  }
+}

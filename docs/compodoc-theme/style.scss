@@ -1,0 +1,221 @@
+// 2. INJECT CINESCOPE VARIABLES
+@use '../../cinescope/src/theme/variables.scss';
+
+// 1. THE 7 NATIVE COMPODOC IMPORTS
+@import "./reset.css";
+@import "./bootstrap.min.css";
+@import "./bootstrap-card.css";
+@import "./prism.css";
+@import "./ionicons.min.css";
+@import "./compodoc.css";
+@import "./tablesort.css";
+
+// 3. CINESCOPE FONTS
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('../../fonts/BebasNeue-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../../fonts/Inter-Variable-Font-opsz-wght.ttf') format('truetype');
+}
+
+* {
+    font-family: 'Inter', sans-serif !important;
+}
+
+// 4. HEADER BRANDING
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.card-title,
+.title,
+span.title,
+.navbar-brand,
+legend {
+    font-family: 'Bebas Neue', sans-serif !important;
+    letter-spacing: 1px;
+    color: #ffffff !important;
+    text-transform: uppercase;
+}
+
+// 5. CYBORG TO CINESCOPE COLOR MAPPING
+a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    border-bottom: 1px dotted rgba(229, 9, 20, 0.4);
+    transition: all 0.2s ease-in-out;
+}
+
+a:hover {
+    color: #ff6b70 !important; // Subtle, less sharp red
+    border-bottom: 1px solid #ff6b70;
+    text-decoration: none !important;
+}
+
+.btn-primary,
+.badge,
+.label-primary,
+.progress-bar,
+.nav-pills>li.active>a {
+    background-color: var(--ion-color-primary, #e50914) !important;
+    border-color: var(--ion-color-primary, #e50914) !important;
+    color: #ffffff !important;
+}
+
+// Active sidebar states
+.list-group-item.active,
+.nav-link.active,
+.chapter.active>a,
+.menu-link.active {
+    background-color: rgba(229, 9, 20, 0.08) !important;
+    color: var(--ion-color-primary, #e50914) !important;
+    border-left: 3px solid var(--ion-color-primary, #e50914) !important;
+    border-radius: 0 !important;
+}
+
+// Strip out the broken Compodoc grey headers so Cyborg's pitch-black shines through
+.menu .header,
+.book-summary .header,
+.compodoc-menu .header,
+.compodoc-menu .navbar-brand {
+    background-color: #060606 !important;
+    border-bottom: 1px solid #282828 !important;
+}
+
+// Hide the redundant dark-mode toggle
+.dark-mode-switch,
+#dark-mode-toggle {
+    display: none !important;
+}
+
+// 6. VAGRANT THEME OVERRIDES TO CINESCOPE AESTHETIC
+
+// 6.1 Base Content & Backgrounds
+body,
+html,
+.content,
+.content-data,
+.container-fluid,
+.row {
+    background-color: var(--ion-background-color, #000000) !important;
+    color: var(--ion-text-color, #ffffff) !important;
+}
+
+// Ensure all standard text is white/readable
+p,
+span,
+div,
+li,
+td,
+th {
+    color: var(--ion-text-color, #ffffff);
+}
+
+// 6.2 Sidebar (Menu) Overrides
+.menu,
+.xs-menu,
+.compodoc-menu {
+    background-color: var(--ion-color-step-50, #0d0d0d) !important;
+    border-right: 1px solid var(--ion-color-step-100, #1a1a1a) !important;
+}
+
+.menu .list,
+.xs-menu .list {
+    background-color: transparent !important;
+}
+
+.menu ul.list li.title {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--ion-color-step-200, #333333) !important;
+}
+
+// Sidebar Search Input
+#book-search-input input {
+    background-color: var(--ion-color-step-100, #1a1a1a) !important;
+    color: var(--ion-text-color, #ffffff) !important;
+    border: 1px solid var(--ion-color-step-200, #333333) !important;
+}
+
+#book-search-input input:focus {
+    border-color: var(--ion-color-primary, #e50914) !important;
+}
+
+// Sidebar text readability
+.menu-link,
+.chapter-title,
+.nav-link,
+.chapter>a {
+    color: #cccccc !important;
+}
+
+.menu-link:hover,
+.chapter-title:hover,
+.nav-link:hover,
+.chapter>a:hover {
+    color: #ffffff !important;
+}
+
+// 6.3 Cards & Overview UI
+.card {
+    background-color: var(--ion-color-step-100, #1a1a1a) !important;
+    border: 1px solid var(--ion-color-step-200, #333333) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+// Card Header / Icons 
+.card-title .icon,
+.card-title {
+    color: var(--ion-color-primary, #e50914) !important;
+}
+
+.card-block p,
+.card-text {
+    color: var(--ion-text-color, #ffffff) !important;
+}
+
+// 6.4 Tables
+.table-bordered,
+.table-bordered>tbody>tr>td,
+.table-bordered>tbody>tr>th,
+.table-bordered>tfoot>tr>td,
+.table-bordered>tfoot>tr>th,
+.table-bordered>thead>tr>td,
+.table-bordered>thead>tr>th {
+    border: 1px solid var(--ion-color-step-200, #333333) !important;
+}
+
+.table>tbody>tr:nth-of-type(odd) {
+    background-color: var(--ion-color-step-50, #0d0d0d) !important;
+}
+
+.table>tbody>tr:nth-of-type(even) {
+    background-color: var(--ion-background-color, #000000) !important;
+}
+
+.table>thead>tr>th {
+    background-color: var(--ion-color-step-100, #1a1a1a) !important;
+    color: var(--ion-text-color, #ffffff) !important;
+    border-bottom: 2px solid var(--ion-color-step-200, #333333) !important;
+}
+
+.table>tbody>tr>td {
+    color: #cccccc !important;
+}
+
+// 6.5 Code blocks
+pre,
+code,
+.language-bash,
+.language-typescript,
+.language-html {
+    background-color: var(--ion-color-step-100, #1a1a1a) !important;
+    border: 1px solid var(--ion-color-step-200, #333333) !important;
+}
+
+// FUTURE USE NOTE: 
+// The var(--ion-color-secondary, #f5c518) "Critic's Gold" is available if we want to change badges/alerts in the future.
