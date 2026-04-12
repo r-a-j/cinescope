@@ -4,7 +4,7 @@
 
 ion-toast.cinescope-toast {
   // Positioning adjustments
-  --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 
   &::part(message) {
     font-family: var(--font-body);
@@ -21,10 +21,10 @@ ion-toast.cinescope-toast {
   }
 
   &::part(container) {
-    // OLED Dark Mode Base
-    background: #1a1a1a;
-    border-radius: 8px;
-    border: 1px solid #333333;
+    // Dynamically uses step-100, which changes based on Light/Dark mode
+    background: var(--ion-color-step-100);
+    border-radius: 8px; // Kept at 8px so toasts aren't pills, maintaining readability
+    border: 1px solid var(--ion-color-step-200);
     overflow: hidden;
     position: relative;
   }
@@ -52,7 +52,7 @@ ion-toast.toast-error {
   }
 }
 
-// 🟡 WARNING: Critic's Gold Accent
+// 🟠 WARNING: Bold Orange Accent (Updated to match Docs)
 ion-toast.toast-warning {
   &::part(container) {
     border-left: 5px solid var(--ion-color-secondary);

@@ -2,11 +2,9 @@
 @use "./theme/toast.scss";
 
 @import "@ionic/angular/css/core.css";
-
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
-
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
@@ -14,7 +12,9 @@
 @import "@ionic/angular/css/flex-utils.css";
 @import "@ionic/angular/css/display.css";
 
-
+// ----------------------------------------
+// 🔤 TYPOGRAPHY (Local First)
+// ----------------------------------------
 @font-face {
     font-family: 'Bebas Neue';
     src: url('./assets/fonts/BebasNeue-Regular.ttf') format('truetype');
@@ -34,26 +34,29 @@
 :root {
     --font-display: 'Bebas Neue', sans-serif;
     --font-body: 'Inter', sans-serif;
+
+    // 🛑 GLOBAL SHAPE: Roundedness "3" (Pill-shaped components)
+    // This applies maximum roundedness to buttons, chips, and inputs automatically
+    --ion-border-radius: 9999px;
+
+    // Default Ionic font family set to Body
+    --ion-font-family: var(--font-body);
 }
 
-// 1. Set the global default to Inter for standard reading text (like descriptions)
 body {
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-// 2. Force Bebas Neue onto ALL Ionic UI elements and headings (Ported from your old app)
+// ----------------------------------------
+// 🎨 DISPLAY FONT OVERRIDES (Bebas Neue)
+// ----------------------------------------
+// Targeting UI elements to use the display font without breaking Shadow DOM
 ion-title,
 ion-label,
-ion-segment-button,
-ion-segment-button::part(indicator),
-ion-segment-button::part(native),
 ion-chip,
 ion-button,
-ion-input,
-ion-textarea,
-ion-select,
 ion-card-title,
 h1,
 h2,
@@ -61,16 +64,27 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: var(--font-display) !important;
+    font-family: var(--font-display);
     letter-spacing: 0.5px;
-    font-weight: 400; // Bebas is naturally bold, keep it at 400
+    font-weight: 400;
 }
 
+// Fix for Segment buttons
+ion-segment-button::part(native) {
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+}
+
+// ----------------------------------------
+// 📐 UTILITIES
+// ----------------------------------------
 ::-webkit-scrollbar {
     display: none;
 }
 
+// Uses CSS variables to automatically adapt to light/dark mode
 .surface-card {
-    background: #121212;
-    border-radius: 12px;
+    background: var(--ion-color-step-50);
+    border-radius: 12px; // Cards shouldn't be pill-shaped, keeping this at 12px
+    border: 1px solid var(--ion-color-step-100);
 }
