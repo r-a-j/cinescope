@@ -26,6 +26,8 @@ permissions:
   security-events: write
   # Read commit contents
   contents: read
+  # Required by osv-scanner-action
+  actions: read
 
 jobs:
   scan-scheduled:
