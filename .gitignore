@@ -11,3 +11,6 @@ keystore_base64.txt
 cinescope-keystore-secrets.txt
 .vscode/
 .vercel/
+cinescope-api/graphify-out/cache/*
+cinescope/graphify-out/cache/*
+graphify-out/cache/*

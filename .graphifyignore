@@ -1,0 +1,20 @@
+# Dependency Directories
+node_modules/
+.pnpm-store/
+
+# Angular / Ionic Frontend (cinescope)
+.angular/
+www/
+android/
+ios/
+
+# Vercel Backend (cinescope-api)
+.vercel/
+
+# Docusaurus / Generated Docs (docs)
+.docusaurus/
+build/
+docs-build/
+
+# Graphify outputs (prevents recursive looping)
+graphify-out/

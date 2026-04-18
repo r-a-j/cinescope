@@ -1,9 +1,12 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit, AfterViewInit } from '@angular/core';
 import { IonContent, IonToolbar, IonSegment, IonSegmentButton, IonLabel, SegmentCustomEvent, IonSkeletonText } from '@ionic/angular/standalone';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { HeroBannerComponent } from '../../shared/components/hero-banner/hero-banner.component';
 import { SwimlaneComponent } from '../../shared/components/swimlane/swimlane.component';
 import { TrendingStore } from 'src/app/core/store/trending.store';
+import { FeedService } from 'src/app/core/services/feed.service';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonButton, IonIcon } from '@ionic/angular/standalone';
 
 export type DiscoverSection = 'desi-hub' | 'bollywood' | 'trending' | 'top-rated' | 'actors' | 'news';
 
@@ -25,7 +28,16 @@ export interface DiscoverTab {
         HeaderComponent,
         HeroBannerComponent,
         SwimlaneComponent,
-        IonSkeletonText
+        IonSkeletonText,
+        IonCard,
+        IonCardHeader,
+        IonCardTitle,
+        IonCardContent,
+        IonImg,
+        IonButton,
+        IonIcon,
+        DatePipe,
+        SlicePipe
     ],
     providers: [TrendingStore],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +46,7 @@ export interface DiscoverTab {
 })
 export class DiscoverPage implements OnInit, AfterViewInit {
     public store = inject(TrendingStore);
+    public feedService = inject(FeedService);
 
     public activeSection = signal<DiscoverSection>('trending');
 
@@ -60,6 +73,11 @@ export class DiscoverPage implements OnInit, AfterViewInit {
         if (segmentEvent.detail.value) {
             const newSection = segmentEvent.detail.value as DiscoverSection;
             this.activeSection.set(newSection);
+
+            // Fetch news dynamically when tapping the news tab
+            if (newSection === 'news' && this.feedService.feedItems().length === 0) {
+                this.feedService.refreshFeed();
+            }
 
             // NEW: Recenter the scrollbar whenever the user taps a different tab
             this.centerActiveTab(newSection, true); // smooth centering
