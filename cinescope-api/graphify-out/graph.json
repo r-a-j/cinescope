@@ -18,7 +18,7 @@
       "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\extract.ts",
       "source_location": "L1",
       "id": "d_work_testbench_cinescope_cinescope_api_api_extract_ts",
-      "community": 0,
+      "community": 1,
       "norm_label": "extract.ts"
     },
     {
@@ -27,7 +27,7 @@
       "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\extract.ts",
       "source_location": "L6",
       "id": "extract_handler",
-      "community": 0,
+      "community": 1,
       "norm_label": "handler()"
     },
     {
@@ -36,16 +36,34 @@
       "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
       "source_location": "L1",
       "id": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
-      "community": 1,
+      "community": 0,
       "norm_label": "feed.ts"
+    },
+    {
+      "label": "extractImage()",
+      "file_type": "code",
+      "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
+      "source_location": "L24",
+      "id": "feed_extractimage",
+      "community": 0,
+      "norm_label": "extractimage()"
+    },
+    {
+      "label": "fetchFeedWithTimeout()",
+      "file_type": "code",
+      "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
+      "source_location": "L44",
+      "id": "feed_fetchfeedwithtimeout",
+      "community": 0,
+      "norm_label": "fetchfeedwithtimeout()"
     },
     {
       "label": "handler()",
       "file_type": "code",
       "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
-      "source_location": "L14",
+      "source_location": "L53",
       "id": "feed_handler",
-      "community": 1,
+      "community": 0,
       "norm_label": "handler()"
     },
     {
@@ -101,6 +119,15 @@
       "id": "tmdb_handler",
       "community": 4,
       "norm_label": "handler()"
+    },
+    {
+      "label": "feed.model.ts",
+      "file_type": "code",
+      "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\model\\feed.model.ts",
+      "source_location": "L1",
+      "id": "d_work_testbench_cinescope_cinescope_api_api_model_feed_model_ts",
+      "community": 6,
+      "norm_label": "feed.model.ts"
     }
   ],
   "links": [
@@ -120,7 +147,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
-      "source_location": "L14",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_src": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
+      "_tgt": "feed_extractimage",
+      "source": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
+      "target": "feed_extractimage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
+      "source_location": "L44",
+      "weight": 1.0,
+      "_src": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
+      "_tgt": "feed_fetchfeedwithtimeout",
+      "source": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
+      "target": "feed_fetchfeedwithtimeout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "D:\\Work\\Testbench\\cinescope\\cinescope-api\\api\\feed.ts",
+      "source_location": "L53",
       "weight": 1.0,
       "_src": "d_work_testbench_cinescope_cinescope_api_api_feed_ts",
       "_tgt": "feed_handler",

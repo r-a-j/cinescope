@@ -1,8 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter cinescope run start",
-    "dev:api": "pnpm --filter cinescope-api run dev",
+    "dev:api": "pnpm --filter cinescope-api exec npx vercel dev --listen 3000 --yes",
+    "dev:ui": "wait-on tcp:3000 && pnpm --filter cinescope run start",
+    "dev": "concurrently -n \"API,UI\" -c \"cyan,magenta\" \"pnpm run dev:api\" \"pnpm run dev:ui\" --kill-others",
     "build": "pnpm --recursive --parallel run build",
     "lint": "pnpm --recursive --parallel run lint",
     "test": "pnpm --recursive --parallel run test",
@@ -17,7 +18,15 @@
     "graph:root": "graphify watch .",
     "graph:ui": "pnpm --filter cinescope exec graphify watch .",
     "graph:api": "pnpm --filter cinescope-api exec graphify watch .",
-    "graph:docs": "pnpm --filter docs exec graphify watch ."
+    "graph:docs": "pnpm --filter docs exec graphify watch .",
+    "release:api": "pnpm --filter cinescope-api exec npx vercel --prod --yes",
+    "release:ui": "pnpm --filter cinescope exec npx vercel --prod --yes",
+    "release:docs": "pnpm --filter docs exec npx vercel --prod --yes",
+    "release:all": "pnpm run release:api && pnpm run release:ui && pnpm run release:docs"
   },
-  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "wait-on": "^9.0.5"
+  }
 }
