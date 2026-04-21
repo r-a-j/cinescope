@@ -1,0 +1,33 @@
+.content-container {
+    margin-top: 24px;
+    padding-bottom: 40px;
+}
+
+.tonal-section {
+    background: var(--ion-color-surface-container-low, #191c20);
+    padding: 24px 0;
+    margin: 24px 0;
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Ensure hero banner and swimlanes don't have borders
+::ng-deep {
+    app-hero-banner, app-swimlane, app-poster-card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}

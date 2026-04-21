@@ -1,66 +1,125 @@
-ion-title {
-    font-family: var(--font-display);
-    letter-spacing: 1px;
+:host {
+    --settings-accent: #79c0ff;
+    display: block;
+    height: 100%;
 }
 
-// Custom Styling for the inset lists to match our dark theme
-.cinescope-list {
-    background: #111111; // Dark card background
-    margin-bottom: 24px;
+ion-header {
+    background: transparent;
+}
 
-    ion-list-header {
-        font-family: var(--font-display);
-        font-size: 1.1rem;
-        color: var(--ion-color-step-300);
-        letter-spacing: 1px;
-        padding-bottom: 8px;
-    }
+ion-toolbar {
+    --background: transparent;
+    --min-height: 72px;
+    --padding-start: 12px;
+    --padding-end: 24px;
+    border-bottom: none;
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.morph-back-btn {
+    --color: var(--settings-accent);
+    --box-shadow: none;
+    --elevation: 0;
+    --background: transparent;
+    --background-hover: transparent;
+    --background-activated: transparent;
+    --background-focused: transparent;
+}
+
+.settings-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+}
+
+.settings-viewport {
+    // GPU Accelerated Slide Up - Faster for 2026 feel
+    animation: settings-reveal 0.4s cubic-bezier(0.2, 0, 0, 1);
+    transform-origin: center bottom;
+    will-change: transform, opacity;
+    padding-bottom: 40px;
+}
+
+.settings-container {
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.group-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--settings-accent);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    padding-left: 8px;
+}
+
+.glass-list {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    padding: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 
     ion-item {
-        --background: #111111;
+        --background: transparent;
         --color: #ffffff;
-        --border-color: #222222;
-        font-weight: 500;
+        --padding-start: 16px;
+        --padding-end: 16px;
+        --min-height: 64px;
+        --inner-border-width: 0;
+        
+        &:active {
+            background: rgba(255, 255, 255, 0.06);
+        }
 
         ion-icon {
-            font-size: 1.2rem;
+            color: var(--settings-accent);
+            font-size: 20px;
+        }
+
+        ion-label {
+            font-size: 15px;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .chevron {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.1);
         }
     }
 }
 
-// Footer Styling
-.tmdb-footer {
-    text-align: center;
-    padding: 32px 24px;
-
-    .tmdb-logo {
-        width: 80px;
-        opacity: 0.6;
-        margin-bottom: 12px;
+.danger-item {
+    ion-icon, ion-label {
+        color: #f85149 !important;
     }
+}
 
-    .tmdb-disclaimer {
-        color: var(--ion-color-medium);
-        font-size: 0.8rem;
-        line-height: 1.4;
-        margin-bottom: 16px;
+@keyframes settings-reveal {
+    from { 
+        transform: translateY(20px) scale(0.98); 
+        opacity: 0; 
     }
-
-    .footer-links {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-
-        .divider {
-            color: var(--ion-color-medium);
-            font-size: 0.8rem;
-        }
-
-        ion-button {
-            --padding-start: 4px;
-            --padding-end: 4px;
-            font-size: 0.8rem;
-        }
+    to { 
+        transform: translateY(0) scale(1); 
+        opacity: 1; 
     }
+}
+
+// Performance: Optimization for smooth scrolling
+ion-content {
+    --offset-bottom: 0px !important;
+    --background: transparent;
 }

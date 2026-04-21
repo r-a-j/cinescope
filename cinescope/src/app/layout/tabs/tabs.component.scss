@@ -1,72 +1,134 @@
 ion-tab-bar {
-    // Sets the background to pure OLED black for a seamless floor
-    --background: var(--ion-background-color);
-    --border: none; // Purge the hard line
-
-    height: 60px;
-    padding-bottom: var(--ion-safe-area-bottom);
-}
-
-// Keep the rest of your ion-tab-button CSS exactly as you have it!
-ion-tab-button {
-    --background: transparent;
-    --color: #737373;
-    --color-selected: var(--ion-color-primary, #e50914);
-
-    transition: all 0.3s ease;
-
-    ion-icon {
-        font-size: 24px;
-        margin-bottom: 4px;
-        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    ion-label {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        margin-top: 0;
-    }
-
-    &.tab-selected {
-        ion-icon {
-            transform: translateY(-2px);
-        }
-    }
-
-    --ripple-color: var(--ion-color-primary);
+    --background: rgba(13, 17, 23, 0.85); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: none;
+    position: absolute;
+    bottom: 24px;
+    left: 20px;
+    right: 20px;
+    height: 72px;
+    border-radius: 22px;
+    padding: 0 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    contain: layout style;
+    will-change: transform;
 }
 
 ion-tab-button {
     --background: transparent;
-    --color: #737373;
-    --color-selected: var(--ion-color-primary, #e50914);
+    --color: rgba(139, 148, 158, 0.4);
+    
+    // Default fallback color
+    --active-color: #f85149;
+    --active-glow: rgba(248, 81, 73, 0.5);
+    --active-bg: rgba(248, 81, 73, 0.15);
 
-    // Added for subtle interaction feel
-    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    --padding-top: 0;
+    --padding-bottom: 0;
+
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
 
     ion-icon {
         font-size: 24px;
-        margin-bottom: 4px;
-        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2;
+        transform: translateY(0); // Perfectly centered
     }
 
     ion-label {
+        font-family: var(--font-display);
         font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.8px;
+        font-weight: 400;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        margin-top: 0;
+        z-index: 2;
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: absolute;
+        bottom: 14px;
+        pointer-events: none;
     }
 
-    // Little pop up animation on active tab
     &.tab-selected {
+        flex: 1.6; 
+        
         ion-icon {
-            transform: translateY(-2px);
+            transform: translateY(-10px); // Move up to make room for label
+            color: var(--active-color);
+            filter: drop-shadow(0 0 10px var(--active-glow));
+        }
+
+        ion-label {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            color: var(--active-color);
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                ellipse at center, 
+                var(--active-bg) 0%, 
+                rgba(0, 0, 0, 0) 70%
+            );
+            border-radius: 20px;
+            z-index: 1;
+            animation: liquid-breathe 4s ease-in-out infinite alternate;
         }
     }
 
-    // Define the click ripple effect color to match brand
-    --ripple-color: var(--ion-color-primary);
+    --ripple-color: transparent;
 }
+
+// 🎨 Chromatic Branding for Tabs
+#tab-button-pulse {
+    --active-color: #f85149; // Scarlet Red
+    --active-glow: rgba(248, 81, 73, 0.6);
+    --active-bg: rgba(248, 81, 73, 0.18);
+}
+
+#tab-button-oracle {
+    --active-color: #79c0ff; // Sapphire Blue
+    --active-glow: rgba(121, 192, 255, 0.6);
+    --active-bg: rgba(121, 192, 255, 0.18);
+}
+
+#tab-button-vault {
+    --active-color: #ffffff; // Pure White
+    --active-glow: rgba(255, 255, 255, 0.4);
+    --active-bg: rgba(255, 255, 255, 0.12);
+}
+
+#tab-button-social {
+    --active-color: #d2a8ff; // Amethyst Purple
+    --active-glow: rgba(210, 168, 255, 0.6);
+    --active-bg: rgba(210, 168, 255, 0.18);
+}
+
+#tab-button-identity {
+    --active-color: #f0883e; // Amber Gold
+    --active-glow: rgba(240, 136, 62, 0.6);
+    --active-bg: rgba(240, 136, 62, 0.18);
+}
+
+@keyframes liquid-breathe {
+    from { opacity: 0.6; transform: translate(-50%, -50%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+:host { display: block; height: 100%; }

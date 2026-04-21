@@ -1,77 +1,60 @@
 <ion-header class="ion-no-border">
     <ion-toolbar>
         <ion-buttons slot="start">
-            <ion-button (click)="goBack()">
-                <ion-icon name="arrow-back-outline"></ion-icon>
-            </ion-button>
+            <ion-back-button defaultHref="/" class="morph-back-btn"></ion-back-button>
         </ion-buttons>
-        <ion-title>SETTINGS</ion-title>
+        <h1 class="settings-title">System Settings</h1>
     </ion-toolbar>
 </ion-header>
 
-<ion-content color="background" class="ion-padding-bottom">
+<ion-content color="background" [fullscreen]="true">
+    <div class="settings-viewport">
+        <div class="settings-container">
+            <div class="settings-group">
+                <h3 class="group-title">Account & Security</h3>
+                <ion-list lines="none" class="glass-list">
+                    <ion-item button detail="false">
+                        <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+                        <ion-label>Vault Encryption</ion-label>
+                        <ion-icon name="chevron-forward-outline" slot="end" class="chevron"></ion-icon>
+                    </ion-item>
+                    <ion-item button detail="false">
+                        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+                        <ion-label>Cloud Sync</ion-label>
+                        <ion-icon name="chevron-forward-outline" slot="end" class="chevron"></ion-icon>
+                    </ion-item>
+                </ion-list>
+            </div>
 
-    <ion-list inset="true" class="cinescope-list">
-        <ion-list-header>
-            <ion-label>Data Management</ion-label>
-        </ion-list-header>
-        <ion-item button (click)="confirmClearWatchlist()">
-            <ion-icon slot="start" name="trash-outline"></ion-icon>
-            <ion-label>Clear Watchlist</ion-label>
-        </ion-item>
-        <ion-item button (click)="confirmClearWatchedList()">
-            <ion-icon slot="start" name="trash-outline"></ion-icon>
-            <ion-label>Clear Watched List</ion-label>
-        </ion-item>
-        <ion-item button (click)="confirmClearCache()">
-            <ion-icon slot="start" name="trash-outline" color="danger"></ion-icon>
-            <ion-label color="danger">Clear Image Cache</ion-label>
-        </ion-item>
-        <ion-item button (click)="createBackup()">
-            <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
-            <ion-label>Backup Data</ion-label>
-        </ion-item>
-        <ion-item button (click)="restoreBackup()" lines="none">
-            <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
-            <ion-label>Restore Data</ion-label>
-        </ion-item>
-    </ion-list>
+            <div class="settings-group">
+                <h3 class="group-title">Preferences</h3>
+                <ion-list lines="none" class="glass-list">
+                    <ion-item button detail="false">
+                        <ion-icon name="color-palette-outline" slot="start"></ion-icon>
+                        <ion-label>Chroma-Sync Theme</ion-label>
+                        <ion-icon name="chevron-forward-outline" slot="end" class="chevron"></ion-icon>
+                    </ion-item>
+                    <ion-item button detail="false">
+                        <ion-icon name="notifications-outline" slot="start"></ion-icon>
+                        <ion-label>AI Insights Alerts</ion-label>
+                        <ion-icon name="chevron-forward-outline" slot="end" class="chevron"></ion-icon>
+                    </ion-item>
+                </ion-list>
+            </div>
 
-    <ion-list inset="true" class="cinescope-list">
-        <ion-list-header>
-            <ion-label>About & Support</ion-label>
-        </ion-list-header>
-        <ion-item button (click)="openUrl('https://github.com/r-a-j/cine-scope')">
-            <ion-icon slot="start" name="logo-github"></ion-icon>
-            <ion-label>Source Code (Currently private!)</ion-label>
-        </ion-item>
-        <ion-item button (click)="sendFeedback()">
-            <ion-icon slot="start" name="mail-outline"></ion-icon>
-            <ion-label>Send Feedback</ion-label>
-        </ion-item>
-        <ion-item button (click)="openUrl('https://rajpawar.in')">
-            <ion-icon slot="start" name="information-circle-outline"></ion-icon>
-            <ion-label>Developer Website</ion-label>
-        </ion-item>
-        <ion-item lines="none">
-            <ion-label>Version</ion-label>
-            <ion-note slot="end">{{ appVersion() }}</ion-note>
-        </ion-item>
-    </ion-list>
-
-    <div class="tmdb-footer">
-        <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-            alt="TMDB Logo" class="tmdb-logo">
-        <p class="tmdb-disclaimer">
-            This product uses the TMDB API but is not endorsed or certified by TMDB.
-        </p>
-        <div class="footer-links">
-            <ion-button fill="clear" size="small" color="medium"
-                (click)="openUrl('https://www.themoviedb.org/documentation/api/terms-of-use')">Terms</ion-button>
-            <span class="divider">•</span>
-            <ion-button fill="clear" size="small" color="medium"
-                (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy</ion-button>
+            <div class="settings-group">
+                <h3 class="group-title">Maintenance</h3>
+                <ion-list lines="none" class="glass-list">
+                    <ion-item button detail="false" class="danger-item">
+                        <ion-icon name="trash-outline" slot="start"></ion-icon>
+                        <ion-label>Clear Local Cache</ion-label>
+                    </ion-item>
+                    <ion-item button detail="false">
+                        <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+                        <ion-label>About Cinescope</ion-label>
+                    </ion-item>
+                </ion-list>
+            </div>
         </div>
     </div>
-
 </ion-content>

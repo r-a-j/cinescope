@@ -7,28 +7,28 @@ export const routes: Routes = [
         component: TabsComponent,
         children: [
             {
-                path: 'movies',
-                loadComponent: () => import('../../features/movies/movies.page').then(m => m.MoviesPage)
-            },
-            {
-                path: 'tv',
-                loadComponent: () => import('../../features/tv/tv.page').then(m => m.TvPage)
-            },
-            {
-                path: 'discover',
+                path: 'pulse',
                 loadComponent: () => import('../../features/discover/discover.page').then(m => m.DiscoverPage)
             },
             {
-                path: 'archive',
+                path: 'oracle',
+                loadComponent: () => import('../../features/movies/movies.page').then(m => m.MoviesPage)
+            },
+            {
+                path: 'vault',
                 loadComponent: () => import('../../features/archive/archive.page').then(m => m.ArchivePage)
             },
             {
-                path: 'inbox',
+                path: 'social',
                 loadComponent: () => import('../../features/inbox/inbox.page').then(m => m.InboxPage)
             },
             {
+                path: 'identity',
+                loadComponent: () => import('../../features/identity/identity.page').then(m => m.IdentityPage)
+            },
+            {
                 path: '',
-                redirectTo: 'discover',
+                redirectTo: 'pulse',
                 pathMatch: 'full'
             }
         ]

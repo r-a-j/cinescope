@@ -19,10 +19,16 @@ export class HeaderComponent {
   }
 
   public openSettings(): void {
-    this.navCtrl.navigateForward('/settings');
+    this.navCtrl.navigateForward('/settings', { 
+      animated: true,
+      animationDirection: 'forward'
+    });
   }
 
   public openSearch(): void {
-    this.navCtrl.navigateForward('/search', { animated: false }); // Instant open for search makes it feel snappy
+    this.navCtrl.navigateForward('/search', { 
+      animated: true,
+      animationDirection: 'forward'
+    });
   }
 }

@@ -1,39 +1,82 @@
 ion-toolbar {
-    // Highly performant gradient: Dark at top, fading to transparent
-    --background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.60) 60%, rgba(0, 0, 0, 0) 100%);
-
-    // Explicitly disable any blurs
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-
-    --min-height: 56px;
-    --padding-start: 16px;
+    --background: transparent;
+    --border-style: none;
+    --min-height: 72px;
+    --padding-start: 24px;
     --padding-end: 12px;
+
+    // SEAMLESS: Removed backdrop-filter to eliminate visual separation
+    border-bottom: none;
+    
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
-// Keep the existing .logo-container, .header-logo, and .action-btn CSS
-.logo-container {
+.brand-container {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
 .header-logo {
-    height: 24px;
+    height: 22px; // More sophisticated smaller size
     width: auto;
     object-fit: contain;
     display: block;
-}
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+    transition: all 0.3s ease;
+    opacity: 0.9;
 
-.action-btn {
-    --color: var(--ion-text-color);
-    margin: 0;
-    min-width: 48px;
-    min-height: 48px;
-
-    ion-icon {
-        font-size: 1.5rem;
+    &:active {
+        transform: scale(0.96);
+        opacity: 1;
     }
 }
 
-// DELETE the entire .glass-toolbar class from this file!
+.action-btn {
+    --color: rgba(255, 255, 255, 0.6);
+    --background: transparent;
+    --background-hover: transparent;
+    --background-activated: transparent;
+    --background-focused: transparent;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --box-shadow: none !important;
+    --border-radius: 50%; // Circular for icon buttons
+    --ripple-color: rgba(255, 255, 255, 0.1);
+    
+    margin: 0 4px;
+    height: 48px;
+    width: 48px;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    
+    // Kill all default focus/active states that cause "weird boxes"
+    &::part(native) {
+        box-shadow: none !important;
+        outline: none !important;
+        background: transparent !important;
+        border-radius: 50%;
+    }
+
+    ion-icon {
+        font-size: 24px;
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    &:hover, &:active, &.activated {
+        --color: #ffffff;
+        --background: transparent;
+        
+        ion-icon {
+            transform: scale(1.1);
+        }
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+
+ion-header {
+    background: transparent;
+    z-index: 100;
+}

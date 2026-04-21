@@ -78,13 +78,39 @@ ion-segment-button::part(native) {
 // ----------------------------------------
 // 📐 UTILITIES
 // ----------------------------------------
+ion-header, 
+ion-toolbar {
+    --background: var(--ion-background-color);
+    --box-shadow: none !important;
+    box-shadow: none !important;
+    
+    // Kill the Ionic internal shadow pseudo-element
+    &::after {
+        display: none !important;
+    }
+}
+
+ion-content {
+    --background: var(--ion-background-color);
+}
+
+ion-tabs ion-content {
+    --padding-bottom: 110px; // Safety space for floating dock
+}
+
 ::-webkit-scrollbar {
     display: none;
 }
 
-// Uses CSS variables to automatically adapt to light/dark mode
+// Ensure app-wide transitions are snappy
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 0.3s;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 .surface-card {
     background: var(--ion-color-step-50);
-    border-radius: 12px; // Cards shouldn't be pill-shaped, keeping this at 12px
+    border-radius: 12px;
     border: 1px solid var(--ion-color-step-100);
 }
