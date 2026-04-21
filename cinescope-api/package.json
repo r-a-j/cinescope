@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs:generate": "ts-node generate-openapi.ts"
   },
@@ -15,6 +13,7 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@google/generative-ai": "^0.24.1",
+    "rss-parser": "^3.13.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
