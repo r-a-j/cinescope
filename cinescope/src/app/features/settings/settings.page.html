@@ -1,5 +1,7 @@
 <ion-header class="ion-no-border">
+    <div class="status-bar-bg"></div>
     <ion-toolbar>
+
         <ion-buttons slot="start">
             <ion-back-button defaultHref="/" class="morph-back-btn"></ion-back-button>
         </ion-buttons>
@@ -29,10 +31,19 @@
             <div class="settings-group">
                 <h3 class="group-title">Preferences</h3>
                 <ion-list lines="none" class="glass-list">
-                    <ion-item button detail="false">
-                        <ion-icon name="color-palette-outline" slot="start"></ion-icon>
-                        <ion-label>Chroma-Sync Theme</ion-label>
-                        <ion-icon name="chevron-forward-outline" slot="end" class="chevron"></ion-icon>
+                    <ion-item class="theme-item">
+                        <ion-icon [name]="themeService.themeMode() === 'dark' ? 'moon-outline' : themeService.themeMode() === 'light' ? 'sunny-outline' : 'contrast-outline'" slot="start"></ion-icon>
+                        <ion-label>Display Theme</ion-label>
+                        <ion-select 
+                            slot="end" 
+                            interface="popover" 
+                            [value]="themeService.themeMode()" 
+                            (ionChange)="onThemeChange($event)"
+                            class="custom-select">
+                            <ion-select-option value="light">Light</ion-select-option>
+                            <ion-select-option value="dark">Dark</ion-select-option>
+                            <ion-select-option value="system">System</ion-select-option>
+                        </ion-select>
                     </ion-item>
                     <ion-item button detail="false">
                         <ion-icon name="notifications-outline" slot="start"></ion-icon>

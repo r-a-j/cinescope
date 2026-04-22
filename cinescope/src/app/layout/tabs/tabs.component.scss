@@ -1,29 +1,43 @@
 ion-tab-bar {
-    --background: rgba(13, 17, 23, 0.85); 
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    --background: rgba(var(--ion-background-color-rgb), 0.65); 
+    backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
+    -webkit-backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
+    border: 1px solid rgba(var(--ion-text-color-rgb), 0.08);
     border-bottom: none;
     position: absolute;
     bottom: 24px;
     left: 20px;
     right: 20px;
-    height: 72px;
-    border-radius: 22px;
+    height: 76px;
+    border-radius: 28px;
     padding: 0 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.25);
     contain: layout style;
     will-change: transform;
+
+    // We removed the mask-image here to prevent "leak gaps" and shadow clipping.
+    // The seamless integration is now handled by the ultra-soft shadow and border-less design.
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(var(--ion-text-color-rgb), 0.05), transparent);
+    }
 }
+
 
 ion-tab-button {
     --background: transparent;
-    --color: rgba(139, 148, 158, 0.4);
+    --color: rgba(var(--ion-text-color-rgb), 0.4);
     
     // Default fallback color
-    --active-color: #f85149;
-    --active-glow: rgba(248, 81, 73, 0.5);
-    --active-bg: rgba(248, 81, 73, 0.15);
+    --active-color: var(--ion-color-primary);
+    --active-glow: rgba(var(--ion-color-primary-rgb), 0.5);
+    --active-bg: rgba(var(--ion-color-primary-rgb), 0.15);
 
     display: flex;
     flex-direction: column;
@@ -109,9 +123,9 @@ ion-tab-button {
 }
 
 #tab-button-vault {
-    --active-color: #ffffff; // Pure White
-    --active-glow: rgba(255, 255, 255, 0.4);
-    --active-bg: rgba(255, 255, 255, 0.12);
+    --active-color: var(--ion-text-color); 
+    --active-glow: rgba(var(--ion-text-color-rgb), 0.4);
+    --active-bg: rgba(var(--ion-text-color-rgb), 0.12);
 }
 
 #tab-button-social {

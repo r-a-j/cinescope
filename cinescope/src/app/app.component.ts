@@ -5,6 +5,8 @@ import { Location } from '@angular/common';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { NavController } from '@ionic/angular/standalone';
 
+import { ThemeService } from './core/services/theme.service';
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -14,6 +16,7 @@ export class AppComponent {
   private platform = inject(Platform);
   private location = inject(Location);
   private navCtrl = inject(NavController);
+  private themeService = inject(ThemeService); // Initializing theme management
 
   constructor() {
     this.initializeApp();

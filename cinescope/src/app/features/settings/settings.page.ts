@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
     IonContent,
@@ -9,7 +9,9 @@ import {
     IonButtons,
     IonToolbar,
     IonHeader,
-    IonBackButton
+    IonBackButton,
+    IonSelect,
+    IonSelectOption
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -20,8 +22,12 @@ import {
     cloudUploadOutline,
     trashOutline,
     informationCircleOutline,
-    chevronForwardOutline
+    chevronForwardOutline,
+    moonOutline,
+    sunnyOutline,
+    contrastOutline
 } from 'ionicons/icons';
+import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 
 @Component({
     selector: 'app-settings',
@@ -36,13 +42,17 @@ import {
         IonButtons,
         IonToolbar,
         IonHeader,
-        IonBackButton
+        IonBackButton,
+        IonSelect,
+        IonSelectOption
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './settings.page.html',
     styleUrls: ['./settings.page.scss'],
 })
 export class SettingsPage {
+    public themeService = inject(ThemeService);
+
     constructor() {
         addIcons({
             settingsOutline,
@@ -52,7 +62,14 @@ export class SettingsPage {
             cloudUploadOutline,
             trashOutline,
             informationCircleOutline,
-            chevronForwardOutline
+            chevronForwardOutline,
+            moonOutline,
+            sunnyOutline,
+            contrastOutline
         });
+    }
+
+    public onThemeChange(event: any) {
+        this.themeService.setTheme(event.detail.value as ThemeMode);
     }
 }

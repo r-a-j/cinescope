@@ -1,7 +1,80 @@
 <app-header></app-header>
 
-<ion-content color="background" class="ion-no-padding">
-    <div class="blank-container">
-        <!-- Content Reset -->
+<ion-content [fullscreen]="true" color="background" class="ion-no-padding">
+    <div class="pulse-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-image-container">
+                <img src="https://image.tmdb.org/t/p/original/gATQxXU9tPj2DwHARCIL9YpDym7.jpg" alt="Shogun">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <span class="badge">FEATURED</span>
+                    <h1>Project Hail Mary</h1>
+                    <p>Science teacher Ryland Grace wakes up on a spaceship light years from home.</p>
+                    <div class="hero-actions">
+                        <ion-button mode="ios" fill="solid" color="light">
+                            WATCH NOW
+                        </ion-button>
+                        <ion-button mode="ios" fill="clear" color="light" class="glass-btn">
+                            <ion-icon slot="start" name="add-outline"></ion-icon>
+                            VAULT
+                        </ion-button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOMO Peaks Section -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2>FOMO PEAKS</h2>
+                <ion-button fill="clear" color="primary" size="small">SEE ALL</ion-button>
+            </div>
+            <div class="horizontal-scroll">
+                <div class="content-card large">
+                    <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=2070&auto=format&fit=crop"
+                        alt="The Bear">
+                    <div class="card-info">
+                        <h3>THE BEAR</h3>
+                        <p>Season 3 Now Streaming</p>
+                    </div>
+                </div>
+                <div class="content-card large">
+                    <img src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop"
+                        alt="Mickey 17">
+                    <div class="card-info">
+                        <h3>MICKEY 17 TEASER</h3>
+                        <p>Exclusive First Look</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vibe Check Section -->
+        <section class="content-section">
+            <div class="section-header">
+                <h2>VIBE CHECK</h2>
+            </div>
+            <div class="vibe-grid">
+                <div class="vibe-item glassmorphism">
+                    <p>"That Shogun finale was purely medicinal. Masterpiece."</p>
+                    <div class="vibe-meta">
+                        <ion-avatar>
+                            <img src="https://i.pravatar.cc/150?u=marcus" />
+                        </ion-avatar>
+                        <span>@marcus</span>
+                    </div>
+                </div>
+                <div class="vibe-item glassmorphism">
+                    <p>"The Bear S3 pacing is wild. Stress levels 📈"</p>
+                    <div class="vibe-meta">
+                        <ion-avatar>
+                            <img src="https://i.pravatar.cc/150?u=sarah" />
+                        </ion-avatar>
+                        <span>@sarah_c</span>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 </ion-content>

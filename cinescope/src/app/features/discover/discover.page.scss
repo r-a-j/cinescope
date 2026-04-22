@@ -1,57 +1,213 @@
-// Temporary styling just to center the text for your testing
-.placeholder-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+.pulse-container {
+    padding-bottom: 40px;
+}
+
+// 🎬 HERO SECTION
+.hero-section {
+    position: relative;
     width: 100%;
+    height: 70vh;
+    margin-bottom: 24px;
 
-    h1 {
-        color: var(--ion-color-step-200); // Faded grey
-        font-weight: 800;
-        letter-spacing: 2px;
+    .hero-image-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.05);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,0) 0%, 
+                rgba(var(--ion-background-color-rgb), 0.2) 40%,
+                rgba(var(--ion-background-color-rgb), 0.8) 80%,
+                var(--ion-background-color) 100%
+            );
+        }
+
+        .hero-content {
+            position: absolute;
+            bottom: 40px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+
+            .badge {
+                font-family: var(--font-display);
+                background: var(--ion-color-primary);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                letter-spacing: 1px;
+                margin-bottom: 12px;
+                display: inline-block;
+            }
+
+            h1 {
+                font-size: 4rem;
+                margin: 0 0 12px 0;
+                line-height: 0.9;
+                color: #ffffff;
+                text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            }
+
+            p {
+                font-size: 0.95rem;
+                color: rgba(255,255,255,0.8);
+                max-width: 90%;
+                margin-bottom: 24px;
+                line-height: 1.4;
+                font-family: var(--font-body);
+            }
+
+            .hero-actions {
+                display: flex;
+                gap: 12px;
+
+                ion-button {
+                    --border-radius: 8px;
+                    height: 48px;
+                    font-size: 1rem;
+                    margin: 0;
+                }
+
+                .glass-btn {
+                    --background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+            }
+        }
     }
 }
 
-.segment-toolbar {
-    --background: #000000;
-    --border-width: 0;
-    --min-height: 48px;
-}
+// 📦 CONTENT SECTIONS
+.content-section {
+    padding: 0 20px;
+    margin-bottom: 32px;
 
-ion-segment {
-    --background: #000000;
-}
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
 
-ion-segment-button {
-    --color: #888888; // Inactive gray
-    --color-checked: #ffffff; // Active white
-
-    // The red underline indicator from your mockup
-    --indicator-color: var(--ion-color-primary);
-    --indicator-height: 3px;
-
-    font-family: var(--font-display); // Forces Bebas Neue
-    font-size: 1.1rem;
-    letter-spacing: 1px;
-    min-width: max-content;
-    padding: 0 16px;
-
-    &::part(indicator-background) {
-        border-radius: 0; // Makes the red line sharp instead of rounded
+        h2 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--ion-color-step-900);
+            letter-spacing: 1px;
+        }
     }
 }
 
-// Fade in animation for section changes
-.fade-in {
-    animation: softlyEmerge 300ms ease-out forwards;
+// 📜 HORIZONTAL SCROLL
+.horizontal-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding-bottom: 8px;
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    .content-card {
+        flex: 0 0 280px;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        aspect-ratio: 16/9;
+        background: var(--ion-color-step-100);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+
+            h3 {
+                margin: 0;
+                color: white;
+                font-size: 1.2rem;
+            }
+
+            p {
+                margin: 4px 0 0 0;
+                color: rgba(255,255,255,0.7);
+                font-size: 0.8rem;
+                font-family: var(--font-body);
+            }
+        }
+    }
 }
 
-@keyframes softlyEmerge {
-    from {
-        opacity: 0;
+// 🌩️ VIBE GRID
+.vibe-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vibe-item {
+    padding: 20px;
+    border-radius: 20px;
+    background: var(--ion-color-step-50);
+    border: 1px solid var(--ion-color-step-100);
+
+    p {
+        margin: 0 0 16px 0;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--ion-color-step-800);
+        font-style: italic;
     }
-    to {
-        opacity: 1;
+
+    .vibe-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        ion-avatar {
+            width: 24px;
+            height: 24px;
+        }
+
+        span {
+            font-size: 0.85rem;
+            color: var(--ion-color-step-500);
+            font-family: var(--font-body);
+        }
     }
 }
+
+.glassmorphism {
+    background: rgba(var(--ion-color-step-50-rgb), 0.6) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}

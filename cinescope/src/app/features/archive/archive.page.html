@@ -1,7 +1,85 @@
 <app-header></app-header>
 
-<ion-content color="background" class="ion-no-padding">
-    <div class="blank-container">
-        <!-- Content Reset -->
+<ion-content [fullscreen]="true" color="background" class="ion-no-padding">
+    <div class="vault-container">
+        <!-- Vault Header -->
+        <header class="vault-header">
+            <span class="eyebrow">CURATED COLLECTION</span>
+            <h1>THE VAULT</h1>
+            <p>Your curated temporal collection of masterpieces and memories.</p>
+        </header>
+
+        <!-- Functional Sections -->
+        <div class="utility-grid">
+            <div class="utility-card glassmorphism">
+                <ion-icon name="trash-outline"></ion-icon>
+                <div class="card-text">
+                    <h3>WATCHLIST BANKRUPTCY</h3>
+                    <p>Clear the clutter. Start fresh with 0 unplayed titles.</p>
+                </div>
+            </div>
+            <div class="utility-card glassmorphism">
+                <ion-icon name="map-outline"></ion-icon>
+                <div class="card-text">
+                    <h3>FRANCHISE GPS</h3>
+                    <p>Navigate complex timelines and cinematic universes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Acquisitions -->
+        <section class="acquisitions-section">
+            <div class="section-header">
+                <h2>RECENT ACQUISITIONS</h2>
+                <ion-button fill="clear" size="small">MANAGE</ion-button>
+            </div>
+            <div class="vault-list">
+                <div class="vault-item">
+                    <div class="item-poster">
+                        <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=2070&auto=format&fit=crop" alt="Breaking Bad">
+                        <div class="item-progress">
+                            <div class="progress-bar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="item-info">
+                        <h3>BREAKING BAD</h3>
+                        <p>S5 E14 • Ozymandias</p>
+                    </div>
+                    <ion-button fill="clear" color="medium">
+                        <ion-icon name="ellipsis-vertical"></ion-icon>
+                    </ion-button>
+                </div>
+
+                <div class="vault-item">
+                    <div class="item-poster">
+                        <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2025&auto=format&fit=crop" alt="Game of Thrones">
+                        <div class="item-progress">
+                            <div class="progress-bar" style="width: 40%"></div>
+                        </div>
+                    </div>
+                    <div class="item-info">
+                        <h3>GAME OF THRONES</h3>
+                        <p>S3 E9 • The Rains of Castamere</p>
+                    </div>
+                    <ion-button fill="clear" color="medium">
+                        <ion-icon name="ellipsis-vertical"></ion-icon>
+                    </ion-button>
+                </div>
+
+                <div class="vault-item">
+                    <div class="item-poster">
+                        <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop" alt="Project Hail Mary">
+                        <span class="new-tag">NEW</span>
+                    </div>
+                    <div class="item-info">
+                        <h3>PROJECT HAIL MARY</h3>
+                        <p>Pre-ordered • 2026 Release</p>
+                    </div>
+                    <ion-button fill="clear" color="medium">
+                        <ion-icon name="ellipsis-vertical"></ion-icon>
+                    </ion-button>
+                </div>
+            </div>
+        </section>
     </div>
 </ion-content>

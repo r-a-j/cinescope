@@ -2,6 +2,10 @@
 // 🎬 CINESCOPE: Theme System & Variables
 // ==========================================
 
+// Import standard Ionic 8 palettes
+// These provide the base colors for light and dark modes
+@import "@ionic/angular/css/palettes/dark.class.css";
+
 :root {
     // ----------------------------------------
     // 🎨 BRAND TOKENS (From Design System Docs)
@@ -48,10 +52,13 @@
 }
 
 // ----------------------------------------
-// 🌑 DARK MODE TOKENS
+// 🌑 DARK MODE OVERRIDES
 // ----------------------------------------
-// Applied via class mixin to keep code DRY for both System and Forced Dark Mode
-@mixin dark-theme-variables {
+// We use the official .ion-palette-dark class on the html element.
+// To override Ionic's defaults with high specificity, we target mode-specific selectors.
+:root.ion-palette-dark,
+:root.ion-palette-dark.ios,
+:root.ion-palette-dark.md {
     // Neutral (#111418) from docs used as the absolute background
     --ion-background-color: #111418;
     --ion-background-color-rgb: 17, 20, 24;
@@ -64,16 +71,4 @@
     --ion-color-step-150: #323842;
     --ion-color-step-200: #3d4550;
     --ion-color-step-250: #48515e;
-}
-
-// 1. SYSTEM DARK MODE (Active if user OS is dark AND no .light class overrides it)
-@media (prefers-color-scheme: dark) {
-    body:not(.light) {
-        @include dark-theme-variables;
-    }
-}
-
-// 2. FORCED DARK MODE (Active if user explicitly selects 'Dark' in settings)
-body.dark {
-    @include dark-theme-variables;
-}
+}

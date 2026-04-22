@@ -1,7 +1,66 @@
 <app-header></app-header>
 
-<ion-content color="background" class="ion-no-padding">
-    <div class="blank-container">
-        <!-- Content Reset -->
+<ion-content [fullscreen]="true" color="background" class="ion-no-padding">
+    <div class="oracle-container">
+        <!-- Oracle Header -->
+        <header class="oracle-hero">
+            <img src="https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=2070&auto=format&fit=crop" alt="Dune">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <span class="oracle-badge">ORACLE SPIN</span>
+                <h1>DUNE: PART TWO</h1>
+                <p>The Oracle only grants 3 spins per night. Use them wisely.</p>
+                <ion-button mode="ios" fill="solid" color="primary" class="spin-btn">
+                    <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                    SPIN AGAIN (2 LEFT)
+                </ion-button>
+            </div>
+        </header>
+
+        <!-- Compromise Engine -->
+        <section class="tonal-section glassmorphism">
+            <div class="section-content">
+                <div class="icon-box">
+                    <ion-icon name=" git-compare-outline"></ion-icon>
+                </div>
+                <div class="text-box">
+                    <h3>COMPROMISE ENGINE</h3>
+                    <p>Can't decide what to watch? Find the middle ground with your inner circle.</p>
+                </div>
+                <ion-button fill="clear" color="primary">
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </ion-button>
+            </div>
+        </section>
+
+        <!-- Watch Hacks -->
+        <section class="hacks-section">
+            <h2>WATCH HACKS</h2>
+            <div class="hacks-grid">
+                <div class="hack-card surface-card">
+                    <ion-icon name="timer-outline" color="primary"></ion-icon>
+                    <h3>PEE BREAKS</h3>
+                    <p>The exact timestamps when nothing happens.</p>
+                </div>
+                <div class="hack-card surface-card">
+                    <ion-icon name="eye-off-outline" color="secondary"></ion-icon>
+                    <h3>BLIND TASTE TEST</h3>
+                    <p>Audio only start. Guess the movie in 30s.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Schedule -->
+        <section class="schedule-section">
+            <div class="glass-card">
+                <div class="card-header">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    <h3>FIT MY SCHEDULE</h3>
+                </div>
+                <p>Have exactly 42 minutes? We'll find the perfect episode.</p>
+                <ion-button fill="outline" color="light" size="small">OPTIMIZE</ion-button>
+            </div>
+        </section>
     </div>
 </ion-content>
+

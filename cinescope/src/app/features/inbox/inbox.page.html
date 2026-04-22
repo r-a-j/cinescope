@@ -1,7 +1,89 @@
 <app-header></app-header>
 
-<ion-content color="background" class="ion-no-padding">
-    <div class="blank-container">
-        <!-- Content Reset -->
+<ion-content [fullscreen]="true" color="background" class="ion-no-padding">
+    <div class="social-container">
+        <!-- Social Header -->
+        <header class="social-header">
+            <div class="header-main">
+                <h1>SOCIAL HUB</h1>
+                <ion-button fill="clear" color="primary">
+                    <ion-icon name="notifications-outline"></ion-icon>
+                </ion-button>
+            </div>
+            <p class="buzz-text">Your inner circle is buzzing. 4 friends are planning a viewing tonight at 9:00 PM.</p>
+        </header>
+
+        <!-- Active Beacon -->
+        <section class="beacon-section">
+            <div class="beacon-card glassmorphism">
+                <div class="beacon-icon">
+                    <ion-icon name="rocket-outline"></ion-icon>
+                </div>
+                <div class="beacon-info">
+                    <h3>ACTIVE BEACON</h3>
+                    <p>Marcus started a viewing room</p>
+                </div>
+                <ion-button fill="solid" color="primary" size="small" mode="ios">JOIN</ion-button>
+            </div>
+        </section>
+
+        <!-- Binge Traitors Section -->
+        <section class="traitors-section">
+            <div class="section-header">
+                <h2>BINGE TRAITORS</h2>
+                <span class="info-pill">LIVE</span>
+            </div>
+            
+            <div class="traitors-list">
+                <div class="traitor-item surface-card">
+                    <div class="traitor-avatar">
+                        <img src="https://i.pravatar.cc/150?u=marcus" alt="Marcus">
+                        <div class="status-indicator online"></div>
+                    </div>
+                    <div class="traitor-content">
+                        <h3>Marcus is watching alone!</h3>
+                        <p>Sneaking an episode of <span>Silo</span> right now.</p>
+                        <span class="time">2m ago</span>
+                    </div>
+                </div>
+
+                <div class="traitor-item surface-card">
+                    <div class="traitor-avatar">
+                        <img src="https://i.pravatar.cc/150?u=sarah" alt="Sarah">
+                    </div>
+                    <div class="traitor-content">
+                        <h3>Sarah reached Level 4</h3>
+                        <p>Unlocked <span>"Noir Enthusiast"</span> badge.</p>
+                        <span class="time">1h ago</span>
+                    </div>
+                </div>
+
+                <div class="traitor-item surface-card">
+                    <div class="traitor-avatar">
+                        <img src="https://i.pravatar.cc/150?u=leon" alt="Leon">
+                    </div>
+                    <div class="traitor-content">
+                        <h3>Leon completed...</h3>
+                        <p>Finished <span>Gladiator II</span> without the squad.</p>
+                        <span class="time">3h ago</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community Blocks -->
+        <section class="community-grid">
+            <div class="comm-card glassmorphism">
+                <ion-icon name="people-outline"></ion-icon>
+                <h3>CINE-CLUBS</h3>
+                <p>Join 12 active</p>
+            </div>
+            <div class="comm-card glassmorphism">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+                <h3>DEBATES</h3>
+                <p>8 new replies</p>
+            </div>
+        </section>
     </div>
 </ion-content>
+

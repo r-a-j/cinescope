@@ -1,14 +1,11 @@
 ion-toolbar {
     --background: transparent;
     --border-style: none;
-    --min-height: 72px;
+    --min-height: 80px;
     --padding-start: 24px;
-    --padding-end: 12px;
-
-    // SEAMLESS: Removed backdrop-filter to eliminate visual separation
-    border-bottom: none;
+    --padding-end: 16px;
     
-    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .brand-container {
@@ -18,38 +15,32 @@ ion-toolbar {
 }
 
 .header-logo {
-    height: 22px; // More sophisticated smaller size
+    height: 20px;
     width: auto;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
-    transition: all 0.3s ease;
-    opacity: 0.9;
+    // iPhone 2026: Etched glass look
+    filter: drop-shadow(0 0 1px rgba(255,255,255,0.3)) brightness(1.2) contrast(1.1);
+    transition: all 0.4s ease;
+    opacity: 0.85;
 
     &:active {
-        transform: scale(0.96);
-        opacity: 1;
+        transform: scale(0.98) opacity(1);
     }
 }
 
 .action-btn {
-    --color: rgba(255, 255, 255, 0.6);
+    --color: rgba(255, 255, 255, 0.4);
     --background: transparent;
-    --background-hover: transparent;
-    --background-activated: transparent;
-    --background-focused: transparent;
-    --padding-start: 12px;
-    --padding-end: 12px;
+    --padding-start: 10px;
+    --padding-end: 10px;
     --box-shadow: none !important;
-    --border-radius: 50%; // Circular for icon buttons
-    --ripple-color: rgba(255, 255, 255, 0.1);
     
-    margin: 0 4px;
-    height: 48px;
-    width: 48px;
-    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    margin: 0 2px;
+    height: 44px;
+    width: 44px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     
-    // Kill all default focus/active states that cause "weird boxes"
     &::part(native) {
         box-shadow: none !important;
         outline: none !important;
@@ -58,25 +49,87 @@ ion-toolbar {
     }
 
     ion-icon {
-        font-size: 24px;
-        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-size: 22px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     &:hover, &:active, &.activated {
-        --color: #ffffff;
-        --background: transparent;
+        --color: var(--ion-color-primary);
         
         ion-icon {
-            transform: scale(1.1);
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 15px rgba(var(--ion-color-primary-rgb), 0.5));
         }
-    }
-
-    &:focus {
-        outline: none;
     }
 }
 
 ion-header {
     background: transparent;
-    z-index: 100;
+    overflow: visible; // Vital to prevent shadow clipping
+    z-index: 2000;
+    border-bottom: none;
+    
+    // THE INFINITE SURFACE: This pseudo-element handles the blur and the fade
+    &::before {
+        content: '';
+        position: absolute;
+        top: -5px;   // Overscan top
+        left: -5px;  // Overscan left
+        right: -5px; // Overscan right
+        bottom: 0;   // Meet the bottom exactly
+        background: linear-gradient(
+            180deg, 
+            rgba(var(--ion-background-color-rgb), 0.75) 0%, 
+            rgba(var(--ion-background-color-rgb), 0.4) 100%
+        );
+        backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
+        -webkit-backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
+        
+        // Precision Bottom-Only Fade
+        -webkit-mask-image: linear-gradient(to bottom, 
+            black 0%, 
+            black calc(100% - 40px), 
+            rgba(0, 0, 0, 0.5) calc(100% - 20px), 
+            transparent 100%
+        );
+        mask-image: linear-gradient(to bottom, 
+            black 0%, 
+            black calc(100% - 40px), 
+            rgba(0, 0, 0, 0.5) calc(100% - 20px), 
+            transparent 100%
+        );
+        z-index: -1;
+    }
+
+    // Ambient Depth
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+
+    // Dynamic Top Edge (Status Bar Integration)
+    .status-bar-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-top);
+        background: rgba(var(--ion-background-color-rgb), 0.1);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    // Subtle Chromatic Line (Floating inside the fade)
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 20px;
+        left: 15%;
+        right: 15%;
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(var(--ion-color-primary-rgb), 0.15) 50%, 
+            transparent 100%
+        );
+        filter: blur(3px);
+        opacity: 0.5;
+    }
 }
