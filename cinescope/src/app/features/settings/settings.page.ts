@@ -6,10 +6,6 @@ import {
     IonList,
     IonItem,
     IonLabel,
-    IonButtons,
-    IonToolbar,
-    IonHeader,
-    IonBackButton,
     IonSelect,
     IonSelectOption
 } from '@ionic/angular/standalone';
@@ -39,10 +35,6 @@ import { ThemeService, ThemeMode } from '../../core/services/theme.service';
         IonList,
         IonItem,
         IonLabel,
-        IonButtons,
-        IonToolbar,
-        IonHeader,
-        IonBackButton,
         IonSelect,
         IonSelectOption
     ],
@@ -69,7 +61,5 @@ export class SettingsPage {
         });
     }
 
-    public onThemeChange(event: any) {
-        this.themeService.setTheme(event.detail.value as ThemeMode);
-    }
+
 }

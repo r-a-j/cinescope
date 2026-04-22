@@ -15,7 +15,9 @@ import {
     sparkles, sparklesOutline,
     grid, gridOutline,
     people, peopleOutline,
-    person, personOutline
+    person, personOutline,
+    search, searchOutline,
+    settings, settingsOutline
 } from 'ionicons/icons';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -44,6 +46,15 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
     private animationFrameId?: number;
     private mouse = new THREE.Vector2();
     private targetRotation = new THREE.Vector2();
+    private readonly TAB_COLORS: Record<string, string> = {
+        'pulse': '#f85149',
+        'oracle': '#79c0ff',
+        'vault': '#2ee7b6',
+        'social': '#d2a8ff',
+        'search': '#00d4ff',
+        'identity': '#f0883e',
+        'settings': '#94a3b8'
+    };
 
     @HostListener('window:mousemove', ['$event'])
     onMouseMove(event: MouseEvent): void {
@@ -85,7 +96,9 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
             sparkles, sparklesOutline,
             grid, gridOutline,
             people, peopleOutline,
-            person, personOutline
+            person, personOutline,
+            search, searchOutline,
+            settings, settingsOutline
         });
     }
 
@@ -210,40 +223,29 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         if (!this.glassSlab || !this.pointLight) return;
 
         const tab = this.activeTab();
-        const colors: { [key: string]: number } = {
-            'pulse': 0xf85149,
-            'oracle': 0x79c0ff,
-            'vault': 0xffffff,
-            'social': 0xd2a8ff,
-            'identity': 0xf0883e
-        };
-
-        const targetColor = new THREE.Color(colors[tab] || 0xffffff);
+        const hexColor = this.TAB_COLORS[tab] || '#ffffff';
+        const targetColor = new THREE.Color(hexColor);
 
         // Transition the light color
         this.pointLight.color.copy(targetColor);
 
         // Subtle color tint on the slab
-        (this.glassSlab.material as THREE.MeshPhysicalMaterial).color.copy(targetColor).lerp(new THREE.Color(0xffffff), 0.95);
+        (this.glassSlab.material as THREE.MeshPhysicalMaterial).color
+            .copy(targetColor)
+            .lerp(new THREE.Color(0xffffff), 0.95);
     }
 
     private updateActiveTab(url: string): void {
         const segments = url.split('/').filter(s => !!s);
         const tab = segments.pop() || 'pulse';
 
-        const colors: { [key: string]: string } = {
-            'pulse': '#f85149',
-            'oracle': '#79c0ff',
-            'vault': '#2ee7b6',
-            'social': '#d2a8ff',
-            'identity': '#f0883e'
-        };
+        const hexColor = this.TAB_COLORS[tab];
 
-        if (colors[tab]) {
+        if (hexColor) {
             this.activeTab.set(tab);
             // SET GLOBAL THEME COLOR
-            document.documentElement.style.setProperty('--active-tab-color', colors[tab]);
-            document.documentElement.style.setProperty('--active-tab-glow', `${colors[tab]}40`); // 25% opacity
+            document.documentElement.style.setProperty('--active-tab-color', hexColor);
+            document.documentElement.style.setProperty('--active-tab-glow', `${hexColor}40`); // 25% opacity
 
             this.updateThreeColor();
         }

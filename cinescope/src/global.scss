@@ -98,9 +98,30 @@ ion-tabs ion-content {
     --padding-bottom: 110px; // Safety space for floating dock
 }
 
-::-webkit-scrollbar {
-    display: none;
+// 🚫 HIDE SCROLLBARS GLOBALLY
+* {
+    -ms-overflow-style: none;  // IE and Edge
+    scrollbar-width: none;     // Firefox
+    
+    &::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
 }
+
+// Special target for Ionic's Shadow DOM scroll containers
+ion-content::part(scroll) {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    
+    &::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+}
+
 
 // Ensure app-wide transitions are snappy
 ::view-transition-old(root),

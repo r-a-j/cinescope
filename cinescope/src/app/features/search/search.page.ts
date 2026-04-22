@@ -3,12 +3,16 @@ import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
+  IonContent, IonSearchbar,
   IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
   IonSpinner, IonButton, NavController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle } from 'ionicons/icons';
+import { 
+  timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, 
+  personOutline, sparkles, sparklesOutline, alertCircle, closeOutline,
+  flashOutline, planetOutline, happyOutline, skullOutline 
+} from 'ionicons/icons';
 import { SearchStore } from '../../core/store/search.store';
 
 @Component({
@@ -19,7 +23,7 @@ import { SearchStore } from '../../core/store/search.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [SearchStore],
   imports: [
-    IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
+    IonContent, IonSearchbar,
     IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
     IonSpinner, IonButton, CommonModule, FormsModule
   ]
@@ -27,6 +31,9 @@ import { SearchStore } from '../../core/store/search.store';
 export class SearchPage implements OnInit {
   public store = inject(SearchStore);
   private navCtrl = inject(NavController);
+
+  public isSearchFocused = false;
+
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
@@ -38,16 +45,18 @@ export class SearchPage implements OnInit {
   }
 
   constructor() {
-    addIcons({ timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle });
+    addIcons({ 
+      timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, 
+      personOutline, sparkles, sparklesOutline, alertCircle, closeOutline,
+      flashOutline, planetOutline, happyOutline, skullOutline
+    });
   }
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
   }
 
-  public goBack(): void {
-    this.navCtrl.back();
-  }
+
 
   onSearchChange(event: Event | CustomEvent): void {
     const customEvent = event as CustomEvent;

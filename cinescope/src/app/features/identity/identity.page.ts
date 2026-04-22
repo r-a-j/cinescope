@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
-import { HeaderComponent } from '../../shared/components/header/header.component';
+
 import { addIcons } from 'ionicons';
 import { 
     personCircle, 
@@ -20,12 +20,10 @@ import {
     imports: [
         CommonModule,
         IonContent,
-        IonIcon,
-        HeaderComponent
+        IonIcon
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-        <app-header></app-header>
         <ion-content [fullscreen]="true" color="background" class="ion-no-padding">
             <div class="identity-container">
                 <!-- Identity Header -->

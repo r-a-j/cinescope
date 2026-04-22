@@ -4,28 +4,31 @@
         <div class="canvas-container" #canvasContainer></div>
 
         <ion-tab-button tab="pulse" href="/tabs/pulse">
-            <ion-icon [name]="activeTab() === 'pulse' ? 'flash' : 'flash-outline'"></ion-icon>
-            <ion-label>PULSE</ion-label>
+            <ion-icon [name]="'flash'"></ion-icon>
         </ion-tab-button>
 
         <ion-tab-button tab="oracle" href="/tabs/oracle">
-            <ion-icon [name]="activeTab() === 'oracle' ? 'sparkles' : 'sparkles-outline'"></ion-icon>
-            <ion-label>ORACLE</ion-label>
+            <ion-icon [name]="'sparkles'"></ion-icon>
         </ion-tab-button>
 
         <ion-tab-button tab="vault" href="/tabs/vault">
-            <ion-icon [name]="activeTab() === 'vault' ? 'grid' : 'grid-outline'"></ion-icon>
-            <ion-label>VAULT</ion-label>
+            <ion-icon [name]="'grid'"></ion-icon>
         </ion-tab-button>
 
         <ion-tab-button tab="social" href="/tabs/social">
-            <ion-icon [name]="activeTab() === 'social' ? 'people' : 'people-outline'"></ion-icon>
-            <ion-label>SOCIAL</ion-label>
+            <ion-icon [name]="'people'"></ion-icon>
+        </ion-tab-button>
+
+        <ion-tab-button tab="search" href="/tabs/search">
+            <ion-icon [name]="'search'"></ion-icon>
         </ion-tab-button>
 
         <ion-tab-button tab="identity" href="/tabs/identity">
-            <ion-icon [name]="activeTab() === 'identity' ? 'person' : 'person-outline'"></ion-icon>
-            <ion-label>IDENTITY</ion-label>
+            <ion-icon [name]="'person'"></ion-icon>
+        </ion-tab-button>
+
+        <ion-tab-button tab="settings" href="/tabs/settings">
+            <ion-icon [name]="'settings'"></ion-icon>
         </ion-tab-button>
 
     </ion-tab-bar>

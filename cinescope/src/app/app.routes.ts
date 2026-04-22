@@ -33,12 +33,14 @@ export const routes: Routes = [
   },
   {
     path: 'settings',
-    loadComponent: () => import('./features/settings/settings.page').then(m => m.SettingsPage)
+    redirectTo: 'tabs/settings',
+    pathMatch: 'full'
   },
   // Feature Standalones
   {
     path: 'search',
-    loadComponent: () => import('./features/search/search.page').then(m => m.SearchPage)
+    redirectTo: 'tabs/search',
+    pathMatch: 'full'
   },
   // Fallbacks
   {

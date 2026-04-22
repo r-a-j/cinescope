@@ -1,24 +1,27 @@
-<ion-header class="ion-no-border search-header">
-  <div class="status-bar-bg"></div>
-  <ion-toolbar>
 
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/" text="" mode="ios"></ion-back-button>
-    </ion-buttons>
-    <ion-searchbar 
-      placeholder="Search movies, tv, people..." 
-      [value]="store.query()"
-      (ionInput)="onSearchChange($event)"
-      (ionSearch)="onSearchSubmit()"
-      (ionClear)="clearSearch()"
-      animated="true"
-      debounce="0" 
-      class="custom-searchbar">
-    </ion-searchbar>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="immersive-search">
+  <div class="background-mesh"></div>
+  
+  <div class="search-overlay-container">
+    <div class="search-hero">
+      <div class="search-input-wrapper glassmorphism" [class.focused]="isSearchFocused">
+        <ion-searchbar 
+          placeholder="Discover movies, tv, people..." 
+          [value]="store.query()"
+          (ionInput)="onSearchChange($event)"
+          (ionSearch)="onSearchSubmit()"
+          (ionClear)="clearSearch()"
+          (ionFocus)="isSearchFocused = true"
+          (ionBlur)="isSearchFocused = false"
+          animated="false"
+          debounce="0" 
+          class="custom-searchbar">
+        </ion-searchbar>
+        <div class="search-glow"></div>
+      </div>
+    </div>
+  </div>
   <!-- Smart Search AI Banner (Floating) -->
   @if (store.query() && store.query().length >= 5) {
     <div class="smart-search-banner">
@@ -76,33 +79,66 @@
     </div>
   }
 
-  <!-- Recent Searches (Empty state with history) -->
-  @if (!store.query() && store.recentSearches().length > 0) {
-    <div class="recent-searches">
-      <div class="recent-header">
-        <h3>Recent Searches</h3>
-        <ion-button fill="clear" size="small" (click)="clearHistory()">Clear</ion-button>
-      </div>
-      <ion-list lines="none" class="transparent-list">
-        @for (term of store.recentSearches(); track term) {
-          <ion-item button (click)="applyRecentSearch(term)">
-            <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
-            <ion-label>{{ term }}</ion-label>
-            <ion-button fill="clear" slot="end" (click)="removeRecentSearch(term, $event)">
-              <ion-icon name="close-circle" color="medium"></ion-icon>
-            </ion-button>
-          </ion-item>
-        }
-      </ion-list>
-    </div>
-  }
+  <!-- Initial Blank State: Hero Sections -->
+  @if (!store.query()) {
+    <div class="hero-sections fade-in">
+      
+      <!-- Recent Searches: Horizontal Chips -->
+      @if (store.recentSearches().length > 0) {
+        <section class="discovery-section">
+          <div class="section-header">
+            <h3>Recent Discoveries</h3>
+            <ion-button fill="clear" size="small" (click)="clearHistory()" class="clear-btn">Clear All</ion-button>
+          </div>
+          <div class="recent-chips-container">
+            @for (term of store.recentSearches(); track term) {
+              <div class="recent-chip glassmorphism" (click)="applyRecentSearch(term)">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>{{ term }}</span>
+                <ion-button fill="clear" (click)="removeRecentSearch(term, $event)">
+                  <ion-icon name="close-outline"></ion-icon>
+                </ion-button>
+              </div>
+            }
+          </div>
+        </section>
+      }
 
-  <!-- Initial Blank State -->
-  @if (!store.query() && store.recentSearches().length === 0) {
-    <div class="status-container empty-state">
-      <ion-icon name="search-outline"></ion-icon>
-      <h3>What to watch next?</h3>
-      <p>Find movies, TV shows, and your favorite actors.</p>
+      <!-- Quick Categories -->
+      <section class="discovery-section">
+        <div class="section-header">
+          <h3>Quick Discovery</h3>
+        </div>
+        <div class="category-grid">
+          <div class="category-card glassmorphism" (click)="applyRecentSearch('Action')">
+            <ion-icon name="flash-outline" color="primary"></ion-icon>
+            <span>Action</span>
+          </div>
+          <div class="category-card glassmorphism" (click)="applyRecentSearch('Sci-Fi')">
+            <ion-icon name="planet-outline" color="secondary"></ion-icon>
+            <span>Sci-Fi</span>
+          </div>
+          <div class="category-card glassmorphism" (click)="applyRecentSearch('Comedy')">
+            <ion-icon name="happy-outline" color="tertiary"></ion-icon>
+            <span>Comedy</span>
+          </div>
+          <div class="category-card glassmorphism" (click)="applyRecentSearch('Horror')">
+            <ion-icon name="skull-outline" color="danger"></ion-icon>
+            <span>Horror</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Empty State Illustration -->
+      @if (store.recentSearches().length === 0) {
+        <div class="status-container empty-state">
+          <div class="pulse-icon">
+            <ion-icon name="search-outline"></ion-icon>
+          </div>
+          <h3>The Universe Awaits</h3>
+          <p>Search for your next cinematic obsession across movies, TV shows, and legendary actors.</p>
+        </div>
+      }
     </div>
   }
 

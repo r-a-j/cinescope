@@ -23,6 +23,14 @@ export const routes: Routes = [
                 loadComponent: () => import('../../features/inbox/inbox.page').then(m => m.InboxPage)
             },
             {
+                path: 'search',
+                loadComponent: () => import('../../features/search/search.page').then(m => m.SearchPage)
+            },
+            {
+                path: 'settings',
+                loadComponent: () => import('../../features/settings/settings.page').then(m => m.SettingsPage)
+            },
+            {
                 path: 'identity',
                 loadComponent: () => import('../../features/identity/identity.page').then(m => m.IdentityPage)
             },
