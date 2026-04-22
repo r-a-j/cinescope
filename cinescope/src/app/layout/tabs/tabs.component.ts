@@ -32,7 +32,7 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
 
     public environmentInjector = inject(EnvironmentInjector);
     private router = inject(Router);
-    
+
     public activeTab = signal<string>('pulse');
 
     // Three.js Core
@@ -46,18 +46,18 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
     private targetRotation = new THREE.Vector2();
 
     @HostListener('window:mousemove', ['$event'])
-    onMouseMove(event: MouseEvent) {
+    onMouseMove(event: MouseEvent): void {
         // Calculate mouse position in normalized device coordinates (-1 to +1)
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        
+
         // Update target rotation based on mouse position
         this.targetRotation.y = this.mouse.x * 0.15;
         this.targetRotation.x = -this.mouse.y * 0.1;
     }
 
     @HostListener('window:resize')
-    onResize() {
+    onResize(): void {
         if (!this.canvasContainer) return;
         const width = this.canvasContainer.nativeElement.clientWidth;
         const height = this.canvasContainer.nativeElement.clientHeight;
@@ -76,8 +76,8 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd),
             takeUntilDestroyed() // Proper cleanup
-        ).subscribe((event: any) => {
-            this.updateActiveTab(event.urlAfterRedirects || event.url);
+        ).subscribe((event: unknown) => {
+            this.updateActiveTab((event as NavigationEnd).urlAfterRedirects || (event as NavigationEnd).url);
         });
 
         addIcons({
@@ -89,19 +89,19 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         });
     }
 
-    ngAfterViewInit() {
+    ngAfterViewInit(): void {
         this.initThree();
         this.animate();
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
         this.renderer?.dispose();
     }
 
-    private initThree() {
+    private initThree(): void {
         const container = this.canvasContainer.nativeElement;
         const width = container.clientWidth;
         const height = container.clientHeight;
@@ -119,28 +119,52 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(this.renderer.domElement);
 
-        // Glass Background Geometry
-        // Even more depth (2.5) for a massive, heavy glass feel
-        const geometry = new THREE.BoxGeometry(10, 4, 2.5);
-        
-        // Material with physical properties for "Glass" look
+        // Glass Background Geometry (Rounded)
+        // Creating a custom rounded rectangle shape for "Ultimate Elegance"
+        const geoWidth = 12;
+        const geoHeight = 5;
+        const radius = 1.2;
+        const shape = new THREE.Shape();
+
+        shape.moveTo(-geoWidth / 2 + radius, -geoHeight / 2);
+        shape.lineTo(geoWidth / 2 - radius, -geoHeight / 2);
+        shape.absarc(geoWidth / 2 - radius, -geoHeight / 2 + radius, radius, -Math.PI / 2, 0, false);
+        shape.lineTo(geoWidth / 2, geoHeight / 2 - radius);
+        shape.absarc(geoWidth / 2 - radius, geoHeight / 2 - radius, radius, 0, Math.PI / 2, false);
+        shape.lineTo(-geoWidth / 2 + radius, geoHeight / 2);
+        shape.absarc(-geoWidth / 2 + radius, geoHeight / 2 - radius, radius, Math.PI / 2, Math.PI, false);
+        shape.lineTo(-geoWidth / 2, -geoHeight / 2 + radius);
+        shape.absarc(-geoWidth / 2 + radius, -geoHeight / 2 + radius, radius, Math.PI, Math.PI * 1.5, false);
+
+        const extrudeSettings = {
+            steps: 2,
+            depth: 2.5, // Increased slab depth
+            bevelEnabled: true,
+            bevelThickness: 0.6, // Deeper bevel for more light catch
+            bevelSize: 0.6,
+            bevelOffset: 0,
+            bevelSegments: 16 // Smoother bevel
+        };
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+        // Material with physical properties for "Ultimate Glass" look
         const material = new THREE.MeshPhysicalMaterial({
             transmission: 1,
-            thickness: 5.0, // Substantially increased for deep refraction
-            roughness: 0.01, // Near perfect polish
-            metalness: 0,
-            ior: 2.4, // Diamond-level Index of Refraction
+            thickness: 6.0, // Deeper base thickness
+            roughness: 0.01,
+            metalness: 0.05, // Slight metallic sheen for premium feel
+            ior: 2.4, // Starting at Diamond level refraction
             clearcoat: 1,
             clearcoatRoughness: 0.01,
             transparent: true,
-            opacity: 0.98,
+            opacity: 0.99,
             color: new THREE.Color(0xffffff),
             attenuationColor: new THREE.Color(0xffffff),
-            attenuationDistance: 0.15 // Even shorter for intense depth perception
+            attenuationDistance: 0.12 // More intense depth perception
         });
 
         this.glassSlab = new THREE.Mesh(geometry, material);
-        // Move it back further to accommodate the new thickness
         this.glassSlab.position.z = -3;
         this.scene.add(this.glassSlab);
 
@@ -156,7 +180,7 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         this.updateThreeColor();
     }
 
-    private animate() {
+    private animate(): void {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
 
         // Smoothly rotate the glass background towards the target (mouse-based)
@@ -164,18 +188,25 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
             this.glassSlab.rotation.x += (this.targetRotation.x - this.glassSlab.rotation.x) * 0.05;
             this.glassSlab.rotation.y += (this.targetRotation.y - this.glassSlab.rotation.y) * 0.05;
 
-            // Liquid-like light movement
             const time = Date.now() * 0.001;
+
+            // "Elegant Morphing": Subtle breathing effect on refraction
+            // Increased the range slightly for more visible "liquidity"
+            const morphFactor = Math.sin(time * 0.4) * 0.3;
+            (this.glassSlab.material as THREE.MeshPhysicalMaterial).ior = 2.4 + morphFactor;
+            (this.glassSlab.material as THREE.MeshPhysicalMaterial).thickness = 6.0 + morphFactor * 3;
+
+            // Liquid-like light movement
             if (this.pointLight) {
-                this.pointLight.position.x = Math.sin(time * 0.5) * 2;
-                this.pointLight.position.y = Math.cos(time * 0.3) * 0.5;
+                this.pointLight.position.x = Math.sin(time * 0.5) * 3;
+                this.pointLight.position.y = Math.cos(time * 0.3) * 1;
             }
         }
 
         this.renderer?.render(this.scene, this.camera);
     }
 
-    private updateThreeColor() {
+    private updateThreeColor(): void {
         if (!this.glassSlab || !this.pointLight) return;
 
         const tab = this.activeTab();
@@ -188,10 +219,10 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         };
 
         const targetColor = new THREE.Color(colors[tab] || 0xffffff);
-        
+
         // Transition the light color
         this.pointLight.color.copy(targetColor);
-        
+
         // Subtle color tint on the slab
         (this.glassSlab.material as THREE.MeshPhysicalMaterial).color.copy(targetColor).lerp(new THREE.Color(0xffffff), 0.95);
     }
@@ -199,7 +230,7 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
     private updateActiveTab(url: string): void {
         const segments = url.split('/').filter(s => !!s);
         const tab = segments.pop() || 'pulse';
-        
+
         const colors: { [key: string]: string } = {
             'pulse': '#f85149',
             'oracle': '#79c0ff',
@@ -213,7 +244,7 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
             // SET GLOBAL THEME COLOR
             document.documentElement.style.setProperty('--active-tab-color', colors[tab]);
             document.documentElement.style.setProperty('--active-tab-glow', `${colors[tab]}40`); // 25% opacity
-            
+
             this.updateThreeColor();
         }
     }
