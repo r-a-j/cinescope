@@ -1,9 +1,21 @@
+.canvas-container {
+    position: absolute;
+    top: -20%; // Slightly larger to allow for 3D tilt without showing edges
+    left: -10%;
+    right: -10%;
+    bottom: -20%;
+    pointer-events: none;
+    z-index: -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 ion-tab-bar {
-    --background: rgba(var(--ion-background-color-rgb), 0.65); 
-    backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
-    -webkit-backdrop-filter: blur(40px) saturate(210%) brightness(1.02);
-    border: 1px solid rgba(var(--ion-text-color-rgb), 0.08);
-    border-bottom: none;
+    --background: transparent; 
+    backdrop-filter: blur(4px); // Reduced fallback blur for clarity
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     position: absolute;
     bottom: 24px;
     left: 20px;
@@ -11,21 +23,29 @@ ion-tab-bar {
     height: 76px;
     border-radius: 28px;
     padding: 0 16px;
-    box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.25);
-    contain: layout style;
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    contain: content;
+    overflow: hidden; // Important to clip the 3D spill
+    z-index: 100;
     will-change: transform;
-
-    // We removed the mask-image here to prevent "leak gaps" and shadow clipping.
-    // The seamless integration is now handled by the ultra-soft shadow and border-less design.
 
     &::after {
         content: '';
         position: absolute;
         top: 0;
-        left: 20px;
-        right: 20px;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(var(--ion-text-color-rgb), 0.05), transparent);
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.05) 0%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.02) 100%
+        );
+        pointer-events: none;
+        z-index: 0;
     }
 }
 

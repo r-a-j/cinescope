@@ -1,5 +1,7 @@
 <ion-tabs>
     <ion-tab-bar slot="bottom">
+        <!-- Three.js Canvas is now the background of the Tab Bar -->
+        <div class="canvas-container" #canvasContainer></div>
 
         <ion-tab-button tab="pulse" href="/tabs/pulse">
             <ion-icon [name]="activeTab() === 'pulse' ? 'flash' : 'flash-outline'"></ion-icon>
