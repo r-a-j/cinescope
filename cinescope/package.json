@@ -5,8 +5,8 @@
   "homepage": "https://rajpawar.in/",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "start": "node scripts/ng-runner.cjs serve",
+    "build": "node scripts/ng-runner.cjs build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "docs:generate": "sass ../docs/compodoc-theme/style.scss ../docs/compodoc-theme/style.css && compodoc -p tsconfig.doc.json -d ../docs/static/frontend -n \"Cinescope Frontend Architecture\" --hideGenerator --theme vagrant -y ../docs/compodoc-theme",

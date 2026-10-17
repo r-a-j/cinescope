@@ -44,12 +44,24 @@
         </ion-item>
         <ion-item button (click)="createBackup()">
             <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
-            <ion-label>Backup / Share Library (JSON)</ion-label>
+            <ion-label>
+                <h3>Backup / Share Library (JSON)</h3>
+                <p>Export Watchlist, Watched & preferences</p>
+            </ion-label>
         </ion-item>
-        <ion-item button (click)="restoreBackup()" lines="none">
+        <ion-item button (click)="triggerRestoreBackup(backupFileInput)" lines="none">
             <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
-            <ion-label>Restore Library from Backup</ion-label>
+            <ion-label>
+                <h3>Restore Library from Backup</h3>
+                <p>Supports legacy CineScope v1 & current backup files</p>
+            </ion-label>
         </ion-item>
+        <input
+            #backupFileInput
+            type="file"
+            accept=".json,application/json,text/plain,*/*"
+            style="display: none"
+            (change)="onBackupFileSelected($event)" />
     </ion-list>
 
     <ion-list inset="true" class="cinescope-list">
