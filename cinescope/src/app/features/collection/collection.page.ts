@@ -8,6 +8,7 @@ import { PosterCardComponent, BookmarkState } from '../../shared/components/post
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
 export type CollectionSortMode = 'featured' | 'rating' | 'newest' | 'alpha';
 
@@ -376,13 +377,15 @@ export class CollectionPage implements OnInit {
       return;
     }
     const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+    const rawBackdrop = item.payload?.['backdrop_path'] as string | undefined;
     void this.router.navigate(['/media', mediaType, item.id], {
       state: {
         preview: {
           id: Number(item.id),
           mediaType,
           title: item.title,
-          posterUrl: item.posterUrl
+          posterUrl: item.posterUrl,
+          backdropUrl: rawBackdrop ? resolveMediaImageUrl(rawBackdrop, 'w1280') : undefined
         }
       }
     });
