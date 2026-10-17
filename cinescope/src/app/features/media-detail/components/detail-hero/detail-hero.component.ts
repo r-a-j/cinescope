@@ -416,9 +416,9 @@ export class DetailHeroComponent {
   public genres = input<string[]>([]);
   public hasTrailer = input<boolean>(false);
 
-  public backClick = output<void>();
-  public shareClick = output<void>();
-  public watchlistToggle = output<void>();
-  public watchedToggle = output<void>();
-  public trailerClick = output<void>();
+  public backClick = output();
+  public shareClick = output();
+  public watchlistToggle = output();
+  public watchedToggle = output();
+  public trailerClick = output();
 }
