@@ -1,10 +1,10 @@
-<div class="poster-container surface-card">
+<div class="poster-container surface-card" (click)="onCardClick()" (keyup.enter)="onCardClick()" tabindex="0">
 
     <img [src]="imageUrl()" [alt]="title() || 'Movie Poster'" class="poster-image" loading="lazy"
         (error)="handleImageError($event)" />
 
     @if (showBookmark()) {
-    <button class="bookmark-btn" aria-label="Toggle Bookmark">
+    <button class="bookmark-btn" type="button" aria-label="Toggle Bookmark" (click)="onBookmarkClick($event)">
 
         @switch (bookmarkState()) {
         @case ('none') {

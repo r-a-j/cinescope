@@ -119,9 +119,9 @@
       @for (item of store.results(); track item.id) {
         @switch (item.media_type) {
           @case ('movie') {
-            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
-                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
                 <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -132,10 +132,10 @@
             </div>
           }
           @case ('tv') {
-            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
                 <!-- Using type casting logically, item.name since it is tv -->
-                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
                 <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -145,9 +145,9 @@
             </div>
           }
           @case ('person') {
-            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
-                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
                 <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -170,9 +170,9 @@
           @for (item of group.items; track item.id) {
             @switch (item.media_type) {
           @case ('movie') {
-            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
-                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.title" loading="lazy">
+                <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
                 <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -182,9 +182,9 @@
             </div>
           }
           @case ('tv') {
-            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
-                <img [src]="item.poster_path ? 'https://image.tmdb.org/t/p/w500' + item.poster_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
                 <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -194,9 +194,9 @@
             </div>
           }
           @case ('person') {
-            <div class="grid-card person-card" tabindex="0" (click)="onResultClick()" (keyup.enter)="onResultClick()">
+            <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
-                <img [src]="item.profile_path ? 'https://image.tmdb.org/t/p/w500' + item.profile_path : 'assets/placeholders/placeholder.webp'" [alt]="item.name" loading="lazy">
+                <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
                 <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
               </div>
               <div class="content-info">

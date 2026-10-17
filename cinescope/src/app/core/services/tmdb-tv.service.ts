@@ -28,7 +28,7 @@ export class TmdbTvService extends BaseMediaService {
      * Get an up to date list of the officially supported TV show certifications on TMDB.
      */
     getTvCertifications(): Observable<TmdbCertificationResponseDto> {
-        return this.http.get<TmdbCertificationResponseDto>('/certification/tv/list');
+        return this.http.get<TmdbCertificationResponseDto>(`${this.apiPrefix}/certification/tv/list`);
     }
 
     /**
@@ -56,11 +56,7 @@ export class TmdbTvService extends BaseMediaService {
         page?: number,
         timezone?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbTvListItemDto>> {
-        let params = this.buildParams({ language, page, timezone });
-
-        if (timezone) {
-            params = params.set('timezone', timezone);
-        }
+        const params = this.buildParams({ language, page, timezone });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbTvListItemDto>>(`${this.apiPrefix}/tv/airing_today`, { params });
     }
@@ -87,11 +83,7 @@ export class TmdbTvService extends BaseMediaService {
         page?: number,
         timezone?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbTvListItemDto>> {
-        let params = this.buildParams({ language, page, timezone });
-
-        if (timezone) {
-            params = params.set('timezone', timezone);
-        }
+        const params = this.buildParams({ language, page, timezone });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbTvListItemDto>>(`${this.apiPrefix}/tv/on_the_air`, { params });
     }
@@ -158,11 +150,10 @@ export class TmdbTvService extends BaseMediaService {
         appendToResponse?: string,
         language?: string
     ): Observable<TmdbTvDetailDto> {
-        let params = this.buildParams({ language, appendToResponse });
-
-        if (appendToResponse) {
-            params = params.set('append_to_response', appendToResponse);
-        }
+        const params = this.buildParams({
+            language,
+            append_to_response: appendToResponse
+        });
 
         return this.http.get<TmdbTvDetailDto>(`${this.apiPrefix}/tv/${seriesId}`, { params });
     }
@@ -230,10 +221,11 @@ export class TmdbTvService extends BaseMediaService {
         endDate?: string,
         page?: number
     ): Observable<TmdbTvChangesResponseDto> {
-        let params = this.buildParams({ page });
-
-        if (startDate) params = params.set('start_date', startDate);
-        if (endDate) params = params.set('end_date', endDate);
+        const params = this.buildParams({
+            page,
+            start_date: startDate,
+            end_date: endDate
+        });
 
         return this.http.get<TmdbTvChangesResponseDto>(`${this.apiPrefix}/tv/${seriesId}/changes`, { params });
     }
@@ -340,9 +332,10 @@ export class TmdbTvService extends BaseMediaService {
         language?: string,
         includeImageLanguage?: string
     ): Observable<TmdbTvImagesResponseDto> {
-        let params = this.buildParams({ language, includeImageLanguage });
-
-        if (includeImageLanguage) params = params.set('include_image_language', includeImageLanguage);
+        const params = this.buildParams({
+            language,
+            include_image_language: includeImageLanguage
+        });
 
         return this.http.get<TmdbTvImagesResponseDto>(`${this.apiPrefix}/tv/${seriesId}/images`, { params });
     }
@@ -559,7 +552,10 @@ export class TmdbTvService extends BaseMediaService {
         language?: string,
         includeVideoLanguage?: string
     ): Observable<TmdbTvVideosResponseDto> {
-        const params = this.buildParams({ language, includeVideoLanguage });
+        const params = this.buildParams({
+            language,
+            include_video_language: includeVideoLanguage
+        });
 
         return this.http.get<TmdbTvVideosResponseDto>(`${this.apiPrefix}/tv/${seriesId}/videos`, { params });
     }

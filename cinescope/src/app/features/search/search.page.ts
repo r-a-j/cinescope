@@ -8,8 +8,16 @@ import {
   IonSpinner, IonButton, NavController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle } from 'ionicons/icons';
+import {
+  timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
+  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, checkmarkCircle
+} from 'ionicons/icons';
 import { SearchStore } from '../../core/store/search.store';
+import { TmdbMultiSearchResultDto } from '../../core/services/tmdb-search.service';
+import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+import { StorageService } from '../../core/services/storage.service';
+import { ToastService } from '../../core/services/toast.service';
+import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 
 @Component({
   selector: 'app-search',
@@ -17,7 +25,6 @@ import { SearchStore } from '../../core/store/search.store';
   styleUrls: ['./search.page.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [SearchStore],
   imports: [
     IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
     IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
@@ -26,6 +33,8 @@ import { SearchStore } from '../../core/store/search.store';
 })
 export class SearchPage implements OnInit {
   public store = inject(SearchStore);
+  private storageService = inject(StorageService);
+  private toastService = inject(ToastService);
   private navCtrl = inject(NavController);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
@@ -38,11 +47,23 @@ export class SearchPage implements OnInit {
   }
 
   constructor() {
-    addIcons({ timeOutline, closeCircle, searchOutline, filmOutline, tvOutline, personOutline, sparkles, sparklesOutline, alertCircle });
+    addIcons({
+      timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
+      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, checkmarkCircle
+    });
   }
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
+  }
+
+  public resolveImage(path: string | null | undefined): string {
+    return resolveMediaImageUrl(path, 'w500');
+  }
+
+  public getBookmarkState(item: TmdbMultiSearchResultDto): BookmarkState {
+    if (item.media_type === 'person') return 'none';
+    return this.storageService.getBookmarkState(item.id, item.media_type);
   }
 
   public goBack(): void {
@@ -64,10 +85,8 @@ export class SearchPage implements OnInit {
       return;
     }
 
-    // Dismiss the virtual keyboard using standard Capacitor method (mobile)
     Keyboard.hide().catch(() => console.debug('[UI - Search Page] Keyboard native hide skipped'));
 
-    // Always call native DOM blur for web/PWA/fallbacks natively
     if (this.searchbar) {
       this.searchbar.getInputElement().then((input: HTMLInputElement) => {
         input.blur();
@@ -83,10 +102,8 @@ export class SearchPage implements OnInit {
     if (query.trim()) {
       this.store.saveSearchToHistory(query);
     }
-    // Dismiss the virtual keyboard using standard Capacitor method (mobile)
     Keyboard.hide().catch(() => console.debug('Keyboard native hide skipped'));
 
-    // Always call native DOM blur for web/PWA/fallbacks natively
     if (this.searchbar) {
       this.searchbar.getInputElement().then((input: HTMLInputElement) => {
         input.blur();
@@ -94,12 +111,27 @@ export class SearchPage implements OnInit {
     }
   }
 
-  onResultClick(): void {
+  async onResultClick(item: TmdbMultiSearchResultDto): Promise<void> {
     const query = this.store.query();
     if (query.trim()) {
       this.store.saveSearchToHistory(query);
     }
-    // TODO: Route to detailed item page
+    if (item.media_type === 'movie' || item.media_type === 'tv') {
+      const title = item.media_type === 'movie' ? item.title : item.name;
+      const payload = {
+        ...item,
+        title,
+        posterUrl: this.resolveImage(item.poster_path)
+      };
+      const nextState = await this.storageService.cycleBookmark(item.id, item.media_type, payload);
+      if (nextState === 'watchlist') {
+        await this.toastService.presentSuccess(`Added "${title}" to Watchlist`, 1800);
+      } else if (nextState === 'watched') {
+        await this.toastService.presentInfo(`Marked "${title}" as Watched`, 1800);
+      } else {
+        await this.toastService.presentWarning(`Removed "${title}" from Archive`, 1800);
+      }
+    }
   }
 
   loadMore(event: Event | CustomEvent): void {

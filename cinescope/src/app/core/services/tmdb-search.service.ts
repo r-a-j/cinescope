@@ -48,17 +48,13 @@ export class TmdbSearchService extends BaseMediaService {
         includeAdult = false,
         region?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbCollectionListItemDto>> {
-        let params = this.buildParams({
+        const params = this.buildParams({
             query,
             page,
             language,
-            includeAdult,
+            include_adult: includeAdult,
             region
         });
-
-        if (region) {
-            params = params.set('region', region);
-        }
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbCollectionListItemDto>>(`${this.apiPrefix}/search/collection`, { params });
     }
@@ -150,19 +146,15 @@ export class TmdbSearchService extends BaseMediaService {
         year?: string,
         region?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        let params = this.buildParams({
+        const params = this.buildParams({
             query,
             page,
             language,
-            includeAdult,
-            primaryReleaseYear,
+            include_adult: includeAdult,
+            primary_release_year: primaryReleaseYear,
             year,
             region
         });
-
-        if (primaryReleaseYear) params = params.set('primary_release_year', primaryReleaseYear);
-        if (year) params = params.set('year', year);
-        if (region) params = params.set('region', region);
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/search/movie`, { params });
     }
@@ -197,29 +189,10 @@ export class TmdbSearchService extends BaseMediaService {
             query,
             page,
             language,
-            includeAdult
+            include_adult: includeAdult
         });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMultiSearchResultDto>>(`${this.apiPrefix}/search/multi`, { params });
-    }
-
-    /**
-     * Search for people by their name and also known as names.
-     * * @productContext
-     * - Scenario 172 (The "Who Was That?" Resolver): Utilize the `known_for` array returned in the results 
-     * to power a "Who Was That?" resolver. 
-     * When a user taps a person's name in the autocomplete dropdown, 
-     * use the `known_for` array to display a grid of their most popular works.
-     * 
-     * -   **The Problem:** A user types "Pedro Pascal" into the search bar and hits "Search." 
-     * The app returns a list of results, but the user doesn't know which Pedro Pascal they're looking for. 
-     * They have to scroll through the results to find the one they want.
-    
-            .set('page', page.toString())
-            .set('language', language)
-            .set('include_adult', includeAdult.toString());
-
-        return this.http.get<TmdbPaginatedResponseDto<TmdbMultiSearchResultDto>>('/search/multi', { params });
     }
 
     /**
@@ -251,7 +224,7 @@ export class TmdbSearchService extends BaseMediaService {
             query,
             page,
             language,
-            includeAdult
+            include_adult: includeAdult
         });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbPersonListItemDto>>(`${this.apiPrefix}/search/person`, { params });
@@ -292,21 +265,14 @@ Pay close attention to the difference between first_air_date_year and year in th
         firstAirDateYear?: number,
         year?: number
     ): Observable<TmdbPaginatedResponseDto<TmdbTvListItemDto>> {
-        let params = this.buildParams({
+        const params = this.buildParams({
             query,
             page,
             language,
-            includeAdult,
-            firstAirDateYear,
+            include_adult: includeAdult,
+            first_air_date_year: firstAirDateYear,
             year
         });
-
-        if (firstAirDateYear) {
-            params = params.set('first_air_date_year', firstAirDateYear.toString());
-        }
-        if (year) {
-            params = params.set('year', year.toString());
-        }
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbTvListItemDto>>(`${this.apiPrefix}/search/tv`, { params });
     }
