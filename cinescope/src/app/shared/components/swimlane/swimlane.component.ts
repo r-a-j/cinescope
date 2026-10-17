@@ -22,13 +22,35 @@ export class SwimlaneComponent {
     public title = input.required<string>();
     public items = input.required<SwimlaneItem[]>();
 
+    public openViewAll(): void {
+        void this.router.navigate(['/collection'], {
+            state: {
+                title: this.title(),
+                items: this.items()
+            }
+        });
+    }
+
     public getItemBookmarkState(item: SwimlaneItem): BookmarkState {
+        if (item.mediaType === 'person') return 'none';
         const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
         return this.storageService.getBookmarkState(item.id, mediaType);
     }
 
     public onCardClick(item: SwimlaneItem): void {
-        if (item.mediaType === 'person') return;
+        if (item.mediaType === 'person') {
+            void this.router.navigate(['/person', item.id], {
+                state: {
+                    preview: {
+                        id: Number(item.id),
+                        name: item.title,
+                        profileUrl: item.posterUrl,
+                        knownForDepartment: item.subtitle
+                    }
+                }
+            });
+            return;
+        }
         const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
         void this.router.navigate(['/media', mediaType, item.id], {
             state: {

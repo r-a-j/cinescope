@@ -14,12 +14,15 @@
 }
 
 .swimlane-action {
-    background: transparent;
-    border: none;
+    background: rgba(229, 9, 20, 0.12);
+    border: 1px solid rgba(229, 9, 20, 0.3);
+    border-radius: 999px;
     color: var(--ion-color-primary); // Cinematic Crimson
-    font-weight: 700;
-    font-size: 0.85rem;
-    padding: 4px 0;
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    cursor: pointer;
 }
 
 .swimlane-scroll-container {
@@ -44,6 +47,30 @@
     scroll-snap-align: start; // Snaps to the left edge of each poster
     flex: 0 0 auto;
     width: 130px; // Standard width for a 2:3 poster on mobile
+}
+
+.swimlane-item-caption {
+    margin-top: 6px;
+    padding: 0 2px;
+    cursor: pointer;
+}
+
+.swimlane-item-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.swimlane-item-sub {
+    margin-top: 2px;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.58);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 // These invisible spacers ensure the first and last posters align with the 16px page margin

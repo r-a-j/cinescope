@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IonIcon } from '@ionic/angular/standalone';
 import { TmdbVideoDto } from '../../../../core/dtos/common/video.dto';
@@ -17,7 +18,11 @@ import { CastMemberVm } from '../../media-detail.page';
         <h3 class="section-heading">TOP BILLED CAST ({{ castList().length }})</h3>
         <div class="cast-scroll-row">
           @for (actor of castList(); track actor.id) {
-            <div class="cast-card">
+            <div
+              class="cast-card"
+              tabindex="0"
+              (click)="openPerson(actor)"
+              (keyup.enter)="openPerson(actor)">
               <div class="cast-avatar-wrap">
                 <img
                   [src]="actor.profileUrl"
@@ -325,6 +330,7 @@ import { CastMemberVm } from '../../media-detail.page';
 })
 export class CastVideoGalleryComponent {
   private sanitizer = inject(DomSanitizer);
+  private router = inject(Router);
 
   public castList = input.required<CastMemberVm[]>();
   public videos = input.required<TmdbVideoDto[]>();
@@ -338,6 +344,19 @@ export class CastVideoGalleryComponent {
       `https://www.youtube-nocookie.com/embed/${vid.key}?autoplay=1&rel=0&modestbranding=1`
     );
   });
+
+  public openPerson(actor: CastMemberVm): void {
+    void this.router.navigate(['/person', actor.id], {
+      state: {
+        preview: {
+          id: actor.id,
+          name: actor.name,
+          profileUrl: actor.profileUrl,
+          knownForDepartment: 'Acting'
+        }
+      }
+    });
+  }
 
   public openVideo(video: TmdbVideoDto): void {
     this.activeVideo.set(video);

@@ -5,12 +5,14 @@
         class="hero-swiper">
 
         @for (item of trendingItems(); track item.id; let i = $index) {
-        <swiper-slide (click)="onHeroClick(item)" style="cursor: pointer;">
+        <swiper-slide (click)="onHeroClick(item)" class="hero-slide">
 
-            <img [src]="item.backdropUrl" [alt]="item.title" class="hero-backdrop"
-                [attr.loading]="i === 0 ? 'eager' : 'lazy'" />
-
-            <div class="gradient-overlay"></div>
+            <div class="hero-media-frame">
+                <img [src]="item.backdropUrl" [alt]="item.title" class="hero-backdrop"
+                    [attr.loading]="i === 0 ? 'eager' : 'lazy'" />
+                <div class="top-gradient"></div>
+                <div class="gradient-overlay"></div>
+            </div>
 
             <div class="hero-content">
                 <div class="badge-row">

@@ -5,10 +5,12 @@ import { TmdbTrendingService } from '../services/tmdb-trending.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
 import { TmdbMoviesService } from '../services/tmdb-movies.service';
 import { TmdbTvService } from '../services/tmdb-tv.service';
+import { TmdbPeopleService } from '../services/tmdb-people.service';
 import { TmdbTrendingMixedItemDto } from '../dtos/trending/trending-mixed-item.dto';
 import { TmdbMovieListItemDto } from '../dtos/movies/movie-list-item.dto';
 import { TmdbTvListItemDto } from '../dtos/tv/tv-list-item.dto';
 import { TmdbPersonListItemDto } from '../dtos/people/person-list-item.dto';
+import { TmdbPersonListItemDto as TmdbFindPersonListItemDto } from '../dtos/find/find-results.dto';
 import { HeroBannerItem } from '../../shared/models/hero-banner-item.interface';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { resolveMediaImageUrl } from '../constants/api.constants';
@@ -16,21 +18,30 @@ import { resolveMediaImageUrl } from '../constants/api.constants';
 interface TrendingState {
     heroItems: HeroBannerItem[];
     movies: SwimlaneItem[];
+    nowPlayingMovies: SwimlaneItem[];
     tvShows: SwimlaneItem[];
-    // Desi Hub
-    desiMovies: SwimlaneItem[];
-    desiTvShows: SwimlaneItem[];
+    airingTvShows: SwimlaneItem[];
+    // Desi Hub (Pan-Indian & Indian OTT)
+    desiWebSeries: SwimlaneItem[];
+    teluguBlockbusters: SwimlaneItem[];
+    tamilCinema: SwimlaneItem[];
+    malayalamGems: SwimlaneItem[];
     isDesiLoading: boolean;
-    // Bollywood
+    // Bollywood (Hindi Cinema)
     bollywoodPopular: SwimlaneItem[];
+    bollywoodRecent: SwimlaneItem[];
     bollywoodTopRated: SwimlaneItem[];
     isBollywoodLoading: boolean;
     // Top Rated
     topRatedMovies: SwimlaneItem[];
+    modernMasterpieces: SwimlaneItem[];
     topRatedTvShows: SwimlaneItem[];
+    topRatedIndianMovies: SwimlaneItem[];
     isTopRatedLoading: boolean;
     // Actors
     trendingActors: SwimlaneItem[];
+    popularActors: SwimlaneItem[];
+    breakoutActors: SwimlaneItem[];
     isActorsLoading: boolean;
 
     isLoading: boolean;
@@ -40,17 +51,26 @@ interface TrendingState {
 const initialState: TrendingState = {
     heroItems: [],
     movies: [],
+    nowPlayingMovies: [],
     tvShows: [],
-    desiMovies: [],
-    desiTvShows: [],
+    airingTvShows: [],
+    desiWebSeries: [],
+    teluguBlockbusters: [],
+    tamilCinema: [],
+    malayalamGems: [],
     isDesiLoading: false,
     bollywoodPopular: [],
+    bollywoodRecent: [],
     bollywoodTopRated: [],
     isBollywoodLoading: false,
     topRatedMovies: [],
+    modernMasterpieces: [],
     topRatedTvShows: [],
+    topRatedIndianMovies: [],
     isTopRatedLoading: false,
     trendingActors: [],
+    popularActors: [],
+    breakoutActors: [],
     isActorsLoading: false,
     isLoading: false,
     error: null,
@@ -107,13 +127,16 @@ function mapTvToSwimlane(items: TmdbTvListItemDto[]): SwimlaneItem[] {
         }));
 }
 
-function mapPeopleToSwimlane(items: TmdbPersonListItemDto[]): SwimlaneItem[] {
+function mapPeopleToSwimlane(items: (TmdbPersonListItemDto | TmdbFindPersonListItemDto)[]): SwimlaneItem[] {
     return items
         .filter((item) => item.profile_path)
         .map((item) => {
-            const topKnownFor = item.known_for?.[0];
-            const knownForTitle = topKnownFor
-                ? ('title' in topKnownFor ? topKnownFor.title : topKnownFor.name)
+            const knownTitles = (item.known_for ?? [])
+                .map((k) => ('title' in k ? k.title : k.name))
+                .filter(Boolean)
+                .slice(0, 2);
+            const knownForTitle = knownTitles.length > 0
+                ? knownTitles.join(', ')
                 : item.known_for_department;
             return {
                 id: item.id,
@@ -135,7 +158,8 @@ export const TrendingStore = signalStore(
         trendingService = inject(TmdbTrendingService),
         discoverService = inject(TmdbDiscoverService),
         moviesService = inject(TmdbMoviesService),
-        tvService = inject(TmdbTvService)
+        tvService = inject(TmdbTvService),
+        peopleService = inject(TmdbPeopleService)
     ) => ({
 
         async loadTrendingData(force = false): Promise<void> {
@@ -150,16 +174,20 @@ export const TrendingStore = signalStore(
                 const isWeekend = today === 0 || today === 5 || today === 6;
                 const pulseWindow = isWeekend ? 'week' : 'day';
 
-                const [allRes, moviesRes, tvRes] = await Promise.all([
+                const [allRes, moviesRes, nowPlayingRes, tvRes, onTheAirRes] = await Promise.all([
                     firstValueFrom(trendingService.getTrendingAll('week')),
                     firstValueFrom(trendingService.getTrendingMovies(pulseWindow)),
-                    firstValueFrom(trendingService.getTrendingTvShows(pulseWindow))
+                    firstValueFrom(moviesService.getNowPlayingMovies('en-US', 1, 'IN')),
+                    firstValueFrom(trendingService.getTrendingTvShows(pulseWindow)),
+                    firstValueFrom(tvService.getTvOnTheAir('en-US', 1))
                 ]);
 
                 patchState(store, {
                     heroItems: mapToHeroItems(allRes.results),
                     movies: mapMoviesToSwimlane(moviesRes.results),
+                    nowPlayingMovies: mapMoviesToSwimlane(nowPlayingRes.results || []),
                     tvShows: mapTvToSwimlane(tvRes.results),
+                    airingTvShows: mapTvToSwimlane(onTheAirRes.results || []),
                     isLoading: false
                 });
 
@@ -169,25 +197,36 @@ export const TrendingStore = signalStore(
             }
         },
 
-        async loadDesiHubData(): Promise<void> {
-            if (store.desiMovies().length > 0 || store.isDesiLoading()) return;
+        async loadDesiHubData(force = false): Promise<void> {
+            if (!force && (store.desiWebSeries().length > 0 || store.isDesiLoading())) return;
             patchState(store, { isDesiLoading: true });
             try {
-                const [desiMoviesRes, desiTvRes] = await Promise.all([
-                    firstValueFrom(discoverService.discoverMovies({
-                        with_original_language: 'hi',
-                        region: 'IN',
+                const [webSeriesRes, teluguRes, tamilRes, malayalamRes] = await Promise.all([
+                    firstValueFrom(discoverService.discoverTv({
+                        with_origin_country: 'IN',
                         sort_by: 'popularity.desc'
                     })),
                     firstValueFrom(discoverService.discoverMovies({
                         with_original_language: 'te',
                         region: 'IN',
                         sort_by: 'popularity.desc'
+                    })),
+                    firstValueFrom(discoverService.discoverMovies({
+                        with_original_language: 'ta',
+                        region: 'IN',
+                        sort_by: 'popularity.desc'
+                    })),
+                    firstValueFrom(discoverService.discoverMovies({
+                        with_original_language: 'ml',
+                        sort_by: 'vote_average.desc',
+                        'vote_count.gte': 35
                     }))
                 ]);
                 patchState(store, {
-                    desiMovies: mapMoviesToSwimlane(desiMoviesRes.results || []),
-                    desiTvShows: mapMoviesToSwimlane(desiTvRes.results || []),
+                    desiWebSeries: mapTvToSwimlane(webSeriesRes.results || []),
+                    teluguBlockbusters: mapMoviesToSwimlane(teluguRes.results || []),
+                    tamilCinema: mapMoviesToSwimlane(tamilRes.results || []),
+                    malayalamGems: mapMoviesToSwimlane(malayalamRes.results || []),
                     isDesiLoading: false
                 });
             } catch (error) {
@@ -196,23 +235,31 @@ export const TrendingStore = signalStore(
             }
         },
 
-        async loadBollywoodData(): Promise<void> {
-            if (store.bollywoodPopular().length > 0 || store.isBollywoodLoading()) return;
+        async loadBollywoodData(force = false): Promise<void> {
+            if (!force && (store.bollywoodPopular().length > 0 || store.isBollywoodLoading())) return;
             patchState(store, { isBollywoodLoading: true });
             try {
-                const [popularRes, acclaimedRes] = await Promise.all([
+                const todayIso = new Date().toISOString().slice(0, 10);
+                const [popularRes, recentRes, acclaimedRes] = await Promise.all([
                     firstValueFrom(discoverService.discoverMovies({
                         with_original_language: 'hi',
                         sort_by: 'popularity.desc'
                     })),
                     firstValueFrom(discoverService.discoverMovies({
                         with_original_language: 'hi',
+                        'primary_release_date.lte': todayIso,
+                        'vote_count.gte': 8,
+                        sort_by: 'primary_release_date.desc'
+                    })),
+                    firstValueFrom(discoverService.discoverMovies({
+                        with_original_language: 'hi',
                         sort_by: 'vote_average.desc',
-                        'vote_count.gte': 100
+                        'vote_count.gte': 120
                     }))
                 ]);
                 patchState(store, {
                     bollywoodPopular: mapMoviesToSwimlane(popularRes.results || []),
+                    bollywoodRecent: mapMoviesToSwimlane(recentRes.results || []),
                     bollywoodTopRated: mapMoviesToSwimlane(acclaimedRes.results || []),
                     isBollywoodLoading: false
                 });
@@ -222,17 +269,29 @@ export const TrendingStore = signalStore(
             }
         },
 
-        async loadTopRatedData(): Promise<void> {
-            if (store.topRatedMovies().length > 0 || store.isTopRatedLoading()) return;
+        async loadTopRatedData(force = false): Promise<void> {
+            if (!force && (store.topRatedMovies().length > 0 || store.isTopRatedLoading())) return;
             patchState(store, { isTopRatedLoading: true });
             try {
-                const [moviesRes, tvRes] = await Promise.all([
+                const [moviesRes, modernRes, tvRes, indianTopRes] = await Promise.all([
                     firstValueFrom(moviesService.getTopRatedMovies()),
-                    firstValueFrom(tvService.getTopRatedTvShows())
+                    firstValueFrom(discoverService.discoverMovies({
+                        'primary_release_date.gte': '2020-01-01',
+                        sort_by: 'vote_average.desc',
+                        'vote_count.gte': 1200
+                    })),
+                    firstValueFrom(tvService.getTopRatedTvShows()),
+                    firstValueFrom(discoverService.discoverMovies({
+                        with_origin_country: 'IN',
+                        sort_by: 'vote_average.desc',
+                        'vote_count.gte': 150
+                    }))
                 ]);
                 patchState(store, {
                     topRatedMovies: mapMoviesToSwimlane(moviesRes.results || []),
+                    modernMasterpieces: mapMoviesToSwimlane(modernRes.results || []),
                     topRatedTvShows: mapTvToSwimlane(tvRes.results || []),
+                    topRatedIndianMovies: mapMoviesToSwimlane(indianTopRes.results || []),
                     isTopRatedLoading: false
                 });
             } catch (error) {
@@ -241,13 +300,24 @@ export const TrendingStore = signalStore(
             }
         },
 
-        async loadActorsData(): Promise<void> {
-            if (store.trendingActors().length > 0 || store.isActorsLoading()) return;
+        async loadActorsData(force = false): Promise<void> {
+            if (!force && (store.trendingActors().length > 0 || store.isActorsLoading())) return;
             patchState(store, { isActorsLoading: true });
             try {
-                const res = await firstValueFrom(trendingService.getTrendingPeople('week'));
+                const [trendingRes, popularPage1, popularPage2] = await Promise.all([
+                    firstValueFrom(trendingService.getTrendingPeople('week')),
+                    firstValueFrom(peopleService.getPopularPeople('en-US', 1)),
+                    firstValueFrom(peopleService.getPopularPeople('en-US', 2))
+                ]);
+                const trendingIds = new Set((trendingRes.results || []).map((p) => p.id));
+                const filteredPopular = (popularPage1.results || []).filter((p) => !trendingIds.has(p.id));
+
                 patchState(store, {
-                    trendingActors: mapPeopleToSwimlane(res.results || []),
+                    trendingActors: mapPeopleToSwimlane(trendingRes.results || []),
+                    popularActors: mapPeopleToSwimlane(
+                        filteredPopular.length >= 6 ? filteredPopular : (popularPage1.results || [])
+                    ),
+                    breakoutActors: mapPeopleToSwimlane(popularPage2.results || []),
                     isActorsLoading: false
                 });
             } catch (error) {

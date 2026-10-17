@@ -1,0 +1,233 @@
+<ion-content [fullscreen]="true" color="background" class="person-content">
+  <!-- Floating Top Navigation -->
+  <div class="floating-nav">
+    <button type="button" class="nav-pill-btn" (click)="goBack()" aria-label="Go Back">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <button type="button" class="nav-pill-btn" (click)="sharePerson()" aria-label="Share">
+      <ion-icon name="share-social-outline"></ion-icon>
+    </button>
+  </div>
+
+  <!-- Artist Hero Header -->
+  <div class="person-hero">
+    <div class="person-backdrop-glow" [style.background-image]="'url(' + profileUrl() + ')'"></div>
+    <div class="person-hero-inner">
+      <div class="portrait-frame">
+        <img
+          [src]="profileUrl()"
+          [alt]="name()"
+          class="portrait-img"
+          decoding="async"
+          fetchpriority="high" />
+      </div>
+
+      <div class="person-identity">
+        <span class="dept-badge">{{ department() }}</span>
+        <h1 class="person-name">{{ name() }}</h1>
+
+        @if (lifespanLabel()) {
+          <div class="meta-line">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>{{ lifespanLabel() }}</span>
+          </div>
+        }
+
+        @if (birthPlace()) {
+          <div class="meta-line">
+            <ion-icon name="location-outline"></ion-icon>
+            <span>{{ birthPlace() }}</span>
+          </div>
+        }
+
+        @if (socialLinks().length > 0) {
+          <div class="social-pills">
+            @for (link of socialLinks(); track link.label) {
+              <a
+                [href]="link.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="social-pill">
+                <span>{{ link.label }}</span>
+                <ion-icon name="open-outline"></ion-icon>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="person-body">
+    <!-- Actor Marathon / Completionist Progress Tracker -->
+    @if (marathonStats().total > 0) {
+      <section class="marathon-card">
+        <div class="marathon-header">
+          <div class="marathon-title">
+            <ion-icon name="trophy-outline"></ion-icon>
+            <span>FILMOGRAPHY TRACKER</span>
+          </div>
+          <span class="marathon-pct">{{ marathonStats().percent }}% Watched</span>
+        </div>
+        <div class="marathon-bar-track">
+          <div class="marathon-bar-fill" [style.width.%]="marathonStats().percent"></div>
+        </div>
+        <div class="marathon-subtext">
+          <span><strong>{{ marathonStats().watched }}</strong> of {{ marathonStats().total }} titles watched</span>
+          @if (marathonStats().watchlist > 0) {
+            <span>• <strong>{{ marathonStats().watchlist }}</strong> in Watchlist</span>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Biography -->
+    <section class="person-section">
+      <h3 class="section-heading">BIOGRAPHY</h3>
+      <p
+        class="bio-text"
+        [class.clamped]="!bioExpanded() && biography().length > 300">
+        {{ biography() }}
+      </p>
+      @if (biography().length > 300) {
+        <button type="button" class="text-toggle-btn" (click)="bioExpanded.set(!bioExpanded())">
+          {{ bioExpanded() ? 'Show less' : 'Read full biography' }}
+        </button>
+      }
+    </section>
+
+    <!-- Portrait Gallery -->
+    @if (profileGallery().length > 1) {
+      <section class="person-section">
+        <h3 class="section-heading">PORTRAITS ({{ profileGallery().length }})</h3>
+        <div class="portraits-scroll">
+          @for (imgUrl of profileGallery(); track imgUrl) {
+            <img [src]="imgUrl" [alt]="name()" class="gallery-thumb" loading="lazy" decoding="async" />
+          }
+        </div>
+      </section>
+    }
+  </div>
+
+  <!-- Known For Swimlane -->
+  @if (knownForSwimlane().length > 0) {
+    <div class="known-for-block">
+      <app-swimlane title="KNOWN FOR" [items]="knownForSwimlane()"></app-swimlane>
+    </div>
+  }
+
+  <!-- Full Interactive Filmography -->
+  <div class="person-body">
+    @if (isLoading()) {
+      <section class="person-section">
+        <ion-skeleton-text animated style="width: 50%; height: 22px; margin-bottom: 14px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 100%; height: 74px; border-radius: 10px; margin-bottom: 10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 100%; height: 74px; border-radius: 10px;"></ion-skeleton-text>
+      </section>
+    } @else {
+      <section class="person-section">
+        <div class="filmography-header">
+          <h3 class="section-heading">FILMOGRAPHY</h3>
+          <div class="sort-pills">
+            <button
+              type="button"
+              class="sort-pill"
+              [class.active]="sortBy() === 'newest'"
+              (click)="sortBy.set('newest')">
+              Newest
+            </button>
+            <button
+              type="button"
+              class="sort-pill"
+              [class.active]="sortBy() === 'popular'"
+              (click)="sortBy.set('popular')">
+              Popular
+            </button>
+          </div>
+        </div>
+
+        <div class="credit-tabs">
+          <button
+            type="button"
+            class="credit-tab"
+            [class.active]="activeCreditTab() === 'movies'"
+            (click)="setCreditTab('movies')">
+            Movies ({{ movieCastEntries().length }})
+          </button>
+          <button
+            type="button"
+            class="credit-tab"
+            [class.active]="activeCreditTab() === 'tv'"
+            (click)="setCreditTab('tv')">
+            TV Shows ({{ tvCastEntries().length }})
+          </button>
+          @if (crewEntries().length > 0) {
+            <button
+              type="button"
+              class="credit-tab"
+              [class.active]="activeCreditTab() === 'crew'"
+              (click)="setCreditTab('crew')">
+              Directed / Crew ({{ crewEntries().length }})
+            </button>
+          }
+        </div>
+
+        <div class="credits-list">
+          @for (entry of visibleTabEntries(); track entry.uid) {
+            <div
+              class="credit-row"
+              tabindex="0"
+              (click)="openMediaDetail(entry)"
+              (keyup.enter)="openMediaDetail(entry)">
+              <img
+                [src]="entry.posterUrl"
+                [alt]="entry.title"
+                class="credit-poster"
+                loading="lazy"
+                decoding="async" />
+
+              <div class="credit-info">
+                <div class="credit-title">{{ entry.title }}</div>
+                <div class="credit-role">
+                  {{ entry.roleLabel }}
+                  @if (entry.episodeCount) {
+                    <span>({{ entry.episodeCount }} eps)</span>
+                  }
+                </div>
+                <div class="credit-meta">
+                  <span class="credit-year">{{ entry.year }}</span>
+                  <span>• {{ entry.mediaType === 'tv' ? 'TV' : 'Movie' }}</span>
+                  @if (entry.rating) {
+                    <span class="credit-rating">• ★ {{ entry.rating }}</span>
+                  }
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="credit-bookmark-btn"
+                [class.is-watchlist]="getEntryBookmarkState(entry) === 'watchlist'"
+                [class.is-watched]="getEntryBookmarkState(entry) === 'watched'"
+                (click)="toggleEntryBookmark(entry, $event)"
+                aria-label="Toggle Bookmark">
+                <ion-icon
+                  [name]="getEntryBookmarkState(entry) === 'watched'
+                    ? 'checkmark-circle'
+                    : (getEntryBookmarkState(entry) === 'watchlist' ? 'bookmark' : 'bookmark-outline')">
+                </ion-icon>
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (visibleTabEntries().length < activeTabEntries().length) {
+          <button type="button" class="load-more-credits-btn" (click)="showMoreCredits()">
+            Show More ({{ activeTabEntries().length - visibleTabEntries().length }} remaining)
+          </button>
+        }
+      </section>
+    }
+  </div>
+
+  <div class="bottom-spacer"></div>
+</ion-content>

@@ -11,8 +11,13 @@ import {
     IonCardHeader,
     IonCardTitle,
     IonCardContent,
-    IonButton
+    IonButton,
+    IonIcon,
+    IonRefresher,
+    IonRefresherContent
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { refreshOutline, swapVerticalOutline, openOutline } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { HeroBannerComponent } from 'src/app/shared/components/hero-banner/hero-banner.component';
 import { SwimlaneComponent } from 'src/app/shared/components/swimlane/swimlane.component';
@@ -35,6 +40,9 @@ import { FeedService } from '../../core/services/feed.service';
         IonCardTitle,
         IonCardContent,
         IonButton,
+        IonIcon,
+        IonRefresher,
+        IonRefresherContent,
         HeaderComponent,
         HeroBannerComponent,
         SwimlaneComponent
@@ -48,10 +56,10 @@ export class DiscoverPage implements OnInit {
     public feedService = inject(FeedService);
 
     public discoverTabs = [
+        { value: 'trending', label: 'TRENDING' },
         { value: 'desi-hub', label: 'DESI HUB' },
         { value: 'bollywood', label: 'BOLLYWOOD' },
         { value: 'top-rated', label: 'TOP RATED' },
-        { value: 'trending', label: 'TRENDING' },
         { value: 'actors', label: 'ACTORS' },
         { value: 'news', label: 'NEWS' }
     ];
@@ -59,8 +67,42 @@ export class DiscoverPage implements OnInit {
     // Default to 'trending'
     public activeSection = signal<string>('trending');
 
+    constructor() {
+        addIcons({ refreshOutline, swapVerticalOutline, openOutline });
+    }
+
     ngOnInit(): void {
         this.store.loadTrendingData();
+    }
+
+    public async onPullRefresh(event: CustomEvent): Promise<void> {
+        const section = this.activeSection();
+        if (section === 'trending') {
+            await this.store.loadTrendingData(true);
+        } else if (section === 'desi-hub') {
+            await this.store.loadDesiHubData(true);
+        } else if (section === 'bollywood') {
+            await this.store.loadBollywoodData(true);
+        } else if (section === 'top-rated') {
+            await this.store.loadTopRatedData(true);
+        } else if (section === 'actors') {
+            await this.store.loadActorsData(true);
+        } else if (section === 'news') {
+            await this.feedService.refreshFeed();
+        }
+        const target = event.target as HTMLIonRefresherElement | null;
+        if (target) {
+            await target.complete();
+        }
+    }
+
+    public setNewsSource(source: string): void {
+        this.feedService.activeFilter.set(source);
+    }
+
+    public toggleNewsSort(): void {
+        const next = this.feedService.sortDirection() === 'newest' ? 'oldest' : 'newest';
+        this.feedService.sortDirection.set(next);
     }
 
     public onSectionChange(event: Event): void {

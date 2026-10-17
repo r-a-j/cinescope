@@ -2,10 +2,10 @@ import { BookmarkState } from "../components/poster-card/poster-card.component";
 
 export interface SwimlaneItem {
     id: string | number;
-    mediaType?: 'movie' | 'tv' | 'person';
+    mediaType?: 'movie' | 'tv' | 'person' | undefined;
     title: string;
-    subtitle?: string;
-    posterUrl?: string;
-    bookmarkState?: BookmarkState;
-    payload?: Record<string, unknown>;
+    subtitle?: string | undefined;
+    posterUrl?: string | undefined;
+    bookmarkState?: BookmarkState | undefined;
+    payload?: Record<string, unknown> | undefined;
 }

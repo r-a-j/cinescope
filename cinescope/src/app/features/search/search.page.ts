@@ -118,6 +118,19 @@ export class SearchPage implements OnInit {
     if (query.trim()) {
       this.store.saveSearchToHistory(query);
     }
+    if (item.media_type === 'person') {
+      void this.router.navigate(['/person', item.id], {
+        state: {
+          preview: {
+            id: item.id,
+            name: item.name,
+            profileUrl: this.resolveImage(item.profile_path),
+            knownForDepartment: item.known_for_department
+          }
+        }
+      });
+      return;
+    }
     if (item.media_type === 'movie' || item.media_type === 'tv') {
       const title = item.media_type === 'movie' ? item.title : item.name;
       const rawDate = item.media_type === 'movie' ? item.release_date : item.first_air_date;

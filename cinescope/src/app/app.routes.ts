@@ -21,5 +21,13 @@ export const routes: Routes = [
   {
     path: 'media/:mediaType/:id',
     loadComponent: () => import('./features/media-detail/media-detail.page').then(m => m.MediaDetailPage)
+  },
+  {
+    path: 'person/:id',
+    loadComponent: () => import('./features/person-detail/person-detail.page').then(m => m.PersonDetailPage)
+  },
+  {
+    path: 'collection',
+    loadComponent: () => import('./features/collection/collection.page').then(m => m.CollectionPage)
   }
 ];
