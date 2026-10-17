@@ -4,8 +4,45 @@
     aspect-ratio: 2 / 3; // INDUSTRY STANDARD: The golden ratio for movie posters
     border-radius: 8px; // M3 standard for image cards
     overflow: hidden;
-    background-color: var(--ion-color-step-100); // Faint gray while image loads
+    background-color: #141418;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); // Cinematic depth
+}
+
+.poster-shimmer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px 8px;
+    background: linear-gradient(
+        110deg,
+        #141418 25%,
+        #22222a 37%,
+        #141418 63%
+    );
+    background-size: 200% 100%;
+    animation: posterShimmerWave 1.35s ease-in-out infinite;
+    z-index: 1;
+}
+
+.poster-shimmer-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.22);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@keyframes posterShimmerWave {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .poster-image {
@@ -13,6 +50,17 @@
     height: 100%;
     object-fit: cover; // Ensures the image perfectly fills the 2:3 box without stretching
     display: block;
+    opacity: 0;
+    transition: opacity 0.16s ease-out;
+
+    &.is-loaded {
+        opacity: 1;
+    }
+
+    &.is-cached {
+        opacity: 1;
+        transition: none;
+    }
 }
 
 // Ensure the button has a massive, invisible 48px touch target

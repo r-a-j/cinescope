@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, inject, signal, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, inject, signal, computed } from '@angular/core';
 import { PosterCacheService } from '../../../core/services/poster-cache.service';
 import { DEFAULT_POSTER_PLACEHOLDER } from '../../../core/constants/api.constants';
 
@@ -19,28 +19,41 @@ export class PosterCardComponent {
     public title = input<string | undefined>();
     public showBookmark = input<boolean>(false);
     public bookmarkState = input<BookmarkState>('none');
+    public priority = input<boolean>(false);
 
-    public resolvedImageUrl = signal<string>(DEFAULT_POSTER_PLACEHOLDER);
+    private readonly loadedUrl = signal<string | null>(null);
+    private readonly erroredUrl = signal<string | null>(null);
+
+    /**
+     * Synchronously resolves on Frame 0 (unlike `effect()`, which runs after first paint).
+     */
+    public readonly resolvedImageUrl = computed<string>(() => {
+        const raw = this.imageUrl();
+        if (raw && this.erroredUrl() === raw) {
+            return DEFAULT_POSTER_PLACEHOLDER;
+        }
+        return this.posterCache.resolveFallbackUrl(raw);
+    });
+
+    public readonly isCached = computed<boolean>(() => {
+        return this.posterCache.isWarm(this.imageUrl());
+    });
+
+    public readonly isLoaded = computed<boolean>(() => {
+        const raw = this.imageUrl();
+        return this.isCached() || this.loadedUrl() === raw || this.erroredUrl() === raw;
+    });
 
     public bookmarkToggle = output();
     public cardClick = output();
 
-    constructor() {
-        effect(() => {
-            const rawUrl = this.imageUrl();
-            const immediate = this.posterCache.getImmediateUrl(rawUrl);
-            if (immediate) {
-                this.resolvedImageUrl.set(immediate);
-                return;
-            }
-            // Set placeholder or raw URL while checking persistent CacheStorage (~1ms)
-            this.resolvedImageUrl.set(rawUrl || DEFAULT_POSTER_PLACEHOLDER);
-            void this.posterCache.resolvePosterUrl(rawUrl).then((resolved) => {
-                if (this.imageUrl() === rawUrl && this.resolvedImageUrl() !== resolved) {
-                    this.resolvedImageUrl.set(resolved);
-                }
-            });
-        });
+    public handleImageLoad(event: Event): void {
+        const imgElement = event.target as HTMLImageElement;
+        if (imgElement.complete && imgElement.naturalWidth > 0) {
+            const raw = this.imageUrl();
+            this.loadedUrl.set(raw);
+            this.posterCache.markLoaded(raw, imgElement);
+        }
     }
 
     public onBookmarkClick(event: Event): void {
@@ -59,5 +72,6 @@ export class PosterCardComponent {
     public handleImageError(event: Event): void {
         const imgElement = event.target as HTMLImageElement;
         imgElement.src = DEFAULT_POSTER_PLACEHOLDER;
+        this.erroredUrl.set(this.imageUrl());
     }
 }
