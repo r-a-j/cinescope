@@ -6,11 +6,12 @@
 <div class="swimlane-scroll-container">
     <div class="scroll-spacer"></div>
 
-    @for (item of items(); track item.id) {
+    @for (item of items(); track item.id; let idx = $index) {
     <div class="swimlane-item">
         <app-poster-card
             [title]="item.title"
             [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
+            [priority]="idx < 4"
             [showBookmark]="item.mediaType !== 'person'"
             [bookmarkState]="getItemBookmarkState(item)"
             (bookmarkToggle)="onToggleBookmark(item)">

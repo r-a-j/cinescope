@@ -113,7 +113,6 @@ export class StorageService {
             }).$.subscribe((docs) => {
                 const watchlist: ContentDocType[] = [];
                 const watched: ContentDocType[] = [];
-                const posterUrls: string[] = [];
 
                 for (const d of docs) {
                     const docJson = d.toJSON() as ContentDocType;
@@ -122,17 +121,24 @@ export class StorageService {
                     } else if (docJson.lists.includes('watchlist')) {
                         watchlist.push(docJson);
                     }
-
-                    const payload = docJson.payload as Record<string, unknown> | undefined;
-                    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
-                    if (rawPath) {
-                        posterUrls.push(resolveMediaImageUrl(rawPath, 'w342'));
-                    }
                 }
 
                 this.watchlistItems.set(watchlist);
                 this.watchedItems.set(watched);
-                this.posterCache.prefetchUrls(posterUrls);
+
+                // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
+                const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
+                const priorityPosterUrls: string[] = [];
+                for (const doc of topDocs) {
+                    const payload = doc.payload as Record<string, unknown> | undefined;
+                    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
+                    if (rawPath) {
+                        priorityPosterUrls.push(resolveMediaImageUrl(rawPath, 'w342'));
+                    }
+                }
+                setTimeout(() => {
+                    this.posterCache.prewarmUrls(priorityPosterUrls);
+                }, 400);
             });
 
             db.settings.findOne('user_preferences').$.subscribe((doc) => {

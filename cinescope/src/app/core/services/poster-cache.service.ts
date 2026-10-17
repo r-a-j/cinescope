@@ -1,179 +1,205 @@
 import { Injectable } from '@angular/core';
 import { DEFAULT_POSTER_PLACEHOLDER } from '../constants/api.constants';
 
-const POSTER_CACHE_NAME = 'cinescope-posters-v1';
-const MAX_CONCURRENT_FETCHES = 4;
+const WARM_POSTERS_STORAGE_KEY = 'cinescope_warm_posters_v1';
+const MAX_WARM_URLS = 600;
+const MAX_PINNED_BITMAPS = 300;
+const PREWARM_CONCURRENCY = 3;
 
 @Injectable({
     providedIn: 'root'
 })
 export class PosterCacheService {
-    private readonly memoryBlobUrls = new Map<string, string>();
-    private readonly inFlightLookups = new Map<string, Promise<string>>();
-    private readonly prefetchQueue: string[] = [];
+    private readonly warmUrls = new Set<string>();
+    private readonly pinnedImages = new Map<string, HTMLImageElement>();
+    private readonly prewarmQueue: string[] = [];
     private readonly queuedSet = new Set<string>();
-    private activeFetches = 0;
-    private cachePromise: Promise<Cache | null> | null = null;
+    private activePrewarms = 0;
+    private hydrated = false;
+    private saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-    /**
-     * Synchronously returns an in-memory `blob:` URL if already hydrated during this session,
-     * or null if it needs async lookup from CacheStorage / network.
-     */
-    public getImmediateUrl(remoteUrl: string | null | undefined): string | null {
-        if (!remoteUrl || remoteUrl.startsWith('assets/') || remoteUrl.startsWith('blob:')) {
-            return remoteUrl || DEFAULT_POSTER_PLACEHOLDER;
-        }
-        return this.memoryBlobUrls.get(remoteUrl) ?? null;
+    constructor() {
+        void this.hydrateFromDisk();
     }
 
     /**
-     * Resolves a remote poster URL from:
-     * 1. In-memory blob URL map (0 ms)
-     * 2. Persistent device CacheStorage `cinescope-posters-v1` (~1 ms, 0 network calls, works offline)
-     * 3. Network fetch (stores into CacheStorage for future offline/instant loads)
+     * Hydrates the set of previously loaded poster URLs from localStorage
+     * so known posters render with `loading="eager"`, `decoding="sync"`, and `opacity: 1` on frame 0.
      */
-    public async resolvePosterUrl(remoteUrl: string | null | undefined): Promise<string> {
-        if (!remoteUrl || remoteUrl.startsWith('assets/') || remoteUrl.startsWith('blob:')) {
-            return remoteUrl || DEFAULT_POSTER_PLACEHOLDER;
+    public hydrateFromDisk(): Promise<void> {
+        if (this.hydrated) {
+            return Promise.resolve();
+        }
+        this.hydrated = true;
+
+        try {
+            const raw = localStorage.getItem(WARM_POSTERS_STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw) as unknown;
+                if (Array.isArray(parsed)) {
+                    for (const item of parsed) {
+                        if (typeof item === 'string' && item) {
+                            this.warmUrls.add(item);
+                        }
+                    }
+                }
+            }
+        } catch {
+            // Ignore localStorage read errors
         }
 
-        const memUrl = this.memoryBlobUrls.get(remoteUrl);
-        if (memUrl) {
-            return memUrl;
-        }
-
-        const existingLookup = this.inFlightLookups.get(remoteUrl);
-        if (existingLookup) {
-            return existingLookup;
-        }
-
-        const lookupPromise = this.lookupOrCacheInBackground(remoteUrl).finally(() => {
-            this.inFlightLookups.delete(remoteUrl);
-        });
-
-        this.inFlightLookups.set(remoteUrl, lookupPromise);
-        return lookupPromise;
+        return Promise.resolve();
     }
 
     /**
-     * Queues an array of remote poster URLs to be cached persistently in the background
-     * with bounded concurrency so Watchlist & Watched posters are available 100% offline.
+     * Returns true synchronously if the poster URL is already in Chromium's memory/disk cache
+     * (or is a local asset), allowing PosterCardComponent to skip the shimmer and paint on frame 0.
      */
-    public prefetchUrls(urls: string[]): void {
+    public isWarm(url: string | null | undefined): boolean {
+        if (!url || url.startsWith('assets/') || url.startsWith('blob:')) {
+            return true;
+        }
+        return this.warmUrls.has(url) || this.pinnedImages.has(url);
+    }
+
+    /**
+     * Pre-decodes a list of poster URLs into RAM (`HTMLImageElement.decode()`) in small batches
+     * so that when the user opens Archive or switches between Watchlist and Watched,
+     * the decoded bitmaps are already pinned in memory and paint on frame 0 with zero empty shells.
+     */
+    public prewarmUrls(urls: string[]): void {
+        if (typeof Image === 'undefined') return;
+
         for (const url of urls) {
             if (
                 !url ||
                 url.startsWith('assets/') ||
-                url.startsWith('blob:') ||
-                this.memoryBlobUrls.has(url) ||
+                this.pinnedImages.has(url) ||
                 this.queuedSet.has(url)
             ) {
                 continue;
             }
             this.queuedSet.add(url);
-            this.prefetchQueue.push(url);
+            this.prewarmQueue.push(url);
         }
-        this.drainPrefetchQueue();
+
+        this.drainPrewarmQueue();
     }
 
     /**
-     * Clears all persistently cached poster blobs and revokes in-memory object URLs.
+     * Marks a poster URL as loaded and pins a lightweight HTMLImageElement reference in RAM
+     * so Chromium keeps the decoded bitmap texture in `(memory cache)` across tab switches.
+     */
+    public markLoaded(url: string | null | undefined, sourceImg?: HTMLImageElement): void {
+        if (!url || url.startsWith('assets/') || url.startsWith('blob:')) {
+            return;
+        }
+
+        if (!this.warmUrls.has(url)) {
+            this.warmUrls.add(url);
+            this.schedulePersistWarmUrls();
+        }
+
+        if (sourceImg && !this.pinnedImages.has(url)) {
+            this.pinImageElement(url, sourceImg);
+        }
+    }
+
+    /**
+     * Clears the warm poster index and releases pinned in-memory image references.
      */
     public async clearCache(): Promise<void> {
-        this.prefetchQueue.length = 0;
+        this.prewarmQueue.length = 0;
         this.queuedSet.clear();
+        this.warmUrls.clear();
+        this.pinnedImages.clear();
 
-        for (const blobUrl of this.memoryBlobUrls.values()) {
-            if (blobUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(blobUrl);
-            }
+        if (this.saveTimer) {
+            clearTimeout(this.saveTimer);
+            this.saveTimer = null;
         }
-        this.memoryBlobUrls.clear();
-        this.cachePromise = null;
+
+        try {
+            localStorage.removeItem(WARM_POSTERS_STORAGE_KEY);
+        } catch {
+            // Ignore storage errors
+        }
 
         if (typeof window !== 'undefined' && 'caches' in window) {
             try {
-                await window.caches.delete(POSTER_CACHE_NAME);
+                await window.caches.delete('cinescope-posters-v1');
             } catch {
-                // Ignore CacheStorage deletion errors
+                // Ignore legacy CacheStorage cleanup errors
             }
         }
     }
 
-    private async lookupOrCacheInBackground(remoteUrl: string): Promise<string> {
-        const cache = await this.getCacheStorage();
-        if (cache) {
-            try {
-                const cachedRes = await cache.match(remoteUrl);
-                if (cachedRes && cachedRes.ok) {
-                    const blob = await cachedRes.blob();
-                    if (blob.size > 0) {
-                        const blobUrl = URL.createObjectURL(blob);
-                        this.memoryBlobUrls.set(remoteUrl, blobUrl);
-                        return blobUrl;
-                    }
-                }
-            } catch {
-                // Fall through to remoteUrl and queue background caching
-            }
-        }
-
-        // Not in CacheStorage yet: return remoteUrl immediately for `<img src>` and queue persistent caching
-        this.prefetchUrls([remoteUrl]);
-        return remoteUrl;
+    public resolveFallbackUrl(url: string | null | undefined): string {
+        return url || DEFAULT_POSTER_PLACEHOLDER;
     }
 
-    private drainPrefetchQueue(): void {
-        while (this.activeFetches < MAX_CONCURRENT_FETCHES && this.prefetchQueue.length > 0) {
-            const nextUrl = this.prefetchQueue.shift();
+    private drainPrewarmQueue(): void {
+        while (this.activePrewarms < PREWARM_CONCURRENCY && this.prewarmQueue.length > 0) {
+            const nextUrl = this.prewarmQueue.shift();
             if (!nextUrl) break;
 
-            this.activeFetches++;
-            void this.cacheSingleUrl(nextUrl).finally(() => {
-                this.activeFetches--;
+            this.activePrewarms++;
+            void this.decodeAndPinUrl(nextUrl).finally(() => {
+                this.activePrewarms--;
                 this.queuedSet.delete(nextUrl);
-                this.drainPrefetchQueue();
+                this.drainPrewarmQueue();
             });
         }
     }
 
-    private async cacheSingleUrl(remoteUrl: string): Promise<void> {
-        if (this.memoryBlobUrls.has(remoteUrl)) return;
-
-        const cache = await this.getCacheStorage();
-        if (!cache) return;
+    private async decodeAndPinUrl(url: string): Promise<void> {
+        if (this.pinnedImages.has(url)) return;
 
         try {
-            const existing = await cache.match(remoteUrl);
-            if (existing && existing.ok) {
-                const blob = await existing.blob();
-                if (blob.size > 0 && !this.memoryBlobUrls.has(remoteUrl)) {
-                    this.memoryBlobUrls.set(remoteUrl, URL.createObjectURL(blob));
-                    return;
-                }
+            const img = new Image();
+            img.decoding = 'async';
+            img.src = url;
+            if (typeof img.decode === 'function') {
+                await img.decode();
+            } else {
+                await new Promise<void>((resolve, reject) => {
+                    img.onload = (): void => resolve();
+                    img.onerror = (): void => reject(new Error('Image load failed'));
+                });
             }
-
-            const response = await fetch(remoteUrl, { mode: 'cors', credentials: 'omit' });
-            if (response.ok) {
-                const cloned = response.clone();
-                await cache.put(remoteUrl, cloned);
-                const blob = await response.blob();
-                if (blob.size > 0 && !this.memoryBlobUrls.has(remoteUrl)) {
-                    this.memoryBlobUrls.set(remoteUrl, URL.createObjectURL(blob));
-                }
+            this.pinImageElement(url, img);
+            if (!this.warmUrls.has(url)) {
+                this.warmUrls.add(url);
+                this.schedulePersistWarmUrls();
             }
         } catch {
-            // Network offline or image unavailable; ignore silently
+            // Ignore decode errors for offline/missing images
         }
     }
 
-    private getCacheStorage(): Promise<Cache | null> {
-        if (typeof window === 'undefined' || !('caches' in window)) {
-            return Promise.resolve(null);
+    private pinImageElement(url: string, img: HTMLImageElement): void {
+        if (this.pinnedImages.size >= MAX_PINNED_BITMAPS) {
+            const oldestKey = this.pinnedImages.keys().next().value;
+            if (oldestKey) {
+                this.pinnedImages.delete(oldestKey);
+            }
         }
-        if (!this.cachePromise) {
-            this.cachePromise = window.caches.open(POSTER_CACHE_NAME).catch(() => null);
+        this.pinnedImages.set(url, img);
+    }
+
+    private schedulePersistWarmUrls(): void {
+        if (this.saveTimer) {
+            return;
         }
-        return this.cachePromise;
+        this.saveTimer = setTimeout(() => {
+            this.saveTimer = null;
+            try {
+                const all = Array.from(this.warmUrls);
+                const trimmed = all.length > MAX_WARM_URLS ? all.slice(all.length - MAX_WARM_URLS) : all;
+                localStorage.setItem(WARM_POSTERS_STORAGE_KEY, JSON.stringify(trimmed));
+            } catch {
+                // Ignore storage quota errors
+            }
+        }, 500);
     }
 }

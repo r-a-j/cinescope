@@ -6,6 +6,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { DatabaseService } from "./app/core/database/database.service";
+import { PosterCacheService } from "./app/core/services/poster-cache.service";
 import { provideHttpClient, withInterceptors } from "@angular/common/http";
 import { authInterceptor } from "./app/core/interceptors/auth.interceptor";
 
@@ -18,7 +19,11 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => {
       const dbService = inject(DatabaseService);
-      return dbService.initDatabase().catch(err => {
+      const posterCache = inject(PosterCacheService);
+      return Promise.all([
+        dbService.initDatabase(),
+        posterCache.hydrateFromDisk()
+      ]).catch(err => {
         console.error('CRITICAL: DB Mount Failure during app bootstrap', err);
         throw err;
       });

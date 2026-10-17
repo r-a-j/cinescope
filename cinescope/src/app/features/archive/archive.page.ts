@@ -22,6 +22,14 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 const INITIAL_CHUNK_SIZE = 30;
 const SCROLL_CHUNK_STEP = 36;
 
+interface ArchiveCardVm {
+  id: string;
+  doc: ContentDocType;
+  title: string;
+  posterUrl: string;
+  metaSubtitle: string;
+}
+
 @Component({
   selector: 'app-archive',
   standalone: true,
@@ -80,58 +88,68 @@ const SCROLL_CHUNK_STEP = 36;
     }
 
     <ion-content color="background">
-      <!-- Keep-Alive Watchlist Pane -->
-      <div [hidden]="activeTab() !== 'watchlist'">
-        @if (filteredWatchlist().length === 0) {
-          <div class="empty-archive">
-            <ion-icon name="bookmark-outline"></ion-icon>
-            <h2>YOUR WATCHLIST IS EMPTY</h2>
-            <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
-          </div>
-        } @else {
-          <div class="archive-grid">
-            @for (doc of visibleWatchlist(); track doc.id) {
-              <div class="archive-card">
-                <app-poster-card
-                  [title]="getTitle(doc)"
-                  [imageUrl]="getPosterUrl(doc)"
-                  [showBookmark]="true"
-                  bookmarkState="watchlist"
-                  (bookmarkToggle)="onToggleBookmark(doc)">
-                </app-poster-card>
-                <div class="archive-card-title">{{ getTitle(doc) }}</div>
-                <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
-              </div>
-            }
-          </div>
-        }
-      </div>
+      <div class="archive-panes-wrapper">
+        <!-- Keep-Alive Watchlist Pane (uses visibility/opacity instead of display:none so Chromium never evicts decoded GPU textures) -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watchlist'">
+          @if (filteredWatchlist().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="bookmark-outline"></ion-icon>
+              <h2>YOUR WATCHLIST IS EMPTY</h2>
+              <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+            </div>
+          } @else {
+            <div
+              class="archive-grid"
+              [class.flip-phase-a]="flipPhase() === 'a'"
+              [class.flip-phase-b]="flipPhase() === 'b'">
+              @for (vm of visibleWatchlist(); track vm.id; let idx = $index) {
+                <div class="archive-card" [style.--flip-delay]="(idx < 15 ? idx * 14 : 0) + 'ms'">
+                  <app-poster-card
+                    [title]="vm.title"
+                    [imageUrl]="vm.posterUrl"
+                    [priority]="idx < 18"
+                    [showBookmark]="true"
+                    bookmarkState="watchlist"
+                    (bookmarkToggle)="onToggleBookmark(vm.doc)">
+                  </app-poster-card>
+                  <div class="archive-card-title">{{ vm.title }}</div>
+                  <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
 
-      <!-- Keep-Alive Watched Pane -->
-      <div [hidden]="activeTab() !== 'watched'">
-        @if (filteredWatched().length === 0) {
-          <div class="empty-archive">
-            <ion-icon name="checkmark-done-circle-outline"></ion-icon>
-            <h2>NO WATCHED TITLES YET</h2>
-            <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
-          </div>
-        } @else {
-          <div class="archive-grid">
-            @for (doc of visibleWatched(); track doc.id) {
-              <div class="archive-card">
-                <app-poster-card
-                  [title]="getTitle(doc)"
-                  [imageUrl]="getPosterUrl(doc)"
-                  [showBookmark]="true"
-                  bookmarkState="watched"
-                  (bookmarkToggle)="onToggleBookmark(doc)">
-                </app-poster-card>
-                <div class="archive-card-title">{{ getTitle(doc) }}</div>
-                <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
-              </div>
-            }
-          </div>
-        }
+        <!-- Keep-Alive Watched Pane -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watched'">
+          @if (filteredWatched().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+              <h2>NO WATCHED TITLES YET</h2>
+              <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+            </div>
+          } @else {
+            <div
+              class="archive-grid"
+              [class.flip-phase-a]="flipPhase() === 'a'"
+              [class.flip-phase-b]="flipPhase() === 'b'">
+              @for (vm of visibleWatched(); track vm.id; let idx = $index) {
+                <div class="archive-card" [style.--flip-delay]="(idx < 15 ? idx * 14 : 0) + 'ms'">
+                  <app-poster-card
+                    [title]="vm.title"
+                    [imageUrl]="vm.posterUrl"
+                    [priority]="idx < 18"
+                    [showBookmark]="true"
+                    bookmarkState="watched"
+                    (bookmarkToggle)="onToggleBookmark(vm.doc)">
+                  </app-poster-card>
+                  <div class="archive-card-title">{{ vm.title }}</div>
+                  <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
 
       @if (hasMoreItems()) {
@@ -179,6 +197,25 @@ const SCROLL_CHUNK_STEP = 36;
       color: #ffffff;
       border-color: var(--ion-color-primary);
     }
+    .archive-panes-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .archive-pane {
+      width: 100%;
+    }
+    .archive-pane.pane-hidden {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
     .empty-archive {
       display: flex;
       flex-direction: column;
@@ -209,18 +246,60 @@ const SCROLL_CHUNK_STEP = 36;
       grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
       gap: 18px 12px;
       padding: 16px;
+      perspective: 900px;
     }
     .archive-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      content-visibility: auto;
-      contain-intrinsic-size: 115px 205px;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+    }
+    .archive-grid.flip-phase-a .archive-card {
+      animation: archiveCardFlipA 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--flip-delay, 0ms);
+    }
+    .archive-grid.flip-phase-b .archive-card {
+      animation: archiveCardFlipB 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--flip-delay, 0ms);
+    }
+    @keyframes archiveCardFlipA {
+      0% {
+        opacity: 0.4;
+        transform: rotateY(-26deg) translateY(5px) scale(0.95);
+      }
+      65% {
+        opacity: 1;
+        transform: rotateY(4deg) translateY(-1px) scale(1.01);
+      }
+      100% {
+        opacity: 1;
+        transform: rotateY(0deg) translateY(0) scale(1);
+      }
+    }
+    @keyframes archiveCardFlipB {
+      0% {
+        opacity: 0.4;
+        transform: rotateY(-26deg) translateY(5px) scale(0.95);
+      }
+      65% {
+        opacity: 1;
+        transform: rotateY(4deg) translateY(-1px) scale(1.01);
+      }
+      100% {
+        opacity: 1;
+        transform: rotateY(0deg) translateY(0) scale(1);
+      }
     }
     .archive-card ::ng-deep .poster-container {
       width: 100%;
       height: auto;
       aspect-ratio: 2 / 3;
+      transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .archive-card:active ::ng-deep .poster-container {
+      transform: scale(0.95) rotateY(8deg);
     }
     .archive-card-title {
       margin-top: 6px;
@@ -251,6 +330,7 @@ export class ArchivePage {
 
   public activeTab = signal<'watchlist' | 'watched'>('watchlist');
   public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
+  public flipPhase = signal<'a' | 'b'>('a');
 
   public visibleWatchlistLimit = signal<number>(INITIAL_CHUNK_SIZE);
   public visibleWatchedLimit = signal<number>(INITIAL_CHUNK_SIZE);
@@ -269,23 +349,25 @@ export class ArchivePage {
     return this.activeTabItems().filter((item) => item.mediaType === 'tv').length;
   });
 
-  public filteredWatchlist = computed<ContentDocType[]>(() => {
+  public filteredWatchlist = computed<ArchiveCardVm[]>(() => {
     const items = this.storage.watchlistItems();
     const filter = this.mediaFilter();
-    return filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+    const filtered = filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+    return filtered.map((doc) => this.toCardVm(doc));
   });
 
-  public filteredWatched = computed<ContentDocType[]>(() => {
+  public filteredWatched = computed<ArchiveCardVm[]>(() => {
     const items = this.storage.watchedItems();
     const filter = this.mediaFilter();
-    return filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+    const filtered = filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+    return filtered.map((doc) => this.toCardVm(doc));
   });
 
-  public visibleWatchlist = computed<ContentDocType[]>(() => {
+  public visibleWatchlist = computed<ArchiveCardVm[]>(() => {
     return this.filteredWatchlist().slice(0, this.visibleWatchlistLimit());
   });
 
-  public visibleWatched = computed<ContentDocType[]>(() => {
+  public visibleWatched = computed<ArchiveCardVm[]>(() => {
     return this.filteredWatched().slice(0, this.visibleWatchedLimit());
   });
 
@@ -299,15 +381,27 @@ export class ArchivePage {
     addIcons({ bookmarkOutline, checkmarkDoneCircleOutline });
   }
 
+  public ionViewWillEnter(): void {
+    this.triggerFlipAnimation();
+  }
+
   public onTabChange(event: Event): void {
     const val = (event as CustomEvent).detail?.value;
     if (val === 'watchlist' || val === 'watched') {
       this.activeTab.set(val);
+      this.triggerFlipAnimation();
     }
   }
 
   public setMediaFilter(filter: 'all' | 'movie' | 'tv'): void {
-    this.mediaFilter.set(filter);
+    if (this.mediaFilter() !== filter) {
+      this.mediaFilter.set(filter);
+      this.triggerFlipAnimation();
+    }
+  }
+
+  private triggerFlipAnimation(): void {
+    this.flipPhase.update((current) => (current === 'a' ? 'b' : 'a'));
   }
 
   public onLoadMore(event: Event): void {
@@ -322,26 +416,26 @@ export class ArchivePage {
     }
   }
 
-  public getTitle(doc: ContentDocType): string {
+  private toCardVm(doc: ContentDocType): ArchiveCardVm {
     const payload = doc.payload as Record<string, unknown> | undefined;
-    return String(payload?.['title'] || payload?.['name'] || `#${doc.tmdbId}`);
-  }
+    const title = String(payload?.['title'] || payload?.['name'] || `#${doc.tmdbId}`);
+    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
+    const posterUrl = resolveMediaImageUrl(rawPath, 'w342');
 
-  public getMetaSubtitle(doc: ContentDocType): string {
-    const payload = doc.payload as Record<string, unknown> | undefined;
     const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
     const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : '';
     const rating = Number(payload?.['vote_average'] || 0);
     const parts: string[] = [doc.mediaType === 'tv' ? 'TV' : 'Movie'];
     if (year) parts.push(year);
     if (rating > 0) parts.push(`★ ${rating.toFixed(1)}`);
-    return parts.join(' • ');
-  }
 
-  public getPosterUrl(doc: ContentDocType): string {
-    const payload = doc.payload as Record<string, unknown> | undefined;
-    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
-    return resolveMediaImageUrl(rawPath, 'w342');
+    return {
+      id: doc.id,
+      doc,
+      title,
+      posterUrl,
+      metaSubtitle: parts.join(' • ')
+    };
   }
 
   public getBookmarkState(doc: ContentDocType): BookmarkState {
@@ -350,7 +444,8 @@ export class ArchivePage {
 
   public async onToggleBookmark(doc: ContentDocType): Promise<void> {
     if (doc.mediaType === 'person') return;
-    const title = this.getTitle(doc);
+    const payload = doc.payload as Record<string, unknown> | undefined;
+    const title = String(payload?.['title'] || payload?.['name'] || `#${doc.tmdbId}`);
     const nextState = await this.storage.cycleBookmark(
       doc.tmdbId,
       doc.mediaType,
