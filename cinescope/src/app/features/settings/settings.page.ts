@@ -14,6 +14,7 @@ import {
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { ApiCacheService } from 'src/app/core/services/api-cache.service';
+import { PosterCacheService } from 'src/app/core/services/poster-cache.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 
@@ -33,6 +34,7 @@ export class SettingsPage implements OnInit {
     private navCtrl = inject(NavController);
     public storage = inject(StorageService);
     private apiCache = inject(ApiCacheService);
+    private posterCache = inject(PosterCacheService);
     private toast = inject(ToastService);
     private alertCtrl = inject(AlertController);
     private searchStore = inject(SearchStore);
@@ -107,9 +109,12 @@ export class SettingsPage implements OnInit {
 
     public async confirmClearCache(): Promise<void> {
         const clearedResponses = this.apiCache.clearAll();
-        await this.searchStore.clearRecentSearches();
+        await Promise.all([
+            this.posterCache.clearCache(),
+            this.searchStore.clearRecentSearches()
+        ]);
         await this.toast.presentSuccess(
-            `Cleared search history & ${clearedResponses} cached API response(s)`
+            `Cleared search history, poster cache & ${clearedResponses} API cache(s)`
         );
     }
 

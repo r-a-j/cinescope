@@ -1,6 +1,13 @@
 <div class="poster-container surface-card" (click)="onCardClick()" (keyup.enter)="onCardClick()" tabindex="0">
 
-    <img [src]="imageUrl()" [alt]="title() || 'Movie Poster'" class="poster-image" loading="lazy"
+    <img
+        [src]="resolvedImageUrl()"
+        [alt]="title() || 'Movie Poster'"
+        width="200"
+        height="300"
+        loading="lazy"
+        decoding="async"
+        class="poster-image"
         (error)="handleImageError($event)" />
 
     @if (showBookmark()) {

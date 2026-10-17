@@ -6,7 +6,9 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
-  IonIcon
+  IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { bookmarkOutline, checkmarkDoneCircleOutline } from 'ionicons/icons';
@@ -16,6 +18,9 @@ import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+
+const INITIAL_CHUNK_SIZE = 30;
+const SCROLL_CHUNK_STEP = 36;
 
 @Component({
   selector: 'app-archive',
@@ -28,6 +33,8 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
     IonSegmentButton,
     IonLabel,
     IonIcon,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
     HeaderComponent,
     PosterCardComponent
   ],
@@ -73,28 +80,64 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
     }
 
     <ion-content color="background">
-      @if (displayedItems().length === 0) {
-        <div class="empty-archive">
-          <ion-icon [name]="activeTab() === 'watchlist' ? 'bookmark-outline' : 'checkmark-done-circle-outline'"></ion-icon>
-          <h2>{{ activeTab() === 'watchlist' ? 'YOUR WATCHLIST IS EMPTY' : 'NO WATCHED TITLES YET' }}</h2>
-          <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
-        </div>
-      } @else {
-        <div class="archive-grid">
-          @for (doc of displayedItems(); track doc.id) {
-            <div class="archive-card">
-              <app-poster-card
-                [title]="getTitle(doc)"
-                [imageUrl]="getPosterUrl(doc)"
-                [showBookmark]="true"
-                [bookmarkState]="getBookmarkState(doc)"
-                (bookmarkToggle)="onToggleBookmark(doc)">
-              </app-poster-card>
-              <div class="archive-card-title">{{ getTitle(doc) }}</div>
-              <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
-            </div>
-          }
-        </div>
+      <!-- Keep-Alive Watchlist Pane -->
+      <div [hidden]="activeTab() !== 'watchlist'">
+        @if (filteredWatchlist().length === 0) {
+          <div class="empty-archive">
+            <ion-icon name="bookmark-outline"></ion-icon>
+            <h2>YOUR WATCHLIST IS EMPTY</h2>
+            <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+          </div>
+        } @else {
+          <div class="archive-grid">
+            @for (doc of visibleWatchlist(); track doc.id) {
+              <div class="archive-card">
+                <app-poster-card
+                  [title]="getTitle(doc)"
+                  [imageUrl]="getPosterUrl(doc)"
+                  [showBookmark]="true"
+                  bookmarkState="watchlist"
+                  (bookmarkToggle)="onToggleBookmark(doc)">
+                </app-poster-card>
+                <div class="archive-card-title">{{ getTitle(doc) }}</div>
+                <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Keep-Alive Watched Pane -->
+      <div [hidden]="activeTab() !== 'watched'">
+        @if (filteredWatched().length === 0) {
+          <div class="empty-archive">
+            <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+            <h2>NO WATCHED TITLES YET</h2>
+            <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+          </div>
+        } @else {
+          <div class="archive-grid">
+            @for (doc of visibleWatched(); track doc.id) {
+              <div class="archive-card">
+                <app-poster-card
+                  [title]="getTitle(doc)"
+                  [imageUrl]="getPosterUrl(doc)"
+                  [showBookmark]="true"
+                  bookmarkState="watched"
+                  (bookmarkToggle)="onToggleBookmark(doc)">
+                </app-poster-card>
+                <div class="archive-card-title">{{ getTitle(doc) }}</div>
+                <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (hasMoreItems()) {
+        <ion-infinite-scroll threshold="300px" (ionInfinite)="onLoadMore($event)">
+          <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
+        </ion-infinite-scroll>
       }
     </ion-content>
   `,
@@ -171,6 +214,8 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
       display: flex;
       flex-direction: column;
       align-items: center;
+      content-visibility: auto;
+      contain-intrinsic-size: 115px 205px;
     }
     .archive-card ::ng-deep .poster-container {
       width: 100%;
@@ -207,6 +252,9 @@ export class ArchivePage {
   public activeTab = signal<'watchlist' | 'watched'>('watchlist');
   public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
 
+  public visibleWatchlistLimit = signal<number>(INITIAL_CHUNK_SIZE);
+  public visibleWatchedLimit = signal<number>(INITIAL_CHUNK_SIZE);
+
   public activeTabItems = computed<ContentDocType[]>(() => {
     return this.activeTab() === 'watchlist'
       ? this.storage.watchlistItems()
@@ -221,11 +269,30 @@ export class ArchivePage {
     return this.activeTabItems().filter((item) => item.mediaType === 'tv').length;
   });
 
-  public displayedItems = computed<ContentDocType[]>(() => {
-    const items = this.activeTabItems();
+  public filteredWatchlist = computed<ContentDocType[]>(() => {
+    const items = this.storage.watchlistItems();
     const filter = this.mediaFilter();
-    if (filter === 'all') return items;
-    return items.filter((item) => item.mediaType === filter);
+    return filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+  });
+
+  public filteredWatched = computed<ContentDocType[]>(() => {
+    const items = this.storage.watchedItems();
+    const filter = this.mediaFilter();
+    return filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
+  });
+
+  public visibleWatchlist = computed<ContentDocType[]>(() => {
+    return this.filteredWatchlist().slice(0, this.visibleWatchlistLimit());
+  });
+
+  public visibleWatched = computed<ContentDocType[]>(() => {
+    return this.filteredWatched().slice(0, this.visibleWatchedLimit());
+  });
+
+  public hasMoreItems = computed<boolean>(() => {
+    return this.activeTab() === 'watchlist'
+      ? this.visibleWatchlist().length < this.filteredWatchlist().length
+      : this.visibleWatched().length < this.filteredWatched().length;
   });
 
   constructor() {
@@ -241,6 +308,18 @@ export class ArchivePage {
 
   public setMediaFilter(filter: 'all' | 'movie' | 'tv'): void {
     this.mediaFilter.set(filter);
+  }
+
+  public onLoadMore(event: Event): void {
+    if (this.activeTab() === 'watchlist') {
+      this.visibleWatchlistLimit.update((current) => current + SCROLL_CHUNK_STEP);
+    } else {
+      this.visibleWatchedLimit.update((current) => current + SCROLL_CHUNK_STEP);
+    }
+    const target = event.target as HTMLIonInfiniteScrollElement | null;
+    if (target) {
+      void target.complete();
+    }
   }
 
   public getTitle(doc: ContentDocType): string {
@@ -261,8 +340,8 @@ export class ArchivePage {
 
   public getPosterUrl(doc: ContentDocType): string {
     const payload = doc.payload as Record<string, unknown> | undefined;
-    const rawPath = (payload?.['posterUrl'] || payload?.['poster_path'] || payload?.['profile_path']) as string | undefined;
-    return resolveMediaImageUrl(rawPath, 'w500');
+    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
+    return resolveMediaImageUrl(rawPath, 'w342');
   }
 
   public getBookmarkState(doc: ContentDocType): BookmarkState {
