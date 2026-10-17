@@ -5,6 +5,7 @@ import { PosterCardComponent, BookmarkState } from '../poster-card/poster-card.c
 import { SwimlaneItem } from '../../models/swimlane-item.interface';
 import { StorageService } from '../../../core/services/storage.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
 
 @Component({
     selector: 'app-swimlane',
@@ -52,13 +53,15 @@ export class SwimlaneComponent {
             return;
         }
         const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+        const rawBackdrop = item.payload?.['backdrop_path'] as string | undefined;
         void this.router.navigate(['/media', mediaType, item.id], {
             state: {
                 preview: {
                     id: Number(item.id),
                     mediaType,
                     title: item.title,
-                    posterUrl: item.posterUrl
+                    posterUrl: item.posterUrl,
+                    backdropUrl: rawBackdrop ? resolveMediaImageUrl(rawBackdrop, 'w1280') : undefined
                 }
             }
         });

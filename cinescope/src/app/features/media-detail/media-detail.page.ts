@@ -202,12 +202,12 @@ export class MediaDetailPage implements OnInit {
     return this.preview()?.posterUrl || 'assets/placeholders/placeholder.webp';
   });
 
-  public backdropUrl = computed<string>(() => {
+  public backdropUrl = computed<string | null>(() => {
     const path = this.movieDetail()?.backdrop_path ?? this.tvDetail()?.backdrop_path;
     if (path) return resolveMediaImageUrl(path, 'w1280');
     const prevBackdrop = this.preview()?.backdropUrl;
     if (prevBackdrop) return prevBackdrop;
-    return this.posterUrl();
+    return null;
   });
 
   public releaseYearLabel = computed<string>(() => {

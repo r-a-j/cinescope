@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
 import { BookmarkState } from '../../../../shared/components/poster-card/poster-card.component';
@@ -24,12 +24,23 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
 
     <!-- Cinematic Hero Section -->
     <div class="hero-stage">
+      <!-- Softly blurred ambient poster glow while high-res widescreen backdrop loads -->
       <img
-        [src]="backdropUrl()"
-        [alt]="title()"
-        class="hero-backdrop-img"
-        decoding="async"
-        fetchpriority="high" />
+        [src]="posterUrl()"
+        alt=""
+        aria-hidden="true"
+        class="hero-ambient-underlay" />
+
+      @if (backdropUrl(); as bgUrl) {
+        <img
+          [src]="bgUrl"
+          [alt]="title()"
+          class="hero-backdrop-img"
+          [class.is-loaded]="isBackdropLoaded()"
+          decoding="async"
+          fetchpriority="high"
+          (load)="onBackdropLoad()" />
+      }
       <div class="hero-backdrop-scrim"></div>
 
       <div class="hero-foreground">
@@ -183,6 +194,18 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
       justify-content: flex-end;
       padding: 96px 16px 20px;
       overflow: hidden;
+      background: #08080a;
+    }
+    .hero-ambient-underlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+      filter: blur(26px) saturate(1.25) brightness(0.42);
+      transform: scale(1.18);
+      pointer-events: none;
     }
     .hero-backdrop-img {
       position: absolute;
@@ -191,8 +214,17 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
       height: 100%;
       object-fit: cover;
       object-position: center 20%;
-      filter: saturate(1.1) brightness(0.7);
-      transform: scale(1.02);
+      filter: saturate(1.1) brightness(0.74);
+      opacity: 0;
+      transform: scale(1.06);
+      transition:
+        opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+    .hero-backdrop-img.is-loaded {
+      opacity: 1;
+      transform: scale(1.01);
     }
     .hero-backdrop-scrim {
       position: absolute;
@@ -405,7 +437,7 @@ export class DetailHeroComponent {
   public title = input.required<string>();
   public originalTitle = input<string | null>(null);
   public posterUrl = input.required<string>();
-  public backdropUrl = input.required<string>();
+  public backdropUrl = input<string | null>(null);
   public bookmarkState = input.required<BookmarkState>();
   public certification = input<string | null>(null);
   public statusLabel = input<string | null>(null);
@@ -421,4 +453,17 @@ export class DetailHeroComponent {
   public watchlistToggle = output();
   public watchedToggle = output();
   public trailerClick = output();
+
+  public isBackdropLoaded = signal<boolean>(false);
+
+  constructor() {
+    effect(() => {
+      const url = this.backdropUrl();
+      this.isBackdropLoaded.set(!url);
+    });
+  }
+
+  public onBackdropLoad(): void {
+    this.isBackdropLoaded.set(true);
+  }
 }
