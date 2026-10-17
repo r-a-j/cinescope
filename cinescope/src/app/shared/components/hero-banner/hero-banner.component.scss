@@ -1,9 +1,30 @@
 .hero-container {
     position: relative;
     width: 100%;
-    // NATIVE ADAPTABILITY: Calculates height based on screen width, capping it so it doesn't break tablets
-    aspect-ratio: 4 / 5;
-    max-height: 70vh;
+    background-color: #000000;
+    overflow: hidden;
+}
+
+.hero-swiper {
+    width: 100%;
+    display: block;
+}
+
+.hero-slide {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #000000;
+    cursor: pointer;
+}
+
+// True 16:9 widescreen frame matching TMDB 1280x720 backdrop images without side-cropping
+.hero-media-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 52vh;
     background-color: var(--ion-color-step-50);
     overflow: hidden;
 }
@@ -12,87 +33,8 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: top center;
+    object-position: center 20%;
     display: block;
-}
-
-.gradient-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-    z-index: 1;
-    pointer-events: none;
-}
-
-.hero-content {
-    z-index: 2;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 24px 16px 16px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.badge-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 2px;
-}
-
-.movie-title {
-    font-size: 2.2rem;
-    font-weight: 900;
-    margin: 0;
-    line-height: 1.1;
-    text-transform: uppercase;
-    color: var(--ion-text-color);
-}
-
-.hero-swiper {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-swiper-slide {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.metadata-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    font-weight: 700;
-
-    .dot-separator {
-        font-size: 1.2rem;
-        line-height: 0;
-    }
-}
-
-.movie-overview {
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: #d1d1d1;
-    margin: 4px 0 0 0;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    overflow: hidden;
 }
 
 .top-gradient {
@@ -100,7 +42,67 @@ swiper-slide {
     top: 0;
     left: 0;
     width: 100%;
-    height: 35%; // Fades down from the top
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+    height: 28%;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 1;
     pointer-events: none;
+}
+
+.gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        #000000 0%,
+        rgba(0, 0, 0, 0.78) 24%,
+        rgba(0, 0, 0, 0.15) 58%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hero-content {
+    z-index: 2;
+    position: relative;
+    margin-top: -54px;
+    width: 100%;
+    padding: 0 16px 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.badge-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+
+.movie-title {
+    font-size: 1.75rem;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.12;
+    text-transform: uppercase;
+    color: var(--ion-text-color);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.movie-overview {
+    font-size: 0.84rem;
+    line-height: 1.42;
+    color: rgba(255, 255, 255, 0.78);
+    margin: 2px 0 0 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
 }

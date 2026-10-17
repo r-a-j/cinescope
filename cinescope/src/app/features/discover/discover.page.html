@@ -13,6 +13,9 @@
 </ion-toolbar>
 
 <ion-content color="background" class="ion-no-padding">
+    <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
 
     @switch (activeSection()) {
 
@@ -20,17 +23,14 @@
     <div class="fade-in">
         @if (store.isLoading()) {
 
-        <ion-skeleton-text animated style="width: 100%; height: 60vh; border-radius: 0; margin: 0;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 100%; aspect-ratio: 16 / 9; border-radius: 0; margin: 0;"></ion-skeleton-text>
 
-        <div style="margin-top: 24px; padding: 0 16px;">
-            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
-            <div style="display: flex; gap: 16px; overflow: hidden;">
-                <ion-skeleton-text animated
-                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated
-                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated
-                    style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
             </div>
         </div>
 
@@ -40,10 +40,15 @@
         <app-hero-banner [trendingItems]="store.heroItems()"></app-hero-banner>
         }
 
-        <div style="margin-top: 24px; padding-bottom: 32px;">
+        <div class="tab-lanes-stack">
             <app-swimlane title="VIRAL MOVIES TODAY" [items]="store.movies()"></app-swimlane>
-            <div style="height: 32px;"></div>
+            @if (store.nowPlayingMovies().length > 0) {
+            <app-swimlane title="IN THEATERS NOW" [items]="store.nowPlayingMovies()"></app-swimlane>
+            }
             <app-swimlane title="BINGE-WORTHY SHOWS" [items]="store.tvShows()"></app-swimlane>
+            @if (store.airingTvShows().length > 0) {
+            <app-swimlane title="AIRING THIS WEEK" [items]="store.airingTvShows()"></app-swimlane>
+            }
         </div>
 
         }
@@ -51,116 +56,181 @@
     }
 
     @case ('desi-hub') {
-    <div class="fade-in" style="padding: 20px 0 32px;">
+    <div class="fade-in tab-section-pad">
+        <div class="tab-intro-banner">
+            <span class="tab-intro-kicker">PAN-INDIAN CINEMA & OTT</span>
+            <p class="tab-intro-sub">Regional blockbusters across Telugu, Tamil, Malayalam & Indian web series.</p>
+        </div>
         @if (store.isDesiLoading()) {
-        <div style="padding: 0 16px;">
-            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
-            <div style="display: flex; gap: 16px; overflow: hidden;">
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
             </div>
         </div>
         } @else {
-        <app-swimlane title="HINDI CINEMA PULSE" [items]="store.desiMovies()"></app-swimlane>
-        <div style="height: 32px;"></div>
-        <app-swimlane title="SOUTH INDIAN BLOCKBUSTERS" [items]="store.desiTvShows()"></app-swimlane>
+        <div class="tab-lanes-stack">
+            @if (store.desiWebSeries().length > 0) {
+            <app-swimlane title="INDIAN OTT & WEB SERIES" [items]="store.desiWebSeries()"></app-swimlane>
+            }
+            @if (store.teluguBlockbusters().length > 0) {
+            <app-swimlane title="TELUGU BLOCKBUSTERS" [items]="store.teluguBlockbusters()"></app-swimlane>
+            }
+            @if (store.tamilCinema().length > 0) {
+            <app-swimlane title="TAMIL CINEMA PULSE" [items]="store.tamilCinema()"></app-swimlane>
+            }
+            @if (store.malayalamGems().length > 0) {
+            <app-swimlane title="MALAYALAM CRITICS' GEMS" [items]="store.malayalamGems()"></app-swimlane>
+            }
+        </div>
         }
     </div>
     }
 
     @case ('bollywood') {
-    <div class="fade-in" style="padding: 20px 0 32px;">
+    <div class="fade-in tab-section-pad">
+        <div class="tab-intro-banner">
+            <span class="tab-intro-kicker">HINDI CINEMA SPOTLIGHT</span>
+            <p class="tab-intro-sub">Fresh Hindi theatrical releases, chartbusters & timeless classics.</p>
+        </div>
         @if (store.isBollywoodLoading()) {
-        <div style="padding: 0 16px;">
-            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
-            <div style="display: flex; gap: 16px; overflow: hidden;">
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
             </div>
         </div>
         } @else {
-        <app-swimlane title="TRENDING IN BOLLYWOOD" [items]="store.bollywoodPopular()"></app-swimlane>
-        <div style="height: 32px;"></div>
-        <app-swimlane title="CRITICS' CHOICE HINDI" [items]="store.bollywoodTopRated()"></app-swimlane>
+        <div class="tab-lanes-stack">
+            @if (store.bollywoodRecent().length > 0) {
+            <app-swimlane title="NEW IN BOLLYWOOD" [items]="store.bollywoodRecent()"></app-swimlane>
+            }
+            <app-swimlane title="TRENDING IN BOLLYWOOD" [items]="store.bollywoodPopular()"></app-swimlane>
+            <app-swimlane title="CRITICS' CHOICE HINDI CLASSICS" [items]="store.bollywoodTopRated()"></app-swimlane>
+        </div>
         }
     </div>
     }
 
     @case ('top-rated') {
-    <div class="fade-in" style="padding: 20px 0 32px;">
+    <div class="fade-in tab-section-pad">
+        <div class="tab-intro-banner">
+            <span class="tab-intro-kicker">CRITICS & AUDIENCE HALL OF FAME</span>
+            <p class="tab-intro-sub">Highest-rated cinema and prestige television across eras.</p>
+        </div>
         @if (store.isTopRatedLoading()) {
-        <div style="padding: 0 16px;">
-            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
-            <div style="display: flex; gap: 16px; overflow: hidden;">
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
             </div>
         </div>
         } @else {
-        <app-swimlane title="ALL-TIME HALL OF FAME MOVIES" [items]="store.topRatedMovies()"></app-swimlane>
-        <div style="height: 32px;"></div>
-        <app-swimlane title="PRESTIGE TV VAULT" [items]="store.topRatedTvShows()"></app-swimlane>
+        <div class="tab-lanes-stack">
+            @if (store.modernMasterpieces().length > 0) {
+            <app-swimlane title="MODERN MASTERPIECES (2020s)" [items]="store.modernMasterpieces()"></app-swimlane>
+            }
+            <app-swimlane title="ALL-TIME HALL OF FAME MOVIES" [items]="store.topRatedMovies()"></app-swimlane>
+            <app-swimlane title="PRESTIGE TV VAULT" [items]="store.topRatedTvShows()"></app-swimlane>
+            @if (store.topRatedIndianMovies().length > 0) {
+            <app-swimlane title="TOP RATED INDIAN CINEMA" [items]="store.topRatedIndianMovies()"></app-swimlane>
+            }
+        </div>
         }
     </div>
     }
 
     @case ('actors') {
-    <div class="fade-in" style="padding: 20px 0 32px;">
+    <div class="fade-in tab-section-pad">
+        <div class="tab-intro-banner">
+            <span class="tab-intro-kicker">STAR SPOTLIGHT & FILMOGRAPHIES</span>
+            <p class="tab-intro-sub">Tap any star to explore their biography, career marathon & full filmography.</p>
+        </div>
         @if (store.isActorsLoading()) {
-        <div style="padding: 0 16px;">
-            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
-            <div style="display: flex; gap: 16px; overflow: hidden;">
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
-                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
             </div>
         </div>
         } @else {
-        <app-swimlane title="TRENDING STARS THIS WEEK" [items]="store.trendingActors()"></app-swimlane>
+        <div class="tab-lanes-stack">
+            <app-swimlane title="TRENDING STARS THIS WEEK" [items]="store.trendingActors()"></app-swimlane>
+            @if (store.popularActors().length > 0) {
+            <app-swimlane title="POPULAR GLOBAL ICONS" [items]="store.popularActors()"></app-swimlane>
+            }
+            @if (store.breakoutActors().length > 0) {
+            <app-swimlane title="BREAKOUT & FAN FAVORITES" [items]="store.breakoutActors()"></app-swimlane>
+            }
+        </div>
         }
     </div>
     }
 
     @case ('news') {
-    <div class="fade-in" style="padding: 16px;">
+    <div class="fade-in news-container">
+        <div class="news-controls-bar">
+            <div class="news-source-chips">
+                @for (src of feedService.availableSources(); track src) {
+                <button
+                    type="button"
+                    class="news-chip"
+                    [class.active]="feedService.activeFilter() === src"
+                    (click)="setNewsSource(src)">
+                    {{ src }}
+                </button>
+                }
+            </div>
+            <div class="news-actions">
+                <button type="button" class="news-icon-btn" (click)="toggleNewsSort()">
+                    <ion-icon name="swap-vertical-outline"></ion-icon>
+                    {{ feedService.sortDirection() === 'newest' ? 'Newest' : 'Oldest' }}
+                </button>
+                <button type="button" class="news-icon-btn" aria-label="Refresh News" (click)="feedService.refreshFeed()">
+                    <ion-icon name="refresh-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+
         @if (feedService.isLoading()) {
-        <ion-skeleton-text animated
-            style="width: 100%; height: 200px; border-radius: 12px; margin-bottom: 16px;"></ion-skeleton-text>
-        <ion-skeleton-text animated
-            style="width: 100%; height: 200px; border-radius: 12px; margin-bottom: 16px;"></ion-skeleton-text>
-        } @else if (feedService.feedItems().length > 0) {
-        <div style="display: flex; flex-direction: column; gap: 16px;">
+        <ion-skeleton-text animated class="news-skeleton-card"></ion-skeleton-text>
+        <ion-skeleton-text animated class="news-skeleton-card"></ion-skeleton-text>
+        } @else if (feedService.displayedItems().length > 0) {
+        <div class="news-list">
             @for (item of feedService.displayedItems(); track item.link) {
-            <ion-card style="margin: 0; border-radius: 12px; background: rgba(255,255,255,0.05);">
+            <ion-card class="news-card">
                 @if (item.image) {
-                <img [src]="item.image" style="width: 100%; height: 180px; object-fit: cover;" alt="{{ item.title }}" />
+                <img [src]="item.image" class="news-card-img" alt="{{ item.title }}" loading="lazy" />
                 }
                 <ion-card-header>
-                    <div
-                        style="font-size: 12px; color: var(--ion-color-primary); font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">
+                    <div class="news-card-meta">
                         {{ item.sourceName }} • {{ item.pubDate | date:'mediumDate' }}
                     </div>
-                    <ion-card-title style="font-size: 18px; line-height: 1.4; color: white;">
-                        <a [href]="item.link" target="_blank" style="color: inherit; text-decoration: none;">
+                    <ion-card-title class="news-card-title">
+                        <a [href]="item.link" target="_blank" rel="noopener noreferrer" class="news-card-link">
                             {{ item.title }}
                         </a>
                     </ion-card-title>
                 </ion-card-header>
                 @if (item.contentSnippet) {
-                <ion-card-content
-                    style="color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.5; padding-top: 0;">
-                    {{ item.contentSnippet | slice:0:150 }}...
+                <ion-card-content class="news-card-snippet">
+                    {{ item.contentSnippet | slice:0:160 }}...
                 </ion-card-content>
                 }
             </ion-card>
             }
         </div>
 
-        <ion-button expand="block" fill="outline" color="light" style="margin-top: 24px;"
+        <ion-button expand="block" fill="outline" color="light" class="news-load-more"
             (click)="feedService.loadMore()">
-            Load More
+            Load More Stories
         </ion-button>
         } @else {
-        <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 40px 0;">
+        <div class="news-empty">
             No news available right now.
         </div>
         }

@@ -12,9 +12,7 @@ const CACHE_PREFIX = 'cinescope_api_cache_v1:';
 const MAX_PERSISTED_ENTRIES = 80;
 
 export const CACHE_TTL = {
-    DISCOVER_AND_TRENDING: 12 * 60 * 60 * 1000, // 12 hours
-    SEARCH_AND_DETAILS: 24 * 60 * 60 * 1000,    // 24 hours
-    NEWS_FEED: 4 * 60 * 60 * 1000               // 4 hours
+    ENTITY_DETAILS_SESSION: 15 * 60 * 1000 // 15 minutes in-memory for /movie/:id, /tv/:id, /person/:id back-navigation
 } as const;
 
 @Injectable({
@@ -25,42 +23,35 @@ export class ApiCacheService {
     private readonly inFlightRequests = new Map<string, Observable<HttpEvent<unknown>>>();
 
     /**
-     * Serves fresh cached GET responses immediately (0 network calls), deduplicates concurrent
-     * in-flight requests, persists responses to localStorage, and falls back to stale cache if offline.
+     * Network-First strategy for live feeds (Discover, Trending, Now Playing, Airing, News, Search):
+     * - ALWAYS fetches fresh data from the network so new content appears the moment it is out.
+     * - Deduplicates concurrent identical in-flight requests.
+     * - Saves the latest successful response as an offline backup and only serves it if the network fails.
      */
-    public observeCachedGet(
+    public observeNetworkFirstGet(
         cacheKey: string,
-        ttlMs: number,
         requestFactory: () => Observable<HttpEvent<unknown>>
     ): Observable<HttpEvent<unknown>> {
-        const now = Date.now();
-        const existing = this.getEntry(cacheKey);
-
-        // 1. Fresh cache hit -> return immediately without hitting the network
-        if (existing && now - existing.timestamp < existing.ttlMs) {
-            return of(new HttpResponse({ status: 200, body: existing.data }));
-        }
-
-        // 2. Deduplicate concurrent identical requests
         const inFlight = this.inFlightRequests.get(cacheKey);
         if (inFlight) {
             return inFlight;
         }
 
-        // 3. Perform network call, cache on 200 OK, and fallback to stale cache on network error
+        const existing = this.getEntry(cacheKey);
+
         const request$ = requestFactory().pipe(
             tap((event) => {
                 if (event instanceof HttpResponse && event.status === 200 && event.body !== null) {
                     this.setEntry(cacheKey, {
                         timestamp: Date.now(),
-                        ttlMs,
+                        ttlMs: 0,
                         data: event.body
                     });
                 }
             }),
             catchError((err: unknown) => {
                 if (existing) {
-                    console.warn(`[ApiCacheService] Network failed for ${cacheKey}, serving stale cached data.`);
+                    console.warn(`[ApiCacheService] Network unavailable for ${cacheKey}, falling back to last known snapshot.`);
                     return of(new HttpResponse({ status: 200, body: existing.data }));
                 }
                 throw err;
@@ -76,16 +67,54 @@ export class ApiCacheService {
     }
 
     /**
-     * Resolves the appropriate TTL based on the TMDB endpoint path.
+     * Short in-memory session cache ONLY for individual entity detail pages (/movie/:id, /tv/:id, /person/:id)
+     * so tapping Movie -> Actor -> Back to Movie doesn't re-download the same detail payload within minutes.
      */
-    public resolveTmdbTtl(targetPath: string): number {
-        if (targetPath.includes('/search/') || targetPath.includes('/movie/') || targetPath.includes('/tv/')) {
-            if (targetPath.includes('top_rated') || targetPath.includes('popular')) {
-                return CACHE_TTL.DISCOVER_AND_TRENDING;
-            }
-            return CACHE_TTL.SEARCH_AND_DETAILS;
+    public observeSessionDetailGet(
+        cacheKey: string,
+        ttlMs: number,
+        requestFactory: () => Observable<HttpEvent<unknown>>
+    ): Observable<HttpEvent<unknown>> {
+        const now = Date.now();
+        const memEntry = this.memoryCache.get(cacheKey);
+
+        if (memEntry && now - memEntry.timestamp < memEntry.ttlMs) {
+            return of(new HttpResponse({ status: 200, body: memEntry.data }));
         }
-        return CACHE_TTL.DISCOVER_AND_TRENDING;
+
+        return this.observeNetworkFirstGet(cacheKey, requestFactory).pipe(
+            tap((event) => {
+                if (event instanceof HttpResponse && event.status === 200 && event.body !== null) {
+                    this.memoryCache.set(cacheKey, {
+                        timestamp: Date.now(),
+                        ttlMs,
+                        data: event.body
+                    });
+                }
+            })
+        );
+    }
+
+    /**
+     * Returns true ONLY for individual Movie, TV, Season, or Person detail endpoints (e.g. /movie/123, /person/456).
+     * Returns false for all Discover, Trending, Now Playing, Popular, Top Rated, On The Air, and Search endpoints.
+     */
+    public isStaticEntityDetailEndpoint(targetPath: string): boolean {
+        if (
+            targetPath.includes('/discover') ||
+            targetPath.includes('/trending') ||
+            targetPath.includes('/search') ||
+            targetPath.includes('now_playing') ||
+            targetPath.includes('on_the_air') ||
+            targetPath.includes('airing_today') ||
+            targetPath.includes('popular') ||
+            targetPath.includes('top_rated') ||
+            targetPath.includes('upcoming') ||
+            targetPath.includes('latest')
+        ) {
+            return false;
+        }
+        return /^\/(movie|tv|person)\/\d+/.test(targetPath);
     }
 
     /**

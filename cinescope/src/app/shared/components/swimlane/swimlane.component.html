@@ -1,6 +1,10 @@
 <div class="swimlane-header">
     <h2 class="swimlane-title">{{ title() }}</h2>
-    <button class="swimlane-action" aria-label="View All">ALL</button>
+    @if (items().length > 0) {
+    <button type="button" class="swimlane-action" aria-label="View All" (click)="openViewAll()">
+        ALL ({{ items().length }})
+    </button>
+    }
 </div>
 
 <div class="swimlane-scroll-container">
@@ -17,6 +21,14 @@
             (cardClick)="onCardClick(item)"
             (bookmarkToggle)="onToggleBookmark(item)">
         </app-poster-card>
+        @if (item.mediaType === 'person' || item.subtitle) {
+        <div class="swimlane-item-caption" tabindex="0" (click)="onCardClick(item)" (keyup.enter)="onCardClick(item)">
+            <div class="swimlane-item-name">{{ item.title }}</div>
+            @if (item.subtitle) {
+            <div class="swimlane-item-sub">{{ item.mediaType === 'person' ? 'Known for: ' + item.subtitle : item.subtitle }}</div>
+            }
+        </div>
+        }
     </div>
     }
 

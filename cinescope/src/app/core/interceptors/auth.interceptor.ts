@@ -29,8 +29,14 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
         if (req.method === 'GET') {
             const queryString = cloneParams.toString();
             const cacheKey = queryString ? `tmdb:${targetPath}?${queryString}` : `tmdb:${targetPath}`;
-            const ttlMs = apiCache.resolveTmdbTtl(targetPath);
-            return apiCache.observeCachedGet(cacheKey, ttlMs, () => next(clonedRequest));
+            if (apiCache.isStaticEntityDetailEndpoint(targetPath)) {
+                return apiCache.observeSessionDetailGet(
+                    cacheKey,
+                    CACHE_TTL.ENTITY_DETAILS_SESSION,
+                    () => next(clonedRequest)
+                );
+            }
+            return apiCache.observeNetworkFirstGet(cacheKey, () => next(clonedRequest));
         }
 
         return next(clonedRequest);
@@ -43,7 +49,7 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
 
         if (req.method === 'GET' && req.url.includes('/feed')) {
             const cacheKey = `feed:${req.urlWithParams}`;
-            return apiCache.observeCachedGet(cacheKey, CACHE_TTL.NEWS_FEED, () => next(clonedRequest));
+            return apiCache.observeNetworkFirstGet(cacheKey, () => next(clonedRequest));
         }
 
         return next(clonedRequest);
