@@ -122,6 +122,15 @@
             <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
                 <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
+                <button
+                  type="button"
+                  class="quick-bookmark-btn"
+                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                  [class.is-watched]="getBookmarkState(item) === 'watched'"
+                  (click)="onQuickBookmark(item, $event)"
+                  aria-label="Toggle Bookmark">
+                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                </button>
                 <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -136,6 +145,15 @@
               <div class="poster-container">
                 <!-- Using type casting logically, item.name since it is tv -->
                 <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
+                <button
+                  type="button"
+                  class="quick-bookmark-btn"
+                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                  [class.is-watched]="getBookmarkState(item) === 'watched'"
+                  (click)="onQuickBookmark(item, $event)"
+                  aria-label="Toggle Bookmark">
+                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                </button>
                 <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -173,6 +191,15 @@
             <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
                 <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
+                <button
+                  type="button"
+                  class="quick-bookmark-btn"
+                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                  [class.is-watched]="getBookmarkState(item) === 'watched'"
+                  (click)="onQuickBookmark(item, $event)"
+                  aria-label="Toggle Bookmark">
+                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                </button>
                 <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
               </div>
               <div class="content-info">
@@ -185,6 +212,15 @@
             <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
               <div class="poster-container">
                 <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
+                <button
+                  type="button"
+                  class="quick-bookmark-btn"
+                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                  [class.is-watched]="getBookmarkState(item) === 'watched'"
+                  (click)="onQuickBookmark(item, $event)"
+                  aria-label="Toggle Bookmark">
+                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                </button>
                 <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
               </div>
               <div class="content-info">

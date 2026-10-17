@@ -5,7 +5,7 @@
         class="hero-swiper">
 
         @for (item of trendingItems(); track item.id; let i = $index) {
-        <swiper-slide>
+        <swiper-slide (click)="onHeroClick(item)" style="cursor: pointer;">
 
             <img [src]="item.backdropUrl" [alt]="item.title" class="hero-backdrop"
                 [attr.loading]="i === 0 ? 'eager' : 'lazy'" />

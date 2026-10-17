@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { PosterCardComponent, BookmarkState } from '../poster-card/poster-card.component';
 import { SwimlaneItem } from '../../models/swimlane-item.interface';
 import { StorageService } from '../../../core/services/storage.service';
@@ -16,6 +17,7 @@ import { ToastService } from '../../../core/services/toast.service';
 export class SwimlaneComponent {
     private storageService = inject(StorageService);
     private toastService = inject(ToastService);
+    private router = inject(Router);
 
     public title = input.required<string>();
     public items = input.required<SwimlaneItem[]>();
@@ -23,6 +25,21 @@ export class SwimlaneComponent {
     public getItemBookmarkState(item: SwimlaneItem): BookmarkState {
         const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
         return this.storageService.getBookmarkState(item.id, mediaType);
+    }
+
+    public onCardClick(item: SwimlaneItem): void {
+        if (item.mediaType === 'person') return;
+        const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+        void this.router.navigate(['/media', mediaType, item.id], {
+            state: {
+                preview: {
+                    id: Number(item.id),
+                    mediaType,
+                    title: item.title,
+                    posterUrl: item.posterUrl
+                }
+            }
+        });
     }
 
     public async onToggleBookmark(item: SwimlaneItem): Promise<void> {

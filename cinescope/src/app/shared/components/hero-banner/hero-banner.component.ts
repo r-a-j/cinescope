@@ -11,6 +11,7 @@ import {
     inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { BadgeComponent } from '../badge/badge.component';
 
 // 1. Strict Modular Imports (Prevents bundle bloat and fixes the compiler error)
@@ -32,6 +33,7 @@ import { HeroBannerItem } from '../../models/hero-banner-item.interface';
 export class HeroBannerComponent {
     public trendingItems = input.required<HeroBannerItem[]>();
     private injector = inject(Injector);
+    private router = inject(Router);
 
     // We drop 'required' here just in case the DOM is still evaluating
     private swiperEl = viewChild<ElementRef>('swiper');
@@ -51,6 +53,22 @@ export class HeroBannerComponent {
                         swiperNode.initialize();
                     }
                 }, { injector: this.injector });
+            }
+        });
+    }
+
+    public onHeroClick(item: HeroBannerItem): void {
+        const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+        void this.router.navigate(['/media', mediaType, item.id], {
+            state: {
+                preview: {
+                    id: item.id,
+                    mediaType,
+                    title: item.title,
+                    overview: item.overview,
+                    backdropUrl: item.backdropUrl,
+                    rating: item.rating
+                }
             }
         });
     }

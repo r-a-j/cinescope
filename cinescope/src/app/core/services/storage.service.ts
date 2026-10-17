@@ -155,6 +155,16 @@ export class StorageService {
         return this.bookmarkStateMap()[docId] ?? 'none';
     }
 
+    public getCachedDoc(tmdbId: number | string, mediaType: 'movie' | 'tv' | 'person' = 'movie'): ContentDocType | null {
+        this.initReactiveStreams();
+        const docId = this.generateId(Number(tmdbId), mediaType);
+        return (
+            this.watchlistItems().find((d) => d.id === docId) ??
+            this.watchedItems().find((d) => d.id === docId) ??
+            null
+        );
+    }
+
     // ==========================================
     // 📡 REACTIVE STREAMS (For the UI)
     // ==========================================
