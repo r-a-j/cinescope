@@ -1,56 +1,53 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit, AfterViewInit } from '@angular/core';
-import { IonContent, IonToolbar, IonSegment, IonSegmentButton, IonLabel, SegmentCustomEvent, IonSkeletonText } from '@ionic/angular/standalone';
-import { DatePipe, SlicePipe } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+    IonContent,
+    IonToolbar,
+    IonSegment,
+    IonSegmentButton,
+    IonLabel,
+    IonSkeletonText,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardContent,
+    IonButton
+} from '@ionic/angular/standalone';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { HeroBannerComponent } from '../../shared/components/hero-banner/hero-banner.component';
-import { SwimlaneComponent } from '../../shared/components/swimlane/swimlane.component';
-import { TrendingStore } from 'src/app/core/store/trending.store';
-import { FeedService } from 'src/app/core/services/feed.service';
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg, IonButton, IonIcon } from '@ionic/angular/standalone';
-
-export type DiscoverSection = 'desi-hub' | 'bollywood' | 'trending' | 'top-rated' | 'actors' | 'news';
-
-export interface DiscoverTab {
-    value: DiscoverSection;
-    label: string;
-}
+import { HeroBannerComponent } from 'src/app/shared/components/hero-banner/hero-banner.component';
+import { SwimlaneComponent } from 'src/app/shared/components/swimlane/swimlane.component';
+import { TrendingStore } from '../../core/store/trending.store';
+import { FeedService } from '../../core/services/feed.service';
 
 @Component({
     selector: 'app-discover',
     standalone: true,
     imports: [
-        IonSkeletonText,
-        IonLabel,
-        IonSegmentButton,
-        IonSegment,
-        IonToolbar,
+        CommonModule,
         IonContent,
-        HeaderComponent,
-        HeroBannerComponent,
-        SwimlaneComponent,
+        IonToolbar,
+        IonSegment,
+        IonSegmentButton,
+        IonLabel,
         IonSkeletonText,
         IonCard,
         IonCardHeader,
         IonCardTitle,
         IonCardContent,
-        IonImg,
         IonButton,
-        IonIcon,
-        DatePipe,
-        SlicePipe
+        HeaderComponent,
+        HeroBannerComponent,
+        SwimlaneComponent
     ],
-    providers: [TrendingStore],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './discover.page.html',
     styleUrls: ['./discover.page.scss'],
 })
-export class DiscoverPage implements OnInit, AfterViewInit {
+export class DiscoverPage implements OnInit {
     public store = inject(TrendingStore);
     public feedService = inject(FeedService);
 
-    public activeSection = signal<DiscoverSection>('trending');
-
-    public discoverTabs: DiscoverTab[] = [
+    public discoverTabs = [
         { value: 'desi-hub', label: 'DESI HUB' },
         { value: 'bollywood', label: 'BOLLYWOOD' },
         { value: 'top-rated', label: 'TOP RATED' },
@@ -59,47 +56,43 @@ export class DiscoverPage implements OnInit, AfterViewInit {
         { value: 'news', label: 'NEWS' }
     ];
 
+    // Default to 'trending'
+    public activeSection = signal<string>('trending');
+
     ngOnInit(): void {
         this.store.loadTrendingData();
     }
 
-    // NEW: Fire the centering logic right after the DOM initially paints
-    ngAfterViewInit(): void {
-        this.centerActiveTab(this.activeSection(), false); // instant centering
-    }
-
     public onSectionChange(event: Event): void {
-        const segmentEvent = event as SegmentCustomEvent;
-        if (segmentEvent.detail.value) {
-            const newSection = segmentEvent.detail.value as DiscoverSection;
+        const customEvent = event as CustomEvent;
+        const newSection = customEvent.detail.value;
+
+        if (newSection) {
             this.activeSection.set(newSection);
 
-            // Fetch news dynamically when tapping the news tab
-            if (newSection === 'news' && this.feedService.feedItems().length === 0) {
+            if (newSection === 'desi-hub') {
+                this.store.loadDesiHubData();
+            } else if (newSection === 'bollywood') {
+                this.store.loadBollywoodData();
+            } else if (newSection === 'top-rated') {
+                this.store.loadTopRatedData();
+            } else if (newSection === 'actors') {
+                this.store.loadActorsData();
+            } else if (newSection === 'news' && this.feedService.feedItems().length === 0) {
                 this.feedService.refreshFeed();
             }
 
-            // NEW: Recenter the scrollbar whenever the user taps a different tab
-            this.centerActiveTab(newSection, true); // smooth centering
-        }
-    }
+            // Smoothly auto-center the clicked button
+            const segmentEl = customEvent.target as HTMLElement;
+            const activeBtn = segmentEl.querySelector(`ion-segment-button[value="${newSection}"]`);
 
-    // NEW: The core centering logic
-    private centerActiveTab(section: DiscoverSection, isSmooth = true): void {
-        // We use requestAnimationFrame to guarantee Angular has finished 
-        // applying the 'active' classes before we calculate the scroll math
-        requestAnimationFrame(() => {
-            // Find the specific segment button in the DOM
-            const button = document.querySelector(`ion-segment-button[value="${section}"]`);
-
-            if (button) {
-                // Command the browser engine to smoothly glide it to the center
-                button.scrollIntoView({
-                    behavior: isSmooth ? 'smooth' : 'auto', // 'auto' removes the snap animation on initial load
-                    inline: 'center', // This is the magic property!
-                    block: 'nearest'
+            if (activeBtn) {
+                activeBtn.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
                 });
             }
-        });
+        }
     }
 }

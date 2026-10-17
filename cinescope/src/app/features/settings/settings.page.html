@@ -13,27 +13,42 @@
 
     <ion-list inset="true" class="cinescope-list">
         <ion-list-header>
+            <ion-label>Content & Family Safety</ion-label>
+        </ion-list-header>
+        <ion-item lines="none">
+            <ion-icon slot="start" name="shield-checkmark-outline"></ion-icon>
+            <ion-label>Include 18+ Adult Titles in Search</ion-label>
+            <ion-toggle
+                slot="end"
+                [checked]="storage.allowAdultContent()"
+                (ionChange)="onToggleAdultContent($event)">
+            </ion-toggle>
+        </ion-item>
+    </ion-list>
+
+    <ion-list inset="true" class="cinescope-list">
+        <ion-list-header>
             <ion-label>Data Management</ion-label>
         </ion-list-header>
         <ion-item button (click)="confirmClearWatchlist()">
             <ion-icon slot="start" name="trash-outline"></ion-icon>
-            <ion-label>Clear Watchlist</ion-label>
+            <ion-label>Clear Watchlist ({{ storage.watchlistItems().length }})</ion-label>
         </ion-item>
         <ion-item button (click)="confirmClearWatchedList()">
             <ion-icon slot="start" name="trash-outline"></ion-icon>
-            <ion-label>Clear Watched List</ion-label>
+            <ion-label>Clear Watched List ({{ storage.watchedItems().length }})</ion-label>
         </ion-item>
         <ion-item button (click)="confirmClearCache()">
             <ion-icon slot="start" name="trash-outline" color="danger"></ion-icon>
-            <ion-label color="danger">Clear Image Cache</ion-label>
+            <ion-label color="danger">Clear Search History & Cache</ion-label>
         </ion-item>
         <ion-item button (click)="createBackup()">
             <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
-            <ion-label>Backup Data</ion-label>
+            <ion-label>Backup / Share Library (JSON)</ion-label>
         </ion-item>
         <ion-item button (click)="restoreBackup()" lines="none">
             <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
-            <ion-label>Restore Data</ion-label>
+            <ion-label>Restore Library from Backup</ion-label>
         </ion-item>
     </ion-list>
 
@@ -43,7 +58,7 @@
         </ion-list-header>
         <ion-item button (click)="openUrl('https://github.com/r-a-j/cine-scope')">
             <ion-icon slot="start" name="logo-github"></ion-icon>
-            <ion-label>Source Code (Currently private!)</ion-label>
+            <ion-label>Source Code (Private Family & Friends Repo)</ion-label>
         </ion-item>
         <ion-item button (click)="sendFeedback()">
             <ion-icon slot="start" name="mail-outline"></ion-icon>

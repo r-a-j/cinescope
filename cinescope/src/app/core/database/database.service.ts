@@ -83,15 +83,16 @@ export class DatabaseService {
                 // ==========================================
                 // 🛑 STRATEGIC MILESTONE VERIFICATION
                 // ==========================================
-                // We perform an idempotent 'upsert' (insert or update).
-                // If this succeeds, it proves the WebView can natively write to IndexedDB.
-                await this.dbInstance.settings.upsert({
-                    id: 'user_preferences',
-                    allowAdultContent: false,
-                    theme: 'system'
-                });
+                // Ensure default settings exist without overwriting existing user preferences.
+                const existingPrefs = await this.dbInstance.settings.findOne('user_preferences').exec();
+                if (!existingPrefs) {
+                    await this.dbInstance.settings.insert({
+                        id: 'user_preferences',
+                        allowAdultContent: false,
+                        theme: 'system'
+                    });
+                }
 
-                // Now we read it back to prove queries work.
                 const testDoc = await this.dbInstance.settings.findOne('user_preferences').exec();
 
                 console.log('✅ MILESTONE PASSED: Database Write & Read Successful!');

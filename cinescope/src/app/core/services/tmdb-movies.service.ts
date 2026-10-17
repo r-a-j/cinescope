@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TmdbCertificationResponseDto } from '../dtos/common/certification.dto';
 import { TmdbNowPlayingResponseDto } from '../dtos/movies/now-playing.dto';
@@ -57,13 +56,7 @@ export class TmdbMoviesService extends BaseMediaService {
         page = 1,
         region?: string
     ): Observable<TmdbNowPlayingResponseDto> {
-        let params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
-
-        if (region) {
-            params = params.set('region', region);
-        }
+        const params = this.buildParams({ language, page, region });
 
         return this.http.get<TmdbNowPlayingResponseDto>(`${this.apiPrefix}/movie/now_playing`, { params });
     }
@@ -86,13 +79,7 @@ export class TmdbMoviesService extends BaseMediaService {
         page = 1,
         region?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        let params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
-
-        if (region) {
-            params = params.set('region', region);
-        }
+        const params = this.buildParams({ language, page, region });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/movie/popular`, { params });
     }
@@ -121,11 +108,7 @@ export class TmdbMoviesService extends BaseMediaService {
         page = 1,
         region?: string
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        let params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
-
-        if (region) params = params.set('region', region);
+        const params = this.buildParams({ language, page, region });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/movie/top_rated`, { params });
     }
@@ -141,11 +124,7 @@ export class TmdbMoviesService extends BaseMediaService {
         page = 1,
         region?: string
     ): Observable<TmdbUpcomingResponseDto> {
-        let params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
-
-        if (region) params = params.set('region', region);
+        const params = this.buildParams({ language, page, region });
 
         return this.http.get<TmdbUpcomingResponseDto>(`${this.apiPrefix}/movie/upcoming`, { params });
     }
@@ -177,11 +156,10 @@ export class TmdbMoviesService extends BaseMediaService {
         appendToResponse?: string,
         language = 'en-US'
     ): Observable<TmdbMovieDetailDto> {
-        let params = new HttpParams().set('language', language);
-
-        if (appendToResponse) {
-            params = params.set('append_to_response', appendToResponse);
-        }
+        const params = this.buildParams({
+            language,
+            append_to_response: appendToResponse
+        });
 
         return this.http.get<TmdbMovieDetailDto>(`${this.apiPrefix}/movie/${movieId}`, { params });
     }
@@ -205,11 +183,7 @@ export class TmdbMoviesService extends BaseMediaService {
      * saving the user's mobile data by preventing an extra HTTP request!
      */
     getMovieAlternativeTitles(movieId: number, country?: string): Observable<TmdbMovieAlternativeTitlesResponseDto> {
-        let params = new HttpParams();
-
-        if (country) {
-            params = params.set('country', country);
-        }
+        const params = this.buildParams({ country });
 
         return this.http.get<TmdbMovieAlternativeTitlesResponseDto>(`${this.apiPrefix}/movie/${movieId}/alternative_titles`, { params });
     }
@@ -246,10 +220,11 @@ export class TmdbMoviesService extends BaseMediaService {
         endDate?: string,
         page = 1
     ): Observable<TmdbMovieChangesResponseDto> {
-        let params = new HttpParams().set('page', page.toString());
-
-        if (startDate) params = params.set('start_date', startDate);
-        if (endDate) params = params.set('end_date', endDate);
+        const params = this.buildParams({
+            page,
+            start_date: startDate,
+            end_date: endDate
+        });
 
         return this.http.get<TmdbMovieChangesResponseDto>(`${this.apiPrefix}/movie/${movieId}/changes`, { params });
     }
@@ -270,7 +245,7 @@ export class TmdbMoviesService extends BaseMediaService {
      *    in a scrollable list, letting the user binge-watch his filmography!
      */
     getMovieCredits(movieId: number, language = 'en-US'): Observable<TmdbMovieCreditsResponseDto> {
-        const params = new HttpParams().set('language', language);
+        const params = this.buildParams({ language });
         return this.http.get<TmdbMovieCreditsResponseDto>(`${this.apiPrefix}/movie/${movieId}/credits`, { params });
     }
 
@@ -315,14 +290,10 @@ export class TmdbMoviesService extends BaseMediaService {
         includeImageLanguage?: string,
         language?: string
     ): Observable<TmdbMovieImagesResponseDto> {
-        let params = new HttpParams();
-
-        if (includeImageLanguage) {
-            params = params.set('include_image_language', includeImageLanguage);
-        }
-        if (language) {
-            params = params.set('language', language);
-        }
+        const params = this.buildParams({
+            include_image_language: includeImageLanguage,
+            language
+        });
 
         return this.http.get<TmdbMovieImagesResponseDto>(`${this.apiPrefix}/movie/${movieId}/images`, { params });
     }
@@ -401,9 +372,7 @@ export class TmdbMoviesService extends BaseMediaService {
         language = 'en-US',
         page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListReferenceDto>> {
-        const params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
+        const params = this.buildParams({ language, page });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListReferenceDto>>(`${this.apiPrefix}/movie/${movieId}/lists`, { params });
     }
@@ -430,9 +399,7 @@ export class TmdbMoviesService extends BaseMediaService {
         language = 'en-US',
         page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        const params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
+        const params = this.buildParams({ language, page });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/movie/${movieId}/recommendations`, { params });
     }
@@ -484,9 +451,7 @@ export class TmdbMoviesService extends BaseMediaService {
         language = 'en-US',
         page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbReviewDto>> {
-        const params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
+        const params = this.buildParams({ language, page });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbReviewDto>>(`${this.apiPrefix}/movie/${movieId}/reviews`, { params });
     }
@@ -514,9 +479,7 @@ export class TmdbMoviesService extends BaseMediaService {
         language = 'en-US',
         page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        const params = new HttpParams()
-            .set('language', language)
-            .set('page', page.toString());
+        const params = this.buildParams({ language, page });
 
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/movie/${movieId}/similar`, { params });
     }
@@ -555,7 +518,7 @@ export class TmdbMoviesService extends BaseMediaService {
      * (And as the final reminder for the Movies namespace: by calling getMovieDetails(id, 'videos,images,credits'), you can get the movie details, the posters, the cast, AND the trailer all in one single HTTP request!)
      */
     getMovieVideos(movieId: number, language = 'en-US'): Observable<TmdbMovieVideosResponseDto> {
-        const params = new HttpParams().set('language', language);
+        const params = this.buildParams({ language });
         return this.http.get<TmdbMovieVideosResponseDto>(`${this.apiPrefix}/movie/${movieId}/videos`, { params });
     }
 

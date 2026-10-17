@@ -40,7 +40,7 @@
         <app-hero-banner [trendingItems]="store.heroItems()"></app-hero-banner>
         }
 
-        <div style="margin-top: 24px;">
+        <div style="margin-top: 24px; padding-bottom: 32px;">
             <app-swimlane title="VIRAL MOVIES TODAY" [items]="store.movies()"></app-swimlane>
             <div style="height: 32px;"></div>
             <app-swimlane title="BINGE-WORTHY SHOWS" [items]="store.tvShows()"></app-swimlane>
@@ -51,26 +51,72 @@
     }
 
     @case ('desi-hub') {
-    <div class="fade-in" style="padding-top: 20px;">
-        <h2 style="color: white; text-align: center;">DESI HUB Feed Placeholder</h2>
+    <div class="fade-in" style="padding: 20px 0 32px;">
+        @if (store.isDesiLoading()) {
+        <div style="padding: 0 16px;">
+            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
+            <div style="display: flex; gap: 16px; overflow: hidden;">
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <app-swimlane title="HINDI CINEMA PULSE" [items]="store.desiMovies()"></app-swimlane>
+        <div style="height: 32px;"></div>
+        <app-swimlane title="SOUTH INDIAN BLOCKBUSTERS" [items]="store.desiTvShows()"></app-swimlane>
+        }
     </div>
     }
 
     @case ('bollywood') {
-    <div class="fade-in" style="padding-top: 20px;">
-        <h2 style="color: white; text-align: center;">Bollywood Feed Placeholder</h2>
+    <div class="fade-in" style="padding: 20px 0 32px;">
+        @if (store.isBollywoodLoading()) {
+        <div style="padding: 0 16px;">
+            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
+            <div style="display: flex; gap: 16px; overflow: hidden;">
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <app-swimlane title="TRENDING IN BOLLYWOOD" [items]="store.bollywoodPopular()"></app-swimlane>
+        <div style="height: 32px;"></div>
+        <app-swimlane title="CRITICS' CHOICE HINDI" [items]="store.bollywoodTopRated()"></app-swimlane>
+        }
     </div>
     }
 
     @case ('top-rated') {
-    <div class="fade-in" style="padding-top: 20px;">
-        <h2 style="color: white; text-align: center;">Top Rated Feed Placeholder</h2>
+    <div class="fade-in" style="padding: 20px 0 32px;">
+        @if (store.isTopRatedLoading()) {
+        <div style="padding: 0 16px;">
+            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
+            <div style="display: flex; gap: 16px; overflow: hidden;">
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <app-swimlane title="ALL-TIME HALL OF FAME MOVIES" [items]="store.topRatedMovies()"></app-swimlane>
+        <div style="height: 32px;"></div>
+        <app-swimlane title="PRESTIGE TV VAULT" [items]="store.topRatedTvShows()"></app-swimlane>
+        }
     </div>
     }
 
     @case ('actors') {
-    <div class="fade-in" style="padding-top: 20px;">
-        <h2 style="color: white; text-align: center;">Actors Feed Placeholder</h2>
+    <div class="fade-in" style="padding: 20px 0 32px;">
+        @if (store.isActorsLoading()) {
+        <div style="padding: 0 16px;">
+            <ion-skeleton-text animated style="width: 180px; height: 24px; margin-bottom: 16px;"></ion-skeleton-text>
+            <div style="display: flex; gap: 16px; overflow: hidden;">
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="min-width: 140px; height: 210px; border-radius: 8px;"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <app-swimlane title="TRENDING STARS THIS WEEK" [items]="store.trendingActors()"></app-swimlane>
+        }
     </div>
     }
 
@@ -118,12 +164,6 @@
             No news available right now.
         </div>
         }
-    </div>
-    }
-
-    @default {
-    <div class="fade-in" style="padding-top: 20px;">
-        <h2 style="color: white; text-align: center;">Default Feed Placeholder</h2>
     </div>
     }
 

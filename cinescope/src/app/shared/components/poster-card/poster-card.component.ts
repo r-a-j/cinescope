@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 
 export type BookmarkState = 'none' | 'watchlist' | 'watched';
 
@@ -14,8 +14,20 @@ export class PosterCardComponent {
     public imageUrl = input<string>('assets/placeholders/placeholder.webp');
     public title = input<string | undefined>();
     public showBookmark = input<boolean>(false);
-
     public bookmarkState = input<BookmarkState>('none');
+
+    public bookmarkToggle = output();
+    public cardClick = output();
+
+    public onBookmarkClick(event: Event): void {
+        event.stopPropagation();
+        this.bookmarkToggle.emit();
+    }
+
+    public onCardClick(): void {
+        this.cardClick.emit();
+    }
+
     /**
      * EDGE CASE FIX: If TMDB returns a dead image link, 
      * this forces the img tag to swap back to our local placeholder.

@@ -55,6 +55,7 @@ const initialState: SearchState = {
 };
 
 export const SearchStore = signalStore(
+    { providedIn: 'root' },
     withState(initialState),
     withComputed(({ smartResults }) => ({
         smartResultGroups: computed(() => {
@@ -130,21 +131,23 @@ export const SearchStore = signalStore(
                         if (wikidataId) {
                             const wikiImageUrl = await firstValueFrom(searchService.getWikidataImage(wikidataId));
 
-                            // 3. Patch the specific record in memory if successful
+                            // 3. Patch the specific record in memory if successful (both standard & smart results)
                             if (wikiImageUrl) {
+                                const patchItem = <T extends TmdbMultiSearchResultDto>(item: T): T => {
+                                    if (item.id === ghost.id && item.media_type === ghost.media_type) {
+                                        return {
+                                            ...item,
+                                            ...(item.media_type === 'person'
+                                                ? { profile_path: wikiImageUrl }
+                                                : { poster_path: wikiImageUrl })
+                                        };
+                                    }
+                                    return item;
+                                };
+
                                 patchState(store, (state) => ({
-                                    results: state.results.map(item => {
-                                        if (item.id === ghost.id && item.media_type === ghost.media_type) {
-                                            return {
-                                                ...item,
-                                                // We hijack the TMDB properties and forcefully inject the Wiki URL
-                                                ...(item.media_type === 'person'
-                                                    ? { profile_path: wikiImageUrl }
-                                                    : { poster_path: wikiImageUrl })
-                                            };
-                                        }
-                                        return item;
-                                    })
+                                    results: state.results.map(patchItem),
+                                    smartResults: state.smartResults.map(patchItem)
                                 }));
                             }
                         }

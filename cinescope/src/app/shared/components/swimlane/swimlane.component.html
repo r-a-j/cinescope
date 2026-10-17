@@ -8,8 +8,13 @@
 
     @for (item of items(); track item.id) {
     <div class="swimlane-item">
-        <app-poster-card [title]="item.title" [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
-            [showBookmark]="true" [bookmarkState]="item.bookmarkState || 'none'"> </app-poster-card>
+        <app-poster-card
+            [title]="item.title"
+            [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
+            [showBookmark]="item.mediaType !== 'person'"
+            [bookmarkState]="getItemBookmarkState(item)"
+            (bookmarkToggle)="onToggleBookmark(item)">
+        </app-poster-card>
     </div>
     }
 

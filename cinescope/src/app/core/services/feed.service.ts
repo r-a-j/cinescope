@@ -1,5 +1,5 @@
 import { inject, Injectable, signal, computed } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { FeedItem, FeedResponseDto } from '../dtos/feed/feed.dto';
@@ -47,10 +47,6 @@ export class FeedService {
     async refreshFeed(): Promise<void> {
         this.isLoading.set(true);
 
-        const headers = new HttpHeaders({
-            'x-cinescope-client': 'CS-Mobile-App-2026'
-        });
-
         const sourcesToFetch = this.sources();
 
         try {
@@ -59,11 +55,11 @@ export class FeedService {
             // If sources are provided, use POST, otherwise use GET (which falls back to API default seeds)
             if (sourcesToFetch.length > 0) {
                 response = await firstValueFrom(
-                    this.http.post<FeedResponseDto>(this.apiUrl, { sources: sourcesToFetch }, { headers })
+                    this.http.post<FeedResponseDto>(this.apiUrl, { sources: sourcesToFetch })
                 );
             } else {
                 response = await firstValueFrom(
-                    this.http.get<FeedResponseDto>(this.apiUrl, { headers })
+                    this.http.get<FeedResponseDto>(this.apiUrl)
                 );
             }
 
