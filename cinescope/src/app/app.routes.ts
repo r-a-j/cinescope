@@ -17,5 +17,9 @@ export const routes: Routes = [
   {
     path: 'search',
     loadComponent: () => import('./features/search/search.page').then( m => m.SearchPage)
+  },
+  {
+    path: 'media/:mediaType/:id',
+    loadComponent: () => import('./features/media-detail/media-detail.page').then(m => m.MediaDetailPage)
   }
 ];

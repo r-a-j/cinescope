@@ -1,0 +1,127 @@
+<ion-content [fullscreen]="true" color="background" class="detail-content">
+  <!-- Cinematic Hero & Action Bar Component -->
+  <app-detail-hero
+    [mediaType]="mediaType()"
+    [title]="title()"
+    [originalTitle]="originalTitle()"
+    [posterUrl]="posterUrl()"
+    [backdropUrl]="backdropUrl()"
+    [bookmarkState]="bookmarkState()"
+    [certification]="certification()"
+    [statusLabel]="statusLabel()"
+    [ratingValue]="ratingValue()"
+    [voteCountLabel]="voteCountLabel()"
+    [releaseYearLabel]="releaseYearLabel()"
+    [runtimeLabel]="runtimeLabel()"
+    [genres]="genres()"
+    [hasTrailer]="officialTrailer() !== null"
+    (backClick)="goBack()"
+    (shareClick)="shareMedia()"
+    (watchlistToggle)="onToggleWatchlist()"
+    (watchedToggle)="onToggleWatched()"
+    (trailerClick)="openOfficialTrailer()">
+  </app-detail-hero>
+
+  <!-- Main Body Container -->
+  <div class="detail-body">
+    <!-- Tagline, Storyline & Key Filmmakers / Creators -->
+    <section class="detail-section synopsis-section">
+      @if (tagline()) {
+        <p class="tagline-quote">“{{ tagline() }}”</p>
+      }
+
+      <h3 class="section-heading">STORYLINE</h3>
+      <p
+        class="overview-paragraph"
+        [class.clamped]="!overviewExpanded() && overview().length > 260">
+        {{ overview() }}
+      </p>
+      @if (overview().length > 260) {
+        <button type="button" class="text-toggle-btn" (click)="toggleOverview()">
+          {{ overviewExpanded() ? 'Show less' : 'Read full storyline' }}
+        </button>
+      }
+
+      @if (crewSpotlights().length > 0) {
+        <div class="crew-spotlight-grid">
+          @for (item of crewSpotlights(); track item.role) {
+            <div class="crew-spotlight-item">
+              <span class="crew-role">{{ item.role }}</span>
+              <span class="crew-names">{{ item.names }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Loading Skeleton when fetching full details for the first time -->
+    @if (isLoading()) {
+      <section class="detail-section">
+        <ion-skeleton-text animated style="width: 45%; height: 20px; border-radius: 6px; margin-bottom: 12px;"></ion-skeleton-text>
+        <div style="display: flex; gap: 12px;">
+          <ion-skeleton-text animated style="width: 90px; height: 120px; border-radius: 10px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 90px; height: 120px; border-radius: 10px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 90px; height: 120px; border-radius: 10px;"></ion-skeleton-text>
+        </div>
+      </section>
+    }
+
+    <!-- Where to Watch (Streaming, Rent, Buy + Networks) -->
+    @if (availableWatchRegions().length > 0 || tvNetworks().length > 0) {
+      <app-watch-providers-panel
+        [availableRegions]="availableWatchRegions()"
+        [selectedRegion]="selectedWatchRegion()"
+        [tvNetworks]="tvNetworks()"
+        [streamingProviders]="streamingProviders()"
+        [rentProviders]="rentProviders()"
+        [buyProviders]="buyProviders()"
+        [justWatchLink]="activeWatchRegionData()?.link || null"
+        (regionChange)="selectedWatchRegion.set($event)">
+      </app-watch-providers-panel>
+    }
+
+    <!-- TV-Exclusive: Airing Pulse ("Where Was I?") & Interactive Seasons/Episodes Hub -->
+    @if (mediaType() === 'tv') {
+      <app-tv-seasons-hub
+        [seasons]="tvSeasons()"
+        [selectedSeasonNumber]="selectedSeasonNumber()"
+        [activeSeasonDetail]="activeSeasonDetail()"
+        [episodes]="activeSeasonEpisodes()"
+        [isSeasonLoading]="isSeasonLoading()"
+        [lastEpisodeToAir]="lastEpisodeToAir()"
+        [nextEpisodeToAir]="nextEpisodeToAir()"
+        (seasonSelect)="selectSeason($event)">
+      </app-tv-seasons-hub>
+    }
+
+    <!-- Top Billed Cast & Videos/Trailers Gallery + Player Modal -->
+    <app-cast-video-gallery
+      [castList]="castList()"
+      [videos]="videos()">
+    </app-cast-video-gallery>
+
+    <!-- Collection Banner, Production/Box Office Facts, Keywords, External Links & Community Reviews -->
+    <app-production-reviews-panel
+      [collection]="movieDetail()?.belongs_to_collection || null"
+      [productionFacts]="productionFacts()"
+      [keywords]="keywords()"
+      [externalLinks]="externalLinks()"
+      [reviews]="reviews()">
+    </app-production-reviews-panel>
+  </div>
+
+  <!-- Recommendations & More Like This Swimlanes -->
+  @if (recommendationsSwimlane().length > 0) {
+    <div class="swimlane-block">
+      <app-swimlane title="RECOMMENDED FOR YOU" [items]="recommendationsSwimlane()"></app-swimlane>
+    </div>
+  }
+
+  @if (similarSwimlane().length > 0) {
+    <div class="swimlane-block">
+      <app-swimlane title="MORE LIKE THIS" [items]="similarSwimlane()"></app-swimlane>
+    </div>
+  }
+
+  <div class="bottom-spacer"></div>
+</ion-content>

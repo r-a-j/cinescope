@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.detail-content {
+  --background: #08080a;
+}
+
+.detail-body {
+  padding: 0 16px;
+}
+
+.detail-section {
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.section-heading {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.tagline-quote {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+  color: #fbbf24;
+  line-height: 1.4;
+}
+
+.overview-paragraph {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: rgba(255, 255, 255, 0.88);
+
+  &.clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.text-toggle-btn {
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ion-color-primary, #e50914);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crew-spotlight-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.crew-spotlight-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crew-role {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: rgba(255, 255, 255, 0.48);
+  font-weight: 700;
+}
+
+.crew-names {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.swimlane-block {
+  margin-top: 24px;
+}
+
+.bottom-spacer {
+  height: 48px;
+}

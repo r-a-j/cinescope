@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   IonContent,
   IonToolbar,
@@ -110,6 +111,7 @@ interface ArchiveCardVm {
                     [priority]="idx < 18"
                     [showBookmark]="true"
                     bookmarkState="watchlist"
+                    (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">
                   </app-poster-card>
                   <div class="archive-card-title">{{ vm.title }}</div>
@@ -141,6 +143,7 @@ interface ArchiveCardVm {
                     [priority]="idx < 18"
                     [showBookmark]="true"
                     bookmarkState="watched"
+                    (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">
                   </app-poster-card>
                   <div class="archive-card-title">{{ vm.title }}</div>
@@ -327,6 +330,7 @@ interface ArchiveCardVm {
 export class ArchivePage {
   public storage = inject(StorageService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   public activeTab = signal<'watchlist' | 'watched'>('watchlist');
   public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
@@ -414,6 +418,20 @@ export class ArchivePage {
     if (target) {
       void target.complete();
     }
+  }
+
+  public onOpenDetail(vm: ArchiveCardVm): void {
+    if (vm.doc.mediaType === 'person') return;
+    void this.router.navigate(['/media', vm.doc.mediaType, vm.doc.tmdbId], {
+      state: {
+        preview: {
+          id: vm.doc.tmdbId,
+          mediaType: vm.doc.mediaType,
+          title: vm.title,
+          posterUrl: vm.posterUrl
+        }
+      }
+    });
   }
 
   private toCardVm(doc: ContentDocType): ArchiveCardVm {

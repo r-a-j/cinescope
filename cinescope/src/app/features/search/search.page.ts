@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild } from '@
 import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
@@ -10,7 +11,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, checkmarkCircle
+  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
 } from 'ionicons/icons';
 import { SearchStore } from '../../core/store/search.store';
 import { TmdbMultiSearchResultDto } from '../../core/services/tmdb-search.service';
@@ -36,6 +37,7 @@ export class SearchPage implements OnInit {
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
   private navCtrl = inject(NavController);
+  private router = inject(Router);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
@@ -49,7 +51,7 @@ export class SearchPage implements OnInit {
   constructor() {
     addIcons({
       timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, checkmarkCircle
+      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
     });
   }
 
@@ -111,11 +113,33 @@ export class SearchPage implements OnInit {
     }
   }
 
-  async onResultClick(item: TmdbMultiSearchResultDto): Promise<void> {
+  onResultClick(item: TmdbMultiSearchResultDto): void {
     const query = this.store.query();
     if (query.trim()) {
       this.store.saveSearchToHistory(query);
     }
+    if (item.media_type === 'movie' || item.media_type === 'tv') {
+      const title = item.media_type === 'movie' ? item.title : item.name;
+      const rawDate = item.media_type === 'movie' ? item.release_date : item.first_air_date;
+      void this.router.navigate(['/media', item.media_type, item.id], {
+        state: {
+          preview: {
+            id: item.id,
+            mediaType: item.media_type,
+            title,
+            overview: item.overview,
+            posterUrl: this.resolveImage(item.poster_path),
+            backdropUrl: item.backdrop_path ? resolveMediaImageUrl(item.backdrop_path, 'w1280') : undefined,
+            releaseYear: rawDate ? rawDate.slice(0, 4) : '',
+            rating: item.vote_average ? item.vote_average.toFixed(1) : undefined
+          }
+        }
+      });
+    }
+  }
+
+  async onQuickBookmark(item: TmdbMultiSearchResultDto, event: Event): Promise<void> {
+    event.stopPropagation();
     if (item.media_type === 'movie' || item.media_type === 'tv') {
       const title = item.media_type === 'movie' ? item.title : item.name;
       const payload = {
