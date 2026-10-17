@@ -6,6 +6,7 @@ import { SettingsDocType } from '../database/schemas/settings.schema';
 import { SearchHistoryDocType } from '../database/schemas/search-history.schema';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
+import { PosterCacheService } from './poster-cache.service';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
@@ -68,6 +69,7 @@ export interface BackupImportResult {
 })
 export class StorageService {
     private dbService = inject(DatabaseService);
+    private posterCache = inject(PosterCacheService);
     private streamsInitialized = false;
 
     // ==========================================
@@ -105,18 +107,32 @@ export class StorageService {
             const db = this.dbService.db;
             this.streamsInitialized = true;
 
+            // Single-pass indexed RxDB stream (uses the `addedAt` index instead of two unindexed `$in` scans)
             db.content.find({
-                selector: { lists: { $in: ['watchlist'] } },
                 sort: [{ addedAt: 'desc' }]
             }).$.subscribe((docs) => {
-                this.watchlistItems.set(docs.map((d) => d.toJSON() as ContentDocType));
-            });
+                const watchlist: ContentDocType[] = [];
+                const watched: ContentDocType[] = [];
+                const posterUrls: string[] = [];
 
-            db.content.find({
-                selector: { lists: { $in: ['watched'] } },
-                sort: [{ addedAt: 'desc' }]
-            }).$.subscribe((docs) => {
-                this.watchedItems.set(docs.map((d) => d.toJSON() as ContentDocType));
+                for (const d of docs) {
+                    const docJson = d.toJSON() as ContentDocType;
+                    if (docJson.lists.includes('watched')) {
+                        watched.push(docJson);
+                    } else if (docJson.lists.includes('watchlist')) {
+                        watchlist.push(docJson);
+                    }
+
+                    const payload = docJson.payload as Record<string, unknown> | undefined;
+                    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
+                    if (rawPath) {
+                        posterUrls.push(resolveMediaImageUrl(rawPath, 'w342'));
+                    }
+                }
+
+                this.watchlistItems.set(watchlist);
+                this.watchedItems.set(watched);
+                this.posterCache.prefetchUrls(posterUrls);
             });
 
             db.settings.findOne('user_preferences').$.subscribe((doc) => {

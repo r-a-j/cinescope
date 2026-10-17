@@ -19,7 +19,13 @@ export function resolveMediaImageUrl(
     if (!path) {
         return fallback;
     }
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('assets/')) {
+    if (path.startsWith('assets/') || path.startsWith('blob:')) {
+        return path;
+    }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        if (path.includes('image.tmdb.org/t/p/')) {
+            return path.replace(/image\.tmdb\.org\/t\/p\/[^/]+\//, `image.tmdb.org/t/p/${size}/`);
+        }
         return path;
     }
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
