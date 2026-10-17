@@ -5,6 +5,7 @@ import { ContentDocType } from '../database/schemas/content.schema';
 import { SettingsDocType } from '../database/schemas/settings.schema';
 import { SearchHistoryDocType } from '../database/schemas/search-history.schema';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
+import { resolveMediaImageUrl } from '../constants/api.constants';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
@@ -15,6 +16,51 @@ export interface CinescopeBackupPayload {
     settings: SettingsDocType | null;
     content: ContentDocType[];
     searchHistory: SearchHistoryDocType[];
+}
+
+export interface LegacyGenreItem {
+    id: number;
+    name: string;
+}
+
+export interface LegacyContentItem {
+    contentId?: number;
+    id?: number;
+    title?: string;
+    name?: string;
+    poster_path?: string | null;
+    vote_average?: number;
+    release_date?: string;
+    first_air_date?: string;
+    genres?: LegacyGenreItem[];
+    isMovie?: boolean;
+    isTv?: boolean;
+    isWatchlist?: boolean;
+    isWatched?: boolean;
+    watchedAt?: string;
+    addedAt?: string;
+    media_type?: 'movie' | 'tv';
+}
+
+export interface LegacyBackupPayload {
+    version?: number;
+    createdAt?: string;
+    app?: string;
+    data?: {
+        watchlist_contents?: LegacyContentItem[];
+        watched_contents?: LegacyContentItem[];
+        settings?: {
+            allowAdultContent?: boolean;
+            theme?: string;
+        };
+    };
+}
+
+export interface BackupImportResult {
+    contentCount: number;
+    watchlistCount: number;
+    watchedCount: number;
+    historyCount: number;
 }
 
 @Injectable({
@@ -294,49 +340,179 @@ export class StorageService {
         return JSON.stringify(payload, null, 2);
     }
 
-    public async importBackupJson(rawJson: string): Promise<{ contentCount: number; historyCount: number }> {
+    public async importBackupJson(rawJson: string): Promise<BackupImportResult> {
         this.initReactiveStreams();
-        const parsed = JSON.parse(rawJson) as Partial<CinescopeBackupPayload>;
+        const parsed = JSON.parse(rawJson) as Partial<CinescopeBackupPayload> & LegacyBackupPayload;
 
         if (!parsed || typeof parsed !== 'object') {
             throw new Error('Invalid backup file format.');
         }
 
-        let contentCount = 0;
+        let watchlistCount = 0;
+        let watchedCount = 0;
         let historyCount = 0;
 
-        if (parsed.settings && parsed.settings.id === 'user_preferences') {
+        // 1. Restore Settings (supports both v4 `parsed.settings` and Legacy v1 `parsed.data.settings`)
+        const rawSettings = parsed.settings ?? parsed.data?.settings;
+        if (rawSettings && typeof rawSettings === 'object') {
+            const rawTheme = rawSettings.theme;
+            const validTheme: 'system' | 'light' | 'dark' =
+                rawTheme === 'light' || rawTheme === 'dark' || rawTheme === 'system' ? rawTheme : 'dark';
+
             await this.dbService.db.settings.upsert({
                 id: 'user_preferences',
-                allowAdultContent: Boolean(parsed.settings.allowAdultContent),
-                theme: parsed.settings.theme || 'system'
+                allowAdultContent: Boolean(rawSettings.allowAdultContent),
+                theme: validTheme
             });
         }
 
+        const docsById = new Map<string, ContentDocType>();
+
+        // 2. Restore Legacy v1 Format (`data.watchlist_contents` & `data.watched_contents`)
+        const legacyData = parsed.data;
+        if (legacyData && typeof legacyData === 'object') {
+            const parsedCreatedAt = parsed.createdAt ? Date.parse(parsed.createdAt) : NaN;
+            const baseTimestamp = Number.isFinite(parsedCreatedAt) ? parsedCreatedAt : Date.now();
+
+            if (Array.isArray(legacyData.watchlist_contents)) {
+                legacyData.watchlist_contents.forEach((item, index) => {
+                    const doc = this.mapLegacyItemToDoc(item, 'watchlist', baseTimestamp, index);
+                    if (doc) {
+                        docsById.set(doc.id, doc);
+                    }
+                });
+            }
+
+            if (Array.isArray(legacyData.watched_contents)) {
+                legacyData.watched_contents.forEach((item, index) => {
+                    const doc = this.mapLegacyItemToDoc(item, 'watched', baseTimestamp, index);
+                    if (doc) {
+                        docsById.set(doc.id, doc);
+                    }
+                });
+            }
+        }
+
+        // 3. Restore Modern v4 Format (`parsed.content`)
         if (Array.isArray(parsed.content)) {
             for (const item of parsed.content) {
                 if (item && item.id && item.tmdbId && item.mediaType && Array.isArray(item.lists)) {
-                    await this.dbService.db.content.upsert(item);
-                    contentCount++;
+                    docsById.set(item.id, item);
                 }
             }
         }
 
+        const docsToUpsert = Array.from(docsById.values());
+        if (docsToUpsert.length > 0) {
+            await this.dbService.db.content.bulkUpsert(docsToUpsert);
+            for (const doc of docsToUpsert) {
+                if (doc.lists.includes('watched')) {
+                    watchedCount++;
+                } else if (doc.lists.includes('watchlist')) {
+                    watchlistCount++;
+                }
+            }
+        }
+
+        // 4. Restore Search History (if present)
         if (Array.isArray(parsed.searchHistory)) {
-            for (const entry of parsed.searchHistory) {
-                if (entry && entry.query && typeof entry.timestamp === 'number') {
-                    await this.dbService.db.searchHistory.upsert(entry);
-                    historyCount++;
-                }
+            const validHistory = parsed.searchHistory.filter(
+                (entry): entry is SearchHistoryDocType =>
+                    Boolean(entry && entry.query && typeof entry.timestamp === 'number')
+            );
+            if (validHistory.length > 0) {
+                await this.dbService.db.searchHistory.bulkUpsert(validHistory);
+                historyCount = validHistory.length;
             }
         }
 
-        return { contentCount, historyCount };
+        return {
+            contentCount: docsToUpsert.length,
+            watchlistCount,
+            watchedCount,
+            historyCount
+        };
     }
 
     // ==========================================
     // ⚙️ UTILITIES
     // ==========================================
+
+    private mapLegacyItemToDoc(
+        item: LegacyContentItem,
+        targetList: 'watchlist' | 'watched',
+        baseTimestamp: number,
+        index: number
+    ): ContentDocType | null {
+        if (!item || typeof item !== 'object') return null;
+
+        const tmdbId = Number(item.contentId ?? item.id);
+        if (!Number.isFinite(tmdbId) || tmdbId <= 0) return null;
+
+        const mediaType: 'movie' | 'tv' =
+            item.isTv === true || item.media_type === 'tv' || (!item.isMovie && Boolean(item.name && !item.title))
+                ? 'tv'
+                : 'movie';
+
+        const docId = this.generateId(tmdbId, mediaType);
+        const staggeredIso = new Date(baseTimestamp - index * 1000).toISOString();
+        const watchedAt = targetList === 'watched' ? (item.watchedAt || staggeredIso) : undefined;
+        const addedAt = item.addedAt || watchedAt || staggeredIso;
+
+        const cleanTitle = this.repairMojibake(item.title);
+        const cleanName = this.repairMojibake(item.name);
+        const displayTitle = cleanTitle || cleanName || `#${tmdbId}`;
+        const posterPath = item.poster_path ?? null;
+
+        const payload: TmdbPayload = {
+            ...item,
+            id: tmdbId,
+            contentId: tmdbId,
+            media_type: mediaType,
+            title: cleanTitle || displayTitle,
+            name: cleanName || displayTitle,
+            poster_path: posterPath,
+            posterUrl: resolveMediaImageUrl(posterPath, 'w500'),
+            vote_average: typeof item.vote_average === 'number' ? item.vote_average : 0,
+            release_date: item.release_date ?? item.first_air_date ?? '',
+            first_air_date: item.first_air_date ?? item.release_date ?? '',
+            genres: Array.isArray(item.genres) ? item.genres : []
+        };
+
+        const doc: ContentDocType = {
+            id: docId,
+            tmdbId,
+            mediaType,
+            lists: [targetList],
+            addedAt,
+            payload
+        };
+
+        if (watchedAt) {
+            doc.watchedAt = watchedAt;
+        }
+
+        return doc;
+    }
+
+    /**
+     * Repairs double-encoded UTF-8 / Latin-1 mojibake strings occasionally found in legacy backups
+     * (e.g. "Naruto ShippÃ\u0085Â«den" -> "Naruto Shippūden").
+     */
+    private repairMojibake(value: unknown): string | undefined {
+        if (typeof value !== 'string' || !value) return undefined;
+        let current = value;
+        for (let pass = 0; pass < 2; pass++) {
+            if (!/[ÃÂÅ][\u0080-\u00BF]/.test(current)) break;
+            try {
+                const bytes = new Uint8Array(Array.from(current, (ch) => ch.charCodeAt(0) & 0xff));
+                current = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch {
+                break;
+            }
+        }
+        return current;
+    }
 
     private generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
         return `${mediaType}_${tmdbId}`;

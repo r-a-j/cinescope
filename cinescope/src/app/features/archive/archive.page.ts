@@ -46,12 +46,38 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
       </ion-segment>
     </ion-toolbar>
 
+    @if (activeTabItems().length > 0) {
+      <div class="filter-bar">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="mediaFilter() === 'all'"
+          (click)="setMediaFilter('all')">
+          All ({{ activeTabItems().length }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="mediaFilter() === 'movie'"
+          (click)="setMediaFilter('movie')">
+          Movies ({{ movieCount() }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="mediaFilter() === 'tv'"
+          (click)="setMediaFilter('tv')">
+          TV Shows ({{ tvCount() }})
+        </button>
+      </div>
+    }
+
     <ion-content color="background">
       @if (displayedItems().length === 0) {
         <div class="empty-archive">
           <ion-icon [name]="activeTab() === 'watchlist' ? 'bookmark-outline' : 'checkmark-done-circle-outline'"></ion-icon>
           <h2>{{ activeTab() === 'watchlist' ? 'YOUR WATCHLIST IS EMPTY' : 'NO WATCHED TITLES YET' }}</h2>
-          <p>Tap the bookmark icon on any movie or TV show in Discover or Search to save it here.</p>
+          <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
         </div>
       } @else {
         <div class="archive-grid">
@@ -65,6 +91,7 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
                 (bookmarkToggle)="onToggleBookmark(doc)">
               </app-poster-card>
               <div class="archive-card-title">{{ getTitle(doc) }}</div>
+              <div class="archive-card-meta">{{ getMetaSubtitle(doc) }}</div>
             </div>
           }
         </div>
@@ -83,6 +110,31 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
       --indicator-color: var(--ion-color-primary);
       font-size: 16px;
       letter-spacing: 1px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #000000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      overflow-x: auto;
+    }
+    .filter-chip {
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .filter-chip.active {
+      background: var(--ion-color-primary);
+      color: #ffffff;
+      border-color: var(--ion-color-primary);
     }
     .empty-archive {
       display: flex;
@@ -129,7 +181,17 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
       margin-top: 6px;
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.85);
+      color: rgba(255, 255, 255, 0.88);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .archive-card-meta {
+      margin-top: 2px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
       text-align: center;
       width: 100%;
       white-space: nowrap;
@@ -143,11 +205,27 @@ export class ArchivePage {
   private toast = inject(ToastService);
 
   public activeTab = signal<'watchlist' | 'watched'>('watchlist');
+  public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
 
-  public displayedItems = computed<ContentDocType[]>(() => {
+  public activeTabItems = computed<ContentDocType[]>(() => {
     return this.activeTab() === 'watchlist'
       ? this.storage.watchlistItems()
       : this.storage.watchedItems();
+  });
+
+  public movieCount = computed<number>(() => {
+    return this.activeTabItems().filter((item) => item.mediaType === 'movie').length;
+  });
+
+  public tvCount = computed<number>(() => {
+    return this.activeTabItems().filter((item) => item.mediaType === 'tv').length;
+  });
+
+  public displayedItems = computed<ContentDocType[]>(() => {
+    const items = this.activeTabItems();
+    const filter = this.mediaFilter();
+    if (filter === 'all') return items;
+    return items.filter((item) => item.mediaType === filter);
   });
 
   constructor() {
@@ -161,9 +239,24 @@ export class ArchivePage {
     }
   }
 
+  public setMediaFilter(filter: 'all' | 'movie' | 'tv'): void {
+    this.mediaFilter.set(filter);
+  }
+
   public getTitle(doc: ContentDocType): string {
     const payload = doc.payload as Record<string, unknown> | undefined;
     return String(payload?.['title'] || payload?.['name'] || `#${doc.tmdbId}`);
+  }
+
+  public getMetaSubtitle(doc: ContentDocType): string {
+    const payload = doc.payload as Record<string, unknown> | undefined;
+    const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
+    const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : '';
+    const rating = Number(payload?.['vote_average'] || 0);
+    const parts: string[] = [doc.mediaType === 'tv' ? 'TV' : 'Movie'];
+    if (year) parts.push(year);
+    if (rating > 0) parts.push(`★ ${rating.toFixed(1)}`);
+    return parts.join(' • ');
   }
 
   public getPosterUrl(doc: ContentDocType): string {

@@ -13,6 +13,7 @@ import {
     logoGithub, mailOutline, informationCircleOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
+import { ApiCacheService } from 'src/app/core/services/api-cache.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 
@@ -31,6 +32,7 @@ import { SearchStore } from 'src/app/core/store/search.store';
 export class SettingsPage implements OnInit {
     private navCtrl = inject(NavController);
     public storage = inject(StorageService);
+    private apiCache = inject(ApiCacheService);
     private toast = inject(ToastService);
     private alertCtrl = inject(AlertController);
     private searchStore = inject(SearchStore);
@@ -104,8 +106,11 @@ export class SettingsPage implements OnInit {
     }
 
     public async confirmClearCache(): Promise<void> {
+        const clearedResponses = this.apiCache.clearAll();
         await this.searchStore.clearRecentSearches();
-        await this.toast.presentSuccess('Cleared recent search history & local cache');
+        await this.toast.presentSuccess(
+            `Cleared search history & ${clearedResponses} cached API response(s)`
+        );
     }
 
     public async createBackup(): Promise<void> {
@@ -140,26 +145,53 @@ export class SettingsPage implements OnInit {
         }
     }
 
-    public restoreBackup(): void {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'application/json,.json';
-        input.onchange = async (): Promise<void> => {
-            const file = input.files?.[0];
-            if (!file) return;
-            try {
-                const rawJson = await file.text();
-                const { contentCount, historyCount } = await this.storage.importBackupJson(rawJson);
-                await this.searchStore.loadRecentSearches();
+    public triggerRestoreBackup(fileInput: HTMLInputElement): void {
+        fileInput.value = '';
+        fileInput.click();
+    }
+
+    public async onBackupFileSelected(event: Event): Promise<void> {
+        const input = event.target as HTMLInputElement | null;
+        const file = input?.files?.[0];
+        if (!file) return;
+
+        try {
+            const rawJson = await this.readFileAsText(file);
+            const { watchlistCount, watchedCount, contentCount, historyCount } =
+                await this.storage.importBackupJson(rawJson.trim());
+            await this.searchStore.loadRecentSearches();
+
+            if (watchlistCount > 0 || watchedCount > 0) {
                 await this.toast.presentSuccess(
-                    `Restored ${contentCount} library title(s) & ${historyCount} search(es)!`
+                    `Restored ${watchlistCount} Watchlist & ${watchedCount} Watched title(s)!`,
+                    3500
                 );
-            } catch (err) {
-                console.error('Restore failed', err);
-                await this.toast.presentError('Invalid backup file');
+            } else {
+                await this.toast.presentSuccess(
+                    `Restored ${contentCount} library title(s) & ${historyCount} search(es)!`,
+                    3000
+                );
             }
-        };
-        input.click();
+        } catch (err) {
+            console.error('Restore failed', err);
+            await this.toast.presentError('Invalid or corrupted backup JSON file');
+        } finally {
+            if (input) {
+                input.value = '';
+            }
+        }
+    }
+
+    private readFileAsText(file: File): Promise<string> {
+        if (typeof file.text === 'function') {
+            return file.text();
+        }
+        return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (): void => resolve(String(reader.result ?? ''));
+            reader.onerror = (): void => reject(reader.error ?? new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
     }
 
     // --- SUPPORT ---
