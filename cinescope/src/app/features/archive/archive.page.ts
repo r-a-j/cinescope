@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -327,7 +327,14 @@ interface ArchiveCardVm {
     }
   `]
 })
-export class ArchivePage {
+export class ArchivePage implements AfterViewInit {
+  @ViewChild(IonContent, { static: false }) private content?: IonContent;
+  private scrollEl: HTMLElement | null = null;
+  private scrollPositions: Record<'watchlist' | 'watched', number> = {
+    watchlist: 0,
+    watched: 0
+  };
+
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private router = inject(Router);
@@ -389,11 +396,37 @@ export class ArchivePage {
     this.triggerFlipAnimation();
   }
 
-  public onTabChange(event: Event): void {
-    const val = (event as CustomEvent).detail?.value;
+  public async ngAfterViewInit(): Promise<void> {
+    this.scrollEl = await this.content?.getScrollElement() ?? null;
+  }
+
+  public async onTabChange(event: Event): Promise<void> {
+    const val = (event as CustomEvent).detail?.value as 'watchlist' | 'watched' | undefined;
     if (val === 'watchlist' || val === 'watched') {
+      if (val === this.activeTab()) return;
+
+      const prev = this.activeTab();
+      if (!this.scrollEl && this.content) {
+        this.scrollEl = await this.content.getScrollElement();
+      }
+      if (this.scrollEl) {
+        this.scrollPositions[prev] = this.scrollEl.scrollTop;
+      }
+
       this.activeTab.set(val);
       this.triggerFlipAnimation();
+
+      const targetY = this.scrollPositions[val] || 0;
+      if (targetY === 0 && this.scrollEl) {
+        this.scrollEl.scrollTop = 0;
+      }
+      requestAnimationFrame(() => {
+        if (this.scrollEl) {
+          this.scrollEl.scrollTop = targetY;
+        } else {
+          void this.content?.scrollToPoint(0, targetY, 0);
+        }
+      });
     }
   }
 
@@ -401,6 +434,12 @@ export class ArchivePage {
     if (this.mediaFilter() !== filter) {
       this.mediaFilter.set(filter);
       this.triggerFlipAnimation();
+      this.scrollPositions[this.activeTab()] = 0;
+      if (this.scrollEl) {
+        this.scrollEl.scrollTop = 0;
+      } else {
+        void this.content?.scrollToTop(0);
+      }
     }
   }
 
