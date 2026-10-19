@@ -212,10 +212,10 @@ export class PersonDetailPage implements OnInit, OnDestroy {
 
     // Register hardware back button priority handler to dismiss lightbox on Android / mobile
     if (!this.backButtonSub) {
-      const sub = this.platform.backButton.subscribeWithPriority(9999, () => {
+      const sub = this.platform.backButton.subscribeWithPriority(9999, (): void => {
         this.closeLightbox();
       });
-      this.backButtonSub = () => sub.unsubscribe();
+      this.backButtonSub = (): void => sub.unsubscribe();
     }
   }
 
@@ -224,6 +224,12 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     if (this.backButtonSub) {
       this.backButtonSub();
       this.backButtonSub = null;
+    }
+  }
+
+  public onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeLightbox();
     }
   }
 
@@ -314,14 +320,14 @@ export class PersonDetailPage implements OnInit, OnDestroy {
           {
             text: 'Save to Gallery / Photos',
             icon: 'images-outline',
-            handler: () => {
+            handler: (): void => {
               void this.saveToGalleryViaSystem(img, fileName);
             }
           },
           {
             text: 'Download to Files Folder',
             icon: 'download-outline',
-            handler: () => {
+            handler: (): void => {
               void this.downloadBlobFile(img, fileName);
             }
           },
