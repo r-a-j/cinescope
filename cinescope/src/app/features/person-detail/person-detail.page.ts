@@ -2,6 +2,8 @@ import {
   Component,
   ChangeDetectionStrategy,
   OnInit,
+  OnDestroy,
+  HostListener,
   inject,
   signal,
   computed
@@ -10,10 +12,13 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
+  ActionSheetController,
   IonContent,
   IonIcon,
   IonSkeletonText,
-  NavController
+  IonSpinner,
+  NavController,
+  Platform
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -29,8 +34,19 @@ import {
   bookmarkOutline,
   bookmark,
   checkmarkCircle,
-  trophyOutline
+  trophyOutline,
+  downloadOutline,
+  closeOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
+  imagesOutline
 } from 'ionicons/icons';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+interface NativeGalleryPlugin {
+  saveImage(options: { url: string; filename?: string }): Promise<{ success: boolean; uri?: string }>;
+}
+const NativeGallery = registerPlugin<NativeGalleryPlugin>('NativeGallery');
 
 import { TmdbPeopleService } from '../../core/services/tmdb-people.service';
 import { StorageService } from '../../core/services/storage.service';
@@ -79,19 +95,22 @@ export interface FilmographyEntryVm {
     IonContent,
     IonIcon,
     IonSkeletonText,
+    IonSpinner,
     SwimlaneComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './person-detail.page.html',
   styleUrls: ['./person-detail.page.scss']
 })
-export class PersonDetailPage implements OnInit {
+export class PersonDetailPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private navCtrl = inject(NavController);
   private peopleService = inject(TmdbPeopleService);
   public storage = inject(StorageService);
   private toast = inject(ToastService);
+  private platform = inject(Platform);
+  private actionSheetCtrl = inject(ActionSheetController);
 
   public personId = signal<number>(0);
   public isLoading = signal<boolean>(true);
@@ -162,13 +181,272 @@ export class PersonDetailPage implements OnInit {
     return links;
   });
 
-  public profileGallery = computed<string[]>(() => {
+  public profileGallery = computed<{ thumb: string; original: string }[]>(() => {
     const imgs = this.person()?.['images'] as { profiles?: TmdbImageDto[] } | undefined;
     const list = imgs?.profiles || [];
     return list
       .slice(0, 12)
-      .map((img) => resolveMediaImageUrl(img.file_path, 'w342'));
+      .map((img) => ({
+        thumb: resolveMediaImageUrl(img.file_path, 'w342'),
+        original: resolveMediaImageUrl(img.file_path, 'original')
+      }));
   });
+
+  public lightboxIndex = signal<number | null>(null);
+  public lightboxLoaded = signal<boolean>(false);
+  public isSavingImage = signal<boolean>(false);
+
+  private backButtonSub: (() => void) | null = null;
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchStartTime = 0;
+
+  public lightboxImage = computed(() => {
+    const i = this.lightboxIndex();
+    return i === null ? null : (this.profileGallery()[i] ?? null);
+  });
+
+  public openLightbox(index: number): void {
+    this.lightboxLoaded.set(false);
+    this.lightboxIndex.set(index);
+
+    // Register hardware back button priority handler to dismiss lightbox on Android / mobile
+    if (!this.backButtonSub) {
+      const sub = this.platform.backButton.subscribeWithPriority(9999, (): void => {
+        this.closeLightbox();
+      });
+      this.backButtonSub = (): void => sub.unsubscribe();
+    }
+  }
+
+  public closeLightbox(): void {
+    this.lightboxIndex.set(null);
+    if (this.backButtonSub) {
+      this.backButtonSub();
+      this.backButtonSub = null;
+    }
+  }
+
+  public onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeLightbox();
+    }
+  }
+
+  public stepLightbox(delta: number, event?: Event): void {
+    event?.stopPropagation();
+    const i = this.lightboxIndex();
+    const len = this.profileGallery().length;
+    if (i === null || len === 0) return;
+    this.lightboxLoaded.set(false);
+    this.lightboxIndex.set((i + delta + len) % len);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  public onKeyDown(event: KeyboardEvent): void {
+    if (this.lightboxIndex() === null) return;
+    if (event.key === 'Escape') {
+      this.closeLightbox();
+    } else if (event.key === 'ArrowRight') {
+      this.stepLightbox(1);
+    } else if (event.key === 'ArrowLeft') {
+      this.stepLightbox(-1);
+    }
+  }
+
+  public onTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 1) {
+      this.touchStartX = event.touches[0].clientX;
+      this.touchStartY = event.touches[0].clientY;
+      this.touchStartTime = Date.now();
+    }
+  }
+
+  public onTouchEnd(event: TouchEvent): void {
+    if (event.changedTouches.length === 1) {
+      const deltaX = event.changedTouches[0].clientX - this.touchStartX;
+      const deltaY = event.changedTouches[0].clientY - this.touchStartY;
+      const elapsedTime = Date.now() - this.touchStartTime;
+
+      // Horizontal swipe to browse next / previous portrait
+      if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && elapsedTime < 600) {
+        if (deltaX < 0) {
+          this.stepLightbox(1);
+        } else {
+          this.stepLightbox(-1);
+        }
+      }
+      // Vertical swipe down to dismiss lightbox
+      else if (deltaY > 75 && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && elapsedTime < 600) {
+        this.closeLightbox();
+      }
+    }
+  }
+
+  public async saveLightboxImage(event: Event): Promise<void> {
+    event.stopPropagation();
+    const img = this.lightboxImage();
+    const idx = this.lightboxIndex();
+    if (!img || this.isSavingImage()) return;
+
+    const sanitizedName = this.name().replace(/[^a-zA-Z0-9_-]/g, '_') || 'portrait';
+    const fileName = `${sanitizedName}_portrait_${(idx ?? 0) + 1}.jpg`;
+
+    // 1. Native Capacitor Application (Android / iOS):
+    // Directly saves to MediaStore / Pictures / Gallery without opening a share sheet!
+    if (Capacitor.isNativePlatform()) {
+      this.isSavingImage.set(true);
+      try {
+        await NativeGallery.saveImage({ url: img.original, filename: fileName });
+        await this.toast.presentSuccess('Portrait saved directly to your Photos Gallery!', 2500);
+      } catch (nativeErr) {
+        console.warn('[PersonDetailPage] Native gallery save failed, falling back:', nativeErr);
+        await this.downloadBlobFile(img, fileName);
+      } finally {
+        this.isSavingImage.set(false);
+      }
+      return;
+    }
+
+    // 2. Mobile Browser (Chrome/Safari on mobile):
+    // Browser security sandboxes prevent websites from writing directly to MediaStore without user prompt.
+    // We provide an explicit ActionSheet so users can choose between Gallery/Photos or Files download!
+    const isMobileBrowser = this.platform.is('mobile') || this.platform.is('mobileweb') || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobileBrowser) {
+      const sheet = await this.actionSheetCtrl.create({
+        header: 'Save Portrait',
+        subHeader: 'Choose how you want to save this portrait',
+        buttons: [
+          {
+            text: 'Save to Gallery / Photos',
+            icon: 'images-outline',
+            handler: (): void => {
+              void this.saveToGalleryViaSystem(img, fileName);
+            }
+          },
+          {
+            text: 'Download to Files Folder',
+            icon: 'download-outline',
+            handler: (): void => {
+              void this.downloadBlobFile(img, fileName);
+            }
+          },
+          {
+            text: 'Cancel',
+            role: 'cancel',
+            icon: 'close-outline'
+          }
+        ]
+      });
+      await sheet.present();
+      return;
+    }
+
+    // 3. Desktop Web Browser:
+    await this.downloadBlobFile(img, fileName);
+  }
+
+  private async saveToGalleryViaSystem(img: { thumb: string; original: string }, fileName: string): Promise<void> {
+    this.isSavingImage.set(true);
+    try {
+      const corsUrl = `${img.original}${img.original.includes('?') ? '&' : '?'}cors_dl=${Date.now()}`;
+      const res = await fetch(corsUrl, { mode: 'cors' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `${this.name()} Portrait`
+        });
+      } else {
+        await this.downloadBlobFile(img, fileName);
+      }
+    } catch (err) {
+      if ((err as DOMException)?.name !== 'AbortError') {
+        console.warn('[PersonDetailPage] System save failed, falling back to download:', err);
+        await this.downloadBlobFile(img, fileName);
+      }
+    } finally {
+      this.isSavingImage.set(false);
+    }
+  }
+
+  private async downloadBlobFile(img: { thumb: string; original: string }, fileName: string): Promise<void> {
+    this.isSavingImage.set(true);
+    try {
+      const corsUrl = `${img.original}${img.original.includes('?') ? '&' : '?'}cors_dl=${Date.now()}`;
+      const res = await fetch(corsUrl, { mode: 'cors' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 20000);
+
+      const isMobile = this.platform.is('mobile') || this.platform.is('mobileweb') || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        await this.toast.presentSuccess('Saved to Downloads folder. Check your Files app.', 2800);
+      } else {
+        await this.toast.presentSuccess('Portrait downloaded', 2000);
+      }
+    } catch (err) {
+      console.warn('[PersonDetailPage] Direct blob download failed, falling back to direct link:', err);
+      try {
+        const link = document.createElement('a');
+        link.href = img.original;
+        link.download = fileName;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        await this.toast.presentInfo('Opening image. Long-press or right-click to save.', 3000);
+      } catch (fallbackErr) {
+        console.error('[PersonDetailPage] Fallback download failed:', fallbackErr);
+        await this.toast.presentWarning('Unable to save image directly', 2000);
+      }
+    } finally {
+      this.isSavingImage.set(false);
+    }
+  }
+
+  public async shareLightboxImage(event: Event): Promise<void> {
+    event.stopPropagation();
+    const img = this.lightboxImage();
+    if (!img) return;
+
+    const personName = this.name();
+    const shareData = {
+      title: `${personName} Portrait`,
+      text: `Portrait of ${personName} on CineScope`,
+      url: img.original
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(img.original);
+        await this.toast.presentSuccess('Image link copied to clipboard', 1800);
+      }
+    } catch {
+      // User cancelled share dialog
+    }
+  }
 
   private rawCombinedCredits = computed<TmdbPersonCombinedCreditsResponseDto | null>(() => {
     return (this.person()?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
@@ -277,7 +555,12 @@ export class PersonDetailPage implements OnInit {
       bookmarkOutline,
       bookmark,
       checkmarkCircle,
-      trophyOutline
+      trophyOutline,
+      downloadOutline,
+      closeOutline,
+      chevronBackOutline,
+      chevronForwardOutline,
+      imagesOutline
     });
   }
 
@@ -294,6 +577,13 @@ export class PersonDetailPage implements OnInit {
 
       void this.loadPersonDetails(id);
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.backButtonSub) {
+      this.backButtonSub();
+      this.backButtonSub = null;
+    }
   }
 
   public async loadPersonDetails(id: number): Promise<void> {

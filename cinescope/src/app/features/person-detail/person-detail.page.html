@@ -13,7 +13,14 @@
   <div class="person-hero">
     <div class="person-backdrop-glow" [style.background-image]="'url(' + profileUrl() + ')'"></div>
     <div class="person-hero-inner">
-      <div class="portrait-frame">
+      <div
+        class="portrait-frame"
+        [class.clickable]="profileGallery().length > 0"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="profileGallery().length > 0 ? 'Enlarge portrait of ' + name() : null"
+        (click)="profileGallery().length > 0 && openLightbox(0)"
+        (keyup.enter)="profileGallery().length > 0 && openLightbox(0)">
         <img
           [src]="profileUrl()"
           [alt]="name()"
@@ -97,17 +104,129 @@
     </section>
 
     <!-- Portrait Gallery -->
-    @if (profileGallery().length > 1) {
+    @if (profileGallery().length > 0) {
       <section class="person-section">
         <h3 class="section-heading">PORTRAITS ({{ profileGallery().length }})</h3>
         <div class="portraits-scroll">
-          @for (imgUrl of profileGallery(); track imgUrl) {
-            <img [src]="imgUrl" [alt]="name()" class="gallery-thumb" loading="lazy" decoding="async" />
+          @for (img of profileGallery(); track img.original; let i = $index) {
+            <img
+              [src]="img.thumb"
+              [alt]="name() + ' portrait ' + (i + 1)"
+              class="gallery-thumb"
+              loading="lazy"
+              decoding="async"
+              tabindex="0"
+              role="button"
+              aria-label="Enlarge portrait"
+              (click)="openLightbox(i)"
+              (keyup.enter)="openLightbox(i)" />
           }
         </div>
       </section>
     }
   </div>
+
+  @if (lightboxImage(); as lb) {
+    <div
+      class="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Portrait viewer"
+      tabindex="-1"
+      (click)="onBackdropClick($event)"
+      (keydown.escape)="closeLightbox()"
+      (touchstart)="onTouchStart($event)"
+      (touchend)="onTouchEnd($event)">
+
+      <!-- Top Navigation & Actions Bar -->
+      <div class="lightbox-toolbar">
+        <div class="lightbox-meta">
+          <span class="lightbox-counter">{{ (lightboxIndex() ?? 0) + 1 }} / {{ profileGallery().length }}</span>
+          <span class="lightbox-badge">ORIGINAL HD</span>
+        </div>
+
+        <div class="lightbox-actions">
+          <button
+            type="button"
+            class="lightbox-btn"
+            [disabled]="isSavingImage()"
+            (click)="saveLightboxImage($event)"
+            aria-label="Save to device">
+            @if (isSavingImage()) {
+              <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+              <span>Saving…</span>
+            } @else {
+              <ion-icon name="download-outline"></ion-icon>
+              <span>Save</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            class="lightbox-btn icon-only"
+            (click)="shareLightboxImage($event)"
+            aria-label="Share portrait">
+            <ion-icon name="share-social-outline"></ion-icon>
+          </button>
+
+          <button
+            type="button"
+            class="lightbox-btn icon-only close-btn"
+            (click)="closeLightbox()"
+            aria-label="Close viewer">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Image Stage with Progressive Cross-Fade -->
+      <div class="lightbox-stage">
+        <!-- Low-resolution thumbnail backdrop -->
+        <img
+          [src]="lb.thumb"
+          [alt]="name()"
+          class="stage-img thumb-layer"
+          [class.fade-out]="lightboxLoaded()" />
+
+        <!-- High-resolution original quality image -->
+        <img
+          [src]="lb.original"
+          [alt]="name()"
+          class="stage-img original-layer"
+          [class.loaded]="lightboxLoaded()"
+          (load)="lightboxLoaded.set(true)" />
+
+        @if (!lightboxLoaded()) {
+          <div class="stage-loader">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        }
+      </div>
+
+      <!-- Navigation Chevrons -->
+      @if (profileGallery().length > 1) {
+        <button
+          type="button"
+          class="lightbox-nav prev"
+          (click)="stepLightbox(-1, $event)"
+          aria-label="Previous portrait">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+        <button
+          type="button"
+          class="lightbox-nav next"
+          (click)="stepLightbox(1, $event)"
+          aria-label="Next portrait">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      }
+
+      <!-- Bottom Swipe Hint & Long-Press Tip for Mobile -->
+      <div class="lightbox-footer">
+        <span>Swipe left/right to browse • Long-press photo to Save to Gallery</span>
+      </div>
+    </div>
+  }
 
   <!-- Known For Swimlane -->
   @if (knownForSwimlane().length > 0) {
