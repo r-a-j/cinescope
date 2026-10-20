@@ -205,6 +205,6 @@ export class SettingsPage implements OnInit {
     }
 
     public sendFeedback(): void {
-        window.open('mailto:support@cinescope.com?subject=Cinescope Feedback', '_system');
+        window.open('mailto:enggcoding@gmail.com?subject=Cinescope Feedback', '_system');
     }
 }
