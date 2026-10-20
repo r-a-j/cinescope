@@ -236,7 +236,11 @@
   <!-- Known For Swimlane -->
   @if (knownForSwimlane().length > 0) {
     <div class="known-for-block">
-      <app-swimlane title="KNOWN FOR" [items]="knownForSwimlane()"></app-swimlane>
+      <app-swimlane
+        title="KNOWN FOR"
+        [items]="knownForSwimlane()"
+        [queryContext]="{ type: 'person_credits', id: personId() }">
+      </app-swimlane>
     </div>
   }
 

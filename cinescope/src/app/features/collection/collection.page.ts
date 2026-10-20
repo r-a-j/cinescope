@@ -9,7 +9,13 @@ import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
-import { CollectionLoaderService, CollectionQueryContext, CollectionSortMode } from '../../core/services/collection-loader.service';
+import {
+  CollectionLoaderService,
+  CollectionQueryContext,
+  CollectionSortMode,
+  CollectionFilterOptions,
+  GENRE_MAP
+} from '../../core/services/collection-loader.service';
 
 interface CollectionCardVm {
   item: SwimlaneItem;
@@ -34,42 +40,126 @@ interface CollectionCardVm {
           </button>
 
           <div class="topbar-titles">
-            <span class="topbar-kicker">COLLECTION • {{ rawItems().length }} TITLES</span>
+            <span class="topbar-kicker">COLLECTION • {{ hasActiveFilters() ? displayedCards().length + ' OF ' + rawItems().length : rawItems().length }} TITLES</span>
             <h1 class="topbar-heading">{{ collectionTitle() }}</h1>
           </div>
         </header>
 
-        <!-- Sort Filter Bar (shown for Movie/TV collections) -->
+        <!-- Controls: Primary Sort Row + Multi-Select Filter Row -->
         @if (rawItems().length > 1 && !isPersonCollection()) {
-          <div class="sort-bar">
-            <button
-              type="button"
-              class="sort-chip"
-              [class.active]="sortMode() === 'featured'"
-              (click)="setSortMode('featured')">
-              Featured
-            </button>
-            <button
-              type="button"
-              class="sort-chip"
-              [class.active]="sortMode() === 'rating'"
-              (click)="setSortMode('rating')">
-              ★ Top Rated
-            </button>
-            <button
-              type="button"
-              class="sort-chip"
-              [class.active]="sortMode() === 'newest'"
-              (click)="setSortMode('newest')">
-              Newest
-            </button>
-            <button
-              type="button"
-              class="sort-chip"
-              [class.active]="sortMode() === 'alpha'"
-              (click)="setSortMode('alpha')">
-              A–Z
-            </button>
+          <div class="collection-controls">
+            <!-- Row 1: Primary Sort Order -->
+            <div class="control-row">
+              <span class="control-label">SORT</span>
+              <div class="chips-track">
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'featured'"
+                  (click)="setSortMode('featured')">
+                  Featured
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'rating'"
+                  (click)="setSortMode('rating')">
+                  ★ Top Rated
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'newest'"
+                  (click)="setSortMode('newest')">
+                  Newest
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'alpha'"
+                  (click)="setSortMode('alpha')">
+                  A–Z
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Multi-Select Filter Chips -->
+            <div class="control-row">
+              <span class="control-label">FILTER</span>
+              <div class="chips-track">
+                @if (hasActiveFilters()) {
+                  <button
+                    type="button"
+                    class="control-chip reset-chip"
+                    (click)="resetFilters()">
+                    Reset ✕
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().minRating !== null"
+                  (click)="toggleRatingFilter()">
+                  ★ 7.0+
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().recentOnly"
+                  (click)="toggleRecentFilter()">
+                  📅 Recent
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().highVotesOnly"
+                  (click)="toggleHighVotesFilter()">
+                  🔥 100+ Votes
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('action')"
+                  (click)="toggleGenreFilter('action')">
+                  Action
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('comedy')"
+                  (click)="toggleGenreFilter('comedy')">
+                  Comedy
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('drama')"
+                  (click)="toggleGenreFilter('drama')">
+                  Drama
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('thriller')"
+                  (click)="toggleGenreFilter('thriller')">
+                  Thriller
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('scifi')"
+                  (click)="toggleGenreFilter('scifi')">
+                  Sci-Fi
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('romance')"
+                  (click)="toggleGenreFilter('romance')">
+                  Romance
+                </button>
+              </div>
+            </div>
           </div>
         }
 
@@ -122,8 +212,13 @@ interface CollectionCardVm {
           </ion-infinite-scroll>
         } @else {
           <div class="empty-collection">
-            <p>No items in this collection.</p>
-            <button type="button" class="empty-back-btn" (click)="goBack()">Go Back</button>
+            @if (hasActiveFilters()) {
+              <p>No titles match the selected filters.</p>
+              <button type="button" class="empty-back-btn" (click)="resetFilters()">Clear Filters</button>
+            } @else {
+              <p>No items in this collection.</p>
+              <button type="button" class="empty-back-btn" (click)="goBack()">Go Back</button>
+            }
           </div>
         }
       </div>
@@ -196,34 +291,65 @@ interface CollectionCardVm {
       text-overflow: ellipsis;
       text-transform: uppercase;
     }
-    .sort-bar {
+    .collection-controls {
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 10px;
       padding: 12px 16px;
-      overflow-x: auto;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       background: #0b0b10;
-      scrollbar-width: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .sort-bar::-webkit-scrollbar {
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .control-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.45);
+      flex-shrink: 0;
+      width: 48px;
+    }
+    .chips-track {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+    .chips-track::-webkit-scrollbar {
       display: none;
     }
-    .sort-chip {
+    .control-chip {
       flex: 0 0 auto;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       background: rgba(255, 255, 255, 0.05);
       color: rgba(255, 255, 255, 0.72);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
+      white-space: nowrap;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
     }
-    .sort-chip.active {
-      background: var(--ion-color-primary);
-      border-color: var(--ion-color-primary);
+    .control-chip:active {
+      transform: scale(0.96);
+    }
+    .control-chip.active {
+      background: var(--ion-color-primary, #e50914);
+      border-color: var(--ion-color-primary, #e50914);
       color: #ffffff;
+      font-weight: 700;
+    }
+    .reset-chip {
+      background: rgba(229, 9, 20, 0.15);
+      border-color: rgba(229, 9, 20, 0.45);
+      color: #ff6b6b;
+      font-weight: 700;
     }
     .collection-grid {
       display: grid;
@@ -333,6 +459,12 @@ export class CollectionPage implements OnInit, AfterViewInit {
   public collectionTitle = signal<string>('Collection');
   public rawItems = signal<SwimlaneItem[]>([]);
   public sortMode = signal<CollectionSortMode>('featured');
+  public filters = signal<CollectionFilterOptions>({
+    minRating: null,
+    recentOnly: false,
+    highVotesOnly: false,
+    genres: []
+  });
   public queryContext = signal<CollectionQueryContext | undefined>(undefined);
   public currentPage = signal<number>(1);
   public hasMore = signal<boolean>(true);
@@ -341,6 +473,11 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private isFetchingMore = false;
   private scrollThrottleTimer: ReturnType<typeof setTimeout> | null = null;
 
+  public hasActiveFilters = computed<boolean>(() => {
+    const f = this.filters();
+    return f.minRating !== null || f.recentOnly || f.highVotesOnly || f.genres.length > 0;
+  });
+
   public isPersonCollection = computed<boolean>(() => {
     const list = this.rawItems();
     return list.length > 0 && list[0].mediaType === 'person';
@@ -348,18 +485,48 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
   public displayedCards = computed<CollectionCardVm[]>(() => {
     const mode = this.sortMode();
-    const mapped = this.rawItems().map((item) => this.toCardVm(item));
+    const f = this.filters();
+    let vms = this.rawItems().map((item) => this.toCardVm(item));
 
+    // Multi-Select Filter Criteria Pipeline
+    const minRating = f.minRating;
+    if (minRating !== null) {
+      vms = vms.filter((card) => card.ratingValue >= minRating);
+    }
+    if (f.recentOnly) {
+      vms = vms.filter((card) => {
+        const y = parseInt(card.yearValue, 10);
+        return !isNaN(y) && y >= 2023;
+      });
+    }
+    if (f.highVotesOnly) {
+      vms = vms.filter((card) => {
+        const count = (card.item.payload?.['vote_count'] as number | undefined) || 0;
+        return count >= 100;
+      });
+    }
+    if (f.genres.length > 0) {
+      vms = vms.filter((card) => {
+        const genreIds = (card.item.payload?.['genre_ids'] as number[] | undefined) || [];
+        const targetIds = f.genres.flatMap((k) => {
+          const g = GENRE_MAP[k];
+          return g ? [g.movie, g.tv] : [];
+        });
+        return targetIds.some((id) => genreIds.includes(id));
+      });
+    }
+
+    // Primary Ordering
     if (mode === 'rating') {
-      return [...mapped].sort((a, b) => b.ratingValue - a.ratingValue);
+      return [...vms].sort((a, b) => b.ratingValue - a.ratingValue);
     }
     if (mode === 'newest') {
-      return [...mapped].sort((a, b) => b.yearValue.localeCompare(a.yearValue));
+      return [...vms].sort((a, b) => b.yearValue.localeCompare(a.yearValue));
     }
     if (mode === 'alpha') {
-      return [...mapped].sort((a, b) => a.item.title.localeCompare(b.item.title));
+      return [...vms].sort((a, b) => a.item.title.localeCompare(b.item.title));
     }
-    return mapped;
+    return vms;
   });
 
   constructor() {
@@ -381,8 +548,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
     if (Array.isArray(navState?.items)) {
       this.rawItems.set(navState.items);
-      // Small or finite collections (like person credits) don't need infinite scrolling
-      if (navState.items.length < 15) {
+      // Small or finite collections without queryContext don't need infinite scrolling
+      if (navState.items.length < 15 && !navState.queryContext) {
         this.hasMore.set(false);
       }
     }
@@ -421,6 +588,76 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
   }
 
+  public toggleRatingFilter(): void {
+    const current = this.filters().minRating;
+    void this.updateFilters({ minRating: current === null ? 7.0 : null });
+  }
+
+  public toggleRecentFilter(): void {
+    void this.updateFilters({ recentOnly: !this.filters().recentOnly });
+  }
+
+  public toggleHighVotesFilter(): void {
+    void this.updateFilters({ highVotesOnly: !this.filters().highVotesOnly });
+  }
+
+  public toggleGenreFilter(genreKey: string): void {
+    const currentGenres = this.filters().genres;
+    const nextGenres = currentGenres.includes(genreKey)
+      ? currentGenres.filter((g) => g !== genreKey)
+      : [...currentGenres, genreKey];
+    void this.updateFilters({ genres: nextGenres });
+  }
+
+  public resetFilters(): void {
+    void this.updateFilters({
+      minRating: null,
+      recentOnly: false,
+      highVotesOnly: false,
+      genres: []
+    });
+  }
+
+  private async updateFilters(partial: Partial<CollectionFilterOptions>): Promise<void> {
+    const updated: CollectionFilterOptions = { ...this.filters(), ...partial };
+    this.filters.set(updated);
+
+    const title = this.collectionTitle();
+    const isServer = this.collectionLoader.isServerSortable(title, this.queryContext());
+
+    void this.content?.scrollToTop(200);
+
+    if (isServer) {
+      this.currentPage.set(1);
+      this.hasMore.set(true);
+      this.isFetchingMore = true;
+      this.isLoadingMore.set(true);
+
+      try {
+        const res = await this.collectionLoader.fetchPage(
+          title,
+          1,
+          this.sortMode(),
+          this.queryContext(),
+          updated
+        );
+        this.rawItems.set(res.items);
+        this.hasMore.set(res.hasMore);
+        this.cdr.detectChanges();
+      } catch (err) {
+        console.error('Failed to load filtered collection page:', err);
+      } finally {
+        this.isFetchingMore = false;
+        this.isLoadingMore.set(false);
+      }
+    } else {
+      this.cdr.detectChanges();
+      if (this.displayedCards().length < 15 && this.hasMore()) {
+        void this.checkAndPreloadNext();
+      }
+    }
+  }
+
   public async setSortMode(mode: CollectionSortMode): Promise<void> {
     if (this.sortMode() === mode) return;
 
@@ -428,7 +665,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     void this.content?.scrollToTop(250);
 
     const title = this.collectionTitle();
-    const isServerSortable = this.collectionLoader.isServerSortable(title);
+    const isServerSortable = this.collectionLoader.isServerSortable(title, this.queryContext());
 
     if (isServerSortable) {
       this.sortMode.set(mode);
@@ -438,7 +675,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
       this.isLoadingMore.set(true);
 
       try {
-        const res = await this.collectionLoader.fetchPage(title, 1, mode, this.queryContext());
+        const res = await this.collectionLoader.fetchPage(
+          title,
+          1,
+          mode,
+          this.queryContext(),
+          this.filters()
+        );
         this.rawItems.set(res.items);
         this.hasMore.set(res.hasMore);
         this.cdr.detectChanges();
@@ -456,8 +699,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
         this.isLoadingMore.set(true);
         try {
           const [p2, p3] = await Promise.all([
-            this.collectionLoader.fetchPage(title, 2, 'featured', this.queryContext()),
-            this.collectionLoader.fetchPage(title, 3, 'featured', this.queryContext())
+            this.collectionLoader.fetchPage(title, 2, 'featured', this.queryContext(), this.filters()),
+            this.collectionLoader.fetchPage(title, 3, 'featured', this.queryContext(), this.filters())
           ]);
           const existingIds = new Set(this.rawItems().map((i) => i.id));
           const newItems = [...p2.items, ...p3.items].filter((i) => !existingIds.has(i.id));
@@ -495,7 +738,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
         this.collectionTitle(),
         nextPage,
         this.sortMode(),
-        this.queryContext()
+        this.queryContext(),
+        this.filters()
       );
 
       if (res.items.length > 0) {
