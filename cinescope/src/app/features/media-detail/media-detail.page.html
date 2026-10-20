@@ -113,13 +113,21 @@
   <!-- Recommendations & More Like This Swimlanes -->
   @if (recommendationsSwimlane().length > 0) {
     <div class="swimlane-block">
-      <app-swimlane title="RECOMMENDED FOR YOU" [items]="recommendationsSwimlane()"></app-swimlane>
+      <app-swimlane
+        title="RECOMMENDED FOR YOU"
+        [items]="recommendationsSwimlane()"
+        [queryContext]="{ type: 'recommendations', id: tmdbId(), mediaType: mediaType() }">
+      </app-swimlane>
     </div>
   }
 
   @if (similarSwimlane().length > 0) {
     <div class="swimlane-block">
-      <app-swimlane title="MORE LIKE THIS" [items]="similarSwimlane()"></app-swimlane>
+      <app-swimlane
+        title="MORE LIKE THIS"
+        [items]="similarSwimlane()"
+        [queryContext]="{ type: 'similar', id: tmdbId(), mediaType: mediaType() }">
+      </app-swimlane>
     </div>
   }
 

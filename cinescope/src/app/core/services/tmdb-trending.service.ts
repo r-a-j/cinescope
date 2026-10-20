@@ -20,8 +20,8 @@ export class TmdbTrendingService extends BaseMediaService {
      * - Scenario 174 (The "Watercooler Radar"): Use this endpoint with the 'week' parameter to power the main hero carousel on the home screen, mixing all media types into one premium feed.
      * 
      * -   **The Problem:** Users want to stay culturally relevant and know what everyone is talking about at the office or on social media, but they don't want to dig through different categories.
-    
-    -   **The Feature:** By hitting the `Trending All` endpoint with the `week` parameter, CINESCOPE populates a massive hero carousel at the very top of the home screen called _"The Watercooler"_. It mixes the biggest blockbuster movie, the hottest new TV pilot, and the most viral actor of the week into one frictionless feed.
+     * 
+     * -   **The Feature:** By hitting the `Trending All` endpoint with the `week` parameter, CINESCOPE populates a massive hero carousel at the very top of the home screen called _"The Watercooler"_. It mixes the biggest blockbuster movie, the hottest new TV pilot, and the most viral actor of the week into one frictionless feed.
      * * @param timeWindow 'day' or 'week'.
      * @param language Optional ISO 639-1 language code (defaults to 'en-US').
      */
@@ -41,12 +41,14 @@ export class TmdbTrendingService extends BaseMediaService {
      * -   **The Feature:** CINESCOPE dynamically alters its API calls based on the day of the week. On weekdays, the app uses the `day` time window to show highly volatile, viral content. On Friday evenings, it silently switches to the `week` time window to provide a more stable, curated list of the week's biggest hits.
      * * @param timeWindow 'day' or 'week'.
      * @param language Optional ISO 639-1 language code (defaults to 'en-US').
+     * @param page The page number to fetch (defaults to 1).
      */
     getTrendingMovies(
         timeWindow: 'day' | 'week' = 'day',
-        language = 'en-US'
+        language = 'en-US',
+        page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbMovieListItemDto>> {
-        const params = this.buildParams({ language });
+        const params = this.buildParams({ language, page });
         return this.http.get<TmdbPaginatedResponseDto<TmdbMovieListItemDto>>(`${this.apiPrefix}/trending/movie/${timeWindow}`, { params });
     }
 
@@ -54,12 +56,14 @@ export class TmdbTrendingService extends BaseMediaService {
      * Get the trending TV shows on TMDB.
      * * @param timeWindow 'day' or 'week'.
      * @param language Optional ISO 639-1 language code (defaults to 'en-US').
+     * @param page The page number to fetch (defaults to 1).
      */
     getTrendingTvShows(
         timeWindow: 'day' | 'week' = 'day',
-        language = 'en-US'
+        language = 'en-US',
+        page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbTvListItemDto>> {
-        const params = this.buildParams({ language });
+        const params = this.buildParams({ language, page });
         return this.http.get<TmdbPaginatedResponseDto<TmdbTvListItemDto>>(`${this.apiPrefix}/trending/tv/${timeWindow}`, { params });
     }
 
@@ -67,12 +71,14 @@ export class TmdbTrendingService extends BaseMediaService {
      * Get the trending people on TMDB.
      * * @param timeWindow 'day' or 'week'.
      * @param language Optional ISO 639-1 language code (defaults to 'en-US').
+     * @param page The page number to fetch (defaults to 1).
      */
     getTrendingPeople(
         timeWindow: 'day' | 'week' = 'day',
-        language = 'en-US'
+        language = 'en-US',
+        page = 1
     ): Observable<TmdbPaginatedResponseDto<TmdbPersonListItemDto>> {
-        const params = this.buildParams({ language });
+        const params = this.buildParams({ language, page });
         return this.http.get<TmdbPaginatedResponseDto<TmdbPersonListItemDto>>(`${this.apiPrefix}/trending/person/${timeWindow}`, { params });
     }
 }

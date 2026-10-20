@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject, signal, computed, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonContent, IonIcon, NavController } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { arrowBackOutline, star } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
@@ -9,8 +9,7 @@ import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
-
-export type CollectionSortMode = 'featured' | 'rating' | 'newest' | 'alpha';
+import { CollectionLoaderService, CollectionQueryContext, CollectionSortMode } from '../../core/services/collection-loader.service';
 
 interface CollectionCardVm {
   item: SwimlaneItem;
@@ -22,10 +21,10 @@ interface CollectionCardVm {
 @Component({
   selector: 'app-collection-page',
   standalone: true,
-  imports: [CommonModule, IonContent, IonIcon, PosterCardComponent],
+  imports: [CommonModule, IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, PosterCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <ion-content [fullscreen]="true" class="collection-content">
+    <ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll()" class="collection-content">
       <div class="collection-shell">
         <!-- Top Navigation Header with Back Button -->
         <header class="collection-topbar">
@@ -110,6 +109,17 @@ interface CollectionCardVm {
               </div>
             }
           </div>
+
+          <!-- Infinite Scroll with 500px Preloading Threshold -->
+          <ion-infinite-scroll
+            threshold="500px"
+            [disabled]="!hasMore()"
+            (ionInfinite)="loadMore($event)">
+            <ion-infinite-scroll-content
+              loadingSpinner="crescent"
+              loadingText="Loading more titles...">
+            </ion-infinite-scroll-content>
+          </ion-infinite-scroll>
         } @else {
           <div class="empty-collection">
             <p>No items in this collection.</p>
@@ -208,6 +218,7 @@ interface CollectionCardVm {
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
     .sort-chip.active {
       background: var(--ion-color-primary);
@@ -297,17 +308,38 @@ interface CollectionCardVm {
       font-weight: 700;
       cursor: pointer;
     }
+    ion-infinite-scroll {
+      margin-top: 12px;
+      margin-bottom: 24px;
+    }
+    ion-infinite-scroll-content {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 13px;
+      font-weight: 600;
+    }
   `]
 })
-export class CollectionPage implements OnInit {
+export class CollectionPage implements OnInit, AfterViewInit {
   private router = inject(Router);
   private navCtrl = inject(NavController);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
+  private collectionLoader = inject(CollectionLoaderService);
+  private cdr = inject(ChangeDetectorRef);
+
+  @ViewChild(IonContent, { static: false }) private content?: IonContent;
+  @ViewChild(IonInfiniteScroll, { static: false }) private infiniteScroll?: IonInfiniteScroll;
 
   public collectionTitle = signal<string>('Collection');
   public rawItems = signal<SwimlaneItem[]>([]);
   public sortMode = signal<CollectionSortMode>('featured');
+  public queryContext = signal<CollectionQueryContext | undefined>(undefined);
+  public currentPage = signal<number>(1);
+  public hasMore = signal<boolean>(true);
+  public isLoadingMore = signal<boolean>(false);
+
+  private isFetchingMore = false;
+  private scrollThrottleTimer: ReturnType<typeof setTimeout> | null = null;
 
   public isPersonCollection = computed<boolean>(() => {
     const list = this.rawItems();
@@ -338,22 +370,169 @@ export class CollectionPage implements OnInit {
     const navState = (this.router.getCurrentNavigation()?.extras.state ?? history.state) as {
       title?: string;
       items?: SwimlaneItem[];
+      queryContext?: CollectionQueryContext;
     } | undefined;
 
     if (navState?.title) {
       this.collectionTitle.set(navState.title);
     }
+    if (navState?.queryContext) {
+      this.queryContext.set(navState.queryContext);
+    }
     if (Array.isArray(navState?.items)) {
       this.rawItems.set(navState.items);
+      // Small or finite collections (like person credits) don't need infinite scrolling
+      if (navState.items.length < 15) {
+        this.hasMore.set(false);
+      }
     }
+  }
+
+  ngAfterViewInit(): void {
+    // If initial items don't fill viewport enough to scroll comfortably, preload next page
+    setTimeout(() => {
+      void this.checkAndPreloadNext();
+    }, 250);
   }
 
   public goBack(): void {
     this.navCtrl.back();
   }
 
-  public setSortMode(mode: CollectionSortMode): void {
-    this.sortMode.set(mode);
+  public onScroll(): void {
+    if (this.isFetchingMore || !this.hasMore()) return;
+    if (this.scrollThrottleTimer) return;
+    this.scrollThrottleTimer = setTimeout(() => {
+      this.scrollThrottleTimer = null;
+      void this.checkAndPreloadNext();
+    }, 120);
+  }
+
+  private async checkAndPreloadNext(): Promise<void> {
+    if (this.isFetchingMore || !this.hasMore()) return;
+
+    const scrollEl = await this.content?.getScrollElement();
+    if (!scrollEl) return;
+
+    const distanceFromBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+    // Proactively fetch next page when user is within 500px of bottom
+    if (distanceFromBottom <= 500) {
+      void this.loadMore();
+    }
+  }
+
+  public async setSortMode(mode: CollectionSortMode): Promise<void> {
+    if (this.sortMode() === mode) return;
+
+    // Smoothly scroll to top so the user views the newly sorted items from the beginning
+    void this.content?.scrollToTop(250);
+
+    const title = this.collectionTitle();
+    const isServerSortable = this.collectionLoader.isServerSortable(title);
+
+    if (isServerSortable) {
+      this.sortMode.set(mode);
+      this.currentPage.set(1);
+      this.hasMore.set(true);
+      this.isFetchingMore = true;
+      this.isLoadingMore.set(true);
+
+      try {
+        const res = await this.collectionLoader.fetchPage(title, 1, mode, this.queryContext());
+        this.rawItems.set(res.items);
+        this.hasMore.set(res.hasMore);
+        this.cdr.detectChanges();
+      } catch (err) {
+        console.error('Failed to load sorted collection page:', err);
+      } finally {
+        this.isFetchingMore = false;
+        this.isLoadingMore.set(false);
+      }
+    } else {
+      // For algorithmic feeds without API-level sort (Trending, Now Playing, Recommendations):
+      // Pre-fetch pages 2 and 3 into the buffer so the user gets a rich, sorted batch
+      if (mode !== 'featured' && this.rawItems().length <= 20 && this.hasMore()) {
+        this.isFetchingMore = true;
+        this.isLoadingMore.set(true);
+        try {
+          const [p2, p3] = await Promise.all([
+            this.collectionLoader.fetchPage(title, 2, 'featured', this.queryContext()),
+            this.collectionLoader.fetchPage(title, 3, 'featured', this.queryContext())
+          ]);
+          const existingIds = new Set(this.rawItems().map((i) => i.id));
+          const newItems = [...p2.items, ...p3.items].filter((i) => !existingIds.has(i.id));
+          this.rawItems.update((curr) => [...curr, ...newItems]);
+          this.currentPage.set(3);
+          this.hasMore.set(p3.hasMore);
+          this.cdr.detectChanges();
+        } catch (err) {
+          console.warn('Failed to prefetch buffer for client sort:', err);
+        } finally {
+          this.isFetchingMore = false;
+          this.isLoadingMore.set(false);
+        }
+      }
+      this.sortMode.set(mode);
+    }
+  }
+
+  public async loadMore(event?: Event): Promise<void> {
+    const infiniteTarget =
+      (event?.target as HTMLIonInfiniteScrollElement | null) ||
+      (this.infiniteScroll as unknown as HTMLIonInfiniteScrollElement | undefined);
+
+    if (this.isFetchingMore || !this.hasMore()) {
+      await infiniteTarget?.complete?.();
+      return;
+    }
+
+    this.isFetchingMore = true;
+    this.isLoadingMore.set(true);
+    const nextPage = this.currentPage() + 1;
+
+    try {
+      const res = await this.collectionLoader.fetchPage(
+        this.collectionTitle(),
+        nextPage,
+        this.sortMode(),
+        this.queryContext()
+      );
+
+      if (res.items.length > 0) {
+        const existingIds = new Set(this.rawItems().map((i) => i.id));
+        const unique = res.items.filter((i) => !existingIds.has(i.id));
+        if (unique.length > 0) {
+          this.rawItems.update((curr) => [...curr, ...unique]);
+        }
+        this.currentPage.set(nextPage);
+
+        // If this page had only duplicate items but TMDB has more pages, keep going to the next page!
+        if (unique.length === 0 && res.hasMore) {
+          this.isFetchingMore = false;
+          this.isLoadingMore.set(false);
+          void this.loadMore();
+          return;
+        }
+      }
+
+      const canContinue = res.hasMore && res.items.length > 0;
+      this.hasMore.set(canContinue);
+
+      // Force immediate DOM update so ion-content's scrollHeight expands before completing
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error('Failed to load more collection items:', err);
+      this.hasMore.set(false);
+    } finally {
+      this.isFetchingMore = false;
+      this.isLoadingMore.set(false);
+      await infiniteTarget?.complete?.();
+
+      // If user is already near the bottom of the newly rendered content, keep preloading!
+      if (this.hasMore()) {
+        await this.checkAndPreloadNext();
+      }
+    }
   }
 
   public getBookmarkState(item: SwimlaneItem): BookmarkState {

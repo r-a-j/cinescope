@@ -9,6 +9,7 @@ import { SwimlaneItem } from '../../models/swimlane-item.interface';
 import { StorageService } from '../../../core/services/storage.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
+import { CollectionQueryContext } from '../../../core/services/collection-loader.service';
 
 @Component({
     selector: 'app-swimlane',
@@ -25,6 +26,7 @@ export class SwimlaneComponent {
 
     public title = input.required<string>();
     public items = input.required<SwimlaneItem[]>();
+    public queryContext = input<CollectionQueryContext>();
 
     constructor() {
         addIcons({ chevronForwardOutline });
@@ -34,7 +36,8 @@ export class SwimlaneComponent {
         void this.router.navigate(['/collection'], {
             state: {
                 title: this.title(),
-                items: this.items()
+                items: this.items(),
+                queryContext: this.queryContext()
             }
         });
     }
