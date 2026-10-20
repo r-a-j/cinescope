@@ -1,15 +1,14 @@
 <div class="swimlane-header">
     <h2 class="swimlane-title">{{ title() }}</h2>
     @if (items().length > 0) {
-    <button type="button" class="swimlane-action" aria-label="View All" (click)="openViewAll()">
-        ALL ({{ items().length }})
+    <button type="button" class="swimlane-action" aria-label="See All" (click)="openViewAll()">
+        <span>See All</span>
+        <ion-icon name="chevron-forward-outline"></ion-icon>
     </button>
     }
 </div>
 
 <div class="swimlane-scroll-container">
-    <div class="scroll-spacer"></div>
-
     @for (item of items(); track item.id; let idx = $index) {
     <div class="swimlane-item">
         <app-poster-card
@@ -31,6 +30,4 @@
         }
     </div>
     }
-
-    <div class="scroll-spacer"></div>
 </div>

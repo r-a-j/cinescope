@@ -1,6 +1,13 @@
 <ion-header class="ion-no-border">
     <ion-toolbar>
-        <div slot="start" class="logo-container">
+        <div
+            slot="start"
+            class="logo-container"
+            role="button"
+            tabindex="0"
+            aria-label="Go to Home"
+            (click)="onLogoClick()"
+            (keyup.enter)="onLogoClick()">
             <img src="assets/images/logo-header.svg" alt="CINESCOPE" class="header-logo" fetchpriority="high" />
         </div>
 

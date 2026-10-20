@@ -194,7 +194,8 @@
           [alt]="name()"
           class="stage-img original-layer"
           [class.loaded]="lightboxLoaded()"
-          (load)="lightboxLoaded.set(true)" />
+          (load)="lightboxLoaded.set(true)"
+          (error)="lightboxLoaded.set(true)" />
 
         @if (!lightboxLoaded()) {
           <div class="stage-loader">
@@ -223,7 +224,11 @@
 
       <!-- Bottom Swipe Hint & Long-Press Tip for Mobile -->
       <div class="lightbox-footer">
-        <span>Swipe left/right to browse • Long-press photo to Save to Gallery</span>
+        @if (profileGallery().length > 1) {
+          <span>Swipe left/right to browse • Long-press photo to Save to Gallery</span>
+        } @else {
+          <span>Long-press photo to Save to Gallery</span>
+        }
       </div>
     </div>
   }
@@ -231,7 +236,11 @@
   <!-- Known For Swimlane -->
   @if (knownForSwimlane().length > 0) {
     <div class="known-for-block">
-      <app-swimlane title="KNOWN FOR" [items]="knownForSwimlane()"></app-swimlane>
+      <app-swimlane
+        title="KNOWN FOR"
+        [items]="knownForSwimlane()"
+        [queryContext]="{ type: 'person_credits', id: personId() }">
+      </app-swimlane>
     </div>
   }
 

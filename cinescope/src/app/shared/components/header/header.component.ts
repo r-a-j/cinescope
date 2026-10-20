@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { searchOutline, settingsOutline } from 'ionicons/icons';
+import { NavigationService } from 'src/app/core/services/navigation.service';
 
 @Component({
   selector: 'app-header',
@@ -13,9 +14,14 @@ import { searchOutline, settingsOutline } from 'ionicons/icons';
 })
 export class HeaderComponent {
   private navCtrl = inject(NavController);
+  private navService = inject(NavigationService);
 
   constructor() {
     addIcons({ searchOutline, settingsOutline });
+  }
+
+  public onLogoClick(): void {
+    this.navService.navigateToHome();
   }
 
   public openSettings(): void {

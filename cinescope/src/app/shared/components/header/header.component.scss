@@ -16,6 +16,14 @@ ion-toolbar {
     display: flex;
     align-items: center;
     height: 100%;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s ease;
+
+    &:active {
+        opacity: 0.75;
+    }
 }
 
 .header-logo {
@@ -35,5 +43,3 @@ ion-toolbar {
         font-size: 1.5rem;
     }
 }
-
-// DELETE the entire .glass-toolbar class from this file!
