@@ -237,9 +237,11 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     event?.stopPropagation();
     const i = this.lightboxIndex();
     const len = this.profileGallery().length;
-    if (i === null || len === 0) return;
+    if (i === null || len <= 1) return;
+    const nextIndex = (i + delta + len) % len;
+    if (nextIndex === i) return;
     this.lightboxLoaded.set(false);
-    this.lightboxIndex.set((i + delta + len) % len);
+    this.lightboxIndex.set(nextIndex);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -269,7 +271,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       const elapsedTime = Date.now() - this.touchStartTime;
 
       // Horizontal swipe to browse next / previous portrait
-      if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && elapsedTime < 600) {
+      if (this.profileGallery().length > 1 && Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && elapsedTime < 600) {
         if (deltaX < 0) {
           this.stepLightbox(1);
         } else {

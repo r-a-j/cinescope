@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit, AfterViewInit, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
     IonContent,
@@ -23,6 +23,7 @@ import { HeroBannerComponent } from 'src/app/shared/components/hero-banner/hero-
 import { SwimlaneComponent } from 'src/app/shared/components/swimlane/swimlane.component';
 import { TrendingStore } from '../../core/store/trending.store';
 import { FeedService } from '../../core/services/feed.service';
+import { NavigationService } from '../../core/services/navigation.service';
 
 @Component({
     selector: 'app-discover',
@@ -51,9 +52,21 @@ import { FeedService } from '../../core/services/feed.service';
     templateUrl: './discover.page.html',
     styleUrls: ['./discover.page.scss'],
 })
-export class DiscoverPage implements OnInit {
+export class DiscoverPage implements OnInit, AfterViewInit {
     public store = inject(TrendingStore);
     public feedService = inject(FeedService);
+    private navService = inject(NavigationService);
+
+    @ViewChild(IonContent, { static: false }) private content?: IonContent;
+    private scrollEl: HTMLElement | null = null;
+    private scrollPositions: Record<string, number> = {
+        'trending': 0,
+        'desi-hub': 0,
+        'bollywood': 0,
+        'top-rated': 0,
+        'actors': 0,
+        'news': 0
+    };
 
     public discoverTabs = [
         { value: 'trending', label: 'TRENDING' },
@@ -69,10 +82,33 @@ export class DiscoverPage implements OnInit {
 
     constructor() {
         addIcons({ refreshOutline, swapVerticalOutline, openOutline });
+
+        effect(() => {
+            const trigger = this.navService.resetDiscoverTrigger();
+            if (trigger > 0) {
+                this.scrollPositions['trending'] = 0;
+                this.activeSection.set('trending');
+                if (this.scrollEl) {
+                    this.scrollEl.scrollTop = 0;
+                }
+                void this.content?.scrollToTop(300);
+
+                const btn = document.querySelector('ion-segment-button[value="trending"]');
+                btn?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        });
     }
 
     ngOnInit(): void {
         this.store.loadTrendingData();
+    }
+
+    public async ngAfterViewInit(): Promise<void> {
+        this.scrollEl = (await this.content?.getScrollElement()) ?? null;
     }
 
     public async onPullRefresh(event: CustomEvent): Promise<void> {
@@ -105,11 +141,19 @@ export class DiscoverPage implements OnInit {
         this.feedService.sortDirection.set(next);
     }
 
-    public onSectionChange(event: Event): void {
+    public async onSectionChange(event: Event): Promise<void> {
         const customEvent = event as CustomEvent;
-        const newSection = customEvent.detail.value;
+        const newSection = customEvent.detail?.value as string | undefined;
 
-        if (newSection) {
+        if (newSection && newSection !== this.activeSection()) {
+            const prevSection = this.activeSection();
+            if (!this.scrollEl && this.content) {
+                this.scrollEl = (await this.content.getScrollElement()) ?? null;
+            }
+            if (this.scrollEl) {
+                this.scrollPositions[prevSection] = this.scrollEl.scrollTop;
+            }
+
             this.activeSection.set(newSection);
 
             if (newSection === 'desi-hub') {
@@ -124,9 +168,21 @@ export class DiscoverPage implements OnInit {
                 this.feedService.refreshFeed();
             }
 
+            const targetY = this.scrollPositions[newSection] || 0;
+            if (targetY === 0 && this.scrollEl) {
+                this.scrollEl.scrollTop = 0;
+            }
+            requestAnimationFrame(() => {
+                if (this.scrollEl) {
+                    this.scrollEl.scrollTop = targetY;
+                } else {
+                    void this.content?.scrollToPoint(0, targetY, 0);
+                }
+            });
+
             // Smoothly auto-center the clicked button
             const segmentEl = customEvent.target as HTMLElement;
-            const activeBtn = segmentEl.querySelector(`ion-segment-button[value="${newSection}"]`);
+            const activeBtn = segmentEl?.querySelector(`ion-segment-button[value="${newSection}"]`);
 
             if (activeBtn) {
                 activeBtn.scrollIntoView({

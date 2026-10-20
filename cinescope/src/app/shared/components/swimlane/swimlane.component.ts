@@ -1,6 +1,9 @@
 import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { chevronForwardOutline } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../poster-card/poster-card.component';
 import { SwimlaneItem } from '../../models/swimlane-item.interface';
 import { StorageService } from '../../../core/services/storage.service';
@@ -10,7 +13,7 @@ import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
 @Component({
     selector: 'app-swimlane',
     standalone: true,
-    imports: [CommonModule, PosterCardComponent],
+    imports: [CommonModule, PosterCardComponent, IonIcon],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './swimlane.component.html',
     styleUrls: ['./swimlane.component.scss']
@@ -22,6 +25,10 @@ export class SwimlaneComponent {
 
     public title = input.required<string>();
     public items = input.required<SwimlaneItem[]>();
+
+    constructor() {
+        addIcons({ chevronForwardOutline });
+    }
 
     public openViewAll(): void {
         void this.router.navigate(['/collection'], {

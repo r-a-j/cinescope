@@ -14,15 +14,28 @@
 }
 
 .swimlane-action {
-    background: rgba(229, 9, 20, 0.12);
-    border: 1px solid rgba(229, 9, 20, 0.3);
-    border-radius: 999px;
-    color: var(--ion-color-primary); // Cinematic Crimson
-    font-weight: 800;
-    font-size: 0.72rem;
-    letter-spacing: 0.5px;
-    padding: 4px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 4px 0;
     cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+
+    ion-icon {
+        font-size: 0.85rem;
+    }
+
+    &:hover,
+    &:active {
+        color: var(--ion-color-primary, #e50914);
+        transform: translateX(2px);
+    }
 }
 
 .swimlane-scroll-container {
@@ -30,10 +43,13 @@
     overflow-x: auto;
     overflow-y: hidden;
     gap: 12px; // Space between posters
+    padding: 0 16px; // Native page margin alignment
+    scroll-padding: 0 16px; // Snap point aligns to 16px page margin
 
     // NATIVE FEEL: This is the magic that makes it snap
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 
     // NOTE: Removed transform and will-change to prevent GPU texture memory bloat.
 
@@ -71,10 +87,4 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-// These invisible spacers ensure the first and last posters align with the 16px page margin
-.scroll-spacer {
-    flex: 0 0 auto;
-    width: 4px; // 16px total when combined with the 12px gap
 }
