@@ -39,7 +39,9 @@ import {
   closeOutline,
   chevronBackOutline,
   chevronForwardOutline,
-  imagesOutline
+  imagesOutline,
+  heart,
+  heartOutline
 } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
@@ -543,6 +545,41 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     return { watched, watchlist, total, percent };
   });
 
+  public isFavorite = computed<boolean>(() => {
+    const id = this.personId();
+    return id > 0 ? this.storage.isPersonFavorite(id) : false;
+  });
+
+  public collectCreditIds(): string[] {
+    const credits = this.rawCombinedCredits();
+    if (!credits) return [];
+    const set = new Set<string>();
+    for (const c of [...(credits.cast || []), ...(credits.crew || [])]) {
+      if (c.id && c.media_type) {
+        set.add(`${c.media_type}_${c.id}`);
+      }
+    }
+    return Array.from(set);
+  }
+
+  public async toggleFavorite(): Promise<void> {
+    const id = this.personId();
+    if (!id) return;
+    const creditIds = this.collectCreditIds();
+    const isNowFav = await this.storage.toggleFavoritePerson({
+      id,
+      name: this.name(),
+      profilePath: this.person()?.profile_path ?? null,
+      department: this.department(),
+      creditIds
+    });
+    if (isNowFav) {
+      await this.toast.presentSuccess(`Added ${this.name()} to Favorites`, 1800);
+    } else {
+      await this.toast.presentWarning(`Removed ${this.name()} from Favorites`, 1800);
+    }
+  }
+
   constructor() {
     addIcons({
       arrowBackOutline,
@@ -562,7 +599,9 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       closeOutline,
       chevronBackOutline,
       chevronForwardOutline,
-      imagesOutline
+      imagesOutline,
+      heart,
+      heartOutline
     });
   }
 
@@ -603,6 +642,14 @@ export class PersonDetailPage implements OnInit, OnDestroy {
         this.crewEntries().length > 0
       ) {
         this.activeCreditTab.set('crew');
+      }
+
+      // If person is already favorited, keep cached filmography credit IDs updated
+      if (this.storage.isPersonFavorite(id)) {
+        const creditIds = this.collectCreditIds();
+        if (creditIds.length > 0) {
+          void this.storage.updateFavoritePersonCredits(id, creditIds);
+        }
       }
     } catch (err) {
       console.error('[PersonDetailPage] Failed to load person details:', err);
