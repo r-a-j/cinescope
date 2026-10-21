@@ -20,8 +20,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
-const INITIAL_CHUNK_SIZE = 30;
-const SCROLL_CHUNK_STEP = 36;
+const INITIAL_CHUNK_SIZE = 40;
+const SCROLL_CHUNK_STEP = 40;
 
 export interface ArchiveCardVm {
   id: string;
@@ -115,14 +115,14 @@ export interface FavoritePersonCardVm {
           } @else {
             <div
               class="archive-grid"
-              [class.flip-phase-a]="flipPhase() === 'a'"
-              [class.flip-phase-b]="flipPhase() === 'b'">
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
               @for (vm of visibleWatchlist(); track vm.id; let idx = $index) {
-                <div class="archive-card" [style.--flip-delay]="(idx < 15 ? idx * 14 : 0) + 'ms'">
+                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
                   <app-poster-card
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
-                    [priority]="idx < 18"
+                    [priority]="idx < 12"
                     [showBookmark]="true"
                     bookmarkState="watchlist"
                     (cardClick)="onOpenDetail(vm)"
@@ -147,14 +147,14 @@ export interface FavoritePersonCardVm {
           } @else {
             <div
               class="archive-grid"
-              [class.flip-phase-a]="flipPhase() === 'a'"
-              [class.flip-phase-b]="flipPhase() === 'b'">
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
               @for (vm of visibleWatched(); track vm.id; let idx = $index) {
-                <div class="archive-card" [style.--flip-delay]="(idx < 15 ? idx * 14 : 0) + 'ms'">
+                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
                   <app-poster-card
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
-                    [priority]="idx < 18"
+                    [priority]="idx < 12"
                     [showBookmark]="true"
                     bookmarkState="watched"
                     (cardClick)="onOpenDetail(vm)"
@@ -179,12 +179,12 @@ export interface FavoritePersonCardVm {
           } @else {
             <div
               class="people-grid"
-              [class.flip-phase-a]="flipPhase() === 'a'"
-              [class.flip-phase-b]="flipPhase() === 'b'">
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
               @for (person of favoritePeopleCards(); track person.id; let idx = $index) {
                 <div
                   class="person-card"
-                  [style.--flip-delay]="(idx < 15 ? idx * 16 : 0) + 'ms'"
+                  [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
                   (click)="onOpenPersonDetail(person)"
                   tabindex="0"
                   role="button"
@@ -226,7 +226,7 @@ export interface FavoritePersonCardVm {
       </div>
 
       @if (hasMoreItems()) {
-        <ion-infinite-scroll threshold="300px" (ionInfinite)="onLoadMore($event)">
+        <ion-infinite-scroll threshold="750px" (ionInfinite)="onLoadMore($event)">
           <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
         </ion-infinite-scroll>
       }
@@ -316,99 +316,98 @@ export interface FavoritePersonCardVm {
     }
     .archive-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-      gap: 18px 12px;
-      padding: 16px;
-      perspective: 900px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px 7px;
+      padding: 12px 10px 28px;
+    }
+    @media (min-width: 640px) {
+      .archive-grid {
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 16px 12px;
+        padding: 16px 16px 36px;
+      }
     }
     .archive-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
-      will-change: transform, opacity;
+      width: 100%;
+      min-width: 0;
+      content-visibility: auto;
+      contain-intrinsic-size: 80px 160px;
     }
-    .archive-grid.flip-phase-a .archive-card {
-      animation: archiveCardFlipA 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-      animation-delay: var(--flip-delay, 0ms);
+    .archive-grid.fade-phase-a .archive-card,
+    .people-grid.fade-phase-a .person-card {
+      animation: magicFadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: var(--enter-delay, 0ms);
     }
-    .archive-grid.flip-phase-b .archive-card {
-      animation: archiveCardFlipB 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-      animation-delay: var(--flip-delay, 0ms);
+    .archive-grid.fade-phase-b .archive-card,
+    .people-grid.fade-phase-b .person-card {
+      animation: magicFadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: var(--enter-delay, 0ms);
     }
-    @keyframes archiveCardFlipA {
+    @keyframes magicFadeIn {
       0% {
-        opacity: 0.4;
-        transform: rotateY(-26deg) translateY(5px) scale(0.95);
-      }
-      65% {
-        opacity: 1;
-        transform: rotateY(4deg) translateY(-1px) scale(1.01);
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
       }
       100% {
         opacity: 1;
-        transform: rotateY(0deg) translateY(0) scale(1);
-      }
-    }
-    @keyframes archiveCardFlipB {
-      0% {
-        opacity: 0.4;
-        transform: rotateY(-26deg) translateY(5px) scale(0.95);
-      }
-      65% {
-        opacity: 1;
-        transform: rotateY(4deg) translateY(-1px) scale(1.01);
-      }
-      100% {
-        opacity: 1;
-        transform: rotateY(0deg) translateY(0) scale(1);
+        transform: translateY(0) scale(1);
       }
     }
     .archive-card ::ng-deep .poster-container {
       width: 100%;
       height: auto;
       aspect-ratio: 2 / 3;
-      transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+      border-radius: 6px;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .archive-card:active ::ng-deep .poster-container {
-      transform: scale(0.95) rotateY(8deg);
+      transform: scale(0.95);
+    }
+    .archive-card ::ng-deep .bookmark-btn {
+      width: 26px;
+      height: 26px;
+      top: 5px;
+      right: 5px;
+      background: rgba(12, 12, 16, 0.78);
+      backdrop-filter: blur(8px);
+
+      .custom-icon {
+        width: 8px;
+      }
     }
     .archive-card-title {
-      margin-top: 6px;
-      font-size: 13px;
+      margin-top: 5px;
+      font-size: 11px;
       font-weight: 500;
+      line-height: 1.25;
       color: rgba(255, 255, 255, 0.88);
       text-align: center;
       width: 100%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding: 0 1px;
     }
     .archive-card-meta {
-      margin-top: 2px;
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
+      margin-top: 1.5px;
+      font-size: 9.5px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.45);
       text-align: center;
       width: 100%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding: 0 1px;
     }
     .people-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 14px 12px;
-      padding: 16px;
-      perspective: 900px;
-    }
-    .people-grid.flip-phase-a .person-card {
-      animation: archiveCardFlipA 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-      animation-delay: var(--flip-delay, 0ms);
-    }
-    .people-grid.flip-phase-b .person-card {
-      animation: archiveCardFlipB 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-      animation-delay: var(--flip-delay, 0ms);
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 12px 10px;
+      padding: 14px 12px 28px;
     }
     .person-card {
       display: flex;
@@ -416,12 +415,11 @@ export interface FavoritePersonCardVm {
       align-items: center;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 14px 10px 12px;
+      border-radius: 12px;
+      padding: 12px 8px 10px;
       cursor: pointer;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
-      will-change: transform, opacity;
+      content-visibility: auto;
+      contain-intrinsic-size: 140px 170px;
       transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
     }
     .person-card:active {
@@ -544,7 +542,7 @@ export class ArchivePage implements AfterViewInit {
 
   public activeTab = signal<'watchlist' | 'watched' | 'people'>('watchlist');
   public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
-  public flipPhase = signal<'a' | 'b'>('a');
+  public fadePhase = signal<'a' | 'b'>('a');
 
   public visibleWatchlistLimit = signal<number>(INITIAL_CHUNK_SIZE);
   public visibleWatchedLimit = signal<number>(INITIAL_CHUNK_SIZE);
@@ -621,7 +619,7 @@ export class ArchivePage implements AfterViewInit {
   }
 
   public ionViewWillEnter(): void {
-    this.triggerFlipAnimation();
+    this.triggerFadeAnimation();
   }
 
   public async ngAfterViewInit(): Promise<void> {
@@ -642,7 +640,7 @@ export class ArchivePage implements AfterViewInit {
       }
 
       this.activeTab.set(val);
-      this.triggerFlipAnimation();
+      this.triggerFadeAnimation();
 
       const targetY = this.scrollPositions[val] || 0;
       if (targetY === 0 && this.scrollEl) {
@@ -661,7 +659,7 @@ export class ArchivePage implements AfterViewInit {
   public setMediaFilter(filter: 'all' | 'movie' | 'tv'): void {
     if (this.mediaFilter() !== filter) {
       this.mediaFilter.set(filter);
-      this.triggerFlipAnimation();
+      this.triggerFadeAnimation();
       this.scrollPositions[this.activeTab()] = 0;
       if (this.scrollEl) {
         this.scrollEl.scrollTop = 0;
@@ -671,8 +669,8 @@ export class ArchivePage implements AfterViewInit {
     }
   }
 
-  private triggerFlipAnimation(): void {
-    this.flipPhase.update((current) => (current === 'a' ? 'b' : 'a'));
+  private triggerFadeAnimation(): void {
+    this.fadePhase.update((current) => (current === 'a' ? 'b' : 'a'));
   }
 
   public onLoadMore(event: Event): void {
