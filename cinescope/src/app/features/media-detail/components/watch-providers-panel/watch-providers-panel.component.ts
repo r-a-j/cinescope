@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
 import { TmdbWatchProviderDto } from '../../../../core/dtos/watch-providers/watch-provider.dto';
@@ -59,11 +59,11 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
         </div>
       }
 
-      @if (rentProviders().length > 0) {
+      @if (rentAndBuyProviders().length > 0) {
         <div class="provider-tier">
-          <span class="tier-label rent-badge">RENT</span>
+          <span class="tier-label rent-buy-badge">RENT / BUY</span>
           <div class="provider-pills-row">
-            @for (prov of rentProviders(); track prov.provider_id) {
+            @for (prov of rentAndBuyProviders(); track prov.provider_id) {
               <div class="provider-chip">
                 <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
                 <span>{{ prov.provider_name }}</span>
@@ -73,11 +73,25 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
         </div>
       }
 
-      @if (buyProviders().length > 0) {
+      @if (rentOnlyProviders().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label rent-badge">RENT</span>
+          <div class="provider-pills-row">
+            @for (prov of rentOnlyProviders(); track prov.provider_id) {
+              <div class="provider-chip">
+                <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
+                <span>{{ prov.provider_name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (buyOnlyProviders().length > 0) {
         <div class="provider-tier">
           <span class="tier-label buy-badge">BUY</span>
           <div class="provider-pills-row">
-            @for (prov of buyProviders(); track prov.provider_id) {
+            @for (prov of buyOnlyProviders(); track prov.provider_id) {
               <div class="provider-chip">
                 <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
                 <span>{{ prov.provider_name }}</span>
@@ -161,6 +175,10 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
       background: rgba(16, 185, 129, 0.2);
       color: #34d399;
     }
+    .tier-label.rent-buy-badge {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+    }
     .tier-label.rent-badge {
       background: rgba(59, 130, 246, 0.2);
       color: #60a5fa;
@@ -229,6 +247,95 @@ export class WatchProvidersPanelComponent {
   public justWatchLink = input<string | null>(null);
 
   public regionChange = output<string>();
+
+  public rentAndBuyProviders = computed<TmdbWatchProviderDto[]>(() => {
+    const rent = this.rentProviders();
+    const buy = this.buyProviders();
+    if (!rent.length || !buy.length) return [];
+
+    const buyIds = new Set(buy.map((b) => b.provider_id));
+    const buyNames = new Set(
+      buy.map((b) => b.provider_name?.trim().toLowerCase()).filter((n): n is string => Boolean(n))
+    );
+
+    const seen = new Set<string | number>();
+    const common: TmdbWatchProviderDto[] = [];
+
+    for (const r of rent) {
+      const nameKey = r.provider_name?.trim().toLowerCase();
+      const isCommon = buyIds.has(r.provider_id) || (nameKey ? buyNames.has(nameKey) : false);
+      if (isCommon && !seen.has(r.provider_id)) {
+        seen.add(r.provider_id);
+        if (nameKey) seen.add(nameKey);
+        common.push(r);
+      }
+    }
+    return common;
+  });
+
+  public rentOnlyProviders = computed<TmdbWatchProviderDto[]>(() => {
+    const rent = this.rentProviders();
+    const common = this.rentAndBuyProviders();
+    if (!common.length) {
+      const seen = new Set<string | number>();
+      return rent.filter((r) => {
+        if (seen.has(r.provider_id)) return false;
+        seen.add(r.provider_id);
+        return true;
+      });
+    }
+
+    const commonIds = new Set(common.map((c) => c.provider_id));
+    const commonNames = new Set(
+      common.map((c) => c.provider_name?.trim().toLowerCase()).filter((n): n is string => Boolean(n))
+    );
+
+    const seen = new Set<string | number>();
+    const result: TmdbWatchProviderDto[] = [];
+
+    for (const r of rent) {
+      const nameKey = r.provider_name?.trim().toLowerCase();
+      const isCommon = commonIds.has(r.provider_id) || (nameKey ? commonNames.has(nameKey) : false);
+      if (!isCommon && !seen.has(r.provider_id)) {
+        seen.add(r.provider_id);
+        if (nameKey) seen.add(nameKey);
+        result.push(r);
+      }
+    }
+    return result;
+  });
+
+  public buyOnlyProviders = computed<TmdbWatchProviderDto[]>(() => {
+    const buy = this.buyProviders();
+    const common = this.rentAndBuyProviders();
+    if (!common.length) {
+      const seen = new Set<string | number>();
+      return buy.filter((b) => {
+        if (seen.has(b.provider_id)) return false;
+        seen.add(b.provider_id);
+        return true;
+      });
+    }
+
+    const commonIds = new Set(common.map((c) => c.provider_id));
+    const commonNames = new Set(
+      common.map((c) => c.provider_name?.trim().toLowerCase()).filter((n): n is string => Boolean(n))
+    );
+
+    const seen = new Set<string | number>();
+    const result: TmdbWatchProviderDto[] = [];
+
+    for (const b of buy) {
+      const nameKey = b.provider_name?.trim().toLowerCase();
+      const isCommon = commonIds.has(b.provider_id) || (nameKey ? commonNames.has(nameKey) : false);
+      if (!isCommon && !seen.has(b.provider_id)) {
+        seen.add(b.provider_id);
+        if (nameKey) seen.add(nameKey);
+        result.push(b);
+      }
+    }
+    return result;
+  });
 
   public resolveLogo(path: string | null | undefined): string {
     return resolveMediaImageUrl(path, 'w185');

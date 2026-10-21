@@ -203,25 +203,45 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
     }
     .nav-pill-btn {
       pointer-events: auto;
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      background: rgba(12, 12, 16, 0.74);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(12, 12, 16, 0.72);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 21px;
+      padding: 0;
+      margin: 0;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    .nav-pill-btn:active {
-      transform: scale(0.92);
-      background: rgba(30, 30, 38, 0.9);
+      outline: none;
+      transition: all 0.15s ease;
+
+      &:active {
+        transform: scale(0.92);
+        background: rgba(24, 24, 32, 0.88);
+      }
+
+      ion-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      ion-icon[name="arrow-back-outline"] {
+        transform: translateX(-1px);
+      }
+
+      ion-icon[name="share-social-outline"] {
+        transform: translateX(-1px) translateY(0.5px);
+      }
     }
     .hero-stage {
       position: relative;
@@ -411,23 +431,11 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
       padding: 2px 7px;
       border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.12);
+      &.is-live { background: rgba(16, 185, 129, 0.16); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+      &.is-ended { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.65); }
+      &.is-canceled { background: rgba(239, 68, 68, 0.16); color: #f87171; border-color: rgba(239, 68, 68, 0.35); }
     }
-    .status-pill.is-live {
-      background: rgba(16, 185, 129, 0.16);
-      color: #34d399;
-      border-color: rgba(16, 185, 129, 0.35);
-    }
-    .status-pill.is-ended {
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.65);
-      border-color: rgba(255, 255, 255, 0.12);
-    }
-    .status-pill.is-canceled {
-      background: rgba(239, 68, 68, 0.16);
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.35);
-    }
-    .status-pill .pulse-dot {
+    .pulse-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
@@ -436,15 +444,8 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
       animation: status-pulse 1.8s infinite ease-in-out;
     }
     @keyframes status-pulse {
-      0%, 100% {
-        transform: scale(0.9);
-        opacity: 0.8;
-      }
-      50% {
-        transform: scale(1.3);
-        opacity: 1;
-        box-shadow: 0 0 10px #34d399;
-      }
+      0%, 100% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px #34d399; }
     }
     .detail-title {
       margin: 2px 0 0;
@@ -477,27 +478,12 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
       padding: 2px 7px;
       border-radius: 6px;
       font-weight: 700;
+      ion-icon { font-size: 13px; }
+      .vote-count { font-size: 11px; font-weight: 500; color: rgba(255, 255, 255, 0.65); }
     }
-    .rating-chip ion-icon {
-      font-size: 13px;
-    }
-    .rating-chip .vote-count {
-      font-size: 11px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.65);
-    }
-    .stat-dot {
-      color: rgba(255, 255, 255, 0.35);
-    }
-    .stat-text {
-      font-weight: 500;
-    }
-    .genre-chips-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
+    .stat-dot { color: rgba(255, 255, 255, 0.35); }
+    .stat-text { font-weight: 500; }
+    .genre-chips-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
     .genre-chip {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.1);

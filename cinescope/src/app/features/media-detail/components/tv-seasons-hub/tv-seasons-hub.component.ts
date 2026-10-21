@@ -663,7 +663,7 @@ export class TvSeasonsHubComponent {
       return { label: 'MID-SEASON FINALE', type: 'mid-season' };
     }
 
-    if (ep.episode_number === 1) {
+    if (ep.season_number > 0 && ep.episode_number === 1) {
       if (ep.season_number === 1) {
         return { label: 'SERIES PREMIERE', type: 'premiere' };
       }

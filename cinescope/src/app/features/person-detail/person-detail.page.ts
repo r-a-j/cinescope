@@ -72,6 +72,7 @@ export interface PersonPreviewState {
   name?: string | undefined;
   profileUrl?: string | undefined;
   knownFor?: string | undefined;
+  knownForDepartment?: string | undefined;
 }
 
 export interface FilmographyEntryVm {
@@ -129,7 +130,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   });
 
   public department = computed<string>(() => {
-    return this.person()?.known_for_department || this.preview()?.knownFor || 'Artist';
+    return this.person()?.known_for_department || this.preview()?.knownFor || this.preview()?.knownForDepartment || 'Artist';
   });
 
   public profileUrl = computed<string>(() => {
@@ -633,6 +634,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       const res = await firstValueFrom(
         this.peopleService.getPersonDetails(id, 'combined_credits,external_ids,images')
       );
+      if (this.personId() !== id) return;
       this.person.set(res);
 
       // Default to crew tab if the person is primarily a Director/Writer with more crew than cast credits
