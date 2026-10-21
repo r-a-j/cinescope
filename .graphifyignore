@@ -15,6 +15,12 @@ ios/
 .docusaurus/
 build/
 docs-build/
+docs/static/
+
+# Minified & Third-party vendor libraries
+*.min.js
+*.min.css
+*.min.map
 
 # Graphify outputs (prevents recursive looping)
 graphify-out/
