@@ -9,11 +9,14 @@
     [bookmarkState]="bookmarkState()"
     [certification]="certification()"
     [statusLabel]="statusLabel()"
+    [productionStatus]="productionStatus()"
     [ratingValue]="ratingValue()"
     [voteCountLabel]="voteCountLabel()"
     [releaseYearLabel]="releaseYearLabel()"
     [runtimeLabel]="runtimeLabel()"
     [genres]="genres()"
+    [networks]="tvNetworks()"
+    [originCountry]="originCountry()"
     [hasTrailer]="officialTrailer() !== null"
     (backClick)="goBack()"
     (shareClick)="shareMedia()"
@@ -40,6 +43,37 @@
         <button type="button" class="text-toggle-btn" (click)="toggleOverview()">
           {{ overviewExpanded() ? 'Show less' : 'Read full storyline' }}
         </button>
+      }
+
+      <!-- TV Creator Avatars with Clickable Links to Person Detail -->
+      @if (mediaType() === 'tv' && tvCreators().length > 0) {
+        <div class="creators-block">
+          <span class="crew-role">CREATED BY</span>
+          <div class="creators-list">
+            @for (creator of tvCreators(); track creator.id) {
+              <div
+                class="creator-card"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="'View profile of ' + creator.name"
+                (click)="openCreator(creator)"
+                (keyup.enter)="openCreator(creator)">
+                @if (creator.profileUrl) {
+                  <img [src]="creator.profileUrl" [alt]="creator.name" class="creator-avatar-img" loading="lazy" />
+                } @else {
+                  <div class="creator-avatar-fallback">
+                    <ion-icon name="person"></ion-icon>
+                  </div>
+                }
+                <div class="creator-info">
+                  <span class="creator-name">{{ creator.name }}</span>
+                  <span class="creator-badge">Creator</span>
+                </div>
+                <ion-icon name="chevron-forward" class="creator-arrow"></ion-icon>
+              </div>
+            }
+          </div>
+        </div>
       }
 
       @if (crewSpotlights().length > 0) {
@@ -90,6 +124,8 @@
         [isSeasonLoading]="isSeasonLoading()"
         [lastEpisodeToAir]="lastEpisodeToAir()"
         [nextEpisodeToAir]="nextEpisodeToAir()"
+        [showStatus]="statusLabel()"
+        [numberOfSeasons]="tvDetail()?.number_of_seasons || 0"
         (seasonSelect)="selectSeason($event)">
       </app-tv-seasons-hub>
     }
@@ -106,7 +142,10 @@
       [productionFacts]="productionFacts()"
       [keywords]="keywords()"
       [externalLinks]="externalLinks()"
-      [reviews]="reviews()">
+      [reviews]="reviews()"
+      [mediaType]="mediaType()"
+      [mediaTitle]="title()"
+      [imdbId]="imdbId()">
     </app-production-reviews-panel>
   </div>
 

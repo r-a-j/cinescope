@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy, input, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { star, openOutline, chatbubblesOutline } from 'ionicons/icons';
 import { TmdbBelongsToCollectionDto } from '../../../../core/dtos/movies/movie-detail.dto';
 import { TmdbKeywordDto } from '../../../../core/dtos/keywords/keyword.dto';
 import { TmdbReviewDto } from '../../../../core/dtos/reviews/review.dto';
@@ -76,10 +78,16 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
       </section>
     }
 
-    <!-- COMMUNITY REVIEWS -->
-    @if (reviews().length > 0) {
-      <section class="detail-section">
-        <h3 class="section-heading">COMMUNITY REVIEWS ({{ reviews().length }})</h3>
+    <!-- COMMUNITY & CRITIC REVIEWS -->
+    <section class="detail-section">
+      <div class="reviews-section-header">
+        <h3 class="section-heading">COMMUNITY REVIEWS</h3>
+        @if (reviews().length > 0) {
+          <span class="reviews-count-badge">{{ reviews().length }}</span>
+        }
+      </div>
+
+      @if (reviews().length > 0) {
         <div class="reviews-stack">
           @for (rev of reviews(); track rev.id) {
             <div class="review-card">
@@ -110,8 +118,73 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
             </div>
           }
         </div>
-      </section>
-    }
+
+        <div class="reviews-more-bar">
+          <span class="more-bar-label">More critic & audience reviews:</span>
+          <div class="more-buttons-group">
+            @if (imdbReviewUrl(); as url) {
+              <a
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ext-review-pill imdb-pill">
+                <ion-icon name="star"></ion-icon>
+                <span>IMDb Reviews</span>
+                <ion-icon name="open-outline" class="pill-open"></ion-icon>
+              </a>
+            }
+            @if (rottenTomatoesUrl(); as url) {
+              <a
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ext-review-pill rt-pill">
+                <span class="rt-icon">🍅</span>
+                <span>Rotten Tomatoes</span>
+                <ion-icon name="open-outline" class="pill-open"></ion-icon>
+              </a>
+            }
+          </div>
+        </div>
+      } @else {
+        <!-- Fallback Empty State with Direct Buttons to IMDb & Rotten Tomatoes -->
+        <div class="reviews-empty-box">
+          <div class="empty-icon-wrap">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+          </div>
+          <div class="empty-content">
+            <h4 class="empty-heading">No Written TMDB Reviews Yet</h4>
+            <p class="empty-text">
+              Community reviews for this {{ mediaType() === 'tv' ? 'TV series' : 'movie' }} haven't been submitted to TMDB yet. Explore verified audience feedback and critic reviews on:
+            </p>
+            <div class="empty-buttons-row">
+              @if (imdbReviewUrl(); as url) {
+                <a
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ext-review-btn imdb-btn">
+                  <ion-icon name="star"></ion-icon>
+                  <span>Read on IMDb</span>
+                  <ion-icon name="open-outline" class="btn-open"></ion-icon>
+                </a>
+              }
+              @if (rottenTomatoesUrl(); as url) {
+                <a
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ext-review-btn rt-btn">
+                  <span class="rt-icon">🍅</span>
+                  <span>Rotten Tomatoes</span>
+                  <ion-icon name="open-outline" class="btn-open"></ion-icon>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </section>
   `,
   styles: [`
     :host {
@@ -291,6 +364,121 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
       font-weight: 700;
       cursor: pointer;
     }
+    .reviews-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      .section-heading { margin-bottom: 0; }
+    }
+    .reviews-count-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .reviews-more-bar {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .more-bar-label {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.55);
+      font-weight: 600;
+    }
+    .more-buttons-group, .empty-buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ext-review-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      transition: background 0.15s ease, transform 0.1s ease;
+      &:active { transform: scale(0.97); }
+    }
+    .ext-review-pill.imdb-pill ion-icon[name="star"] { color: #f5c518; }
+    .pill-open, .btn-open { font-size: 13px; opacity: 0.65; }
+    .rt-icon { font-size: 14px; line-height: 1; }
+
+    .reviews-empty-box {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .empty-icon-wrap {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .empty-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .empty-heading {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .empty-text {
+      margin: 0 0 8px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .ext-review-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+      &:active { transform: scale(0.96); }
+    }
+    .ext-review-btn.imdb-btn {
+      background: rgba(245, 197, 24, 0.14);
+      border: 1px solid rgba(245, 197, 24, 0.35);
+      color: #f5c518;
+      ion-icon[name="star"] { font-size: 15px; }
+    }
+    .ext-review-btn.rt-btn {
+      background: rgba(250, 50, 10, 0.12);
+      border: 1px solid rgba(250, 50, 10, 0.3);
+      color: #ff6b6b;
+    }
   `]
 })
 export class ProductionReviewsPanelComponent {
@@ -299,8 +487,33 @@ export class ProductionReviewsPanelComponent {
   public keywords = input.required<TmdbKeywordDto[]>();
   public externalLinks = input.required<ExternalLinkVm[]>();
   public reviews = input.required<TmdbReviewDto[]>();
+  public mediaType = input<'movie' | 'tv'>('movie');
+  public mediaTitle = input<string>('');
+  public imdbId = input<string | null>(null);
 
   public expandedReviewIds = signal<Record<string, boolean>>({});
+
+  public imdbReviewUrl = computed<string | null>(() => {
+    const id = this.imdbId();
+    if (id) {
+      return `https://www.imdb.com/title/${id}/reviews/`;
+    }
+    const title = this.mediaTitle();
+    if (title) {
+      return `https://www.imdb.com/find/?q=${encodeURIComponent(title)}&s=tt`;
+    }
+    return null;
+  });
+
+  public rottenTomatoesUrl = computed<string | null>(() => {
+    const title = this.mediaTitle();
+    if (!title) return null;
+    return `https://www.rottentomatoes.com/search?search=${encodeURIComponent(title)}`;
+  });
+
+  constructor() {
+    addIcons({ star, openOutline, chatbubblesOutline });
+  }
 
   public toggleReviewExpand(reviewId: string): void {
     this.expandedReviewIds.update((curr) => ({
