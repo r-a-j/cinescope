@@ -105,11 +105,11 @@ export interface ProductionStatusVm {
 
 function getCountryFlagEmoji(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2) return '';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  const upper = countryCode.toUpperCase();
+  const c1 = upper.charCodeAt(0);
+  const c2 = upper.charCodeAt(1);
+  if (c1 < 65 || c1 > 90 || c2 < 65 || c2 > 90) return '';
+  return String.fromCodePoint(127397 + c1, 127397 + c2);
 }
 
 const CULTURAL_FORMAT_MAP: Record<string, { name: string; tvFormat?: string }> = {
@@ -604,7 +604,7 @@ export class MediaDetailPage implements OnInit {
     return creators.map((c) => ({
       id: c.id,
       name: c.name,
-      profileUrl: resolveMediaImageUrl(c.profile_path, 'w185')
+      profileUrl: c.profile_path ? resolveMediaImageUrl(c.profile_path, 'w185') : null
     }));
   });
 
@@ -926,6 +926,7 @@ export class MediaDetailPage implements OnInit {
             'credits,videos,watch/providers,release_dates,recommendations,similar,keywords,reviews,external_ids'
           )
         );
+        if (this.tmdbId() !== id || this.mediaType() !== type) return;
         this.movieDetail.set(res);
         this.syncDefaultWatchRegion();
       } else {
@@ -935,6 +936,7 @@ export class MediaDetailPage implements OnInit {
             'aggregate_credits,credits,videos,watch/providers,content_ratings,recommendations,similar,keywords,reviews,external_ids'
           )
         );
+        if (this.tmdbId() !== id || this.mediaType() !== type) return;
         this.tvDetail.set(res);
         this.syncDefaultWatchRegion();
 
