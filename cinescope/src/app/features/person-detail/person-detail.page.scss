@@ -8,7 +8,15 @@
   z-index: 40;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   pointer-events: none;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
 }
 
 .nav-pill-btn {
@@ -25,11 +33,26 @@
   justify-content: center;
   font-size: 21px;
   cursor: pointer;
+  transition: transform 0.18s ease, background 0.2s ease;
+
+  &:active { transform: scale(0.92); }
+}
+
+.fav-btn {
+  &.is-favorite {
+    color: #ff3b5c;
+    border-color: rgba(255, 59, 92, 0.45);
+    background: rgba(255, 59, 92, 0.16);
+
+    ion-icon {
+      transform: scale(1.1);
+    }
+  }
 }
 
 .person-hero {
   position: relative;
-  padding: 88px 16px 24px;
+  padding: calc(env(safe-area-inset-top, 12px) + 68px) 16px 24px;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
@@ -232,7 +255,6 @@
   z-index: 10000;
   background: rgba(0, 0, 0, 0.94);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -364,9 +386,7 @@
       position: relative;
       opacity: 0;
       transition: opacity 0.25s ease-in-out;
-      user-select: auto !important;
-      -webkit-user-select: auto !important;
-      -webkit-touch-callout: default !important;
+      user-select: auto;
       &.loaded {
         opacity: 1;
       }

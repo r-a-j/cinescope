@@ -77,6 +77,7 @@ export class StorageService {
     // ==========================================
     public readonly watchlistItems = signal<ContentDocType[]>([]);
     public readonly watchedItems = signal<ContentDocType[]>([]);
+    public readonly favoritePeople = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
 
     public readonly allowAdultContent = computed<boolean>(() => {
@@ -97,6 +98,17 @@ export class StorageService {
         return map;
     });
 
+    /**
+     * Reactive O(1) set of watched media keys (`movie_550`, `tv_1399`) for fast progress calculation.
+     */
+    public readonly watchedMediaKeys = computed<Set<string>>(() => {
+        const keys = new Set<string>();
+        for (const item of this.watchedItems()) {
+            keys.add(item.id);
+        }
+        return keys;
+    });
+
     constructor() {
         this.initReactiveStreams();
     }
@@ -113,10 +125,13 @@ export class StorageService {
             }).$.subscribe((docs) => {
                 const watchlist: ContentDocType[] = [];
                 const watched: ContentDocType[] = [];
+                const favoritePeople: ContentDocType[] = [];
 
                 for (const d of docs) {
                     const docJson = d.toJSON() as ContentDocType;
-                    if (docJson.lists.includes('watched')) {
+                    if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
+                        favoritePeople.push(docJson);
+                    } else if (docJson.lists.includes('watched')) {
                         watched.push(docJson);
                     } else if (docJson.lists.includes('watchlist')) {
                         watchlist.push(docJson);
@@ -125,6 +140,7 @@ export class StorageService {
 
                 this.watchlistItems.set(watchlist);
                 this.watchedItems.set(watched);
+                this.favoritePeople.set(favoritePeople);
 
                 // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
                 const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
@@ -298,6 +314,84 @@ export class StorageService {
         if (doc) {
             await doc.remove();
         }
+    }
+
+    // ==========================================
+    // 🌟 FAVORITE PEOPLE & PROGRESS TRACKING
+    // ==========================================
+
+    public isPersonFavorite(personId: number): boolean {
+        this.initReactiveStreams();
+        const docId = this.generateId(personId, 'person');
+        return this.favoritePeople().some((p) => p.id === docId);
+    }
+
+    public async toggleFavoritePerson(person: {
+        id: number;
+        name: string;
+        profilePath?: string | null;
+        department?: string;
+        creditIds?: string[];
+    }): Promise<boolean> {
+        this.initReactiveStreams();
+        const isFav = this.isPersonFavorite(person.id);
+
+        if (isFav) {
+            await this.removeFavoritePerson(person.id);
+            return false;
+        } else {
+            const docId = this.generateId(person.id, 'person');
+            const now = new Date().toISOString();
+            await this.dbService.db.content.upsert({
+                id: docId,
+                tmdbId: person.id,
+                mediaType: 'person',
+                lists: ['favorite'],
+                addedAt: now,
+                payload: {
+                    id: person.id,
+                    name: person.name,
+                    profile_path: person.profilePath ?? null,
+                    known_for_department: person.department ?? 'Artist',
+                    credit_ids: person.creditIds ?? []
+                }
+            });
+            return true;
+        }
+    }
+
+    public async removeFavoritePerson(personId: number): Promise<void> {
+        await this.removeMedia(personId, 'person');
+    }
+
+    public async updateFavoritePersonCredits(personId: number, creditIds: string[]): Promise<void> {
+        this.initReactiveStreams();
+        const docId = this.generateId(personId, 'person');
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                const payload = (docData.payload ?? {}) as Record<string, unknown>;
+                payload['credit_ids'] = creditIds;
+                docData.payload = payload;
+                return docData;
+            });
+        }
+    }
+
+    public getPersonProgress(creditIds?: string[]): { watched: number; total: number; percent: number } {
+        if (!creditIds || creditIds.length === 0) {
+            return { watched: 0, total: 0, percent: 0 };
+        }
+        const watchedKeys = this.watchedMediaKeys();
+        let watched = 0;
+        for (const cid of creditIds) {
+            if (watchedKeys.has(cid)) {
+                watched++;
+            }
+        }
+        const total = creditIds.length;
+        const percent = total > 0 ? Math.min(100, Math.round((watched / total) * 100)) : 0;
+        return { watched, total, percent };
     }
 
     // ==========================================

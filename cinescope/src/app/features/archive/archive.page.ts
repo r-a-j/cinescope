@@ -12,7 +12,7 @@ import {
   IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { bookmarkOutline, checkmarkDoneCircleOutline } from 'ionicons/icons';
+import { bookmarkOutline, checkmarkDoneCircleOutline, heart, heartOutline, trophyOutline } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { StorageService } from '../../core/services/storage.service';
@@ -23,12 +23,23 @@ import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 const INITIAL_CHUNK_SIZE = 30;
 const SCROLL_CHUNK_STEP = 36;
 
-interface ArchiveCardVm {
+export interface ArchiveCardVm {
   id: string;
   doc: ContentDocType;
   title: string;
   posterUrl: string;
   metaSubtitle: string;
+}
+
+export interface FavoritePersonCardVm {
+  id: number;
+  docId: string;
+  name: string;
+  department: string;
+  profileUrl: string;
+  watched: number;
+  total: number;
+  percent: number;
 }
 
 @Component({
@@ -59,10 +70,13 @@ interface ArchiveCardVm {
         <ion-segment-button value="watched">
           <ion-label>WATCHED ({{ storage.watchedItems().length }})</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="people">
+          <ion-label>PEOPLE ({{ storage.favoritePeople().length }})</ion-label>
+        </ion-segment-button>
       </ion-segment>
     </ion-toolbar>
 
-    @if (activeTabItems().length > 0) {
+    @if (activeTab() !== 'people' && activeTabItems().length > 0) {
       <div class="filter-bar">
         <button
           type="button"
@@ -148,6 +162,62 @@ interface ArchiveCardVm {
                   </app-poster-card>
                   <div class="archive-card-title">{{ vm.title }}</div>
                   <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Keep-Alive Favorite People Pane -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'people'">
+          @if (favoritePeopleCards().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="heart-outline"></ion-icon>
+              <h2>NO FAVORITE ARTISTS YET</h2>
+              <p>Explore actors and directors on CineScope, tap the heart icon on their profile, and track your filmography progress here.</p>
+            </div>
+          } @else {
+            <div
+              class="people-grid"
+              [class.flip-phase-a]="flipPhase() === 'a'"
+              [class.flip-phase-b]="flipPhase() === 'b'">
+              @for (person of favoritePeopleCards(); track person.id; let idx = $index) {
+                <div
+                  class="person-card"
+                  [style.--flip-delay]="(idx < 15 ? idx * 16 : 0) + 'ms'"
+                  (click)="onOpenPersonDetail(person)"
+                  tabindex="0"
+                  role="button"
+                  (keyup.enter)="onOpenPersonDetail(person)">
+                  <div class="person-card-avatar-wrap">
+                    <img
+                      [src]="person.profileUrl"
+                      [alt]="person.name"
+                      class="person-avatar"
+                      loading="lazy" />
+                    <button
+                      type="button"
+                      class="person-unfav-btn"
+                      (click)="onRemoveFavoritePerson($event, person)"
+                      aria-label="Remove from favorite people">
+                      <ion-icon name="heart"></ion-icon>
+                    </button>
+                  </div>
+
+                  <div class="person-card-info">
+                    <span class="person-card-name">{{ person.name }}</span>
+                    <span class="person-card-dept">{{ person.department }}</span>
+
+                    <div class="person-progress-block">
+                      <div class="person-progress-bar">
+                        <div class="person-progress-fill" [style.width.%]="person.percent"></div>
+                      </div>
+                      <div class="person-progress-meta">
+                        <span class="progress-counts">{{ person.watched }}/{{ person.total }} watched</span>
+                        <span class="progress-pct">{{ person.percent }}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               }
             </div>
@@ -325,21 +395,154 @@ interface ArchiveCardVm {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .people-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px 12px;
+      padding: 16px;
+      perspective: 900px;
+    }
+    .people-grid.flip-phase-a .person-card {
+      animation: archiveCardFlipA 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--flip-delay, 0ms);
+    }
+    .people-grid.flip-phase-b .person-card {
+      animation: archiveCardFlipB 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--flip-delay, 0ms);
+    }
+    .person-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px 10px 12px;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+      transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+    }
+    .person-card:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .person-card-avatar-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    .person-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      background: #18181b;
+      display: block;
+    }
+    .person-unfav-btn {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #1c1c24;
+      border: 1px solid rgba(255, 59, 92, 0.4);
+      color: #ff3b5c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .person-unfav-btn:active {
+      transform: scale(0.85);
+      background: #ff3b5c;
+      color: #fff;
+    }
+    .person-card-info {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .person-card-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #ffffff;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .person-card-dept {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2px;
+      margin-bottom: 8px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .person-progress-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .person-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .person-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e50914, #ff3b5c);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .person-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .progress-counts {
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-pct {
+      font-weight: 600;
+      color: #ff3b5c;
+      font-variant-numeric: tabular-nums;
+    }
   `]
 })
 export class ArchivePage implements AfterViewInit {
   @ViewChild(IonContent, { static: false }) private content?: IonContent;
   private scrollEl: HTMLElement | null = null;
-  private scrollPositions: Record<'watchlist' | 'watched', number> = {
+  private scrollPositions: Record<'watchlist' | 'watched' | 'people', number> = {
     watchlist: 0,
-    watched: 0
+    watched: 0,
+    people: 0
   };
 
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private router = inject(Router);
 
-  public activeTab = signal<'watchlist' | 'watched'>('watchlist');
+  public activeTab = signal<'watchlist' | 'watched' | 'people'>('watchlist');
   public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
   public flipPhase = signal<'a' | 'b'>('a');
 
@@ -382,14 +585,39 @@ export class ArchivePage implements AfterViewInit {
     return this.filteredWatched().slice(0, this.visibleWatchedLimit());
   });
 
+  public favoritePeopleCards = computed<FavoritePersonCardVm[]>(() => {
+    const docs = this.storage.favoritePeople();
+    return docs.map((doc) => {
+      const payload = (doc.payload ?? {}) as Record<string, unknown>;
+      const name = String(payload['name'] || `Artist #${doc.tmdbId}`);
+      const rawPath = (payload['profile_path'] || payload['posterUrl']) as string | undefined;
+      const profileUrl = resolveMediaImageUrl(rawPath, 'w342');
+      const department = String(payload['known_for_department'] || 'Artist');
+      const creditIds = Array.isArray(payload['credit_ids']) ? (payload['credit_ids'] as string[]) : [];
+
+      const progress = this.storage.getPersonProgress(creditIds);
+      return {
+        id: doc.tmdbId,
+        docId: doc.id,
+        name,
+        department,
+        profileUrl,
+        watched: progress.watched,
+        total: progress.total,
+        percent: progress.percent
+      };
+    });
+  });
+
   public hasMoreItems = computed<boolean>(() => {
+    if (this.activeTab() === 'people') return false;
     return this.activeTab() === 'watchlist'
       ? this.visibleWatchlist().length < this.filteredWatchlist().length
       : this.visibleWatched().length < this.filteredWatched().length;
   });
 
   constructor() {
-    addIcons({ bookmarkOutline, checkmarkDoneCircleOutline });
+    addIcons({ bookmarkOutline, checkmarkDoneCircleOutline, heart, heartOutline, trophyOutline });
   }
 
   public ionViewWillEnter(): void {
@@ -401,8 +629,8 @@ export class ArchivePage implements AfterViewInit {
   }
 
   public async onTabChange(event: Event): Promise<void> {
-    const val = (event as CustomEvent).detail?.value as 'watchlist' | 'watched' | undefined;
-    if (val === 'watchlist' || val === 'watched') {
+    const val = (event as CustomEvent).detail?.value as 'watchlist' | 'watched' | 'people' | undefined;
+    if (val === 'watchlist' || val === 'watched' || val === 'people') {
       if (val === this.activeTab()) return;
 
       const prev = this.activeTab();
@@ -513,5 +741,24 @@ export class ArchivePage implements AfterViewInit {
     } else if (nextState === 'none') {
       await this.toast.presentWarning(`Removed "${title}" from Archive`, 1800);
     }
+  }
+
+  public onOpenPersonDetail(person: FavoritePersonCardVm): void {
+    void this.router.navigate(['/person', person.id], {
+      state: {
+        preview: {
+          id: person.id,
+          name: person.name,
+          profileUrl: person.profileUrl,
+          knownFor: person.department
+        }
+      }
+    });
+  }
+
+  public async onRemoveFavoritePerson(event: Event, person: FavoritePersonCardVm): Promise<void> {
+    event.stopPropagation();
+    await this.storage.removeFavoritePerson(person.id);
+    await this.toast.presentWarning(`Removed ${person.name} from Favorites`, 1800);
   }
 }

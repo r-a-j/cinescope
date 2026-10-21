@@ -4,9 +4,19 @@
     <button type="button" class="nav-pill-btn" (click)="goBack()" aria-label="Go Back">
       <ion-icon name="arrow-back-outline"></ion-icon>
     </button>
-    <button type="button" class="nav-pill-btn" (click)="sharePerson()" aria-label="Share">
-      <ion-icon name="share-social-outline"></ion-icon>
-    </button>
+    <div class="nav-actions">
+      <button
+        type="button"
+        class="nav-pill-btn fav-btn"
+        [class.is-favorite]="isFavorite()"
+        (click)="toggleFavorite()"
+        [attr.aria-label]="isFavorite() ? 'Remove from favorites' : 'Add to favorites'">
+        <ion-icon [name]="isFavorite() ? 'heart' : 'heart-outline'"></ion-icon>
+      </button>
+      <button type="button" class="nav-pill-btn" (click)="sharePerson()" aria-label="Share">
+        <ion-icon name="share-social-outline"></ion-icon>
+      </button>
+    </div>
   </div>
 
   <!-- Artist Hero Header -->
