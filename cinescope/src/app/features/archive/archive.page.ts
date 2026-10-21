@@ -195,13 +195,6 @@ export interface FavoritePersonCardVm {
                       [alt]="person.name"
                       class="person-avatar"
                       loading="lazy" />
-                    <button
-                      type="button"
-                      class="person-unfav-btn"
-                      (click)="onRemoveFavoritePerson($event, person)"
-                      aria-label="Remove from favorite people">
-                      <ion-icon name="heart"></ion-icon>
-                    </button>
                   </div>
 
                   <div class="person-card-info">
@@ -440,29 +433,6 @@ export interface FavoritePersonCardVm {
       border: 2px solid rgba(255, 255, 255, 0.18);
       background: #18181b;
       display: block;
-    }
-    .person-unfav-btn {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #1c1c24;
-      border: 1px solid rgba(255, 59, 92, 0.4);
-      color: #ff3b5c;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    .person-unfav-btn:active {
-      transform: scale(0.85);
-      background: #ff3b5c;
-      color: #fff;
     }
     .person-card-info {
       width: 100%;
@@ -752,11 +722,5 @@ export class ArchivePage implements AfterViewInit {
         }
       }
     });
-  }
-
-  public async onRemoveFavoritePerson(event: Event, person: FavoritePersonCardVm): Promise<void> {
-    event.stopPropagation();
-    await this.storage.removeFavoritePerson(person.id);
-    await this.toast.presentWarning(`Removed ${person.name} from Favorites`, 1800);
   }
 }
