@@ -2,6 +2,9 @@ import { Component, ChangeDetectionStrategy, input, output, signal, effect } fro
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
 import { BookmarkState } from '../../../../shared/components/poster-card/poster-card.component';
+import { TmdbTvNetworkDto } from '../../../../core/dtos/tv/tv-detail.dto';
+import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
+import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
 
 @Component({
   selector: 'app-detail-hero',
@@ -67,11 +70,46 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
               {{ mediaType() === 'tv' ? 'TV SERIES' : 'MOVIE' }}
             </span>
 
+            @if (originCountry(); as origin) {
+              <span class="origin-pill" [attr.title]="origin.countryName">
+                <span class="origin-flag">{{ origin.flag }}</span>
+                @if (origin.culturalLabel) {
+                  <span class="origin-cultural">{{ origin.culturalLabel }}</span>
+                } @else {
+                  <span class="origin-code">{{ origin.code }}</span>
+                }
+              </span>
+            }
+
+            @if (mediaType() === 'tv' && networks().length > 0) {
+              @for (net of networks().slice(0, 2); track net.id) {
+                <span class="network-badge-pill" [attr.title]="net.name">
+                  @if (resolveNetworkLogo(net.logo_path); as logoUrl) {
+                    <img [src]="logoUrl" [alt]="net.name" class="network-badge-logo" />
+                  } @else {
+                    <span class="network-badge-text">{{ net.name }}</span>
+                  }
+                </span>
+              }
+            }
+
             @if (certification()) {
               <span class="cert-pill">{{ certification() }}</span>
             }
 
-            @if (statusLabel()) {
+            @if (productionStatus(); as pStatus) {
+              <span
+                class="status-pill"
+                [class.is-live]="pStatus.isLive"
+                [class.is-ended]="pStatus.isEnded && !pStatus.isCanceled"
+                [class.is-canceled]="pStatus.isCanceled"
+                [attr.title]="pStatus.tooltip">
+                @if (pStatus.isLive) {
+                  <span class="pulse-dot" aria-hidden="true"></span>
+                }
+                {{ pStatus.label }}
+              </span>
+            } @else if (statusLabel()) {
               <span class="status-pill">{{ statusLabel() }}</span>
             }
           </div>
@@ -308,6 +346,50 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
     .type-pill.is-tv {
       background: #6366f1;
     }
+    .origin-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 20px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .origin-flag {
+      font-size: 12px;
+      line-height: 1;
+    }
+    .network-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 20px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .network-badge-logo {
+      height: 12px;
+      max-width: 52px;
+      object-fit: contain;
+      display: block;
+    }
+    .network-badge-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0d0d11;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
     .cert-pill {
       border: 1px solid rgba(255, 255, 255, 0.35);
       color: rgba(255, 255, 255, 0.9);
@@ -317,12 +399,52 @@ import { BookmarkState } from '../../../../shared/components/poster-card/poster-
       border-radius: 4px;
     }
     .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.8);
+      color: rgba(255, 255, 255, 0.85);
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
       padding: 2px 7px;
       border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .status-pill.is-live {
+      background: rgba(16, 185, 129, 0.16);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .status-pill.is-ended {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.65);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .status-pill.is-canceled {
+      background: rgba(239, 68, 68, 0.16);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    .status-pill .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      animation: status-pulse 1.8s infinite ease-in-out;
+    }
+    @keyframes status-pulse {
+      0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.3);
+        opacity: 1;
+        box-shadow: 0 0 10px #34d399;
+      }
     }
     .detail-title {
       margin: 2px 0 0;
@@ -441,11 +563,14 @@ export class DetailHeroComponent {
   public bookmarkState = input.required<BookmarkState>();
   public certification = input<string | null>(null);
   public statusLabel = input<string | null>(null);
+  public productionStatus = input<ProductionStatusVm | null>(null);
   public ratingValue = input<string | null>(null);
   public voteCountLabel = input<string | null>(null);
   public releaseYearLabel = input<string>('');
   public runtimeLabel = input<string | null>(null);
   public genres = input<string[]>([]);
+  public networks = input<TmdbTvNetworkDto[]>([]);
+  public originCountry = input<OriginCountryVm | null>(null);
   public hasTrailer = input<boolean>(false);
 
   public backClick = output();
@@ -465,5 +590,9 @@ export class DetailHeroComponent {
 
   public onBackdropLoad(): void {
     this.isBackdropLoaded.set(true);
+  }
+
+  public resolveNetworkLogo(path: string | null): string | null {
+    return path ? resolveMediaImageUrl(path, 'w185') : null;
   }
 }

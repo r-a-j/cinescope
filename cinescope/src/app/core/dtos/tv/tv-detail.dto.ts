@@ -24,6 +24,7 @@ export interface TmdbTvEpisodeBaseDto {
     season_number: number;
     show_id: number;
     still_path: string | null;
+    episode_type?: string | null;
 }
 
 export interface TmdbTvNetworkDto {

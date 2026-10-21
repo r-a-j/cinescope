@@ -8,10 +8,11 @@ import {
   viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   IonContent,
+  IonIcon,
   IonSkeletonText,
   NavController
 } from '@ionic/angular/standalone';
@@ -38,7 +39,9 @@ import {
   cashOutline,
   layersOutline,
   chatboxEllipsesOutline,
-  pricetagOutline
+  pricetagOutline,
+  person,
+  chevronForward
 } from 'ionicons/icons';
 
 import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
@@ -79,6 +82,59 @@ export interface CastMemberVm {
   episodeCount?: number | undefined;
 }
 
+export interface TvCreatorVm {
+  id: number;
+  name: string;
+  profileUrl: string | null;
+}
+
+export interface OriginCountryVm {
+  code: string;
+  flag: string;
+  countryName: string;
+  culturalLabel?: string | undefined;
+}
+
+export interface ProductionStatusVm {
+  label: string;
+  isLive: boolean;
+  isEnded: boolean;
+  isCanceled: boolean;
+  tooltip?: string | undefined;
+}
+
+function getCountryFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
+
+const CULTURAL_FORMAT_MAP: Record<string, { name: string; tvFormat?: string }> = {
+  KR: { name: 'South Korea', tvFormat: 'K-Drama' },
+  JP: { name: 'Japan', tvFormat: 'Anime' },
+  IN: { name: 'India', tvFormat: 'Indian Series' },
+  GB: { name: 'United Kingdom', tvFormat: 'British TV' },
+  US: { name: 'United States', tvFormat: 'US Series' },
+  ES: { name: 'Spain', tvFormat: 'Spanish Drama' },
+  FR: { name: 'France', tvFormat: 'French Drama' },
+  DE: { name: 'Germany', tvFormat: 'German Series' },
+  IT: { name: 'Italy', tvFormat: 'Italian Series' },
+  TR: { name: 'Turkey', tvFormat: 'Turkish Dizi' },
+  CN: { name: 'China', tvFormat: 'C-Drama' },
+  TW: { name: 'Taiwan', tvFormat: 'Taiwanese Drama' },
+  TH: { name: 'Thailand', tvFormat: 'Thai Drama' },
+  SE: { name: 'Sweden', tvFormat: 'Nordic Noir' },
+  NO: { name: 'Norway', tvFormat: 'Nordic Noir' },
+  DK: { name: 'Denmark', tvFormat: 'Nordic Noir' },
+  BR: { name: 'Brazil', tvFormat: 'Brazilian Telenovela' },
+  MX: { name: 'Mexico', tvFormat: 'Mexican Drama' },
+  AU: { name: 'Australia', tvFormat: 'Australian TV' },
+  CA: { name: 'Canada', tvFormat: 'Canadian TV' }
+};
+
 export interface CrewSpotlightVm {
   role: string;
   names: string;
@@ -109,6 +165,7 @@ const PREFERRED_REGIONS = ['IN', 'DE', 'US', 'GB', 'CA', 'AU'];
   imports: [
     CommonModule,
     IonContent,
+    IonIcon,
     IonSkeletonText,
     SwimlaneComponent,
     DetailHeroComponent,
@@ -123,6 +180,7 @@ const PREFERRED_REGIONS = ['IN', 'DE', 'US', 'GB', 'CA', 'AU'];
 })
 export class MediaDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private navCtrl = inject(NavController);
   private moviesService = inject(TmdbMoviesService);
   private tvService = inject(TmdbTvService);
@@ -273,6 +331,74 @@ export class MediaDetailPage implements OnInit {
 
   public statusLabel = computed<string | null>(() => {
     return this.movieDetail()?.status || this.tvDetail()?.status || null;
+  });
+
+  public productionStatus = computed<ProductionStatusVm | null>(() => {
+    const t = this.tvDetail();
+    if (t) {
+      const rawStatus = (t.status || '').trim();
+      const inProd = t.in_production === true;
+      const lower = rawStatus.toLowerCase();
+
+      if (lower.includes('cancel')) {
+        return {
+          label: 'Canceled',
+          isLive: false,
+          isEnded: true,
+          isCanceled: true,
+          tooltip: 'Production canceled'
+        };
+      }
+
+      if (lower.includes('ended')) {
+        return {
+          label: 'Ended',
+          isLive: false,
+          isEnded: true,
+          isCanceled: false,
+          tooltip: 'Series concluded'
+        };
+      }
+
+      if (inProd || lower.includes('returning') || lower.includes('in production')) {
+        const label =
+          inProd && lower.includes('returning')
+            ? 'Renewed / In Production'
+            : rawStatus || 'In Production';
+        return {
+          label,
+          isLive: true,
+          isEnded: false,
+          isCanceled: false,
+          tooltip: 'Actively in production / renewed'
+        };
+      }
+
+      if (rawStatus) {
+        return {
+          label: rawStatus,
+          isLive: false,
+          isEnded: true,
+          isCanceled: false
+        };
+      }
+    }
+
+    const m = this.movieDetail();
+    if (m && m.status) {
+      const lower = m.status.toLowerCase();
+      const isLive = lower.includes('in production') || lower.includes('post production');
+      const isCanceled = lower.includes('cancel');
+      const isEnded = lower.includes('released');
+      return {
+        label: m.status,
+        isLive,
+        isEnded,
+        isCanceled
+      };
+    }
+
+    return null;
   });
 
   public certification = computed<string | null>(() => {
@@ -459,7 +585,7 @@ export class MediaDetailPage implements OnInit {
 
     const t = this.tvDetail();
     if (t) {
-      if (t.created_by && t.created_by.length > 0) {
+      if (t.created_by && t.created_by.length > 0 && this.tvCreators().length === 0) {
         items.push({
           role: 'Created By',
           names: t.created_by.map((c) => c.name).join(', ')
@@ -471,6 +597,15 @@ export class MediaDetailPage implements OnInit {
     }
 
     return items;
+  });
+
+  public tvCreators = computed<TvCreatorVm[]>(() => {
+    const creators = this.tvDetail()?.created_by || [];
+    return creators.map((c) => ({
+      id: c.id,
+      name: c.name,
+      profileUrl: resolveMediaImageUrl(c.profile_path, 'w185')
+    }));
   });
 
   // ==========================================
@@ -503,12 +638,63 @@ export class MediaDetailPage implements OnInit {
   // ==========================================
   // 💰 FACTS, KEYWORDS, REVIEWS & LINKS
   // ==========================================
+  public originCountry = computed<OriginCountryVm | null>(() => {
+    const t = this.tvDetail();
+    const m = this.movieDetail();
+
+    const code =
+      t?.origin_country?.[0] ||
+      t?.production_countries?.[0]?.iso_3166_1 ||
+      (m?.['origin_country'] as string[] | undefined)?.[0] ||
+      m?.production_countries?.[0]?.iso_3166_1;
+
+    if (!code || code.length !== 2) return null;
+
+    const upper = code.toUpperCase();
+    const flag = getCountryFlagEmoji(upper);
+    const meta = CULTURAL_FORMAT_MAP[upper];
+    const countryName = meta?.name || upper;
+
+    let culturalLabel: string | undefined;
+    if (this.mediaType() === 'tv') {
+      if (upper === 'JP') {
+        const isAnim = this.genres().some((g) => g.toLowerCase().includes('animat'));
+        culturalLabel = isAnim ? 'Anime' : 'J-Drama';
+      } else {
+        culturalLabel = meta?.tvFormat;
+      }
+    } else {
+      if (upper === 'KR') culturalLabel = 'Korean Cinema';
+      else if (upper === 'IN') culturalLabel = 'Indian Cinema';
+      else if (upper === 'JP') {
+        const isAnim = this.genres().some((g) => g.toLowerCase().includes('animat'));
+        culturalLabel = isAnim ? 'Anime' : 'Japanese Cinema';
+      } else if (upper === 'FR') culturalLabel = 'French Cinema';
+    }
+
+    return {
+      code: upper,
+      flag,
+      countryName,
+      culturalLabel
+    };
+  });
+
   public productionFacts = computed<{ label: string; value: string }[]>(() => {
     const facts: { label: string; value: string }[] = [];
     const m = this.movieDetail();
     const t = this.tvDetail();
 
+    const origin = this.originCountry();
+    if (origin) {
+      const val = `${origin.flag} ${origin.countryName}${origin.culturalLabel ? ` (${origin.culturalLabel})` : ''}`;
+      facts.push({ label: 'Origin', value: val });
+    }
+
     if (m) {
+      if (m.status) {
+        facts.push({ label: 'Status', value: m.status });
+      }
       if (m.release_date) {
         facts.push({ label: 'Release Date', value: m.release_date });
       }
@@ -521,11 +707,17 @@ export class MediaDetailPage implements OnInit {
     }
 
     if (t) {
+      const prodNote = t.in_production ? 'Actively In Production' : 'Concluded';
+      const statusText = t.status ? `${t.status} • ${prodNote}` : (t.in_production ? 'Actively In Production' : 'Concluded');
+      facts.push({ label: 'Production Status', value: statusText });
       if (t.first_air_date) {
         facts.push({ label: 'First Aired', value: t.first_air_date });
       }
       if (t.last_air_date) {
         facts.push({ label: 'Last Aired', value: t.last_air_date });
+      }
+      if (t.networks && t.networks.length > 0) {
+        facts.push({ label: 'Network', value: t.networks.map((n) => n.name).join(', ') });
       }
     }
 
@@ -586,12 +778,19 @@ export class MediaDetailPage implements OnInit {
     return (raw?.results || []).slice(0, 5);
   });
 
+  public imdbId = computed<string | null>(() => {
+    const ext = (this.movieDetail()?.['external_ids'] ?? this.tvDetail()?.['external_ids']) as
+      | Record<string, string | number | null>
+      | undefined;
+    return (ext?.['imdb_id'] as string | null) || this.movieDetail()?.imdb_id || null;
+  });
+
   public externalLinks = computed<ExternalLinkVm[]>(() => {
     const links: ExternalLinkVm[] = [];
     const ext = (this.movieDetail()?.['external_ids'] ?? this.tvDetail()?.['external_ids']) as
       | Record<string, string | number | null>
       | undefined;
-    const imdbId = (ext?.['imdb_id'] as string | null) || this.movieDetail()?.imdb_id || null;
+    const imdbId = this.imdbId();
     if (imdbId) {
       links.push({
         label: 'IMDb',
@@ -660,7 +859,9 @@ export class MediaDetailPage implements OnInit {
       cashOutline,
       layersOutline,
       chatboxEllipsesOutline,
-      pricetagOutline
+      pricetagOutline,
+      person,
+      chevronForward
     });
   }
 
@@ -854,6 +1055,19 @@ export class MediaDetailPage implements OnInit {
       await this.storage.moveToWatched(id, type, this.buildStoragePayload());
       await this.toast.presentInfo(`Marked "${itemTitle}" as Watched`, 1800);
     }
+  }
+
+  public openCreator(creator: TvCreatorVm): void {
+    void this.router.navigate(['/person', creator.id], {
+      state: {
+        preview: {
+          id: creator.id,
+          name: creator.name,
+          profileUrl: creator.profileUrl,
+          knownForDepartment: 'Writing'
+        }
+      }
+    });
   }
 
   public openOfficialTrailer(): void {
