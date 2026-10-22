@@ -45,7 +45,9 @@ jobs:
 
       - name: Build Release APK via Gradle
         working-directory: ./cinescope/android
-        run: ./gradlew assembleRelease
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
 
       - name: Safely Decode Keystore
         run: |
