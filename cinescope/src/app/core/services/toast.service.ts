@@ -30,6 +30,45 @@ export class ToastService {
     await this.presentToast(message, 'info', duration);
   }
 
+  public async presentActionWithUndo(
+    message: string,
+    onUndo: () => void,
+    onCommit?: () => void,
+    duration = 4500
+  ): Promise<void> {
+    if (this.currentToast) {
+      await this.currentToast.dismiss();
+    }
+
+    let undone = false;
+    this.currentToast = await this.toastController.create({
+      message,
+      duration,
+      position: 'bottom',
+      mode: 'ios',
+      cssClass: ['cinescope-toast', 'toast-info'],
+      buttons: [
+        {
+          text: 'UNDO',
+          role: 'undo',
+          handler: (): void => {
+            undone = true;
+            onUndo();
+          }
+        }
+      ]
+    });
+
+    this.currentToast.onDidDismiss().then(() => {
+      this.currentToast = null;
+      if (!undone && onCommit) {
+        onCommit();
+      }
+    });
+
+    await this.currentToast.present();
+  }
+
   // ==========================================
   // ⚙️ CORE IMPLEMENTATION
   // ==========================================
