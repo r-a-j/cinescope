@@ -1,0 +1,47 @@
+name: Deploy API to Vercel
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'cinescope-api/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-vercel:
+    name: Deploy Serverless Backend (Vercel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cinescope-api
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel Production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "Deploying cinescope-api to Vercel Production..."
+            vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+          else
+            echo "::warning::VERCEL_TOKEN is not set in GitHub repository secrets. Automatic Vercel deployment skipped."
+            echo "::notice::To enable automated deployment, add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID to GitHub Actions Secrets."
+          fi
