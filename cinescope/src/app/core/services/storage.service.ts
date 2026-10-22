@@ -77,8 +77,11 @@ export class StorageService {
     // ==========================================
     public readonly watchlistItems = signal<ContentDocType[]>([]);
     public readonly watchedItems = signal<ContentDocType[]>([]);
+    public readonly inboxItems = signal<ContentDocType[]>([]);
     public readonly favoritePeople = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
+
+    public readonly inboxCount = computed<number>(() => this.inboxItems().length);
 
     public readonly allowAdultContent = computed<boolean>(() => {
         return this.settings()?.allowAdultContent ?? false;
@@ -128,12 +131,15 @@ export class StorageService {
                 next: (docs) => {
                     const watchlist: ContentDocType[] = [];
                     const watched: ContentDocType[] = [];
+                    const inbox: ContentDocType[] = [];
                     const favoritePeople: ContentDocType[] = [];
 
                     for (const d of docs) {
                         const docJson = d.toJSON() as ContentDocType;
                         if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
                             favoritePeople.push(docJson);
+                        } else if (docJson.lists.includes('inbox')) {
+                            inbox.push(docJson);
                         } else if (docJson.lists.includes('watched')) {
                             watched.push(docJson);
                         } else if (docJson.lists.includes('watchlist')) {
@@ -143,6 +149,7 @@ export class StorageService {
 
                     this.watchlistItems.set(watchlist);
                     this.watchedItems.set(watched);
+                    this.inboxItems.set(inbox);
                     this.favoritePeople.set(favoritePeople);
 
                     // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
@@ -216,6 +223,14 @@ export class StorageService {
         }).$;
     }
 
+    public getInbox$(): Observable<ContentDocType[]> {
+        this.initReactiveStreams();
+        return this.dbService.db.content.find({
+            selector: { lists: { $in: ['inbox'] } },
+            sort: [{ addedAt: 'desc' }]
+        }).$;
+    }
+
     public async getSettings(): Promise<SettingsDocType | null> {
         this.initReactiveStreams();
         const cached = this.settings();
@@ -241,6 +256,15 @@ export class StorageService {
         this.initReactiveStreams();
         const docs = await this.dbService.db.content.find({
             selector: { lists: { $in: ['watched'] } },
+            sort: [{ addedAt: 'desc' }]
+        }).exec();
+        return docs.map((d) => d.toJSON() as ContentDocType);
+    }
+
+    public async getInbox(): Promise<ContentDocType[]> {
+        this.initReactiveStreams();
+        const docs = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['inbox'] } },
             sort: [{ addedAt: 'desc' }]
         }).exec();
         return docs.map((d) => d.toJSON() as ContentDocType);
@@ -329,6 +353,124 @@ export class StorageService {
         if (doc) {
             await doc.remove();
         }
+    }
+
+    // ==========================================
+    // 📥 INBOX TRIAGE & EXTRACTION QUEUE
+    // ==========================================
+
+    /**
+     * Staging an item into the Inbox triage queue.
+     * Returns false if the item is already in Watchlist or Watched to prevent unnecessary triage duplicate.
+     */
+    public async addToInbox(tmdbId: number, mediaType: 'movie' | 'tv', payload: TmdbPayload): Promise<boolean> {
+        this.initReactiveStreams();
+        const docId: string = this.generateId(tmdbId, mediaType);
+        const existing = await this.dbService.db.content.findOne(docId).exec();
+
+        if (existing) {
+            const data = existing.toJSON() as ContentDocType;
+            if (data.lists.includes('watchlist') || data.lists.includes('watched')) {
+                return false;
+            }
+        }
+
+        await this.dbService.db.content.upsert({
+            id: docId,
+            tmdbId,
+            mediaType,
+            lists: ['inbox'],
+            addedAt: new Date().toISOString(),
+            payload
+        });
+        return true;
+    }
+
+    /**
+     * Moves a triaged item from Inbox to Watchlist.
+     */
+    public async moveInboxToWatchlist(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+        this.initReactiveStreams();
+        const docId: string = this.generateId(tmdbId, mediaType);
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                d.lists = ['watchlist'];
+                return d;
+            });
+        }
+    }
+
+    /**
+     * Moves a triaged item from Inbox to Watched.
+     */
+    public async moveInboxToWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+        this.initReactiveStreams();
+        const docId: string = this.generateId(tmdbId, mediaType);
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                d.lists = ['watched'];
+                d.watchedAt = new Date().toISOString();
+                return d;
+            });
+        }
+    }
+
+    /**
+     * Discards an item from the Inbox queue.
+     */
+    public async discardFromInbox(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+        await this.removeMedia(tmdbId, mediaType);
+    }
+
+    /**
+     * Bulk moves multiple inbox items into Watchlist or Watched.
+     */
+    public async bulkMoveInbox(
+        items: Array<{ tmdbId: number; mediaType: 'movie' | 'tv' }>,
+        targetList: 'watchlist' | 'watched'
+    ): Promise<void> {
+        this.initReactiveStreams();
+        const now = new Date().toISOString();
+        for (const item of items) {
+            const docId = this.generateId(item.tmdbId, item.mediaType);
+            const doc = await this.dbService.db.content.findOne(docId).exec();
+            if (doc) {
+                await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                    d.lists = [targetList];
+                    if (targetList === 'watched') {
+                        d.watchedAt = now;
+                    }
+                    return d;
+                });
+            }
+        }
+    }
+
+    /**
+     * Bulk discards multiple inbox items.
+     */
+    public async bulkDiscardInbox(items: Array<{ tmdbId: number; mediaType: 'movie' | 'tv' }>): Promise<void> {
+        this.initReactiveStreams();
+        for (const item of items) {
+            await this.removeMedia(item.tmdbId, item.mediaType);
+        }
+    }
+
+    /**
+     * Clears all items currently in the Inbox queue.
+     */
+    public async clearInbox(): Promise<number> {
+        this.initReactiveStreams();
+        const docs = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['inbox'] } }
+        }).exec();
+        const count = docs.length;
+        for (const doc of docs) {
+            await doc.remove();
+        }
+        return count;
     }
 
     // ==========================================

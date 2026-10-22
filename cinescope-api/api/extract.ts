@@ -1,17 +1,42 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, Part } from '@google/generative-ai';
 import { checkRateLimit } from '../lib/rate-limiter';
 
 const MAX_TEXT_LENGTH = 10000;
+// Maximum ~5.5MB base64 payload size (well within Vercel's 4.5MB raw body limit)
+const MAX_IMAGE_BASE64_LENGTH = 5.5 * 1024 * 1024;
+
+const ALLOWED_MIME_TYPES = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif'
+]);
 
 const SYSTEM_EXTRACTION_INSTRUCTION = `
-You are a movie and TV series extraction assistant.
-Read the user-provided text extracted from images or screenshots.
-Identify any valid movie or TV show titles referenced across the text.
-Ignore actor names, director names, release years, timestamps, and UI/social media artifacts.
-Return ONLY a valid JSON array of strings containing unique titles. Example: ["Inception", "Breaking Bad"].
-If you find no recognizable titles, return [].
+You are an expert movie, TV series, and documentary extraction assistant for CineScope.
+Analyze the user-provided text or screenshot image.
+Identify all distinct movie or TV show titles referenced.
+For each title:
+1. Extract the clean official title (without extraneous words, episode numbers, or social media handles).
+2. If available or clearly discernible from context, infer the release year (4-digit integer) and media type ('movie' or 'tv').
+3. Filter out actor names, director names, studio names, platform names (like Netflix, HBO, Hulu), and UI elements unless they are part of the actual title.
+
+Return ONLY a valid JSON array of objects conforming to this structure:
+[
+  { "title": "Inception", "year": 2010, "mediaType": "movie" },
+  { "title": "The Bear", "year": 2022, "mediaType": "tv" }
+]
+If no valid titles are found, return [].
 `;
+
+export interface ExtractedTitleItem {
+    title: string;
+    year?: number;
+    mediaType?: 'movie' | 'tv';
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
     if (req.method === 'OPTIONS') {
@@ -44,21 +69,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     try {
-        const body = (req.body || {}) as { text?: unknown };
+        const body = (req.body || {}) as {
+            text?: unknown;
+            image?: unknown;
+            mimeType?: unknown;
+        };
 
-        // 2. Strict Input Length & Type Validation
-        if (!body.text || typeof body.text !== 'string') {
-            return res.status(400).json({ error: 'Text payload is required and must be a string.' });
-        }
+        const hasText = typeof body.text === 'string' && body.text.trim().length > 0;
+        const hasImage = typeof body.image === 'string' && body.image.trim().length > 0;
 
-        const sanitizedText = body.text.trim();
-        if (sanitizedText.length === 0) {
-            return res.status(400).json({ error: 'Text payload cannot be empty.' });
-        }
-
-        if (sanitizedText.length > MAX_TEXT_LENGTH) {
+        if (!hasText && !hasImage) {
             return res.status(400).json({
-                error: `Text payload exceeds maximum allowed length of ${MAX_TEXT_LENGTH} characters.`
+                error: 'Either "text" or "image" payload is required.'
+            });
+        }
+
+        const parts: Part[] = [];
+
+        // Validate and attach text payload
+        if (hasText) {
+            const sanitizedText = (body.text as string).trim();
+            if (sanitizedText.length > MAX_TEXT_LENGTH) {
+                return res.status(400).json({
+                    error: `Text payload exceeds maximum allowed length of ${MAX_TEXT_LENGTH} characters.`
+                });
+            }
+            parts.push({
+                text: `Extracted OCR or user text:\n${sanitizedText}`
+            });
+        }
+
+        // Validate and attach base64 image payload
+        if (hasImage) {
+            const rawImage = (body.image as string).trim();
+            if (rawImage.length > MAX_IMAGE_BASE64_LENGTH) {
+                return res.status(400).json({
+                    error: 'Image payload exceeds maximum allowed size (~4MB).'
+                });
+            }
+
+            let mimeType = typeof body.mimeType === 'string' ? body.mimeType.toLowerCase() : 'image/jpeg';
+            let base64Data = rawImage;
+
+            // Handle data URL prefix if present (e.g. data:image/png;base64,iVBORw...)
+            const dataUrlMatch = rawImage.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+            if (dataUrlMatch) {
+                mimeType = dataUrlMatch[1].toLowerCase();
+                base64Data = dataUrlMatch[2];
+            }
+
+            if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+                return res.status(400).json({
+                    error: `Unsupported image MIME type "${mimeType}". Allowed types: image/jpeg, image/png, image/webp, image/heic.`
+                });
+            }
+
+            parts.push({
+                inlineData: {
+                    data: base64Data,
+                    mimeType
+                }
             });
         }
 
@@ -75,12 +145,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             }
         });
 
-        // 3. Isolated User Message Turn
         const result = await model.generateContent({
             contents: [
                 {
                     role: 'user',
-                    parts: [{ text: `OCR Text Content:\n${sanitizedText}` }]
+                    parts
                 }
             ]
         });
@@ -89,17 +158,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         let parsed: unknown = [];
 
         try {
-            parsed = JSON.parse(responseText);
+            const cleanJson = responseText
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/```$/i, '')
+                .trim();
+            parsed = JSON.parse(cleanJson);
         } catch (parseError) {
             console.error('[API - Extract] JSON parse failure on model response:', responseText);
             return res.status(500).json({ error: 'Failed to parse model response' });
         }
 
-        const titles = (Array.isArray(parsed) ? parsed : [])
-            .map((item: any) => typeof item === 'string' ? item : (item && typeof item === 'object' && typeof item.title === 'string' ? item.title : ''))
-            .filter((t: string) => typeof t === 'string' && t.trim().length > 0);
+        const items: ExtractedTitleItem[] = (Array.isArray(parsed) ? parsed : [])
+            .map((item: any) => {
+                if (typeof item === 'string') {
+                    const clean = item.trim();
+                    return clean.length > 0 ? { title: clean } : null;
+                }
+                if (item && typeof item === 'object' && typeof item.title === 'string') {
+                    const cleanTitle = item.title.trim();
+                    if (!cleanTitle) return null;
+                    const resItem: ExtractedTitleItem = { title: cleanTitle };
+                    if (typeof item.year === 'number' && item.year > 1880 && item.year < 2100) {
+                        resItem.year = Math.round(item.year);
+                    }
+                    if (item.mediaType === 'movie' || item.mediaType === 'tv') {
+                        resItem.mediaType = item.mediaType;
+                    }
+                    return resItem;
+                }
+                return null;
+            })
+            .filter((item): item is ExtractedTitleItem => item !== null);
 
-        return res.status(200).json(titles);
+        return res.status(200).json(items);
 
     } catch (error: unknown) {
         console.error('[API - Extract Error]', error);

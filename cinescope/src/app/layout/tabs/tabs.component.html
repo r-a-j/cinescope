@@ -24,6 +24,9 @@
         <ion-tab-button tab="inbox" href="/tabs/inbox">
             <ion-icon name="mail"></ion-icon>
             <ion-label>INBOX</ion-label>
+            @if (storage.inboxCount() > 0) {
+                <ion-badge color="danger">{{ storage.inboxCount() }}</ion-badge>
+            }
         </ion-tab-button>
 
     </ion-tab-bar>

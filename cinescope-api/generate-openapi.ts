@@ -28,15 +28,17 @@ const ClientHeader = z.string().openapi({
 registry.registerPath({
     method: 'post',
     path: '/api/extract',
-    description: 'Extracts movie titles from raw OCR text using Gemini 2.5 Flash.',
-    summary: 'Extract Movie Titles',
+    description: 'Extracts movie and TV titles from raw OCR text or screenshot images using Gemini 2.5 Flash.',
+    summary: 'Extract Movie and TV Titles',
     request: {
         headers: z.object({ 'x-cinescope-client': ClientHeader }),
         body: {
             content: {
                 'application/json': {
                     schema: z.object({
-                        text: z.string().openapi({ example: 'I watched Inception and Breaking Bad today.' }),
+                        text: z.string().optional().openapi({ example: 'I watched Inception and Breaking Bad today.' }),
+                        image: z.string().optional().openapi({ example: 'data:image/jpeg;base64,...' }),
+                        mimeType: z.string().optional().openapi({ example: 'image/jpeg' }),
                     }),
                 },
             },
@@ -44,14 +46,18 @@ registry.registerPath({
     },
     responses: {
         200: {
-            description: 'A JSON array of extracted movie titles.',
+            description: 'A JSON array of extracted movie and TV titles with optional year and mediaType.',
             content: {
                 'application/json': {
-                    schema: z.array(z.string()).openapi({ example: ['Inception', 'Breaking Bad'] }),
+                    schema: z.array(z.object({
+                        title: z.string().openapi({ example: 'Inception' }),
+                        year: z.number().optional().openapi({ example: 2010 }),
+                        mediaType: z.enum(['movie', 'tv']).optional().openapi({ example: 'movie' }),
+                    })),
                 },
             },
         },
-        400: { description: 'Bad Request - Missing text payload' },
+        400: { description: 'Bad Request - Missing or invalid text/image payload' },
         403: { description: 'Forbidden - Invalid Client Origin' },
     },
 });
