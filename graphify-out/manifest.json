@@ -1,7 +1,7 @@
 {
   "cinescope-api/api/extract.ts": {
-    "mtime": 1792711368.3631036,
-    "ast_hash": "c4bda059182f5fa5e6640f7104550b81",
+    "mtime": 1792712763.1621654,
+    "ast_hash": "9ea3a8fa5bc419ad34c0896da8bad428",
     "semantic_hash": ""
   },
   "cinescope-api/api/feed.ts": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/tmdb.ts": {
-    "mtime": 1792708981.4356513,
-    "ast_hash": "88514158d4faeedf921b11138a37f93e",
+    "mtime": 1792712763.1631749,
+    "ast_hash": "c01a04e5729aeaae4a67899a1a0a1c96",
     "semantic_hash": ""
   },
   "cinescope-api/generate-openapi.ts": {
@@ -60,7 +60,7 @@
     "semantic_hash": ""
   },
   "cinescope/angular.json": {
-    "mtime": 1792709539.386811,
+    "mtime": 1792712763.1631749,
     "ast_hash": "e699367b4281ffc281c1b9405bf23965",
     "semantic_hash": ""
   },
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/inbox/inbox.page.ts": {
-    "mtime": 1792712493.7739727,
-    "ast_hash": "a7886aebc2c31749940de015b5d6993f",
+    "mtime": 1792712763.1671696,
+    "ast_hash": "6236feac22810f495d6481c6ebe7b213",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts": {
@@ -1300,8 +1300,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/inbox/inbox.page.html": {
-    "mtime": 1792712319.8746636,
-    "ast_hash": "b9b381732f61790ecbca80a830c07337",
+    "mtime": 1792712763.1651638,
+    "ast_hash": "9fc52adef008cbc67358efe684124a83",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.html": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "docs/user-docs/index.md": {
-    "mtime": 1792674415.6755252,
-    "ast_hash": "0c9ce32953f47ec85bfa1514865b2107",
+    "mtime": 1792713037.8938158,
+    "ast_hash": "6eb133f376c580ac9f246fe7f46b4f34",
     "semantic_hash": ""
   },
   "help.txt": {
@@ -2775,28 +2775,33 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/extraction.service.ts": {
-    "mtime": 1792709011.9112062,
-    "ast_hash": "0fc07a58670077c35519305491c439ef",
+    "mtime": 1792712763.1641636,
+    "ast_hash": "22dee5d3a321386485c2ad06b7b916ab",
     "semantic_hash": ""
   },
   "docs/dev-docs/api/extract-movie-and-tv-titles.ParamsDetails.json": {
-    "mtime": 1792707501.7472303,
+    "mtime": 1792712763.1681721,
     "ast_hash": "d9ee3de0aa100d533436df6ef05a2ed4",
     "semantic_hash": ""
   },
   "docs/dev-docs/api/extract-movie-and-tv-titles.RequestSchema.json": {
-    "mtime": 1792707501.7482383,
+    "mtime": 1792712763.1681721,
     "ast_hash": "971d0536ea3e7a31a4679f414147f492",
     "semantic_hash": ""
   },
   "docs/dev-docs/api/extract-movie-and-tv-titles.StatusCodes.json": {
-    "mtime": 1792707501.7492244,
+    "mtime": 1792712763.169163,
     "ast_hash": "a3037cc1b7fc701eb99abb0b4eddd096",
     "semantic_hash": ""
   },
   "docs/dev-docs/api/extract-movie-and-tv-titles.api.mdx": {
-    "mtime": 1792707501.7502332,
-    "ast_hash": "1723575e3dc5bbd8458421d65e67fb10",
+    "mtime": 1792712763.169163,
+    "ast_hash": "733c6c4be3602cf9e7b44d17af8bc3f5",
+    "semantic_hash": ""
+  },
+  "docs/user-docs/ai-inbox-queue.md": {
+    "mtime": 1792713001.2810192,
+    "ast_hash": "2c38a54c74b027b37ec70925543afa33",
     "semantic_hash": ""
   }
 }

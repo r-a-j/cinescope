@@ -23,6 +23,7 @@ flowchart LR
 
     B --> B1["Natural language queries"]
     B --> B2["Automatic intent translation"]
+    B --> B3["Multi-screenshot & text extraction"]
     C --> C1["Trending & regional hubs"]
     C --> C2["Detailed episode guides"]
     D --> D1["JustWatch integration"]
@@ -41,6 +42,7 @@ Explore each section of the user guide:
 | :--- | :--- |
 | **[Installation & Setup](./getting-started)** | Download the latest APK release, install on Android, and initialize offline storage without API key setup. |
 | **[Gemini AI Smart Search](./ai-smart-search)** | Formulate conversational movie queries translated by Google Gemini into structured execution graphs. |
+| **[AI Inbox & Gesture Queue](./ai-inbox-queue)** | Extract titles from unstructured text or mobile screenshots, and triage candidates with 120fps swipe deck gestures. |
 | **[Discover Hub & Curated Feeds](./discover-and-feeds)** | Explore dynamic trending hero backdrops, swimlanes, and dedicated Regional Indian Cinema hubs. |
 | **[Media Details & Streaming](./media-details-and-streaming)** | Inspect cast carousels, season-by-season episode guides, and real-time streaming provider availability. |
 | **[Watchlist & Offline Library](./watchlist-and-offline)** | Manage your collection with high-density 4-column poster grids, optimistic state controls, and RxDB offline storage. |
