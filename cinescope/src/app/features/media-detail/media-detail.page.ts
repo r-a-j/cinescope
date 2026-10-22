@@ -19,6 +19,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline,
+  homeOutline,
   shareSocialOutline,
   bookmarkOutline,
   bookmark,
@@ -48,6 +49,7 @@ import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { TmdbTvSeasonsService } from '../../core/services/tmdb-tv-seasons.service';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
+import { NavigationService } from '../../core/services/navigation.service';
 import { ToastService } from '../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
@@ -187,6 +189,7 @@ export class MediaDetailPage implements OnInit {
   private tvSeasonsService = inject(TmdbTvSeasonsService);
   public storage = inject(StorageService);
   private toast = inject(ToastService);
+  private navService = inject(NavigationService);
 
   private castVideoGallery = viewChild(CastVideoGalleryComponent);
   private content = viewChild(IonContent);
@@ -840,6 +843,7 @@ export class MediaDetailPage implements OnInit {
   constructor() {
     addIcons({
       arrowBackOutline,
+      homeOutline,
       shareSocialOutline,
       bookmarkOutline,
       bookmark,
@@ -1143,6 +1147,11 @@ export class MediaDetailPage implements OnInit {
     } else {
       this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
     }
+  }
+
+  public goToHome(): void {
+    this.castVideoGallery()?.closeVideo();
+    this.navService.navigateToHome();
   }
 
   private formatCurrency(value: number): string {

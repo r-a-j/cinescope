@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/navigation.service.ts": {
-    "mtime": 1792522767.2320511,
-    "ast_hash": "4fa823ec6c0cb1edcf11a09a8240bd7c",
+    "mtime": 1792699221.254438,
+    "ast_hash": "e75de7d2ca420cc826a625991db4e05b",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/poster-cache.service.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1792697595.7146344,
-    "ast_hash": "322d4e157ed50448b8af490b81944ffa",
+    "mtime": 1792697967.6087925,
+    "ast_hash": "402967b20621e481a44a3bb0252ef5ea",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -740,8 +740,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
-    "mtime": 1792697786.9803808,
-    "ast_hash": "2947918a34c5ec7fcd84a7b218ab0376",
+    "mtime": 1792697967.610545,
+    "ast_hash": "5823441fafbcd2af85d451b9ced8b60f",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/archive/archive.page.ts": {
@@ -750,13 +750,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792697764.7314641,
-    "ast_hash": "f2a9361b1e2b567cae7293bceec663d0",
+    "mtime": 1792699444.1723802,
+    "ast_hash": "2db2b230c4148ea7a11183f6952d56d3",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
-    "mtime": 1792697777.331875,
-    "ast_hash": "f5dd41cbf1bc9762e10e01a32222d639",
+    "mtime": 1792697967.6134932,
+    "ast_hash": "3d168d505ac4ba7e14aa11487a3659cf",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/inbox/inbox.page.ts": {
@@ -765,13 +765,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts": {
-    "mtime": 1792697618.574925,
-    "ast_hash": "a177c487fd6b38831422dcd8d08a88d4",
+    "mtime": 1792697967.6153476,
+    "ast_hash": "d105fdac6e52669f901454c341509440",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts": {
-    "mtime": 1792620702.006658,
-    "ast_hash": "6feff572b3f43a2415393473af80a92f",
+    "mtime": 1792699259.7747478,
+    "ast_hash": "44be4dcf4d230983e593fb23f3551705",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.ts": {
-    "mtime": 1792697812.523844,
-    "ast_hash": "97bc4dfbfe39602169380fb2506835be",
+    "mtime": 1792699310.020028,
+    "ast_hash": "790903adf5a2d1f32afabcb9292c2cfb",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.ts": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.ts": {
-    "mtime": 1792697735.2487683,
-    "ast_hash": "e6cdc8fa225fb9bdb41d367af1612fb4",
+    "mtime": 1792699374.994169,
+    "ast_hash": "8fa9294b9ca2aee37ca10b8abcdef1f8",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.html": {
-    "mtime": 1792616490.984501,
-    "ast_hash": "43613abef35875e6b50b1049eb890217",
+    "mtime": 1792699270.4431639,
+    "ast_hash": "32f347746a354f61d5d4522038ea9762",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.html": {
-    "mtime": 1792616490.987147,
-    "ast_hash": "5dbadbe22b70acced209194270ea16a7",
+    "mtime": 1792699318.2956772,
+    "ast_hash": "addf30eb517ab4aedb2a93ef29633d14",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {

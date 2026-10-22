@@ -1,9 +1,14 @@
 <ion-content [fullscreen]="true" color="background" class="person-content">
   <!-- Floating Top Navigation -->
   <div class="floating-nav">
-    <button type="button" class="nav-pill-btn" (click)="goBack()" aria-label="Go Back">
-      <ion-icon name="arrow-back-outline"></ion-icon>
-    </button>
+    <div class="nav-left">
+      <button type="button" class="nav-pill-btn" (click)="goBack()" aria-label="Go Back">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+      <button type="button" class="nav-pill-btn" (click)="goToHome()" aria-label="Go to Home">
+        <ion-icon name="home-outline"></ion-icon>
+      </button>
+    </div>
     <div class="nav-actions">
       <button
         type="button"
