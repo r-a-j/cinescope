@@ -1,6 +1,6 @@
 # CineScope
 
-CineScope is an offline-first cinematic tracking and discovery platform built with Angular 19, Ionic 8, and Capacitor 7, powered by a high-resilience Google Gemini AI orchestration gateway and a Node.js serverless Backend-for-Frontend (BFF) on Vercel.
+CineScope is an offline-first cinematic tracking and discovery platform built with Angular 21, Ionic 8, and Capacitor 8, powered by a high-resilience Google Gemini AI orchestration gateway and a Node.js serverless Backend-for-Frontend (BFF) on Vercel.
 
 ## Application Showcase
 
@@ -137,7 +137,7 @@ flowchart TD
 
 This repository is managed as a monorepo via PNPM Workspaces:
 
-- `cinescope/`: Cross-platform mobile app (Angular 19 Signals, Ionic 8, Capacitor 7, RxDB persistent local database).
+- `cinescope/`: Cross-platform mobile app (Angular 21 Signals, Ionic 8, Capacitor 8, RxDB persistent local database).
 - `cinescope-api/`: Serverless Backend-for-Frontend gateway (Vercel functions, rate limiting, SSRF guard, Gemini orchestration).
 - `docs/`: Docusaurus technical documentation hub and OpenAPI specifications.
 
