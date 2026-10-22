@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 import { IonApp, IonRouterOutlet, Platform } from '@ionic/angular/standalone';
 import { App } from '@capacitor/app';
 import { Location } from '@angular/common';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { NavController } from '@ionic/angular/standalone';
 
 @Component({
@@ -22,11 +21,6 @@ export class AppComponent {
   private initializeApp(): void {
     this.platform.ready().then(() => {
       this.setupHardwareBackButton();
-      
-      // Warm Start: Hide splash screen gracefully after initialization
-      setTimeout(() => {
-        SplashScreen.hide();
-      }, 200); 
     });
   }
 
