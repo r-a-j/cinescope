@@ -10,10 +10,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import {
   IonContent,
   IonToolbar,
-  IonIcon
+  IonIcon,
+  IonModal,
+  IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -23,11 +26,17 @@ import {
   informationCircleOutline,
   trashOutline,
   mailOpenOutline,
-  sparklesOutline
+  sparklesOutline,
+  addCircleOutline,
+  documentTextOutline,
+  imageOutline,
+  clipboardOutline,
+  cameraOutline
 } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ExtractionService } from '../../core/services/extraction.service';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
@@ -50,6 +59,14 @@ interface SampleInboxSeed {
   payload: TmdbPayload;
 }
 
+interface SelectedImageState {
+  previewUrl: string;
+  base64: string;
+  mimeType: string;
+  name: string;
+  sizeText: string;
+}
+
 @Component({
   selector: 'app-inbox',
   standalone: true,
@@ -58,6 +75,8 @@ interface SampleInboxSeed {
     IonContent,
     IonToolbar,
     IonIcon,
+    IonModal,
+    IonSpinner,
     HeaderComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +89,7 @@ export class InboxPage {
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private extractionService = inject(ExtractionService);
 
   // Transient set of IDs hidden optimistically while pending undo toast dismissal
   public pendingIds = signal<Set<string>>(new Set());
@@ -77,6 +97,22 @@ export class InboxPage {
   // Gesture dragging state
   public isDragging = signal<boolean>(false);
   public isAnimating = signal<boolean>(false);
+
+  // Ingestion Modal State
+  public isImportModalOpen = signal<boolean>(false);
+  public importMode = signal<'text' | 'image'>('text');
+  public rawText = '';
+  public selectedImage = signal<SelectedImageState | null>(null);
+  public isProcessing = signal<boolean>(false);
+  public processingStatus = signal<string>('Analyzing titles with Gemini AI...');
+
+  public isSubmitDisabled = computed<boolean>(() => {
+    if (this.isProcessing()) return true;
+    if (this.importMode() === 'text') {
+      return this.rawText.trim().length === 0;
+    }
+    return !this.selectedImage();
+  });
 
   private startX = 0;
   private startY = 0;
@@ -106,13 +142,143 @@ export class InboxPage {
       informationCircleOutline,
       trashOutline,
       mailOpenOutline,
-      sparklesOutline
+      sparklesOutline,
+      addCircleOutline,
+      documentTextOutline,
+      imageOutline,
+      clipboardOutline,
+      cameraOutline
     });
   }
 
   private get activeCardElement(): HTMLElement | null {
     const first = this.deckCards?.first;
     return first ? first.nativeElement : null;
+  }
+
+  // ==========================================
+  // 📥 INGESTION MODAL & AI EXTRACTION
+  // ==========================================
+
+  public openImportModal(): void {
+    this.isImportModalOpen.set(true);
+  }
+
+  public closeImportModal(): void {
+    if (this.isProcessing()) return;
+    this.isImportModalOpen.set(false);
+  }
+
+  public setImportMode(mode: 'text' | 'image'): void {
+    this.importMode.set(mode);
+  }
+
+  public onTextInput(event: Event): void {
+    const target = event.target as HTMLTextAreaElement | null;
+    this.rawText = target?.value ?? '';
+  }
+
+  public clearText(): void {
+    this.rawText = '';
+  }
+
+  public async pasteFromClipboard(): Promise<void> {
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim().length > 0) {
+          this.rawText = text.trim();
+          await this.toast.presentInfo('Pasted text from clipboard.', 1500);
+        } else {
+          await this.toast.presentWarning('Clipboard is empty.');
+        }
+      } else {
+        await this.toast.presentWarning('Clipboard permission is not available.');
+      }
+    } catch {
+      await this.toast.presentWarning('Unable to read clipboard. You can paste directly into the box.');
+    }
+  }
+
+  public async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) return;
+
+    try {
+      // Downscale screenshot client-side to ensure base64 remains well below 4.5MB
+      const compressed = await this.extractionService.compressImage(file, 1280, 0.82);
+      const sizeKb = Math.round((compressed.base64.length * 0.75) / 1024);
+
+      this.selectedImage.set({
+        previewUrl: compressed.base64,
+        base64: compressed.base64,
+        mimeType: compressed.mimeType,
+        name: file.name,
+        sizeText: `~${sizeKb} KB (optimized)`
+      });
+    } catch (err) {
+      console.error('[InboxPage] Image compression failed:', err);
+      await this.toast.presentError('Failed to load and compress screenshot.');
+    }
+  }
+
+  public async startExtraction(): Promise<void> {
+    const mode = this.importMode();
+    const hasText = mode === 'text' && this.rawText.trim().length > 0;
+    const hasImage = mode === 'image' && !!this.selectedImage();
+
+    if (!hasText && !hasImage) return;
+
+    this.isProcessing.set(true);
+    this.processingStatus.set('Analyzing titles with Gemini AI...');
+
+    try {
+      const img = this.selectedImage();
+      let payload: { text?: string; image?: string; mimeType?: string } | null = null;
+
+      if (hasText) {
+        payload = { text: this.rawText.trim() };
+      } else if (img) {
+        payload = {
+          image: img.base64,
+          mimeType: img.mimeType
+        };
+      }
+
+      if (!payload) {
+        this.isProcessing.set(false);
+        return;
+      }
+
+      const extracted = await firstValueFrom(this.extractionService.extractTitles(payload));
+
+      if (!extracted || extracted.length === 0) {
+        await this.toast.presentWarning('No movie or TV titles recognized. Try pasting a clearer list.');
+        this.isProcessing.set(false);
+        return;
+      }
+
+      this.processingStatus.set(`Resolving ${extracted.length} titles on TMDB...`);
+
+      const result = await this.extractionService.resolveAndQueueTitles(extracted);
+
+      this.isImportModalOpen.set(false);
+      this.rawText = '';
+      this.selectedImage.set(null);
+
+      if (result.added > 0) {
+        const skippedNote = result.skipped > 0 ? ` (${result.skipped} already saved)` : '';
+        await this.toast.presentSuccess(`Queued ${result.added} titles in your Inbox${skippedNote}!`, 3500);
+      } else {
+        await this.toast.presentInfo(`All ${result.total} extracted titles are already saved in your library.`);
+      }
+    } catch (error) {
+      console.error('[InboxPage] Extraction pipeline failed:', error);
+      await this.toast.presentError('Extraction failed. Check your network or try again.');
+    } finally {
+      this.isProcessing.set(false);
+    }
   }
 
   // ==========================================
@@ -349,7 +515,7 @@ export class InboxPage {
   }
 
   // ==========================================
-  // 🌱 DEMO POPULATOR (For testing Stage 2)
+  // 🌱 DEMO POPULATOR (For quick testing)
   // ==========================================
 
   public async populateDemoTitles(): Promise<void> {

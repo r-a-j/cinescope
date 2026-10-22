@@ -8,12 +8,22 @@
       <span class="queue-pill">{{ cards().length }}</span>
     </div>
 
-    @if (cards().length > 0) {
-      <button type="button" class="clear-all-btn" (click)="onClearAll()">
-        <ion-icon name="trash-outline"></ion-icon>
-        Clear All
+    <div class="inbox-toolbar-actions">
+      <button type="button" class="import-toolbar-btn" (click)="openImportModal()">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        <span>Import</span>
       </button>
-    }
+
+      @if (cards().length > 0) {
+        <button
+          type="button"
+          class="clear-all-btn"
+          (click)="onClearAll()"
+          title="Clear all queue items">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      }
+    </div>
   </div>
 </ion-toolbar>
 
@@ -25,12 +35,17 @@
           <ion-icon name="mail-open-outline"></ion-icon>
         </div>
         <h2>INBOX IS CLEAR</h2>
-        <p>No items pending review. Screenshot extractions and imported titles appear here for swift, one-swipe triage.</p>
+        <p>No items pending review. Import recommendation text, notes, or screenshots to queue movies and series for one-swipe triage.</p>
 
-        <button type="button" class="demo-seed-btn" (click)="populateDemoTitles()">
-          <ion-icon name="sparkles-outline"></ion-icon>
-          Load Demo Titles
-        </button>
+        <div class="empty-actions">
+          <button type="button" class="primary-import-btn" (click)="openImportModal()">
+            <ion-icon name="sparkles-outline"></ion-icon>
+            Import Text or Screenshot
+          </button>
+          <button type="button" class="demo-seed-btn" (click)="populateDemoTitles()">
+            Load Demo Titles
+          </button>
+        </div>
       </div>
     } @else {
       <!-- Interactive Card Deck -->
@@ -135,3 +150,125 @@
     }
   </div>
 </ion-content>
+
+<!-- Unified Ingestion Modal / Sheet -->
+<ion-modal
+  [isOpen]="isImportModalOpen()"
+  (didDismiss)="closeImportModal()"
+  [initialBreakpoint]="0.85"
+  [breakpoints]="[0, 0.85, 1.0]"
+  class="import-modal-sheet">
+  <ng-template>
+    <div class="import-modal-wrapper">
+      <div class="import-modal-header">
+        <div class="modal-handle"></div>
+        <div class="modal-title-row">
+          <h3>IMPORT TITLES</h3>
+          <button type="button" class="modal-close-btn" (click)="closeImportModal()">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
+
+        <div class="import-mode-tabs">
+          <button
+            type="button"
+            class="mode-tab"
+            [class.active]="importMode() === 'text'"
+            (click)="setImportMode('text')">
+            <ion-icon name="document-text-outline"></ion-icon>
+            Raw Text / Notes
+          </button>
+          <button
+            type="button"
+            class="mode-tab"
+            [class.active]="importMode() === 'image'"
+            (click)="setImportMode('image')">
+            <ion-icon name="image-outline"></ion-icon>
+            Screenshot
+          </button>
+        </div>
+      </div>
+
+      <div class="import-modal-body">
+        @if (importMode() === 'text') {
+          <div class="text-input-section">
+            <div class="text-quick-bar">
+              <span class="text-hint">Paste recommendation text or lists</span>
+              <button type="button" class="clipboard-btn" (click)="pasteFromClipboard()">
+                <ion-icon name="clipboard-outline"></ion-icon>
+                Paste
+              </button>
+            </div>
+
+            <textarea
+              class="import-textarea"
+              rows="6"
+              [value]="rawText"
+              (input)="onTextInput($event)"
+              placeholder="e.g. You have to check out Severance, Dune Part 2, Inception, and The Bear!"></textarea>
+
+            @if (rawText.trim().length > 0) {
+              <div class="text-meta-row">
+                <span>{{ rawText.length }} characters</span>
+                <button type="button" class="clear-text-btn" (click)="clearText()">Clear</button>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="image-input-section">
+            <input
+              #fileInput
+              type="file"
+              accept="image/*"
+              class="hidden-file-input"
+              (change)="onFileSelected($event)" />
+
+            @if (!selectedImage()) {
+              <div
+                class="image-dropzone"
+                role="button"
+                tabindex="0"
+                (click)="fileInput.click()"
+                (keyup.enter)="fileInput.click()">
+                <div class="dropzone-icon">
+                  <ion-icon name="camera-outline"></ion-icon>
+                </div>
+                <div class="dropzone-text">Tap to select or take screenshot</div>
+                <div class="dropzone-hint">Supports Instagram Reels, TikTok, Letterboxd, Notes</div>
+              </div>
+            } @else if (selectedImage(); as img) {
+              <div class="image-preview-card">
+                <img [src]="img.previewUrl" alt="Screenshot preview" class="preview-img" />
+                <div class="preview-info">
+                  <span class="preview-name">{{ img.name }}</span>
+                  <span class="preview-size">{{ img.sizeText }}</span>
+                  <button type="button" class="replace-img-btn" (click)="fileInput.click()">
+                    Change Screenshot
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="import-modal-footer">
+        @if (isProcessing()) {
+          <div class="processing-state">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>{{ processingStatus() }}</span>
+          </div>
+        } @else {
+          <button
+            type="button"
+            class="submit-import-btn"
+            [disabled]="isSubmitDisabled()"
+            (click)="startExtraction()">
+            <ion-icon name="sparkles-outline"></ion-icon>
+            Extract & Queue Titles
+          </button>
+        }
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>
