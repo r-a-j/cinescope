@@ -8,6 +8,8 @@ An offline-first cinematic tracking and discovery platform designed for film and
 [![Google Gemini](https://img.shields.io/badge/Google_Gemini-AI_Engine-8E75B2?style=flat&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![RxDB](https://img.shields.io/badge/RxDB-Offline_First-EE1C25?style=flat)](https://rxdb.info/)
 [![Vercel](https://img.shields.io/badge/Vercel-Serverless_BFF-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Latest Release](https://img.shields.io/github/v/release/r-a-j/cinescope?style=flat&label=Release&color=blue)](https://github.com/r-a-j/cinescope/releases/latest)
+[![Download Latest APK](https://img.shields.io/badge/Download-Latest_APK-success?style=flat&logo=android&logoColor=white)](https://github.com/r-a-j/cinescope/releases/latest/download/app-release-unsigned-signed.apk)
 
 ## Application Showcase
 
@@ -204,6 +206,10 @@ Alternatively, use root convenience scripts:
 pnpm run android:dev   # Live-reload mode
 pnpm run android:prod  # Production bundle mode
 ```
+
+Directly download the compiled Android production package without building from source:
+- [Download Latest Android APK](https://github.com/r-a-j/cinescope/releases/latest/download/app-release-unsigned-signed.apk) (always tracks the latest release asset)
+- [View All Releases & Changelogs](https://github.com/r-a-j/cinescope/releases/latest)
 
 ## Security & Gateway Defenses
 
