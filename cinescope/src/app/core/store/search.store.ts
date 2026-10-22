@@ -397,11 +397,11 @@ export const SearchStore = signalStore(
                         else if (section.action === 'exact_match' && section.parameters.query) {
                             const exactMatchRes = await firstValueFrom(searchService.searchMulti(section.parameters.query, 1));
                             if (exactMatchRes.results && exactMatchRes.results.length > 0) {
-                                const match = exactMatchRes.results[0] as CategorizedSearchResult;
-                                // Critical Fix: Manual schema padding for Angular Grid
-                                match.media_type = match.media_type || 'movie'; 
-                                match.smart_category = section.title;
-                                tmdbItems = [match];
+                                tmdbItems = exactMatchRes.results.slice(0, 10).map(match => ({
+                                    ...match,
+                                    media_type: match.media_type || 'movie',
+                                    smart_category: section.title
+                                })) as CategorizedSearchResult[];
                             }
                         }
 
@@ -430,6 +430,9 @@ export const SearchStore = signalStore(
                         if (error.status === 429) {
                             errorMsg = 'Too many AI requests. Please slow down.';
                             retryTimer = error.error?.retryAfter || 60; // Use exactly what Vercel sends, else 60s
+                        } else if (error.status === 503) {
+                            errorMsg = error.error?.error || 'AI is experiencing high demand. Please try again shortly.';
+                            retryTimer = error.error?.retryAfter || 5;
                         } else if (error.status === 500) {
                             errorMsg = 'AI Backend experienced an issue.';
                         } else if (error.status === 504) {

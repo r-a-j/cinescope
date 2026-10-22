@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { checkRateLimit } from '../lib/rate-limiter';
+import { getQueryCache, setQueryCache } from '../lib/query-cache';
 
 export interface GoogleRpcRetryInfo {
     retryDelay?: string;
@@ -17,14 +18,30 @@ export interface GoogleGenerativeAIError extends Error {
  * Prevents arbitrary model injection or forced invocation of expensive tiers.
  */
 const ALLOWED_GEMINI_MODELS = new Set([
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
     'gemini-3.1-flash-lite-preview',
+    'gemini-2.5-flash-lite',
     'gemini-2.5-flash',
+    'gemini-3-flash-preview',
+    'gemini-3.6-flash',
+    'gemini-3.8-flash',
     'gemini-2.0-flash',
     'gemini-1.5-flash'
 ]);
 
-const DEFAULT_MODEL = 'gemini-3.1-flash-lite-preview';
-const MAX_FALLBACK_MODELS = 3;
+/**
+ * Server-side fallback chain prioritized by quota capacity (RPM / RPD) and stability.
+ */
+const DEFAULT_FALLBACK_CASCADE = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-flash'
+];
+
+const MAX_FALLBACK_MODELS = 4;
 const MAX_QUERY_LENGTH = 300;
 
 const SYSTEM_SEARCH_ORCHESTRATOR_INSTRUCTION = `
@@ -107,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
         const body = (req.body || {}) as { query?: unknown; models?: unknown };
 
-        // 3. Strict Input Length & Type Validation
+        // 4. Strict Input Length & Type Validation
         if (!body.query || typeof body.query !== 'string') {
             return res.status(400).json({ error: 'Search query is required and must be a string.' });
         }
@@ -123,7 +140,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             });
         }
 
-        // 4. Model Whitelisting & Fallback Sanitization
+        // 5. Query Response Cache (Check if recently computed)
+        const cachedPayload = getQueryCache<{ sections: unknown[] }>(sanitizedQuery);
+        if (cachedPayload) {
+            res.setHeader('X-Cache-Status', 'HIT');
+            return res.status(200).json(cachedPayload);
+        }
+
+        // 6. Model Whitelisting & Cascading Fallback Setup
         let candidateModels: string[] = [];
         if (Array.isArray(body.models)) {
             candidateModels = body.models
@@ -131,7 +155,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
                 .slice(0, MAX_FALLBACK_MODELS);
         }
 
-        const modelsToAttempt = candidateModels.length > 0 ? candidateModels : [DEFAULT_MODEL];
+        // Merge requested models with server-side default cascade to ensure alternative fallback tiers
+        const modelsToAttempt = Array.from(new Set([...candidateModels, ...DEFAULT_FALLBACK_CASCADE])).slice(0, MAX_FALLBACK_MODELS);
 
         const genAI = new GoogleGenerativeAI(apiKey);
         let success = false;
@@ -139,9 +164,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         let lastError: unknown = null;
         let quotaError: unknown = null;
 
-        console.log(`[API - Gemini Fallback] Starting Cascading Fallback Loop for query length: ${sanitizedQuery.length}`);
+        console.log(`[API - Gemini Fallback] Starting Cascading Fallback Loop for query length: ${sanitizedQuery.length}. Candidates: ${modelsToAttempt.join(', ')}`);
 
-        // 5. Fallback Model Engine with Native systemInstruction Separation
+        // 7. Fallback Model Engine with Native systemInstruction Separation
         for (const modelId of modelsToAttempt) {
             try {
                 console.log(`[API - Gemini Fallback] Attempting Model: ${modelId}`);
@@ -207,12 +232,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             }
         }
 
+        // 8. Graceful Degradation Fallback (Rescue Mode)
+        // If all AI models fail (e.g., Google 503 high demand or 429 rate limit across all tiers),
+        // fallback gracefully to TMDB direct search so the user still receives search results!
         if (!success) {
-            console.error('[API - Gemini Fallback] ALL fallback models were completely exhausted!');
-            throw quotaError || lastError || new Error('All models exhausted without success.');
+            console.warn(`[API - Gemini Fallback] All fallback models failed for query: "${sanitizedQuery}". Activating Graceful Degradation.`);
+
+            const degradedPayload = {
+                sections: [
+                    {
+                        title: `Results for "${sanitizedQuery}"`,
+                        action: 'exact_match',
+                        parameters: {
+                            query: sanitizedQuery
+                        }
+                    }
+                ],
+                degraded: true,
+                notice: 'AI assistant is currently experiencing high demand. Showing direct matches.'
+            };
+
+            res.setHeader('X-Cache-Status', 'DEGRADED');
+            return res.status(200).json(degradedPayload);
         }
 
-        return res.status(200).json({ sections: mediaTitles });
+        const successPayload = { sections: mediaTitles };
+        setQueryCache(sanitizedQuery, successPayload);
+        res.setHeader('X-Cache-Status', 'MISS');
+
+        return res.status(200).json(successPayload);
 
     } catch (error: unknown) {
         const typedError = error as GoogleGenerativeAIError;
@@ -235,6 +283,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
         if (typedError?.status === 429 || msg.includes('429') || msg.includes('Quota')) {
             return res.status(429).json({ error: 'AI Quota Exceeded. Please slow down.', retryAfter });
+        }
+
+        if (typedError?.status === 503 || msg.includes('503') || msg.includes('high demand') || msg.includes('Service Unavailable')) {
+            return res.status(503).json({
+                error: 'AI assistant is experiencing high demand. Please try again shortly.',
+                retryAfter: 5
+            });
         }
 
         // Return a clean error without exposing upstream details, tokens, or internal tracebacks
