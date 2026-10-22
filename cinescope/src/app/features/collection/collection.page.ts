@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject, signal, computed, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { arrowBackOutline, star } from 'ionicons/icons';
@@ -447,6 +447,7 @@ interface CollectionCardVm {
 })
 export class CollectionPage implements OnInit, AfterViewInit {
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private navCtrl = inject(NavController);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
@@ -534,24 +535,76 @@ export class CollectionPage implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    this.extractNavigationState();
+  }
+
+  public ionViewWillEnter(): void {
+    this.extractNavigationState();
+  }
+
+  private extractNavigationState(): void {
     const navState = (this.router.getCurrentNavigation()?.extras.state ?? history.state) as {
       title?: string;
       items?: SwimlaneItem[];
       queryContext?: CollectionQueryContext;
     } | undefined;
 
-    if (navState?.title) {
-      this.collectionTitle.set(navState.title);
-    }
-    if (navState?.queryContext) {
-      this.queryContext.set(navState.queryContext);
-    }
-    if (Array.isArray(navState?.items)) {
-      this.rawItems.set(navState.items);
-      // Small or finite collections without queryContext don't need infinite scrolling
-      if (navState.items.length < 15 && !navState.queryContext) {
-        this.hasMore.set(false);
+    const qParams = this.route.snapshot.queryParams;
+
+    const title = navState?.title || qParams['title'] || 'Collection';
+    this.collectionTitle.set(title);
+
+    let queryContext = navState?.queryContext;
+    if (!queryContext && qParams['type']) {
+      const builtContext: CollectionQueryContext = {
+        type: qParams['type']
+      };
+      if (qParams['id']) {
+        builtContext.id = Number(qParams['id']);
       }
+      if (qParams['mediaType'] === 'movie' || qParams['mediaType'] === 'tv') {
+        builtContext.mediaType = qParams['mediaType'];
+      }
+      queryContext = builtContext;
+    }
+    this.queryContext.set(queryContext);
+
+    if (Array.isArray(navState?.items) && navState.items.length > 0) {
+      this.rawItems.set(navState.items);
+      this.currentPage.set(1);
+      // Small or finite collections without queryContext don't need infinite scrolling
+      if (navState.items.length < 15 && !queryContext) {
+        this.hasMore.set(false);
+      } else {
+        this.hasMore.set(true);
+      }
+    } else if (this.rawItems().length === 0) {
+      void this.fetchInitialCollectionPage();
+    }
+  }
+
+  private async fetchInitialCollectionPage(): Promise<void> {
+    const title = this.collectionTitle();
+    if (!title && !this.queryContext()) return;
+    this.isFetchingMore = true;
+    this.isLoadingMore.set(true);
+    try {
+      const res = await this.collectionLoader.fetchPage(
+        title,
+        1,
+        this.sortMode(),
+        this.queryContext(),
+        this.filters()
+      );
+      this.rawItems.set(res.items);
+      this.currentPage.set(1);
+      this.hasMore.set(res.hasMore);
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error('Failed to load initial collection items:', err);
+    } finally {
+      this.isFetchingMore = false;
+      this.isLoadingMore.set(false);
     }
   }
 

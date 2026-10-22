@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "cinescope/capacitor.config.ts": {
-    "mtime": 1792693670.5055623,
-    "ast_hash": "16be4f49bce40aa321402cfb86388749",
+    "mtime": 1792693904.894627,
+    "ast_hash": "c44d6b10b93a1db606e31701dc8cb8cf",
     "semantic_hash": ""
   },
   "cinescope/eslint.config.mjs": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792693684.835171,
-    "ast_hash": "f5d8fb2b8b59028f318e7b004bdbee2f",
+    "mtime": 1792693904.895291,
+    "ast_hash": "47222159f047ee2ce35ad9b58f47fe62",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -100,13 +100,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.ts": {
-    "mtime": 1792693664.7199824,
-    "ast_hash": "eafc81380e620fe4bcd7d4fa616099e3",
+    "mtime": 1792693904.8958483,
+    "ast_hash": "2359280ce573679ce8856198b3bb8413",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.routes.ts": {
-    "mtime": 1792245291.3547714,
-    "ast_hash": "a6444099b0fbb02767a159d0dfef6bde",
+    "mtime": 1792694558.8170638,
+    "ast_hash": "1809e806c0a3e59a6b648525870f5b1f",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/constants/api.constants.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792522767.234153,
-    "ast_hash": "37e280c7aecd2d925b65de7614cf7104",
+    "mtime": 1792694650.5707834,
+    "ast_hash": "698da0d41ae862adfe451abf8ed2e9a0",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -860,8 +860,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/shared/components/swimlane/swimlane.component.ts": {
-    "mtime": 1792522767.2476234,
-    "ast_hash": "70061d705198cca65aa702f088d2adbd",
+    "mtime": 1792694548.8159263,
+    "ast_hash": "f79c8ce570c0bbcfdb4cda906a4436cf",
     "semantic_hash": ""
   },
   "cinescope/src/app/shared/models/hero-banner-item.interface.ts": {

@@ -33,7 +33,23 @@ export class SwimlaneComponent {
     }
 
     public openViewAll(): void {
-        void this.router.navigate(['/collection'], {
+        const query = this.queryContext();
+        const baseSlug = (query?.type ? `${query.type}-${query.id ?? ''}` : this.title())
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'all';
+
+        const collectionId = `${baseSlug}-${Date.now()}`;
+
+        const queryParams: Record<string, string | number> = {
+            title: this.title()
+        };
+        if (query?.type) queryParams['type'] = query.type;
+        if (query?.id !== undefined) queryParams['id'] = query.id;
+        if (query?.mediaType) queryParams['mediaType'] = query.mediaType;
+
+        void this.router.navigate(['/collection', collectionId], {
+            queryParams,
             state: {
                 title: this.title(),
                 items: this.items(),
