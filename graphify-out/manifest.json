@@ -615,8 +615,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/navigation.service.ts": {
-    "mtime": 1792699221.254438,
-    "ast_hash": "e75de7d2ca420cc826a625991db4e05b",
+    "mtime": 1792699527.7545984,
+    "ast_hash": "406df8cfb1f3cb41ed662bf4a2b21a1f",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/poster-cache.service.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792699444.1723802,
-    "ast_hash": "2db2b230c4148ea7a11183f6952d56d3",
+    "mtime": 1792699527.7551513,
+    "ast_hash": "edac696528c721b6bbfca92f4a29b1cd",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -770,8 +770,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts": {
-    "mtime": 1792699259.7747478,
-    "ast_hash": "44be4dcf4d230983e593fb23f3551705",
+    "mtime": 1792699527.7562926,
+    "ast_hash": "6ea4293eabc80b59202808af73c8f256",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.ts": {
-    "mtime": 1792699310.020028,
-    "ast_hash": "790903adf5a2d1f32afabcb9292c2cfb",
+    "mtime": 1792699527.7573626,
+    "ast_hash": "cd4e4c97dca0cec65a3274e01b61bb03",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.ts": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.ts": {
-    "mtime": 1792699374.994169,
-    "ast_hash": "8fa9294b9ca2aee37ca10b8abcdef1f8",
+    "mtime": 1792699527.7600188,
+    "ast_hash": "69408bdeece2e51d457209b8ac32dc53",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.html": {
-    "mtime": 1792699270.4431639,
-    "ast_hash": "32f347746a354f61d5d4522038ea9762",
+    "mtime": 1792699527.7568276,
+    "ast_hash": "1ca5e12eeedaf47eb1bd256522764644",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.html": {
-    "mtime": 1792699318.2956772,
-    "ast_hash": "addf30eb517ab4aedb2a93ef29633d14",
+    "mtime": 1792699527.7584162,
+    "ast_hash": "d5ec3478999a9e1faa95d9166627db4c",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {
