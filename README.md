@@ -8,6 +8,7 @@ An offline-first cinematic tracking and discovery platform designed for film and
 [![Google Gemini](https://img.shields.io/badge/Google_Gemini-AI_Engine-8E75B2?style=flat&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![RxDB](https://img.shields.io/badge/RxDB-Offline_First-EE1C25?style=flat)](https://rxdb.info/)
 [![Vercel](https://img.shields.io/badge/Vercel-Serverless_BFF-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Documentation](https://img.shields.io/badge/Documentation-Live_Hub-success?style=flat&logo=docusaurus&logoColor=white)](https://docs-ten-pi-73.vercel.app/)
 [![Latest Release](https://img.shields.io/github/v/release/r-a-j/cinescope?style=flat&label=Release&color=blue)](https://github.com/r-a-j/cinescope/releases/latest)
 [![Download Latest APK](https://img.shields.io/badge/Download-Latest_APK-success?style=flat&logo=android&logoColor=white)](https://github.com/r-a-j/cinescope/releases/latest/download/app-release-unsigned-signed.apk)
 
@@ -95,7 +96,7 @@ Instead of acting as a simple LLM wrapper, CineScope employs Google Gemini as a 
 For example, a query such as:
 > *"mind-bending sci-fi movies where time slows down near a black hole with matthew mcconaughey"*
 
-is parsed by Gemini into an executable JSON parameter graph:
+is parsed by Gemini into an executable JSON parameter graph (see [API Reference: AI Smart Search](https://docs-ten-pi-73.vercel.app/developers/api/ai-smart-search)):
 ```json
 {
   "sections": [
@@ -148,7 +149,7 @@ This repository is managed as a monorepo via PNPM Workspaces:
 
 - `cinescope/`: Cross-platform mobile app (Angular Signals, Ionic, Capacitor, RxDB persistent local database).
 - `cinescope-api/`: Serverless Backend-for-Frontend gateway (Vercel functions, rate limiting, SSRF guard, Gemini orchestration).
-- `docs/`: Docusaurus technical documentation hub and OpenAPI specifications.
+- `docs/`: Technical documentation hub, Compodoc frontend architecture, and interactive OpenAPI specifications ([Live Hub](https://docs-ten-pi-73.vercel.app/)).
 
 ## Prerequisites
 
@@ -220,12 +221,27 @@ The serverless gateway (`cinescope-api`) enforces strict security policies on al
 - SSRF Protection: Blocks private IP ranges, link-local addresses, cloud metadata (169.254.169.254), and non-HTTPS targets on feed endpoints.
 - Rate Limiting: In-memory sliding-window limiter per IP to mitigate denial-of-service attempts.
 
-Detailed endpoint specifications, JSON schemas, and API documentation are available in [`cinescope-api/README.md`](cinescope-api/README.md).
+Detailed endpoint specifications, JSON schemas, and API documentation are available in [`cinescope-api/README.md`](cinescope-api/README.md) and the [Live Interactive OpenAPI Reference](https://docs-ten-pi-73.vercel.app/developers/api/ai-smart-search).
 
 ## Documentation Hub
 
-Build and preview the complete documentation portal:
+The complete documentation suite is deployed live at **[docs-ten-pi-73.vercel.app](https://docs-ten-pi-73.vercel.app/)**.
+
+### Live Documentation Sections
+
+- [Documentation Portal Home](https://docs-ten-pi-73.vercel.app/): Unified entry point for user guides, system architecture, and API references.
+- [Interactive OpenAPI Specification](https://docs-ten-pi-73.vercel.app/developers/api/ai-smart-search): Complete interactive API documentation covering the Gemini AI orchestration engine, secure TMDB proxy, and curated feed endpoints.
+- [Frontend Architecture Reference (Compodoc)](https://docs-ten-pi-73.vercel.app/frontend/index.html): Class hierarchies, Angular Signals architecture, services, components, and module dependency graphs.
+- [Developer & Architecture Guide](https://docs-ten-pi-73.vercel.app/developers/): Local environment configuration, monorepo workflows, offline storage design, and deployment pipelines.
+- [User Guide](https://docs-ten-pi-73.vercel.app/users/): End-user feature walkthroughs for semantic discovery, streaming provider lookups, and offline collection management.
+
+### Local Documentation Commands
+
+Run, build, and deploy the documentation suite locally:
 
 ```bash
-pnpm run docs:start
+pnpm run docs:start     # Generates API & Compodoc specs and launches Docusaurus dev server
+pnpm run docs:build-all # Regenerates OpenAPI docs and Compodoc frontend documentation
+pnpm run docs:build     # Compiles production static documentation bundle into docs/build/
+pnpm run release:docs   # Builds all assets and deploys directly to Vercel production
 ```
