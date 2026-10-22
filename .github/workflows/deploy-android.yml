@@ -53,6 +53,13 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ./cinescope/android/app/release.keystore
 
+      - name: Detect Android Build Tools
+        id: build_tools
+        run: |
+          BUILD_TOOLS_VERSION=$(ls -1 $ANDROID_HOME/build-tools | sort -V | tail -n 1)
+          echo "Found Android Build Tools: $BUILD_TOOLS_VERSION"
+          echo "version=$BUILD_TOOLS_VERSION" >> $GITHUB_OUTPUT
+
       - name: Sign Production APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
@@ -62,6 +69,7 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
+          buildToolsVersion: ${{ steps.build_tools.outputs.version || '35.0.0' }}
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
