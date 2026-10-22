@@ -53,12 +53,13 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ./cinescope/android/app/release.keystore
 
-      - name: Detect Android Build Tools
-        id: build_tools
+      - name: Symlink Android Build Tools for Sign Action
         run: |
-          BUILD_TOOLS_VERSION=$(ls -1 $ANDROID_HOME/build-tools | sort -V | tail -n 1)
-          echo "Found Android Build Tools: $BUILD_TOOLS_VERSION"
-          echo "version=$BUILD_TOOLS_VERSION" >> $GITHUB_OUTPUT
+          BUILD_TOOLS_DIR="${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools"
+          LATEST_VERSION=$(ls -1 "$BUILD_TOOLS_DIR" | sort -V | tail -n 1)
+          echo "Symlinking latest build tools ($LATEST_VERSION) to 29.0.3 for r0adkll/sign-android-release..."
+          sudo ln -sf "$BUILD_TOOLS_DIR/$LATEST_VERSION" "$BUILD_TOOLS_DIR/29.0.3"
+          ls -ld "$BUILD_TOOLS_DIR/29.0.3"
 
       - name: Sign Production APK
         uses: r0adkll/sign-android-release@v1
@@ -69,7 +70,6 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
-          buildToolsVersion: ${{ steps.build_tools.outputs.version || '35.0.0' }}
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
