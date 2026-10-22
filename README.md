@@ -56,6 +56,65 @@ flowchart TD
 - Prompt Isolation & Security: Native role separation via Google Generative AI SDK `systemInstruction` parameters prevents prompt injection and parameter hallucination.
 - Credential Security: Third-party API credentials (TMDB access tokens and Gemini API keys) are fully isolated within the Vercel BFF and never exposed to the client bundle.
 
+## Application Showcase
+
+### 1. AI-Driven Semantic Discovery & Curated Feeds
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="screenshots/01-gemini-smart-search.jpg" width="260" alt="Gemini AI Smart Search" /><br />
+      <sub><b>Gemini AI Semantic Search</b><br />Query: <i>"movie list that has anirudh music"</i> translated to Anirudh Ravichander filmography</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/02-discover-trending.jpg" width="260" alt="Trending Discover Feed" /><br />
+      <sub><b>Trending & Viral Discover Hub</b><br />Dynamic hero backdrop carousels and live TMDB catalog swimlanes</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/03-regional-desi-hub.jpg" width="260" alt="Regional Indian Cinema Hub" /><br />
+      <sub><b>Regional Indian Cinema Hub</b><br />Dedicated feeds for Telugu blockbusters, Tamil cinema, and Indian OTT series</sub>
+    </td>
+  </tr>
+</table>
+
+### 2. Comprehensive Media Metadata & Episode Guides
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="screenshots/04-movie-details.jpg" width="260" alt="Movie Details View" /><br />
+      <sub><b>Movie Details & Cast Overview</b><br />Metadata, cast carousels, crew credits, and watched status tracking</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/06-tv-series-details.jpg" width="260" alt="TV Series Details" /><br />
+      <sub><b>TV Series Hub & JustWatch</b><br />Multi-season hub with streaming provider availability (Netflix, AMC)</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/07-tv-episodes-guide.jpg" width="260" alt="TV Episodes Guide" /><br />
+      <sub><b>Interactive Episode Guide</b><br />Episode ratings, guest star badges, and director breakdowns</sub>
+    </td>
+  </tr>
+</table>
+
+### 3. Offline-First Reactive Storage & Watchlist Management
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="screenshots/08-archive-watchlist-grid.jpg" width="260" alt="4-Column Watchlist Grid" /><br />
+      <sub><b>High-Density Watchlist Grid</b><br />4-column layout rendering 300+ tracked titles with sub-frame hydration</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/09-archive-watched-history.jpg" width="260" alt="Watched History Archive" /><br />
+      <sub><b>Watched History & Offline Sync</b><br />Reactive local persistence via RxDB with indicator badges</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="screenshots/05-movie-watchlist-active.jpg" width="260" alt="Watchlist State Action" /><br />
+      <sub><b>Optimistic State Controls</b><br />Instant UI feedback for Watchlist additions and media states</sub>
+    </td>
+  </tr>
+</table>
+
 ## Monorepo Layout
 
 This repository is managed as a monorepo via PNPM Workspaces:
