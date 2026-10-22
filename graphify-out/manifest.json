@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/smart-search.ts": {
-    "mtime": 1792663963.024758,
-    "ast_hash": "9d7f5ddee27621f60d3c1f024c215506",
+    "mtime": 1792664194.4136803,
+    "ast_hash": "187da2934a8fef45f9513a6a0ea8598c",
     "semantic_hash": ""
   },
   "cinescope-api/api/tmdb.ts": {
@@ -625,8 +625,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/smart-search.service.ts": {
-    "mtime": 1792664011.4741194,
-    "ast_hash": "0c627f0d0be341f55fd07268f60e9496",
+    "mtime": 1792664194.4156768,
+    "ast_hash": "a7ee7a512ece8b66d3be919f1c413234",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
@@ -735,7 +735,7 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792663987.4001875,
+    "mtime": 1792664194.4166813,
     "ast_hash": "45aa93982613e57981d723bd20b40a92",
     "semantic_hash": ""
   },
@@ -875,13 +875,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/environments/environment.prod.ts": {
-    "mtime": 1792663969.5175247,
-    "ast_hash": "af64d4098a77217cf0888e3a199057d9",
+    "mtime": 1792664194.4166813,
+    "ast_hash": "41085e97afcb8f6d12c4ad0659e1eaff",
     "semantic_hash": ""
   },
   "cinescope/src/environments/environment.ts": {
-    "mtime": 1792663972.4094574,
-    "ast_hash": "a14152ae4cee1f041758d28ba11427bf",
+    "mtime": 1792664194.4176784,
+    "ast_hash": "1136cb0008a8443fc7e6c31bff82de01",
     "semantic_hash": ""
   },
   "cinescope/src/main.ts": {
@@ -925,7 +925,7 @@
     "semantic_hash": ""
   },
   "docs/cinescope-openapi.json": {
-    "mtime": 1792664016.822611,
+    "mtime": 1792664159.4173706,
     "ast_hash": "4ab5bf6397405341c9205d67d55d407b",
     "semantic_hash": ""
   },
@@ -1270,8 +1270,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1776538031.0198069,
-    "ast_hash": "4aa08fe8cbfff3ca8089e19c159dde3a",
+    "mtime": 1792666132.953642,
+    "ast_hash": "5a34f8c8c0c217562487be71944bd98e",
     "semantic_hash": ""
   },
   "REPOSITORY_ANALYSIS.md": {
@@ -1280,8 +1280,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/README.md": {
-    "mtime": 1774015719.2333515,
-    "ast_hash": "373e9d48be156b5271b0b38e8bfb0af0",
+    "mtime": 1792664446.0480287,
+    "ast_hash": "6b9ecae1cbea298942588e27fe433719",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.html": {
@@ -2690,13 +2690,63 @@
     "semantic_hash": ""
   },
   "cinescope-api/lib/query-cache.ts": {
-    "mtime": 1792663874.99694,
-    "ast_hash": "3740febb355754872949fdd95eae67e9",
+    "mtime": 1792664194.4146757,
+    "ast_hash": "29b639cf4a6f8cbd9c2cead40f569dff",
     "semantic_hash": ""
   },
   ".github/workflows/deploy-api.yml": {
-    "mtime": 1792663998.7610202,
-    "ast_hash": "52bcf2158b45dffdea899343abf07dee",
+    "mtime": 1792664194.4126823,
+    "ast_hash": "e3742960008b413e8f5660dd06183dc1",
+    "semantic_hash": ""
+  },
+  "screenshots/01-gemini-smart-search.jpg": {
+    "mtime": 1792666132.9560747,
+    "ast_hash": "8d5960c225d1fd4a77b1f480639959f9",
+    "semantic_hash": ""
+  },
+  "screenshots/02-discover-trending.jpg": {
+    "mtime": 1792666132.957313,
+    "ast_hash": "a2bf9fd5320b3ba8cccd00308a6a70bb",
+    "semantic_hash": ""
+  },
+  "screenshots/03-regional-desi-hub.jpg": {
+    "mtime": 1792666132.958997,
+    "ast_hash": "b0d245cc9e84a1069a97ad4c36af445a",
+    "semantic_hash": ""
+  },
+  "screenshots/04-movie-details.jpg": {
+    "mtime": 1792666132.9605975,
+    "ast_hash": "1ce42a420ef4cc28cd35173764ad8f55",
+    "semantic_hash": ""
+  },
+  "screenshots/05-movie-watchlist-active.jpg": {
+    "mtime": 1792666132.9632175,
+    "ast_hash": "f17e7d8865bef014ad2a95375574078d",
+    "semantic_hash": ""
+  },
+  "screenshots/06-tv-series-details-extended.jpg": {
+    "mtime": 1792666132.9653163,
+    "ast_hash": "26150900dc11f5988e6344844c6023d5",
+    "semantic_hash": ""
+  },
+  "screenshots/06-tv-series-details.jpg": {
+    "mtime": 1792666132.9668274,
+    "ast_hash": "b40a5e4c0555d079e77d20d9b6f6ec3c",
+    "semantic_hash": ""
+  },
+  "screenshots/07-tv-episodes-guide.jpg": {
+    "mtime": 1792666132.9684384,
+    "ast_hash": "8d1f05a11cbb6be1cda8df50d6053bf1",
+    "semantic_hash": ""
+  },
+  "screenshots/08-archive-watchlist-grid.jpg": {
+    "mtime": 1792666132.9694452,
+    "ast_hash": "397701d322b07402eb70455e6cc632d0",
+    "semantic_hash": ""
+  },
+  "screenshots/09-archive-watched-history.jpg": {
+    "mtime": 1792666132.971627,
+    "ast_hash": "c2fa5f8c4b562ed539499e332ae27068",
     "semantic_hash": ""
   }
 }
