@@ -1,82 +1,86 @@
-# Cinescope (v4 Architecture)
+# CineScope
 
-Welcome to the completely revamped Cinescope project! This repository has been structurally upgraded to a **Monorepo** architecture powered by **PNPM Workspaces**.
+CineScope is a movie and TV tracking application built with Ionic, Angular 19, and Capacitor 7, supported by a serverless Backend-for-Frontend (BFF) on Vercel.
 
-## Repository Structure
+## Repository Layout
 
-This repository contains both the frontend application and the backend API, allowing them to share dependencies and exist harmoniously under one roof without long-path locking issues.
+This monorepo is managed using PNPM Workspaces:
 
-- `/cinescope` - The Ionic/Angular frontend application.
-- `/cinescope-api` - The Node.js/Vercel serverless backend API.
+- `cinescope/` - Frontend mobile application (Angular 19, Ionic 8, Capacitor 7, RxDB).
+- `cinescope-api/` - Serverless API gateway (Node.js, TMDB proxy, Gemini AI orchestration).
+- `docs/` - Docusaurus documentation hub and OpenAPI specifications.
+
+## Prerequisites
+
+- Node.js >= 22.0.0
+- pnpm >= 10.0.0
+- Java JDK 21 (for Android builds)
+- Android SDK Platform 34+
 
 ## Getting Started
 
 ### 1. Installation
-Because this is a PNPM workspace, you only need to run the install command once at the **root** of the repository:
+
+Install all workspace dependencies from the repository root:
+
 ```bash
 pnpm install
 ```
-PNPM will automatically hoist and link dependencies for both the frontend and the backend simultaneously to save space and time.
 
-### 2. Running Locally (Development)
+### 2. Local Development
 
-**Frontend (Cinescope):**
-To start the frontend development server:
+Run both the API server (port 3000) and the Angular UI development server concurrently:
+
 ```bash
-cd cinescope
-pnpm start
-```
-This will run `ng serve` and host the web app locally.
-
-**Backend (Cinescope API):**
-To start the backend development server using the Vercel CLI:
-```bash
-cd cinescope-api
-npx vercel dev
+pnpm run dev
 ```
 
-### 3. Building for Production
+Or run services individually:
 
-**Frontend:**
+- Frontend UI: `pnpm --filter cinescope start`
+- Backend API: `pnpm --filter cinescope-api exec npx vercel dev --listen 3000 --yes`
+
+### 3. Production Build
+
+Compile all packages across the workspace:
+
 ```bash
-cd cinescope
 pnpm run build
 ```
-This will compile the production-ready Angular bundle into the `/cinescope/www/` directory.
 
-**Mobile Deployment (Capacitor):**
-After building the production frontend, you can sync and run the Android app natively on an attached mobile device:
+Frontend assets will be generated in `cinescope/www/`.
+
+### 4. Android Build and Deployment
+
+Sync web assets to Capacitor and launch on a connected Android device:
+
 ```bash
 cd cinescope
 npx cap sync android
 npx cap run android
 ```
 
-## Documentation Architecture
+Or use the workspace scripts:
 
-This monorepo features a fully automated, self-generating documentation pipeline powered by **Docusaurus**, **Compodoc** (Frontend), and **OpenAPI** (Backend API).
-
-### Generating the Docs
-
-To regenerate all documentation across the entire stack, run this single command from the root:
 ```bash
-pnpm run docs:build-all
+pnpm run android:dev   # Live-reload mode
+pnpm run android:prod  # Production bundle mode
 ```
 
-### One-Click Development
+## Backend API & AI Resilience
 
-If you are actively developing and want to guarantee you are looking at the most up-to-date documentation, run the startup macro:
+The backend API secures TMDB and Gemini keys and implements a 4-tier resilience strategy against AI demand spikes and outages:
+- Multi-tier in-memory LRU query cache (2-hour TTL).
+- Cascading model fallback across available Gemini Flash models.
+- Automatic graceful degradation to direct TMDB search when AI tiers are unavailable.
+- Strict prefix allowlists and SSRF protection.
+
+Detailed API endpoint documentation and architecture diagrams are in [`cinescope-api/README.md`](cinescope-api/README.md).
+
+## Documentation Hub
+
+Build and preview the unified documentation portal (Compodoc and OpenAPI):
 
 ```bash
 pnpm run docs:start
-```
-
-### 4. Publishing & Hosting
-
-**Frontend App:** You can deploy the web version of the frontend to any static host (Firebase Hosting, Vercel, Netlify) by uploading the compiled `/cinescope/www` directory. 
-
-**Backend API:** The backend is natively configured for **Vercel** (`@vercel/node`). You can instantly publish your Serverless functions by navigating to the API folder and pushing to production:
-```bash
-cd cinescope-api
-npx vercel --prod
 ```
