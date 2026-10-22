@@ -428,7 +428,7 @@ export class StorageService {
      * Bulk moves multiple inbox items into Watchlist or Watched.
      */
     public async bulkMoveInbox(
-        items: Array<{ tmdbId: number; mediaType: 'movie' | 'tv' }>,
+        items: { tmdbId: number; mediaType: 'movie' | 'tv' }[],
         targetList: 'watchlist' | 'watched'
     ): Promise<void> {
         this.initReactiveStreams();
@@ -451,7 +451,7 @@ export class StorageService {
     /**
      * Bulk discards multiple inbox items.
      */
-    public async bulkDiscardInbox(items: Array<{ tmdbId: number; mediaType: 'movie' | 'tv' }>): Promise<void> {
+    public async bulkDiscardInbox(items: { tmdbId: number; mediaType: 'movie' | 'tv' }[]): Promise<void> {
         this.initReactiveStreams();
         for (const item of items) {
             await this.removeMedia(item.tmdbId, item.mediaType);
