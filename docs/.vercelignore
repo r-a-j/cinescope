@@ -1,0 +1,12 @@
+# Dependencies & temporary caches
+node_modules
+.docusaurus
+.cache-loader
+.env*.local
+*.log
+
+# Explicitly whitelist prebuilt Docusaurus bundle and static Compodoc assets
+!build
+!build/**
+!static/frontend
+!static/frontend/**

@@ -1210,13 +1210,13 @@
     "semantic_hash": ""
   },
   "docs/vercel.json": {
-    "mtime": 1775850613.0499353,
-    "ast_hash": "94af5ad51d2627940da05eb7b54eb89d",
+    "mtime": 1792668984.8669667,
+    "ast_hash": "3119cefd01f2bff532d43f814a2e8576",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1776792567.4352136,
-    "ast_hash": "fb25787e2c31bdc281e39e7e7a668b26",
+    "mtime": 1792668992.9754317,
+    "ast_hash": "c10a754ae83b794867e94c808dd1ad3a",
     "semantic_hash": ""
   },
   ".agent/rules/graphify.md": {
@@ -1270,8 +1270,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792666132.953642,
-    "ast_hash": "5a34f8c8c0c217562487be71944bd98e",
+    "mtime": 1792667494.0769577,
+    "ast_hash": "6a962a034276a960d5dbfa86a4a1ea8c",
     "semantic_hash": ""
   },
   "REPOSITORY_ANALYSIS.md": {

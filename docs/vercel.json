@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "docusaurus",
-  "buildCommand": "cd .. && pnpm run docs:build-all && pnpm --filter docs run build",
+  "installCommand": "node -e \"if (require('fs').existsSync('build/index.html')) { console.log('Prebuilt docs found, skipping install'); } else { require('child_process').execSync('npm install', {stdio: 'inherit'}); }\"",
+  "buildCommand": "node -e \"if (require('fs').existsSync('build/index.html')) { console.log('Prebuilt docs found, skipping remote build'); } else { require('child_process').execSync('docusaurus build', {stdio: 'inherit'}); }\"",
   "outputDirectory": "build",
   "ignoreCommand": "git diff HEAD^ HEAD --quiet . ../cinescope ../cinescope-api"
 }
