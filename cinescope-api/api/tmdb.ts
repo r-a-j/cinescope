@@ -1,3 +1,6 @@
+// Suppress Node.js runtime DEP0169 url.parse deprecation warnings triggered by internal serverless wrappers
+process.noDeprecation = true;
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { checkRateLimit } from '../lib/rate-limiter';
 
