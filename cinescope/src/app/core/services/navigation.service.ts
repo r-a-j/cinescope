@@ -12,6 +12,6 @@ export class NavigationService {
 
   public navigateToHome(): void {
     this.resetDiscoverTrigger.update(count => count + 1);
-    this.navCtrl.navigateRoot('/tabs/discover', { animated: true });
+    this.navCtrl.navigateRoot('/tabs/discover', { animated: true, animationDirection: 'back' });
   }
 }

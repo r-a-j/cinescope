@@ -1,6 +1,8 @@
 import { Component, ChangeDetectionStrategy, input, output, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { arrowBackOutline, homeOutline, shareSocialOutline } from 'ionicons/icons';
 import { BookmarkState } from '../../../../shared/components/poster-card/poster-card.component';
 import { TmdbTvNetworkDto } from '../../../../core/dtos/tv/tv-detail.dto';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
@@ -14,9 +16,14 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
   template: `
     <!-- Floating Top Navigation Bar -->
     <div class="floating-nav">
-      <button type="button" class="nav-pill-btn" (click)="backClick.emit()" aria-label="Go Back">
-        <ion-icon name="arrow-back-outline"></ion-icon>
-      </button>
+      <div class="nav-left">
+        <button type="button" class="nav-pill-btn" (click)="backClick.emit()" aria-label="Go Back">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </button>
+        <button type="button" class="nav-pill-btn" (click)="homeClick.emit()" aria-label="Go to Home">
+          <ion-icon name="home-outline"></ion-icon>
+        </button>
+      </div>
 
       <div class="nav-actions">
         <button type="button" class="nav-pill-btn" (click)="shareClick.emit()" aria-label="Share">
@@ -200,6 +207,11 @@ import { OriginCountryVm, ProductionStatusVm } from '../../media-detail.page';
       align-items: center;
       justify-content: space-between;
       pointer-events: none;
+    }
+    .nav-left, .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .nav-pill-btn {
       pointer-events: auto;
@@ -560,6 +572,7 @@ export class DetailHeroComponent {
   public hasTrailer = input<boolean>(false);
 
   public backClick = output();
+  public homeClick = output();
   public shareClick = output();
   public watchlistToggle = output();
   public watchedToggle = output();
@@ -568,6 +581,7 @@ export class DetailHeroComponent {
   public isBackdropLoaded = signal<boolean>(false);
 
   constructor() {
+    addIcons({ arrowBackOutline, homeOutline, shareSocialOutline });
     effect(() => {
       const url = this.backdropUrl();
       this.isBackdropLoaded.set(!url);

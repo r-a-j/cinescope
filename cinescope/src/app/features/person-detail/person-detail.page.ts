@@ -24,6 +24,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline,
+  homeOutline,
   shareSocialOutline,
   locationOutline,
   calendarOutline,
@@ -54,6 +55,7 @@ const NativeGallery = registerPlugin<NativeGalleryPlugin>('NativeGallery');
 import { TmdbPeopleService } from '../../core/services/tmdb-people.service';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
 import { TmdbPersonDetailDto } from '../../core/dtos/people/person-detail.dto';
@@ -113,6 +115,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   private peopleService = inject(TmdbPeopleService);
   public storage = inject(StorageService);
   private toast = inject(ToastService);
+  private navService = inject(NavigationService);
   private platform = inject(Platform);
   private actionSheetCtrl = inject(ActionSheetController);
 
@@ -586,6 +589,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   constructor() {
     addIcons({
       arrowBackOutline,
+      homeOutline,
       shareSocialOutline,
       locationOutline,
       calendarOutline,
@@ -757,6 +761,11 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     } else {
       this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
     }
+  }
+
+  public goToHome(): void {
+    this.closeLightbox();
+    this.navService.navigateToHome();
   }
 
   private mapCastToVm(c: TmdbPersonCastCreditDto): FilmographyEntryVm {

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, NavController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowBackOutline, star } from 'ionicons/icons';
+import { arrowBackOutline, homeOutline, star } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 import {
   CollectionLoaderService,
@@ -34,10 +35,15 @@ interface CollectionCardVm {
       <div class="collection-shell">
         <!-- Top Navigation Header with Back Button -->
         <header class="collection-topbar">
-          <button type="button" class="back-btn" aria-label="Go Back" (click)="goBack()">
-            <ion-icon name="arrow-back-outline"></ion-icon>
-            <span>Back</span>
-          </button>
+          <div class="topbar-actions">
+            <button type="button" class="back-btn" aria-label="Go Back" (click)="goBack()">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+              <span>Back</span>
+            </button>
+            <button type="button" class="home-btn" aria-label="Go to Home" (click)="goToHome()">
+              <ion-icon name="home-outline"></ion-icon>
+            </button>
+          </div>
 
           <div class="topbar-titles">
             <span class="topbar-kicker">COLLECTION • {{ hasActiveFilters() ? displayedCards().length + ' OF ' + rawItems().length : rawItems().length }} TITLES</span>
@@ -245,6 +251,12 @@ interface CollectionCardVm {
       backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
+    .topbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
     .back-btn {
       display: inline-flex;
       align-items: center;
@@ -266,6 +278,27 @@ interface CollectionCardVm {
       background: rgba(229, 9, 20, 0.25);
     }
     .back-btn ion-icon {
+      font-size: 18px;
+    }
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.07);
+      color: #ffffff;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+    .home-btn:active {
+      transform: scale(0.95);
+      background: rgba(229, 9, 20, 0.25);
+    }
+    .home-btn ion-icon {
       font-size: 18px;
     }
     .topbar-titles {
@@ -451,6 +484,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private navCtrl = inject(NavController);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
+  private navService = inject(NavigationService);
   private collectionLoader = inject(CollectionLoaderService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -531,7 +565,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   });
 
   constructor() {
-    addIcons({ arrowBackOutline, star });
+    addIcons({ arrowBackOutline, star, homeOutline });
   }
 
   ngOnInit(): void {
@@ -621,6 +655,10 @@ export class CollectionPage implements OnInit, AfterViewInit {
     } else {
       this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
     }
+  }
+
+  public goToHome(): void {
+    this.navService.navigateToHome();
   }
 
   public onScroll(): void {
