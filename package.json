@@ -21,7 +21,7 @@
     "graph:docs": "pnpm --filter docs exec graphify watch .",
     "release:api": "pnpm --filter cinescope-api exec npx vercel --prod --yes",
     "release:ui": "pnpm --filter cinescope exec npx vercel --prod --yes",
-    "release:docs": "pnpm --filter docs exec npx vercel --prod --yes",
+    "release:docs": "pnpm run docs:build-all && pnpm --filter docs run build && pnpm --filter docs exec npx vercel --prod --yes",
     "release:all": "pnpm run release:api && pnpm run release:ui && pnpm run release:docs",
     "android:dev": "pnpm --filter cinescope exec ionic capacitor run android -l --external",
     "android:prod": "pnpm --filter cinescope exec ionic capacitor run android --prod"
