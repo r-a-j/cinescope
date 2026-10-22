@@ -1,3 +1,6 @@
+// Suppress Node.js runtime DEP0169 deprecation warnings
+process.noDeprecation = true;
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI, Part } from '@google/generative-ai';
 import { checkRateLimit } from '../lib/rate-limiter';
@@ -111,12 +114,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             let mimeType = typeof body.mimeType === 'string' ? body.mimeType.toLowerCase() : 'image/jpeg';
             let base64Data = rawImage;
 
-            // Handle data URL prefix if present (e.g. data:image/png;base64,iVBORw...)
-            const dataUrlMatch = rawImage.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
-            if (dataUrlMatch) {
-                mimeType = dataUrlMatch[1].toLowerCase();
-                base64Data = dataUrlMatch[2];
+            // Robust data URL header extraction
+            const commaIdx = rawImage.indexOf(',');
+            if (rawImage.startsWith('data:') && commaIdx !== -1) {
+                const header = rawImage.substring(0, commaIdx);
+                const match = header.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64$/i);
+                if (match) {
+                    mimeType = match[1].toLowerCase().trim();
+                }
+                base64Data = rawImage.substring(commaIdx + 1);
             }
+
+            // Remove any whitespace, newlines, or carriage returns from base64
+            base64Data = base64Data.replace(/[\r\n\s]+/g, '');
 
             if (!ALLOWED_MIME_TYPES.has(mimeType)) {
                 return res.status(400).json({
@@ -133,26 +143,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            systemInstruction: {
-                role: 'system',
-                parts: [{ text: SYSTEM_EXTRACTION_INSTRUCTION }]
-            },
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.1
-            }
-        });
+        const candidateModels = [
+            process.env.GEMINI_MODEL,
+            'gemini-3.1-flash-lite',
+            'gemini-3.5-flash-lite',
+            'gemini-2.5-flash'
+        ].filter((m): m is string => Boolean(m));
 
-        const result = await model.generateContent({
-            contents: [
-                {
-                    role: 'user',
-                    parts
-                }
-            ]
-        });
+        let result: any = null;
+        let lastError: unknown = null;
+
+        for (const modelName of candidateModels) {
+            try {
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction: {
+                        role: 'system',
+                        parts: [{ text: SYSTEM_EXTRACTION_INSTRUCTION }]
+                    },
+                    generationConfig: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.1
+                    }
+                });
+
+                result = await model.generateContent({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts
+                        }
+                    ]
+                });
+                break;
+            } catch (err: any) {
+                lastError = err;
+                console.warn(`[API - Extract] Model ${modelName} failed or rate limited:`, err?.message || err);
+            }
+        }
+
+        if (!result) {
+            console.error('[API - Extract Error] All candidate models failed:', lastError);
+            const errStr = String((lastError as any)?.message || '');
+            const status = (lastError as any)?.status;
+
+            if (errStr.includes('429') || status === 429) {
+                return res.status(429).json({
+                    error: 'Gemini AI rate limit reached. Please wait a minute before retrying.'
+                });
+            }
+
+            if (errStr.includes('503') || status === 503) {
+                return res.status(503).json({
+                    error: 'Gemini AI is currently experiencing high demand. Please try again shortly.'
+                });
+            }
+
+            return res.status(500).json({
+                error: 'Failed to extract titles from AI service. Please try again.'
+            });
+        }
 
         const responseText: string = result.response.text().trim();
         let parsed: unknown = [];

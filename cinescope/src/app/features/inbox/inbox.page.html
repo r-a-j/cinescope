@@ -4,7 +4,7 @@
   <div class="inbox-toolbar-content">
     <div class="queue-counter">
       <span class="pulse-indicator" [class.active]="cards().length > 0"></span>
-      <span class="queue-label">TRIAGE QUEUE</span>
+      <span class="queue-label">INBOX</span>
       <span class="queue-pill">{{ cards().length }}</span>
     </div>
 
@@ -32,6 +32,13 @@
         </div>
       }
 
+      @if (isProcessing()) {
+        <div class="bg-processing-badge" [title]="processingStatus()">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>Extracting...</span>
+        </div>
+      }
+
       <button type="button" class="import-toolbar-btn" (click)="openImportModal()">
         <ion-icon name="add-circle-outline"></ion-icon>
         <span>Import</span>
@@ -42,8 +49,10 @@
           type="button"
           class="clear-all-btn"
           (click)="onClearAll()"
-          title="Clear all queue items">
+          title="Clear all queue items"
+          aria-label="Clear all queue items">
           <ion-icon name="trash-outline"></ion-icon>
+          <span>Clear All</span>
         </button>
       }
     </div>
@@ -64,9 +73,6 @@
           <button type="button" class="primary-import-btn" (click)="openImportModal()">
             <ion-icon name="sparkles-outline"></ion-icon>
             Import Text or Screenshot
-          </button>
-          <button type="button" class="demo-seed-btn" (click)="populateDemoTitles()">
-            Load Demo Titles
           </button>
         </div>
       </div>
@@ -90,10 +96,13 @@
                 [src]="card.posterUrl"
                 [alt]="card.title"
                 class="card-poster"
-                draggable="false" />
+                draggable="false"
+                (error)="onPosterError($event)" />
 
               <div class="card-badges">
-                <span class="badge-type">{{ card.mediaType | uppercase }}</span>
+                <span class="badge-type" [class.tv]="card.mediaType === 'tv'">
+                  {{ card.mediaType | uppercase }}
+                </span>
                 @if (card.rating) {
                   <span class="badge-rating">★ {{ card.rating }}</span>
                 }
@@ -102,21 +111,19 @@
                 }
               </div>
 
-              <!-- Directional Stamp Indicators -->
-              @if (idx === 0) {
-                <div class="stamp stamp-watchlist">
-                  <ion-icon name="bookmark"></ion-icon>
-                  <span>WATCHLIST</span>
-                </div>
-                <div class="stamp stamp-discard">
-                  <ion-icon name="close"></ion-icon>
-                  <span>DISCARD</span>
-                </div>
-                <div class="stamp stamp-watched">
-                  <ion-icon name="checkmark-done"></ion-icon>
-                  <span>WATCHED</span>
-                </div>
-              }
+              <!-- Directional Stamp Indicators (pre-rendered with opacity 0) -->
+              <div class="stamp stamp-watchlist">
+                <ion-icon name="bookmark"></ion-icon>
+                <span>WATCHLIST</span>
+              </div>
+              <div class="stamp stamp-discard">
+                <ion-icon name="close"></ion-icon>
+                <span>DISCARD</span>
+              </div>
+              <div class="stamp stamp-watched">
+                <ion-icon name="checkmark-done"></ion-icon>
+                <span>WATCHED</span>
+              </div>
 
               <!-- Bottom Info Scrim -->
               <div
@@ -178,17 +185,59 @@
             class="select-all-btn"
             (click)="toggleSelectAll()"
             [attr.aria-label]="isAllSelected() ? 'Deselect all items' : 'Select all items'">
-            <ion-icon [name]="isAllSelected() ? 'checkbox' : (selectedCount() > 0 ? 'checkbox-outline' : 'square-outline')"></ion-icon>
+            <div class="custom-checkbox" [class.checked]="isAllSelected()">
+              @if (isAllSelected()) {
+                <ion-icon name="checkmark-done"></ion-icon>
+              }
+            </div>
             <span>{{ isAllSelected() ? 'Deselect All' : 'Select All' }}</span>
+            @if (selectedCount() > 0) {
+              <span class="selected-count-pill">{{ selectedCount() }}</span>
+            }
           </button>
 
-          <span class="selection-status">
-            @if (selectedCount() > 0) {
-              {{ selectedCount() }} of {{ cards().length }} selected
-            } @else {
+          @if (selectedCount() > 0) {
+            <!-- Top-Right Actions Menu Capsule -->
+            <div class="top-actions-menu">
+              <button
+                type="button"
+                class="top-action-btn action-watchlist"
+                (click)="triageBulk('watchlist')"
+                title="Save selected to Watchlist"
+                aria-label="Save selected to Watchlist">
+                <ion-icon name="bookmark"></ion-icon>
+                <span class="action-btn-text">Watchlist</span>
+              </button>
+
+              <div class="top-action-divider"></div>
+
+              <button
+                type="button"
+                class="top-action-btn action-watched"
+                (click)="triageBulk('watched')"
+                title="Mark selected as Watched"
+                aria-label="Mark selected as Watched">
+                <ion-icon name="checkmark-done"></ion-icon>
+                <span class="action-btn-text">Watched</span>
+              </button>
+
+              <div class="top-action-divider"></div>
+
+              <button
+                type="button"
+                class="top-action-btn action-discard"
+                (click)="triageBulk('discard')"
+                title="Discard selected"
+                aria-label="Discard selected">
+                <ion-icon name="trash-outline"></ion-icon>
+                <span class="action-btn-text">Discard</span>
+              </button>
+            </div>
+          } @else {
+            <span class="selection-status">
               {{ cards().length }} items
-            }
-          </span>
+            </span>
+          }
         </div>
 
         <div class="batch-items-list">
@@ -199,10 +248,14 @@
               
               <button
                 type="button"
-                class="item-checkbox"
+                class="item-checkbox-btn"
                 (click)="toggleSelectCard(card.id, $event)"
                 [attr.aria-label]="'Select ' + card.title">
-                <ion-icon [name]="selectedIds().has(card.id) ? 'checkbox' : 'square-outline'"></ion-icon>
+                <div class="custom-checkbox" [class.checked]="selectedIds().has(card.id)">
+                  @if (selectedIds().has(card.id)) {
+                    <ion-icon name="checkmark-done"></ion-icon>
+                  }
+                </div>
               </button>
 
               <div
@@ -211,7 +264,12 @@
                 tabindex="0"
                 (click)="openDetail(card)"
                 (keyup.enter)="openDetail(card)">
-                <img [src]="card.posterUrl" [alt]="card.title" class="item-poster" loading="lazy" />
+                <img
+                  [src]="card.posterUrl"
+                  [alt]="card.title"
+                  class="item-poster"
+                  loading="lazy"
+                  (error)="onPosterError($event)" />
               </div>
 
               <div
@@ -221,7 +279,9 @@
                 (click)="openDetail(card)"
                 (keyup.enter)="openDetail(card)">
                 <div class="item-title-row">
-                  <span class="item-type-badge">{{ card.mediaType | uppercase }}</span>
+                  <span class="item-type-badge" [class.tv]="card.mediaType === 'tv'">
+                    {{ card.mediaType | uppercase }}
+                  </span>
                   <h4 class="item-title">{{ card.title }}</h4>
                 </div>
                 <div class="item-meta">
@@ -237,26 +297,29 @@
                 }
               </div>
 
-              <div class="item-row-actions">
+              <!-- Quick Action Capsule -->
+              <div class="row-actions-capsule">
                 <button
                   type="button"
-                  class="row-action-btn btn-watchlist"
+                  class="capsule-btn btn-watchlist"
                   (click)="inlineTriage(card, 'watchlist', $event)"
                   title="Save to Watchlist"
                   aria-label="Save to Watchlist">
                   <ion-icon name="bookmark"></ion-icon>
                 </button>
+                <div class="capsule-divider"></div>
                 <button
                   type="button"
-                  class="row-action-btn btn-watched"
+                  class="capsule-btn btn-watched"
                   (click)="inlineTriage(card, 'watched', $event)"
                   title="Mark Watched"
                   aria-label="Mark Watched">
                   <ion-icon name="checkmark-done"></ion-icon>
                 </button>
+                <div class="capsule-divider"></div>
                 <button
                   type="button"
-                  class="row-action-btn btn-discard"
+                  class="capsule-btn btn-discard"
                   (click)="inlineTriage(card, 'discard', $event)"
                   title="Discard"
                   aria-label="Discard">
@@ -267,37 +330,7 @@
           }
         </div>
 
-        @if (selectedCount() > 0) {
-          <div class="bulk-action-bar">
-            <div class="bulk-summary">
-              <span class="bulk-count">{{ selectedCount() }}</span>
-              <span>Selected</span>
-            </div>
-            <div class="bulk-buttons">
-              <button
-                type="button"
-                class="bulk-btn bulk-watchlist"
-                (click)="triageBulk('watchlist')">
-                <ion-icon name="bookmark"></ion-icon>
-                <span>Watchlist</span>
-              </button>
-              <button
-                type="button"
-                class="bulk-btn bulk-watched"
-                (click)="triageBulk('watched')">
-                <ion-icon name="checkmark-done"></ion-icon>
-                <span>Watched</span>
-              </button>
-              <button
-                type="button"
-                class="bulk-btn bulk-discard"
-                (click)="triageBulk('discard')">
-                <ion-icon name="trash-outline"></ion-icon>
-                <span>Discard</span>
-              </button>
-            </div>
-          </div>
-        }
+
       </div>
     }
   </div>
@@ -307,13 +340,12 @@
 <ion-modal
   [isOpen]="isImportModalOpen()"
   (didDismiss)="closeImportModal()"
-  [initialBreakpoint]="0.85"
-  [breakpoints]="[0, 0.85, 1.0]"
+  [initialBreakpoint]="0.75"
+  [breakpoints]="[0, 0.75, 1.0]"
   class="import-modal-sheet">
   <ng-template>
-    <div class="import-modal-wrapper">
+    <div class="import-modal-container">
       <div class="import-modal-header">
-        <div class="modal-handle"></div>
         <div class="modal-title-row">
           <h3>IMPORT RECOMMENDATIONS</h3>
           <button type="button" class="modal-close-btn" (click)="closeImportModal()" aria-label="Close modal">
@@ -342,90 +374,123 @@
         </div>
       </div>
 
-      <div class="import-modal-body">
-        @if (importMode() === 'text') {
-          <div class="text-input-section">
-            <div class="text-quick-bar">
-              <span class="text-hint">Paste Reddit comments, chat messages, or notes:</span>
-              <button type="button" class="clipboard-btn" (click)="pasteFromClipboard()">
-                <ion-icon name="clipboard-outline"></ion-icon>
-                <span>Paste</span>
-              </button>
-            </div>
-
-            <textarea
-              class="import-textarea"
-              rows="7"
-              placeholder="e.g. You gotta watch Severance and The Bear! Also check out Dune 2 and Sicario this weekend..."
-              [value]="rawText"
-              (input)="onTextInput($event)"></textarea>
-
-            <div class="text-meta-row">
-              <span>{{ rawText.length }} characters</span>
-              @if (rawText.length > 0) {
-                <button type="button" class="clear-text-btn" (click)="clearText()">Clear</button>
-              }
-            </div>
-          </div>
-        } @else {
-          <div class="image-input-section">
-            <input
-              #fileInput
-              type="file"
-              accept="image/png, image/jpeg, image/webp"
-              class="hidden-file-input"
-              (change)="onFileSelected($event)" />
-
-            @if (!selectedImage()) {
-              <div
-                class="image-dropzone"
-                role="button"
-                tabindex="0"
-                (click)="fileInput.click()"
-                (keyup.enter)="fileInput.click()"
-                (dragover)="onDragOver($event)"
-                (drop)="onDropFile($event)">
-                <div class="dropzone-icon">
-                  <ion-icon name="camera-outline"></ion-icon>
-                </div>
-                <div class="dropzone-text">Tap to select or drop screenshot</div>
-                <div class="dropzone-hint">Supports PNG, JPEG, WEBP • Auto-compressed</div>
+      <ion-content class="import-modal-content" [scrollY]="true">
+        <div class="import-modal-body">
+          @if (importMode() === 'text') {
+            <div class="text-input-section">
+              <div class="text-quick-bar">
+                <span class="text-hint">Paste Reddit comments, chat messages, or notes:</span>
+                <button type="button" class="clipboard-btn" (click)="pasteFromClipboard()">
+                  <ion-icon name="clipboard-outline"></ion-icon>
+                  <span>Paste</span>
+                </button>
               </div>
-            } @else {
-              @if (selectedImage(); as img) {
-                <div class="image-preview-card">
-                  <img [src]="img.previewUrl" [alt]="img.name" class="preview-img" />
-                  <div class="preview-info">
-                    <span class="preview-name">{{ img.name }}</span>
-                    <span class="preview-size">{{ img.sizeText }}</span>
-                    <button type="button" class="replace-img-btn" (click)="fileInput.click()">
-                      Change Image
-                    </button>
+
+              <textarea
+                class="import-textarea"
+                rows="6"
+                maxlength="10000"
+                placeholder="e.g. You gotta watch Severance and The Bear! Also check out Dune 2 and Sicario this weekend..."
+                [value]="rawText()"
+                (input)="onTextInput($event)"></textarea>
+
+              <div class="text-meta-row">
+                <span [class.limit-reached]="rawText().length >= 10000">{{ rawText().length }} / 10,000 characters</span>
+                @if (rawText().length > 0) {
+                  <button type="button" class="clear-text-btn" (click)="clearText()">Clear</button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="image-input-section">
+              <input
+                #fileInput
+                type="file"
+                multiple
+                accept="image/png, image/jpeg, image/webp"
+                class="hidden-file-input"
+                (change)="onFileSelected($event)" />
+
+              @if (selectedImages().length === 0) {
+                <div
+                  class="image-dropzone"
+                  role="button"
+                  tabindex="0"
+                  (click)="fileInput.click()"
+                  (keyup.enter)="fileInput.click()"
+                  (dragover)="onDragOver($event)"
+                  (drop)="onDropFile($event)">
+                  <div class="dropzone-icon">
+                    <ion-icon name="camera-outline"></ion-icon>
+                  </div>
+                  <div class="dropzone-text">Tap to select or drop screenshots</div>
+                  <div class="dropzone-hint">Queue up to 5 screenshots (PNG, JPG, WEBP) • Auto-compressed</div>
+                </div>
+              } @else {
+                <div class="multi-images-container">
+                  <div class="images-header-row">
+                    <span class="images-count-badge">Screenshots ({{ selectedImages().length }}/5)</span>
+                    <button type="button" class="clear-all-images-btn" (click)="clearAllImages()">Clear All</button>
+                  </div>
+
+                  <div class="image-previews-grid">
+                    @for (img of selectedImages(); track img.id; let idx = $index) {
+                      <div class="image-thumb-card">
+                        <div class="thumb-wrapper">
+                          <img [src]="img.previewUrl" [alt]="img.name" class="thumb-img" />
+                          <button
+                            type="button"
+                            class="remove-thumb-btn"
+                            (click)="removeImage(img.id)"
+                            aria-label="Remove screenshot">
+                            <ion-icon name="close-circle"></ion-icon>
+                          </button>
+                          <span class="thumb-index">{{ idx + 1 }}</span>
+                        </div>
+                        <div class="thumb-info">
+                          <span class="thumb-name" [title]="img.name">{{ img.name }}</span>
+                          <span class="thumb-size">{{ img.sizeText }}</span>
+                        </div>
+                      </div>
+                    }
+
+                    @if (selectedImages().length < 5) {
+                      <button type="button" class="add-more-card" (click)="fileInput.click()">
+                        <ion-icon name="add-circle-outline"></ion-icon>
+                        <span class="add-more-text">Add More</span>
+                        <span class="slots-left">{{ 5 - selectedImages().length }} remaining</span>
+                      </button>
+                    }
                   </div>
                 </div>
               }
+            </div>
+          }
+
+          <!-- In-Flow Primary Action: Directly below input with proper spacing and guidance -->
+          <div class="import-action-container">
+            @if (isProcessing()) {
+              <div class="processing-state">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span class="processing-text">{{ processingStatus() }}</span>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="submit-import-btn"
+                [disabled]="isSubmitDisabled()"
+                (click)="submitImport()">
+                <ion-icon name="sparkles-outline"></ion-icon>
+                <span>Extract & Queue Titles</span>
+              </button>
+              <div class="action-helper-text" [class.limit-error]="importMode() === 'text' && rawText().length > 10000">
+                <ion-icon [name]="validationHintIcon()"></ion-icon>
+                <span>{{ validationHint() }}</span>
+              </div>
             }
           </div>
-        }
-      </div>
-
-      <div class="import-modal-footer">
-        @if (isProcessing()) {
-          <div class="processing-state">
-            <ion-spinner name="crescent"></ion-spinner>
-            <span>{{ processingStatus() }}</span>
-          </div>
-        } @else {
-          <button
-            type="button"
-            class="submit-import-btn"
-            [disabled]="isSubmitDisabled()"
-            (click)="submitImport()">
-            <ion-icon name="sparkles-outline"></ion-icon>
-            <span>Extract & Queue Titles</span>
-          </button>
-        }
-      </div>
+        </div>
+      </ion-content>
     </div>
   </ng-template>
 </ion-modal>

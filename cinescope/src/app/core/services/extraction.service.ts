@@ -34,7 +34,27 @@ export class ExtractionService {
     image?: string;
     mimeType?: string;
   }): Observable<ExtractedTitleItem[]> {
-    return this.http.post<ExtractedTitleItem[]>(this.extractUrl, payload);
+    let cleanImage = payload.image;
+    let cleanMime = payload.mimeType;
+
+    if (cleanImage) {
+      const commaIdx = cleanImage.indexOf(',');
+      if (cleanImage.startsWith('data:') && commaIdx !== -1) {
+        const header = cleanImage.substring(0, commaIdx);
+        const match = header.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64$/i);
+        if (match) {
+          cleanMime = match[1].toLowerCase().trim();
+        }
+        cleanImage = cleanImage.substring(commaIdx + 1);
+      }
+      cleanImage = cleanImage.replace(/[\r\n\s]+/g, '');
+    }
+
+    return this.http.post<ExtractedTitleItem[]>(this.extractUrl, {
+      ...payload,
+      ...(cleanImage ? { image: cleanImage } : {}),
+      ...(cleanMime ? { mimeType: cleanMime } : {})
+    });
   }
 
   /**

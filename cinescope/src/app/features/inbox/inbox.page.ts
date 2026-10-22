@@ -9,6 +9,7 @@ import {
   ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -16,7 +17,8 @@ import {
   IonToolbar,
   IonIcon,
   IonModal,
-  IonSpinner
+  IonSpinner,
+  AlertController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -36,15 +38,18 @@ import {
   listOutline,
   checkbox,
   squareOutline,
-  checkboxOutline
+  checkboxOutline,
+  closeCircle,
+  alertCircleOutline,
+  checkmarkCircleOutline
 } from 'ionicons/icons';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { HeaderComponent } from '../../shared/components/header/header.component';
-import { StorageService, TmdbPayload } from '../../core/services/storage.service';
+import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ExtractionService, ExtractedTitleItem } from '../../core/services/extraction.service';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
-import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+import { resolveMediaImageUrl, DEFAULT_POSTER_PLACEHOLDER } from '../../core/constants/api.constants';
 
 export interface InboxCardVm {
   id: string;
@@ -59,13 +64,8 @@ export interface InboxCardVm {
   doc: ContentDocType;
 }
 
-interface SampleInboxSeed {
-  tmdbId: number;
-  mediaType: 'movie' | 'tv';
-  payload: TmdbPayload;
-}
-
-interface SelectedImageState {
+export interface SelectedImageItem {
+  id: string;
   previewUrl: string;
   base64: string;
   mimeType: string;
@@ -96,6 +96,7 @@ export class InboxPage {
   private toast = inject(ToastService);
   private router = inject(Router);
   private extractionService = inject(ExtractionService);
+  private alertController = inject(AlertController);
 
   // View mode: Deck (swiping card stack) or Batch List (table multi-select)
   public viewMode = signal<'deck' | 'list'>(this.getInitialViewMode());
@@ -113,17 +114,41 @@ export class InboxPage {
   // Ingestion Modal State
   public isImportModalOpen = signal<boolean>(false);
   public importMode = signal<'text' | 'image'>('text');
-  public rawText = '';
-  public selectedImage = signal<SelectedImageState | null>(null);
+  public rawText = signal<string>('');
+  public selectedImages = signal<SelectedImageItem[]>([]);
   public isProcessing = signal<boolean>(false);
   public processingStatus = signal<string>('Analyzing titles with Gemini AI...');
 
   public isSubmitDisabled = computed<boolean>(() => {
     if (this.isProcessing()) return true;
     if (this.importMode() === 'text') {
-      return this.rawText.trim().length === 0;
+      const len = this.rawText().trim().length;
+      return len === 0 || len > 10000;
     }
-    return !this.selectedImage();
+    return this.selectedImages().length === 0;
+  });
+
+  public validationHint = computed<string>(() => {
+    if (this.importMode() === 'text') {
+      const len = this.rawText().trim().length;
+      if (len === 0) return 'Paste or type movie & TV titles above to enable extraction';
+      if (len > 10000) return `Input exceeds maximum limit of 10,000 characters (${this.rawText().length} / 10,000)`;
+      return `Ready to extract from ${this.rawText().length} characters`;
+    }
+    const count = this.selectedImages().length;
+    if (count === 0) return 'Select or drop up to 5 screenshots above to enable extraction';
+    return `Ready to analyze ${count} of 5 screenshot${count > 1 ? 's' : ''}`;
+  });
+
+  public validationHintIcon = computed<string>(() => {
+    if (this.importMode() === 'text') {
+      const len = this.rawText().trim().length;
+      if (len === 0) return 'information-circle-outline';
+      if (len > 10000) return 'alert-circle-outline';
+      return 'checkmark-circle-outline';
+    }
+    const count = this.selectedImages().length;
+    return count > 0 ? 'checkmark-circle-outline' : 'information-circle-outline';
   });
 
   private startX = 0;
@@ -178,7 +203,10 @@ export class InboxPage {
       listOutline,
       checkbox,
       squareOutline,
-      checkboxOutline
+      checkboxOutline,
+      closeCircle,
+      alertCircleOutline,
+      checkmarkCircleOutline
     });
   }
 
@@ -260,10 +288,10 @@ export class InboxPage {
       return next;
     });
 
-    this.commitOrQueueAction(card, action);
+    void this.commitCardAction(card, action);
   }
 
-  public triageBulk(action: 'watchlist' | 'watched' | 'discard'): void {
+  public async triageBulk(action: 'watchlist' | 'watched' | 'discard'): Promise<void> {
     const selected = this.selectedIds();
     const targetCards = this.cards().filter((c) => selected.has(c.id));
     if (targetCards.length === 0) return;
@@ -275,6 +303,40 @@ export class InboxPage {
       mediaType: c.mediaType
     }));
 
+    if (action === 'discard') {
+      void this.triggerHaptic(ImpactStyle.Light);
+      const isAll = this.isAllSelected();
+      const alert = await this.alertController.create({
+        header: isAll ? 'Clear Entire Inbox?' : `Discard ${count} Selected Item${count > 1 ? 's' : ''}?`,
+        subHeader: `${count} title${count > 1 ? 's' : ''} will be permanently removed`,
+        message: 'All selected unreviewed titles extracted from AI recommendations will be cleared from this queue. This action cannot be undone.',
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel'
+          },
+          {
+            text: isAll ? 'Clear All' : 'Discard',
+            role: 'destructive',
+            handler: async (): Promise<void> => {
+              await this.executeBulkCommit(targetIds, targetEntries, action, count);
+            }
+          }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+
+    await this.executeBulkCommit(targetIds, targetEntries, action, count);
+  }
+
+  private async executeBulkCommit(
+    targetIds: string[],
+    targetEntries: { tmdbId: number; mediaType: 'movie' | 'tv' }[],
+    action: 'watchlist' | 'watched' | 'discard',
+    count: number
+  ): Promise<void> {
     // Clear selection
     this.selectedIds.set(new Set());
 
@@ -295,37 +357,27 @@ export class InboxPage {
         ? `Marked ${count} item${count > 1 ? 's' : ''} as Watched`
         : `Discarded ${count} item${count > 1 ? 's' : ''}`;
 
-    void this.toast.presentActionWithUndo(
-      label,
-      () => {
-        // UNDO tapped: restore all items to visible array
-        this.pendingIds.update((current) => {
-          const next = new Set(current);
-          for (const id of targetIds) {
-            next.delete(id);
-          }
-          return next;
-        });
-        void this.triggerHaptic(ImpactStyle.Light);
-      },
-      () => {
-        // Dismissed naturally: commit bulk mutation to RxDB
-        if (action === 'watchlist') {
-          void this.storage.bulkMoveInbox(targetEntries, 'watchlist');
-        } else if (action === 'watched') {
-          void this.storage.bulkMoveInbox(targetEntries, 'watched');
-        } else {
-          void this.storage.bulkDiscardInbox(targetEntries);
-        }
-        this.pendingIds.update((current) => {
-          const next = new Set(current);
-          for (const id of targetIds) {
-            next.delete(id);
-          }
-          return next;
-        });
+    try {
+      if (action === 'watchlist') {
+        await this.storage.bulkMoveInbox(targetEntries, 'watchlist');
+      } else if (action === 'watched') {
+        await this.storage.bulkMoveInbox(targetEntries, 'watched');
+      } else {
+        await this.storage.bulkDiscardInbox(targetEntries);
       }
-    );
+      await this.toast.presentSuccess(label, 2000);
+    } catch (err) {
+      console.error('[InboxPage] Bulk action failed:', err);
+      await this.toast.presentError('Failed to process bulk action. Please try again.');
+    } finally {
+      this.pendingIds.update((current) => {
+        const next = new Set(current);
+        for (const id of targetIds) {
+          next.delete(id);
+        }
+        return next;
+      });
+    }
   }
 
   // ==========================================
@@ -337,7 +389,6 @@ export class InboxPage {
   }
 
   public closeImportModal(): void {
-    if (this.isProcessing()) return;
     this.isImportModalOpen.set(false);
   }
 
@@ -347,11 +398,11 @@ export class InboxPage {
 
   public onTextInput(event: Event): void {
     const target = event.target as HTMLTextAreaElement | null;
-    this.rawText = target?.value ?? '';
+    this.rawText.set(target?.value ?? '');
   }
 
   public clearText(): void {
-    this.rawText = '';
+    this.rawText.set('');
   }
 
   public async pasteFromClipboard(): Promise<void> {
@@ -359,8 +410,14 @@ export class InboxPage {
       if (navigator.clipboard && navigator.clipboard.readText) {
         const text = await navigator.clipboard.readText();
         if (text && text.trim().length > 0) {
-          this.rawText = text.trim();
-          await this.toast.presentInfo('Pasted text from clipboard.', 1500);
+          const trimmed = text.trim();
+          if (trimmed.length > 10000) {
+            this.rawText.set(trimmed.slice(0, 10000));
+            await this.toast.presentWarning('Pasted text was truncated to the 10,000 character limit.');
+          } else {
+            this.rawText.set(trimmed);
+            await this.toast.presentInfo('Pasted text from clipboard.', 1500);
+          }
         } else {
           await this.toast.presentWarning('Clipboard is empty.');
         }
@@ -372,26 +429,57 @@ export class InboxPage {
     }
   }
 
+  public async addFiles(files: File[]): Promise<void> {
+    if (!files || files.length === 0) return;
+
+    const current = this.selectedImages();
+    const availableSlots = 5 - current.length;
+
+    if (availableSlots <= 0) {
+      await this.toast.presentWarning('Maximum of 5 screenshots allowed.');
+      return;
+    }
+
+    let filesToProcess = files.filter((f) => f.type.startsWith('image/'));
+    if (filesToProcess.length === 0) {
+      await this.toast.presentWarning('Please select valid image files (PNG, JPG, WEBP).');
+      return;
+    }
+
+    if (filesToProcess.length > availableSlots) {
+      await this.toast.presentWarning(`Only ${availableSlots} more screenshot${availableSlots > 1 ? 's' : ''} can be added (max 5).`);
+      filesToProcess = filesToProcess.slice(0, availableSlots);
+    }
+
+    const newItems: SelectedImageItem[] = [];
+    for (const file of filesToProcess) {
+      try {
+        const compressed = await this.extractionService.compressImage(file, 1280, 0.82);
+        const sizeKb = Math.round((compressed.base64.length * 0.75) / 1024);
+        newItems.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          previewUrl: compressed.base64,
+          base64: compressed.base64,
+          mimeType: compressed.mimeType,
+          name: file.name,
+          sizeText: `~${sizeKb} KB`
+        });
+      } catch (err) {
+        console.error('[InboxPage] Compression error for ' + file.name, err);
+      }
+    }
+
+    if (newItems.length > 0) {
+      this.selectedImages.update((list) => [...list, ...newItems]);
+    }
+  }
+
   public async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) return;
-
-    try {
-      // Downscale screenshot client-side to ensure base64 remains well below 4.5MB
-      const compressed = await this.extractionService.compressImage(file, 1280, 0.82);
-      const sizeKb = Math.round((compressed.base64.length * 0.75) / 1024);
-
-      this.selectedImage.set({
-        previewUrl: compressed.base64,
-        base64: compressed.base64,
-        mimeType: compressed.mimeType,
-        name: file.name,
-        sizeText: `~${sizeKb} KB (optimized)`
-      });
-    } catch (err) {
-      console.error('[InboxPage] Image compression error:', err);
-      await this.toast.presentError('Failed to process image file.');
+    const files = Array.from(input?.files || []);
+    if (files.length > 0) {
+      await this.addFiles(files);
+      if (input) input.value = '';
     }
   }
 
@@ -403,85 +491,177 @@ export class InboxPage {
   public async onDropFile(event: DragEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
-    const file = event.dataTransfer?.files?.[0];
-    if (!file || !file.type.startsWith('image/')) {
-      await this.toast.presentWarning('Please drop an image file (PNG, JPG, WEBP).');
-      return;
-    }
-
-    try {
-      const compressed = await this.extractionService.compressImage(file, 1280, 0.82);
-      const sizeKb = Math.round((compressed.base64.length * 0.75) / 1024);
-
-      this.selectedImage.set({
-        previewUrl: compressed.base64,
-        base64: compressed.base64,
-        mimeType: compressed.mimeType,
-        name: file.name,
-        sizeText: `~${sizeKb} KB (optimized)`
-      });
-    } catch (err) {
-      console.error('[InboxPage] Drag-drop compression error:', err);
-      await this.toast.presentError('Failed to process dropped image file.');
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) {
+      await this.addFiles(files);
     }
   }
 
-  public clearImage(): void {
-    this.selectedImage.set(null);
+  public removeImage(id: string): void {
+    this.selectedImages.update((list) => list.filter((img) => img.id !== id));
+  }
+
+  public clearAllImages(): void {
+    this.selectedImages.set([]);
   }
 
   public async submitImport(): Promise<void> {
     if (this.isSubmitDisabled()) return;
 
+    // Snapshot user input
+    const mode = this.importMode();
+    const textPayload = this.rawText().trim();
+    const imagesPayload = [...this.selectedImages()];
+    const totalScreenshots = imagesPayload.length;
+
+    // Immediately clear inputs and close modal for responsive background UX
+    this.rawText.set('');
+    this.selectedImages.set([]);
+    this.closeImportModal();
+    void this.triggerHaptic(ImpactStyle.Light);
+
     this.isProcessing.set(true);
-    this.processingStatus.set('Extracting titles with Gemini AI...');
+    const startMsg = mode === 'text'
+      ? 'Extracting titles from notes in background...'
+      : `Queued ${totalScreenshots} screenshot(s) for background analysis...`;
+    await this.toast.presentInfo(startMsg, 2500);
 
     try {
-      let extracted: ExtractedTitleItem[] = [];
+      const allExtracted: ExtractedTitleItem[] = [];
+      const totalScreenshots = this.selectedImages().length;
+      let failedScreenshots = 0;
 
-      if (this.importMode() === 'text') {
-        extracted = await firstValueFrom(this.extractionService.extractTitles({ text: this.rawText }));
-      } else {
-        const img = this.selectedImage();
-        if (!img) return;
-        extracted = await firstValueFrom(
-          this.extractionService.extractTitles({
-            image: img.base64,
-            mimeType: img.mimeType
-          })
+      if (mode === 'text') {
+        this.processingStatus.set('Extracting titles from text with Gemini AI...');
+        const res = await firstValueFrom(
+          this.extractionService.extractTitles({ text: textPayload })
         );
+        if (res && res.length > 0) {
+          allExtracted.push(...res);
+        }
+      } else {
+        const total = imagesPayload.length;
+        let lastFailureMessage = '';
+
+        for (let i = 0; i < total; i++) {
+          const img = imagesPayload[i];
+          this.processingStatus.set(`Analyzing screenshot ${i + 1} of ${total}: ${img.name}...`);
+
+          try {
+            const extracted = await firstValueFrom(
+              this.extractionService.extractTitles({
+                image: img.base64,
+                mimeType: img.mimeType
+              })
+            );
+            if (extracted && extracted.length > 0) {
+              allExtracted.push(...extracted);
+            }
+          } catch (jobErr) {
+            console.error(`[InboxPage] Analysis error for image ${i + 1} (${img.name}):`, jobErr);
+            failedScreenshots++;
+            lastFailureMessage = this.formatExtractionError(jobErr);
+          }
+
+          if (i < total - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 350));
+          }
+        }
+
+        if (allExtracted.length === 0 && failedScreenshots === total) {
+          const finalMsg = lastFailureMessage || 'Failed to analyze screenshots. Please try again.';
+          await this.toast.presentError(finalMsg, 5000);
+          return;
+        }
       }
 
-      if (extracted.length === 0) {
-        await this.toast.presentWarning('No movie or TV titles recognized. Try clearer text or another screenshot.');
+      // Deduplicate titles by name and year
+      const titleMap = new Map<string, ExtractedTitleItem>();
+      for (const item of allExtracted) {
+        const clean = item.title?.trim();
+        if (!clean) continue;
+        const key = `${clean.toLowerCase()}:${item.year || ''}:${item.mediaType || ''}`;
+        if (!titleMap.has(key)) {
+          titleMap.set(key, item);
+        }
+      }
+      const uniqueTitles = Array.from(titleMap.values());
+
+      if (uniqueTitles.length === 0) {
+        await this.toast.presentWarning('No movie or TV titles recognized. Try clearer text or different screenshots.');
         this.isProcessing.set(false);
         return;
       }
 
-      this.processingStatus.set(`Resolving ${extracted.length} title${extracted.length > 1 ? 's' : ''} on TMDB...`);
-
-      const result = await this.extractionService.resolveAndQueueTitles(extracted);
-
-      // Reset modal state
-      this.rawText = '';
-      this.selectedImage.set(null);
-      this.isImportModalOpen.set(false);
-      this.isProcessing.set(false);
+      this.processingStatus.set(`Resolving ${uniqueTitles.length} title${uniqueTitles.length > 1 ? 's' : ''} on TMDB...`);
+      const result = await this.extractionService.resolveAndQueueTitles(uniqueTitles);
 
       void this.triggerHaptic(ImpactStyle.Medium);
 
+      // Send notification of findings
+      const sourceDesc = mode === 'text'
+        ? 'pasted text'
+        : `${totalScreenshots} screenshot${totalScreenshots > 1 ? 's' : ''}`;
+
+      const alert = await this.alertController.create({
+        header: 'Analysis Findings',
+        subHeader: `${uniqueTitles.length} Titles Discovered`,
+        message:
+          `Batch analysis completed for ${sourceDesc}.\n\n` +
+          `• Added to Inbox: ${result.added}\n` +
+          (result.skipped > 0 ? `• Already in Collection: ${result.skipped}\n` : '') +
+          (failedScreenshots > 0 ? `• Screenshots with errors: ${failedScreenshots}\n` : ''),
+        buttons: [
+          {
+            text: 'Dismiss',
+            role: 'cancel'
+          },
+          {
+            text: 'View in Inbox',
+            handler: (): void => {
+              void this.router.navigateByUrl('/tabs/inbox');
+              this.setViewMode('list');
+            }
+          }
+        ]
+      });
+      await alert.present();
+
       if (result.added > 0) {
-        await this.toast.presentSuccess(`Successfully queued ${result.added} title${result.added > 1 ? 's' : ''} for triage.`);
-      } else if (result.skipped > 0) {
-        await this.toast.presentInfo('All recognized titles were already present in your library.');
-      } else {
-        await this.toast.presentWarning('No titles could be resolved or added.');
+        await this.toast.presentSuccess(`Successfully queued ${result.added} new title${result.added > 1 ? 's' : ''} into Inbox.`);
       }
+
     } catch (err) {
       console.error('[InboxPage] Extraction pipeline error:', err);
+      const userMessage = this.formatExtractionError(err);
+      await this.toast.presentError(userMessage, 5000);
+    } finally {
       this.isProcessing.set(false);
-      await this.toast.presentError('Failed to extract titles. Please verify your connection.');
     }
+  }
+
+  private formatExtractionError(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const serverError = (err.error as { error?: string } | null)?.error;
+      if (typeof serverError === 'string' && serverError.length > 0) {
+        return serverError;
+      }
+      if (err.status === 429) {
+        return 'AI rate limit reached. Please wait a minute before trying again.';
+      }
+      if (err.status === 503) {
+        return 'Gemini AI is currently experiencing high demand. Please try again in a moment.';
+      }
+      if (err.status === 0) {
+        return 'Network connection timed out. Please check your internet connection.';
+      }
+    }
+
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      return 'Network connection timed out. Please check your internet connection.';
+    }
+
+    return 'Failed to extract titles from AI service. Please try again.';
   }
 
   // ==========================================
@@ -501,6 +681,7 @@ export class InboxPage {
     this.currentY = 0;
     this.startTime = Date.now();
 
+    el.classList.add('dragging');
     el.setPointerCapture(event.pointerId);
   }
 
@@ -533,6 +714,7 @@ export class InboxPage {
 
     const el = this.activeCardElement;
     if (el) {
+      el.classList.remove('dragging');
       try {
         el.releasePointerCapture(event.pointerId);
       } catch {
@@ -578,6 +760,7 @@ export class InboxPage {
 
   private animateSnapBack(el: HTMLElement): void {
     this.isAnimating.set(true);
+    el.classList.remove('dragging');
     el.style.transition = 'transform 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     this.resetTransform(el);
 
@@ -601,74 +784,60 @@ export class InboxPage {
     void this.triggerHaptic(ImpactStyle.Medium);
 
     if (el) {
+      el.classList.remove('dragging');
       el.classList.add('exiting');
       if (action === 'watchlist') {
-        el.style.setProperty('--tx', '150vw');
-        el.style.setProperty('--ty', `${this.currentY}px`);
-        el.style.setProperty('--rot', '30deg');
+        el.style.setProperty('--tx', '140vw');
+        el.style.setProperty('--ty', `${this.currentY || 0}px`);
+        el.style.setProperty('--rot', '24deg');
         el.style.setProperty('--stamp-right', '1');
       } else if (action === 'discard') {
-        el.style.setProperty('--tx', '-150vw');
-        el.style.setProperty('--ty', `${this.currentY}px`);
-        el.style.setProperty('--rot', '-30deg');
+        el.style.setProperty('--tx', '-140vw');
+        el.style.setProperty('--ty', `${this.currentY || 0}px`);
+        el.style.setProperty('--rot', '-24deg');
         el.style.setProperty('--stamp-left', '1');
       } else if (action === 'watched') {
-        el.style.setProperty('--tx', `${this.currentX}px`);
-        el.style.setProperty('--ty', '-150vh');
+        el.style.setProperty('--tx', `${this.currentX || 0}px`);
+        el.style.setProperty('--ty', '-140vh');
         el.style.setProperty('--rot', '0deg');
         el.style.setProperty('--stamp-up', '1');
       }
     }
 
-    setTimeout(() => {
-      this.commitOrQueueAction(card, action);
+    this.currentX = 0;
+    this.currentY = 0;
 
-      if (el) {
-        el.classList.remove('exiting');
-        this.resetTransform(el);
-      }
+    setTimeout(() => {
+      void this.commitCardAction(card, action);
       this.isAnimating.set(false);
-    }, 280);
+    }, 240);
   }
 
-  private commitOrQueueAction(card: InboxCardVm, action: 'watchlist' | 'watched' | 'discard'): void {
-    // Optimistically hide card from visible stack
+  private async commitCardAction(card: InboxCardVm, action: 'watchlist' | 'watched' | 'discard'): Promise<void> {
+    // 1. Optimistically hide card from visible stack immediately
     this.pendingIds.update((current) => new Set(current).add(card.id));
 
-    const title = card.title;
-    const msg = action === 'watchlist'
-      ? `Saved "${title}" to Watchlist`
-      : action === 'watched'
-        ? `Marked "${title}" as Watched`
-        : `Discarded "${title}"`;
-
-    void this.toast.presentActionWithUndo(
-      msg,
-      () => {
-        // UNDO tapped: restore card back to active deck
-        this.pendingIds.update((current) => {
-          const next = new Set(current);
-          next.delete(card.id);
-          return next;
-        });
-        void this.triggerHaptic(ImpactStyle.Light);
-      },
-      () => {
-        // Dismissed naturally: commit mutation to RxDB
-        if (action === 'watchlist') {
-          void this.storage.moveInboxToWatchlist(card.tmdbId, card.mediaType);
-        } else if (action === 'watched') {
-          void this.storage.moveInboxToWatched(card.tmdbId, card.mediaType);
-        } else {
-          void this.storage.discardFromInbox(card.tmdbId, card.mediaType);
-        }
-        this.pendingIds.update((current) => {
-          const next = new Set(current);
-          next.delete(card.id);
-          return next;
-        });
+    try {
+      // 2. Commit mutation directly to RxDB immediately
+      if (action === 'watchlist') {
+        await this.storage.moveInboxToWatchlist(card.tmdbId, card.mediaType);
+      } else if (action === 'watched') {
+        await this.storage.moveInboxToWatched(card.tmdbId, card.mediaType);
+      } else {
+        await this.storage.discardFromInbox(card.tmdbId, card.mediaType);
       }
-    );
+    } catch (err) {
+      console.error('[InboxPage] Failed to commit card action:', err);
+      await this.toast.presentError('Failed to save card action. Please try again.');
+    } finally {
+      // 3. Clear from pendingIds ONLY after RxDB has persisted and emitted.
+      // This guarantees the card never flashes back on screen.
+      this.pendingIds.update((current) => {
+        const next = new Set(current);
+        next.delete(card.id);
+        return next;
+      });
+    }
   }
 
   private resetTransform(el: HTMLElement): void {
@@ -699,69 +868,41 @@ export class InboxPage {
   }
 
   public async onClearAll(): Promise<void> {
-    this.selectedIds.set(new Set());
-    const count = await this.storage.clearInbox();
-    await this.toast.presentInfo(`Cleared ${count} items from Inbox queue.`);
-  }
-
-  // ==========================================
-  // DEMO POPULATOR (For quick testing)
-  // ==========================================
-
-  public async populateDemoTitles(): Promise<void> {
-    const demoItems: SampleInboxSeed[] = [
-      {
-        tmdbId: 27205,
-        mediaType: 'movie',
-        payload: {
-          title: 'Inception',
-          poster_path: '/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg',
-          release_date: '2010-07-15',
-          vote_average: 8.4,
-          overview: 'Cobb, a skilled thief who steals corporate secrets through dream-sharing technology, is given the inverse task of planting an idea into the mind of a CEO.'
-        }
-      },
-      {
-        tmdbId: 1396,
-        mediaType: 'tv',
-        payload: {
-          name: 'Breaking Bad',
-          poster_path: '/ztkUQFLlC19CCMYHW9o1zWhJAGq.jpg',
-          first_air_date: '2008-01-20',
-          vote_average: 8.9,
-          overview: 'A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student.'
-        }
-      },
-      {
-        tmdbId: 438631,
-        mediaType: 'movie',
-        payload: {
-          title: 'Dune',
-          poster_path: '/d5NXSklXo0qyIYkgV94XAgMIckC.jpg',
-          release_date: '2021-09-15',
-          vote_average: 7.8,
-          overview: 'Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe.'
-        }
-      },
-      {
-        tmdbId: 119051,
-        mediaType: 'tv',
-        payload: {
-          name: 'Wednesday',
-          poster_path: '/9PFonB99qQwygh2ZewTM0nQ94AD.jpg',
-          first_air_date: '2022-11-23',
-          vote_average: 8.4,
-          overview: 'A sleuthing, supernaturally infused mystery charting Wednesday Addams\' years as a student at Nevermore Academy.'
-        }
-      }
-    ];
-
-    for (const item of demoItems) {
-      await this.storage.addToInbox(item.tmdbId, item.mediaType, item.payload);
-    }
+    const total = this.cards().length;
+    if (total === 0) return;
 
     void this.triggerHaptic(ImpactStyle.Light);
-    await this.toast.presentSuccess('Loaded 4 sample titles into Inbox.');
+
+    const alert = await this.alertController.create({
+      header: 'Clear Inbox Queue?',
+      subHeader: `${total} title${total > 1 ? 's' : ''} will be permanently removed`,
+      message: 'All unreviewed titles extracted from AI recommendations will be cleared from this queue. This action cannot be undone.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Clear All',
+          role: 'destructive',
+          handler: async (): Promise<void> => {
+            this.selectedIds.set(new Set());
+            const count = await this.storage.clearInbox();
+            void this.triggerHaptic(ImpactStyle.Medium);
+            await this.toast.presentInfo(`Cleared ${count} items from Inbox.`);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  public onPosterError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && img.src !== DEFAULT_POSTER_PLACEHOLDER) {
+      img.src = DEFAULT_POSTER_PLACEHOLDER;
+    }
   }
 
   private toCardVm(doc: ContentDocType): InboxCardVm {
@@ -770,7 +911,7 @@ export class InboxPage {
     const rawTitle = (isMovie ? p['title'] : p['name']) as string | undefined;
     const title = rawTitle ?? 'Untitled Title';
     const posterPath = (p['poster_path'] as string | undefined) ?? null;
-    const posterUrl = resolveMediaImageUrl(posterPath, 'w500');
+    const posterUrl = posterPath ? resolveMediaImageUrl(posterPath, 'w500') : DEFAULT_POSTER_PLACEHOLDER;
 
     const dateStr = (isMovie ? p['release_date'] : p['first_air_date']) as string | undefined;
     const year = dateStr ? dateStr.substring(0, 4) : undefined;
