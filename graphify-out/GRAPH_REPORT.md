@@ -1,7 +1,7 @@
 # Graph Report - cinescope  (2026-10-23)
 
 ## Corpus Check
-- 232 files · ~199,224 words
+- 232 files · ~199,247 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a2c5b9f2`
+- Built from commit: `bdc158c8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -343,11 +343,11 @@ Nodes (10): architect, prefix, projectType, root, sourceRoot, extract-i18n, buil
 
 ### Community 181 - "Community 181"
 Cohesion: 0.20
-Nodes (10): serve, development, buildTarget, extractLicenses, namedChunks, optimization, sourceMap, builder (+2 more)
+Nodes (10): build, builder, configurations, defaultConfiguration, development, buildTarget, extractLicenses, namedChunks (+2 more)
 
 ### Community 183 - "Community 183"
 Cohesion: 0.22
-Nodes (9): build, builder, configurations, defaultConfiguration, production, budgets, buildTarget, fileReplacements (+1 more)
+Nodes (9): serve, production, budgets, buildTarget, fileReplacements, outputHashing, builder, configurations (+1 more)
 
 ### Community 184 - "Community 184"
 Cohesion: 0.25

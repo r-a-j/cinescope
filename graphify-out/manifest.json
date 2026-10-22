@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
-    "mtime": 1776792567.3505905,
-    "ast_hash": "4ed8701dbb20fdc0cfae76406254d705",
+    "mtime": 1792713414.8319466,
+    "ast_hash": "bf546a72ab2b765be49ae35d92a9ad57",
     "semantic_hash": ""
   },
   "cinescope-api/tsconfig.json": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792693904.895291,
-    "ast_hash": "47222159f047ee2ce35ad9b58f47fe62",
+    "mtime": 1792713411.2943604,
+    "ast_hash": "eb5f17cdd3a2c708d19e7d28d46d0aa0",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -815,8 +815,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
-    "mtime": 1792522767.2411199,
-    "ast_hash": "67fcd44b0a56fab3956938cdbe74cf02",
+    "mtime": 1792713444.4509408,
+    "ast_hash": "9ba19e551ee2dbe9e48a549b2ef95b93",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.ts": {
@@ -970,8 +970,8 @@
     "semantic_hash": ""
   },
   "docs/package.json": {
-    "mtime": 1775850613.0361917,
-    "ast_hash": "d938422a490f154798830623ee1c5470",
+    "mtime": 1792713418.2630813,
+    "ast_hash": "c74b3e8cb21bbb74b4af99af525d1b56",
     "semantic_hash": ""
   },
   "docs/sidebarsDev.ts": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "docs/user-docs/index.md": {
-    "mtime": 1792713037.8938158,
-    "ast_hash": "6eb133f376c580ac9f246fe7f46b4f34",
+    "mtime": 1792713273.0512445,
+    "ast_hash": "3027a99364a15bfc6111713dc5a01693",
     "semantic_hash": ""
   },
   "help.txt": {
@@ -2800,8 +2800,8 @@
     "semantic_hash": ""
   },
   "docs/user-docs/ai-inbox-queue.md": {
-    "mtime": 1792713001.2810192,
-    "ast_hash": "2c38a54c74b027b37ec70925543afa33",
+    "mtime": 1792713273.0507236,
+    "ast_hash": "3fea16c09db5f74492f3eb443c44dea2",
     "semantic_hash": ""
   }
 }
