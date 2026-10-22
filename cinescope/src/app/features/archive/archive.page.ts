@@ -81,21 +81,21 @@ export interface FavoritePersonCardVm {
         <button
           type="button"
           class="filter-chip"
-          [class.active]="mediaFilter() === 'all'"
+          [class.active]="currentMediaFilter() === 'all'"
           (click)="setMediaFilter('all')">
           All ({{ activeTabItems().length }})
         </button>
         <button
           type="button"
           class="filter-chip"
-          [class.active]="mediaFilter() === 'movie'"
+          [class.active]="currentMediaFilter() === 'movie'"
           (click)="setMediaFilter('movie')">
           Movies ({{ movieCount() }})
         </button>
         <button
           type="button"
           class="filter-chip"
-          [class.active]="mediaFilter() === 'tv'"
+          [class.active]="currentMediaFilter() === 'tv'"
           (click)="setMediaFilter('tv')">
           TV Shows ({{ tvCount() }})
         </button>
@@ -109,8 +109,13 @@ export interface FavoritePersonCardVm {
           @if (filteredWatchlist().length === 0) {
             <div class="empty-archive">
               <ion-icon name="bookmark-outline"></ion-icon>
-              <h2>YOUR WATCHLIST IS EMPTY</h2>
-              <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              @if (storage.watchlistItems().length > 0) {
+                <h2>NO {{ watchlistMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHLIST</h2>
+                <p>You don't have any {{ watchlistMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} saved to your watchlist.</p>
+              } @else {
+                <h2>YOUR WATCHLIST IS EMPTY</h2>
+                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              }
             </div>
           } @else {
             <div
@@ -141,8 +146,13 @@ export interface FavoritePersonCardVm {
           @if (filteredWatched().length === 0) {
             <div class="empty-archive">
               <ion-icon name="checkmark-done-circle-outline"></ion-icon>
-              <h2>NO WATCHED TITLES YET</h2>
-              <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              @if (storage.watchedItems().length > 0) {
+                <h2>NO {{ watchedMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHED</h2>
+                <p>You don't have any {{ watchedMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} marked as watched.</p>
+              } @else {
+                <h2>NO WATCHED TITLES YET</h2>
+                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              }
             </div>
           } @else {
             <div
@@ -511,7 +521,14 @@ export class ArchivePage implements AfterViewInit {
   private router = inject(Router);
 
   public activeTab = signal<'watchlist' | 'watched' | 'people'>('watchlist');
-  public mediaFilter = signal<'all' | 'movie' | 'tv'>('all');
+  public watchlistMediaFilter = signal<'all' | 'movie' | 'tv'>('all');
+  public watchedMediaFilter = signal<'all' | 'movie' | 'tv'>('all');
+
+  public currentMediaFilter = computed<'all' | 'movie' | 'tv'>(() => {
+    return this.activeTab() === 'watchlist'
+      ? this.watchlistMediaFilter()
+      : this.watchedMediaFilter();
+  });
   public fadePhase = signal<'a' | 'b'>('a');
 
   public visibleWatchlistLimit = signal<number>(INITIAL_CHUNK_SIZE);
@@ -533,14 +550,14 @@ export class ArchivePage implements AfterViewInit {
 
   public filteredWatchlist = computed<ArchiveCardVm[]>(() => {
     const items = this.storage.watchlistItems();
-    const filter = this.mediaFilter();
+    const filter = this.watchlistMediaFilter();
     const filtered = filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
     return filtered.map((doc) => this.toCardVm(doc));
   });
 
   public filteredWatched = computed<ArchiveCardVm[]>(() => {
     const items = this.storage.watchedItems();
-    const filter = this.mediaFilter();
+    const filter = this.watchedMediaFilter();
     const filtered = filter === 'all' ? items : items.filter((item) => item.mediaType === filter);
     return filtered.map((doc) => this.toCardVm(doc));
   });
@@ -627,14 +644,30 @@ export class ArchivePage implements AfterViewInit {
   }
 
   public setMediaFilter(filter: 'all' | 'movie' | 'tv'): void {
-    if (this.mediaFilter() !== filter) {
-      this.mediaFilter.set(filter);
-      this.triggerFadeAnimation();
-      this.scrollPositions[this.activeTab()] = 0;
-      if (this.scrollEl) {
-        this.scrollEl.scrollTop = 0;
-      } else {
-        void this.content?.scrollToTop(0);
+    const tab = this.activeTab();
+    if (tab === 'watchlist') {
+      if (this.watchlistMediaFilter() !== filter) {
+        this.watchlistMediaFilter.set(filter);
+        this.visibleWatchlistLimit.set(INITIAL_CHUNK_SIZE);
+        this.triggerFadeAnimation();
+        this.scrollPositions['watchlist'] = 0;
+        if (this.scrollEl) {
+          this.scrollEl.scrollTop = 0;
+        } else {
+          void this.content?.scrollToTop(0);
+        }
+      }
+    } else if (tab === 'watched') {
+      if (this.watchedMediaFilter() !== filter) {
+        this.watchedMediaFilter.set(filter);
+        this.visibleWatchedLimit.set(INITIAL_CHUNK_SIZE);
+        this.triggerFadeAnimation();
+        this.scrollPositions['watched'] = 0;
+        if (this.scrollEl) {
+          this.scrollEl.scrollTop = 0;
+        } else {
+          void this.content?.scrollToTop(0);
+        }
       }
     }
   }
