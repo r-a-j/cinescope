@@ -1,0 +1,439 @@
+.inbox-toolbar {
+  --background: #000000;
+  --border-width: 0 0 1px 0;
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+.inbox-toolbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  width: 100%;
+}
+
+.queue-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+
+  &.active {
+    background: #e50914;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.7);
+  }
+}
+
+.queue-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.queue-pill {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clear-all-btn {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  ion-icon {
+    font-size: 13px;
+  }
+
+  &:hover,
+  &:active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+  }
+}
+
+.inbox-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  padding: 16px 16px 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+.empty-inbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 75vh;
+  text-align: center;
+  max-width: 360px;
+  margin: auto;
+  color: rgba(255, 255, 255, 0.6);
+
+  .empty-icon-wrap {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 9, 20, 0.18) 0%, rgba(0, 0, 0, 0) 70%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+
+    ion-icon {
+      font-size: 42px;
+      color: #e50914;
+    }
+  }
+
+  h2 {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+  }
+
+  p {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin: 0 0 24px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .demo-seed-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    ion-icon {
+      font-size: 16px;
+      color: #38bdf8;
+    }
+
+    &:hover,
+    &:active {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.deck-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  height: calc(100% - 90px);
+  max-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.triage-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #121216;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  touch-action: none;
+  cursor: grab;
+  will-change: transform, opacity;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.card-active {
+    z-index: 10;
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotate(var(--rot, 0deg));
+    transition: none;
+
+    &.exiting {
+      transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.28s ease;
+      opacity: 0;
+    }
+  }
+
+  &.card-depth-1 {
+    z-index: 5;
+    transform: translate3d(0, 16px, -20px) scale(0.94);
+    opacity: 0.75;
+    pointer-events: none;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+
+  &.card-depth-2 {
+    z-index: 1;
+    transform: translate3d(0, 32px, -40px) scale(0.88);
+    opacity: 0.45;
+    pointer-events: none;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+}
+
+.card-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.card-poster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.card-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+
+  span {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+  }
+
+  .badge-rating {
+    color: #facc15;
+  }
+}
+
+/* Directional Stamps */
+.stamp {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border-width: 3px;
+  border-style: solid;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.05s ease;
+
+  ion-icon {
+    font-size: 22px;
+  }
+
+  &.stamp-watchlist {
+    top: 40px;
+    right: 20px;
+    transform: rotate(15deg);
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.18);
+    opacity: var(--stamp-right, 0);
+  }
+
+  &.stamp-discard {
+    top: 40px;
+    left: 20px;
+    transform: rotate(-15deg);
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.18);
+    opacity: var(--stamp-left, 0);
+  }
+
+  &.stamp-watched {
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%) rotate(0deg);
+    border-color: #38bdf8;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.18);
+    opacity: var(--stamp-up, 0);
+  }
+}
+
+.card-scrim {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  padding: 40px 18px 18px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.75) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.card-title {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.25;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.card-meta {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11.5px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.card-overview {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10.5px;
+  margin-top: 4px;
+
+  ion-icon {
+    font-size: 12px;
+  }
+}
+
+/* Control Buttons Dock */
+.dock-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  width: 100%;
+  max-width: 380px;
+  padding: 8px 0;
+}
+
+.dock-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+
+  ion-icon {
+    font-size: 28px;
+    transition: transform 0.18s ease;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &.btn-discard {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+
+    &:hover,
+    &:active {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: #ef4444;
+    }
+  }
+
+  &.btn-watched {
+    width: 52px;
+    height: 52px;
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.3);
+
+    ion-icon {
+      font-size: 24px;
+    }
+
+    &:hover,
+    &:active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: #38bdf8;
+    }
+  }
+
+  &.btn-watchlist {
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.3);
+
+    &:hover,
+    &:active {
+      background: rgba(34, 197, 94, 0.18);
+      border-color: #22c55e;
+    }
+  }
+}

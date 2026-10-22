@@ -1,0 +1,137 @@
+<app-header></app-header>
+
+<ion-toolbar class="inbox-toolbar">
+  <div class="inbox-toolbar-content">
+    <div class="queue-counter">
+      <span class="pulse-indicator" [class.active]="cards().length > 0"></span>
+      <span class="queue-label">TRIAGE QUEUE</span>
+      <span class="queue-pill">{{ cards().length }}</span>
+    </div>
+
+    @if (cards().length > 0) {
+      <button type="button" class="clear-all-btn" (click)="onClearAll()">
+        <ion-icon name="trash-outline"></ion-icon>
+        Clear All
+      </button>
+    }
+  </div>
+</ion-toolbar>
+
+<ion-content color="background" [scrollY]="false">
+  <div class="inbox-container">
+    @if (cards().length === 0) {
+      <div class="empty-inbox">
+        <div class="empty-icon-wrap">
+          <ion-icon name="mail-open-outline"></ion-icon>
+        </div>
+        <h2>INBOX IS CLEAR</h2>
+        <p>No items pending review. Screenshot extractions and imported titles appear here for swift, one-swipe triage.</p>
+
+        <button type="button" class="demo-seed-btn" (click)="populateDemoTitles()">
+          <ion-icon name="sparkles-outline"></ion-icon>
+          Load Demo Titles
+        </button>
+      </div>
+    } @else {
+      <!-- Interactive Card Deck -->
+      <div class="deck-wrapper">
+        <!-- Render up to top 3 cards in the stack -->
+        @for (card of visibleStack(); track card.id; let idx = $index) {
+          <div
+            #deckCard
+            class="triage-card"
+            [class.card-active]="idx === 0"
+            [class.card-depth-1]="idx === 1"
+            [class.card-depth-2]="idx === 2"
+            (pointerdown)="idx === 0 ? onPointerDown($event) : null"
+            (pointermove)="idx === 0 ? onPointerMove($event) : null"
+            (pointerup)="idx === 0 ? onPointerUp($event) : null"
+            (pointercancel)="idx === 0 ? onPointerCancel($event) : null">
+            
+            <div class="card-media">
+              <img
+                [src]="card.posterUrl"
+                [alt]="card.title"
+                class="card-poster"
+                draggable="false" />
+
+              <div class="card-badges">
+                <span class="badge-type">{{ card.mediaType | uppercase }}</span>
+                @if (card.rating) {
+                  <span class="badge-rating">★ {{ card.rating }}</span>
+                }
+                @if (card.year) {
+                  <span class="badge-year">{{ card.year }}</span>
+                }
+              </div>
+
+              <!-- Directional Stamp Indicators -->
+              @if (idx === 0) {
+                <div class="stamp stamp-watchlist">
+                  <ion-icon name="bookmark"></ion-icon>
+                  <span>WATCHLIST</span>
+                </div>
+                <div class="stamp stamp-discard">
+                  <ion-icon name="close"></ion-icon>
+                  <span>DISCARD</span>
+                </div>
+                <div class="stamp stamp-watched">
+                  <ion-icon name="checkmark-done"></ion-icon>
+                  <span>WATCHED</span>
+                </div>
+              }
+
+              <!-- Bottom Info Scrim -->
+              <div
+                class="card-scrim"
+                role="button"
+                tabindex="0"
+                (click)="openDetail(card)"
+                (keyup.enter)="openDetail(card)">
+                <h3 class="card-title">{{ card.title }}</h3>
+                <div class="card-meta">{{ card.metaSubtitle }}</div>
+                @if (card.overview) {
+                  <p class="card-overview">{{ card.overview }}</p>
+                }
+                <div class="card-hint">
+                  <ion-icon name="information-circle-outline"></ion-icon>
+                  <span>Tap card for full details</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Control Buttons Dock -->
+      <div class="dock-container">
+        <button
+          type="button"
+          class="dock-btn btn-discard"
+          (click)="triggerTriage('discard')"
+          title="Discard item (Swipe Left)"
+          aria-label="Discard item">
+          <ion-icon name="close"></ion-icon>
+        </button>
+
+        <button
+          type="button"
+          class="dock-btn btn-watched"
+          (click)="triggerTriage('watched')"
+          title="Mark Watched (Swipe Up)"
+          aria-label="Mark Watched">
+          <ion-icon name="checkmark-done"></ion-icon>
+        </button>
+
+        <button
+          type="button"
+          class="dock-btn btn-watchlist"
+          (click)="triggerTriage('watchlist')"
+          title="Save to Watchlist (Swipe Right)"
+          aria-label="Save to Watchlist">
+          <ion-icon name="bookmark"></ion-icon>
+        </button>
+      </div>
+    }
+  </div>
+</ion-content>
