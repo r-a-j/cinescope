@@ -1,7 +1,7 @@
 {
   "cinescope-api/api/extract.ts": {
-    "mtime": 1792661387.4772847,
-    "ast_hash": "5f6ad6e60a6f0a3e40e62bbfc9769984",
+    "mtime": 1792702809.9863403,
+    "ast_hash": "e7fa76a6781ebfcf663e4cf772fbc1b8",
     "semantic_hash": ""
   },
   "cinescope-api/api/feed.ts": {
@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/generate-openapi.ts": {
-    "mtime": 1775850613.0249472,
-    "ast_hash": "dcb0c09c7d17bf9a29d4a0c5752200fe",
+    "mtime": 1792702830.166577,
+    "ast_hash": "daeb8ffebc19c3773323762544baa49a",
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1792697967.6087925,
-    "ast_hash": "402967b20621e481a44a3bb0252ef5ea",
+    "mtime": 1792702900.6316867,
+    "ast_hash": "4505e8a8c3a7861cbad76789a73d3de2",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -745,8 +745,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/archive/archive.page.ts": {
-    "mtime": 1792701378.2311215,
-    "ast_hash": "aa0a0eac4e40afebd3f29008d48c5e79",
+    "mtime": 1792701635.4874287,
+    "ast_hash": "c91ff612df672a7ea9f4230115c612b1",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/layout/tabs/tabs.component.ts": {
-    "mtime": 1792232106.196029,
-    "ast_hash": "a74c70548c65462918fa92d9a83d6bb2",
+    "mtime": 1792702919.8907464,
+    "ast_hash": "0a00b62d638cf70f167bbb8db481008e",
     "semantic_hash": ""
   },
   "cinescope/src/app/layout/tabs/tabs.routes.ts": {
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "docs/cinescope-openapi.json": {
-    "mtime": 1792664159.4173706,
-    "ast_hash": "4ab5bf6397405341c9205d67d55d407b",
+    "mtime": 1792702837.5382395,
+    "ast_hash": "d332152df9f16727deefc7341876e388",
     "semantic_hash": ""
   },
   "docs/dev-docs/api/ai-smart-search.ParamsDetails.json": {
@@ -1335,8 +1335,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/layout/tabs/tabs.component.html": {
-    "mtime": 1792232106.1950297,
-    "ast_hash": "d5e0edbf5a6c352612de55fc068d93b6",
+    "mtime": 1792702924.2722228,
+    "ast_hash": "23caae7e58d36dab247ff2f2f6b1d7df",
     "semantic_hash": ""
   },
   "cinescope/src/app/shared/components/badge/badge.component.html": {

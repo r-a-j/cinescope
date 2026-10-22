@@ -25,8 +25,8 @@
   "paths": {
     "/api/extract": {
       "post": {
-        "description": "Extracts movie titles from raw OCR text using Gemini 2.5 Flash.",
-        "summary": "Extract Movie Titles",
+        "description": "Extracts movie and TV titles from raw OCR text or screenshot images using Gemini 2.5 Flash.",
+        "summary": "Extract Movie and TV Titles",
         "parameters": [
           {
             "schema": {
@@ -49,35 +49,57 @@
                   "text": {
                     "type": "string",
                     "example": "I watched Inception and Breaking Bad today."
+                  },
+                  "image": {
+                    "type": "string",
+                    "example": "data:image/jpeg;base64,..."
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "example": "image/jpeg"
                   }
-                },
-                "required": [
-                  "text"
-                ]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "A JSON array of extracted movie titles.",
+            "description": "A JSON array of extracted movie and TV titles with optional year and mediaType.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "string"
-                  },
-                  "example": [
-                    "Inception",
-                    "Breaking Bad"
-                  ]
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "example": "Inception"
+                      },
+                      "year": {
+                        "type": "number",
+                        "example": 2010
+                      },
+                      "mediaType": {
+                        "type": "string",
+                        "enum": [
+                          "movie",
+                          "tv"
+                        ],
+                        "example": "movie"
+                      }
+                    },
+                    "required": [
+                      "title"
+                    ]
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Bad Request - Missing text payload"
+            "description": "Bad Request - Missing or invalid text/image payload"
           },
           "403": {
             "description": "Forbidden - Invalid Client Origin"
