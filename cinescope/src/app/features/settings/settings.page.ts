@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { App } from '@capacitor/app';
 import { NavController } from '@ionic/angular';
 import {
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle,
@@ -39,7 +40,7 @@ export class SettingsPage implements OnInit {
     private alertCtrl = inject(AlertController);
     private searchStore = inject(SearchStore);
 
-    public appVersion = signal<string>('4.0.0');
+    public appVersion = signal<string>('1.1.0');
 
     constructor() {
         addIcons({
@@ -51,6 +52,14 @@ export class SettingsPage implements OnInit {
 
     async ngOnInit(): Promise<void> {
         await this.storage.getSettings();
+        try {
+            const info = await App.getInfo();
+            if (info?.version) {
+                this.appVersion.set(info.version);
+            }
+        } catch {
+            this.appVersion.set('1.1.0');
+        }
     }
 
     // --- NAVIGATION ---
