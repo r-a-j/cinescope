@@ -11,7 +11,7 @@ export class TmdbKeywordsService extends BaseMediaService {
      * @param keywordId The TMDB Keyword ID.
      */
     getKeywordDetails(keywordId: number): Observable<TmdbKeywordDto> {
-        return this.http.get<TmdbKeywordDto>(`/keyword/${keywordId}`);
+        return this.http.get<TmdbKeywordDto>(`${this.apiPrefix}/keyword/${keywordId}`);
     }
 
     // Pro-Tip for CINESCOPE
