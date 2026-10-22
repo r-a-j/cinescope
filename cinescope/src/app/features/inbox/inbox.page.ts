@@ -31,12 +31,18 @@ import {
   documentTextOutline,
   imageOutline,
   clipboardOutline,
-  cameraOutline
+  cameraOutline,
+  albumsOutline,
+  listOutline,
+  checkbox,
+  squareOutline,
+  checkboxOutline
 } from 'ionicons/icons';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ExtractionService } from '../../core/services/extraction.service';
+import { ExtractionService, ExtractedTitleItem } from '../../core/services/extraction.service';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
@@ -91,6 +97,12 @@ export class InboxPage {
   private router = inject(Router);
   private extractionService = inject(ExtractionService);
 
+  // View mode: Deck (swiping card stack) or Batch List (table multi-select)
+  public viewMode = signal<'deck' | 'list'>(this.getInitialViewMode());
+
+  // Multi-selection state for Batch List View
+  public selectedIds = signal<Set<string>>(new Set());
+
   // Transient set of IDs hidden optimistically while pending undo toast dismissal
   public pendingIds = signal<Set<string>>(new Set());
 
@@ -134,6 +146,20 @@ export class InboxPage {
     return this.cards().slice(0, 3);
   });
 
+  // Selection computed helpers for Batch List View
+  public isAllSelected = computed<boolean>(() => {
+    const active = this.cards();
+    if (active.length === 0) return false;
+    const selected = this.selectedIds();
+    return active.every((c) => selected.has(c.id));
+  });
+
+  public selectedCount = computed<number>(() => {
+    const active = this.cards();
+    const selected = this.selectedIds();
+    return active.filter((c) => selected.has(c.id)).length;
+  });
+
   constructor() {
     addIcons({
       close,
@@ -147,8 +173,43 @@ export class InboxPage {
       documentTextOutline,
       imageOutline,
       clipboardOutline,
-      cameraOutline
+      cameraOutline,
+      albumsOutline,
+      listOutline,
+      checkbox,
+      squareOutline,
+      checkboxOutline
     });
+  }
+
+  private getInitialViewMode(): 'deck' | 'list' {
+    try {
+      const saved = localStorage.getItem('cinescope_inbox_view_mode');
+      if (saved === 'list' || saved === 'deck') {
+        return saved;
+      }
+    } catch {
+      // Non-critical fallback
+    }
+    return 'deck';
+  }
+
+  public setViewMode(mode: 'deck' | 'list'): void {
+    this.viewMode.set(mode);
+    try {
+      localStorage.setItem('cinescope_inbox_view_mode', mode);
+    } catch {
+      // Non-critical fallback
+    }
+    void this.triggerHaptic(ImpactStyle.Light);
+  }
+
+  private async triggerHaptic(style: ImpactStyle = ImpactStyle.Light): Promise<void> {
+    try {
+      await Haptics.impact({ style });
+    } catch {
+      // Graceful no-op on non-native environments
+    }
   }
 
   private get activeCardElement(): HTMLElement | null {
@@ -157,7 +218,118 @@ export class InboxPage {
   }
 
   // ==========================================
-  // 📥 INGESTION MODAL & AI EXTRACTION
+  // VIEW MODE & BATCH SELECTION
+  // ==========================================
+
+  public toggleSelectAll(): void {
+    void this.triggerHaptic(ImpactStyle.Light);
+    if (this.isAllSelected()) {
+      this.selectedIds.set(new Set());
+    } else {
+      this.selectedIds.set(new Set(this.cards().map((c) => c.id)));
+    }
+  }
+
+  public toggleSelectCard(cardId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    void this.triggerHaptic(ImpactStyle.Light);
+    this.selectedIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
+  }
+
+  public inlineTriage(card: InboxCardVm, action: 'watchlist' | 'watched' | 'discard', event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    void this.triggerHaptic(ImpactStyle.Light);
+
+    // Clean up selection if this item was checked
+    this.selectedIds.update((current) => {
+      if (!current.has(card.id)) return current;
+      const next = new Set(current);
+      next.delete(card.id);
+      return next;
+    });
+
+    this.commitOrQueueAction(card, action);
+  }
+
+  public triageBulk(action: 'watchlist' | 'watched' | 'discard'): void {
+    const selected = this.selectedIds();
+    const targetCards = this.cards().filter((c) => selected.has(c.id));
+    if (targetCards.length === 0) return;
+
+    const count = targetCards.length;
+    const targetIds = targetCards.map((c) => c.id);
+    const targetEntries = targetCards.map((c) => ({
+      tmdbId: c.tmdbId,
+      mediaType: c.mediaType
+    }));
+
+    // Clear selection
+    this.selectedIds.set(new Set());
+
+    // Optimistically hide all targeted items
+    this.pendingIds.update((current) => {
+      const next = new Set(current);
+      for (const id of targetIds) {
+        next.add(id);
+      }
+      return next;
+    });
+
+    void this.triggerHaptic(ImpactStyle.Medium);
+
+    const label = action === 'watchlist'
+      ? `Moved ${count} item${count > 1 ? 's' : ''} to Watchlist`
+      : action === 'watched'
+        ? `Marked ${count} item${count > 1 ? 's' : ''} as Watched`
+        : `Discarded ${count} item${count > 1 ? 's' : ''}`;
+
+    void this.toast.presentActionWithUndo(
+      label,
+      () => {
+        // UNDO tapped: restore all items to visible array
+        this.pendingIds.update((current) => {
+          const next = new Set(current);
+          for (const id of targetIds) {
+            next.delete(id);
+          }
+          return next;
+        });
+        void this.triggerHaptic(ImpactStyle.Light);
+      },
+      () => {
+        // Dismissed naturally: commit bulk mutation to RxDB
+        if (action === 'watchlist') {
+          void this.storage.bulkMoveInbox(targetEntries, 'watchlist');
+        } else if (action === 'watched') {
+          void this.storage.bulkMoveInbox(targetEntries, 'watched');
+        } else {
+          void this.storage.bulkDiscardInbox(targetEntries);
+        }
+        this.pendingIds.update((current) => {
+          const next = new Set(current);
+          for (const id of targetIds) {
+            next.delete(id);
+          }
+          return next;
+        });
+      }
+    );
+  }
+
+  // ==========================================
+  // INGESTION MODAL & AI EXTRACTION
   // ==========================================
 
   public openImportModal(): void {
@@ -218,199 +390,215 @@ export class InboxPage {
         sizeText: `~${sizeKb} KB (optimized)`
       });
     } catch (err) {
-      console.error('[InboxPage] Image compression failed:', err);
-      await this.toast.presentError('Failed to load and compress screenshot.');
+      console.error('[InboxPage] Image compression error:', err);
+      await this.toast.presentError('Failed to process image file.');
     }
   }
 
-  public async startExtraction(): Promise<void> {
-    const mode = this.importMode();
-    const hasText = mode === 'text' && this.rawText.trim().length > 0;
-    const hasImage = mode === 'image' && !!this.selectedImage();
+  public onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
-    if (!hasText && !hasImage) return;
-
-    this.isProcessing.set(true);
-    this.processingStatus.set('Analyzing titles with Gemini AI...');
+  public async onDropFile(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer?.files?.[0];
+    if (!file || !file.type.startsWith('image/')) {
+      await this.toast.presentWarning('Please drop an image file (PNG, JPG, WEBP).');
+      return;
+    }
 
     try {
-      const img = this.selectedImage();
-      let payload: { text?: string; image?: string; mimeType?: string } | null = null;
+      const compressed = await this.extractionService.compressImage(file, 1280, 0.82);
+      const sizeKb = Math.round((compressed.base64.length * 0.75) / 1024);
 
-      if (hasText) {
-        payload = { text: this.rawText.trim() };
-      } else if (img) {
-        payload = {
-          image: img.base64,
-          mimeType: img.mimeType
-        };
+      this.selectedImage.set({
+        previewUrl: compressed.base64,
+        base64: compressed.base64,
+        mimeType: compressed.mimeType,
+        name: file.name,
+        sizeText: `~${sizeKb} KB (optimized)`
+      });
+    } catch (err) {
+      console.error('[InboxPage] Drag-drop compression error:', err);
+      await this.toast.presentError('Failed to process dropped image file.');
+    }
+  }
+
+  public clearImage(): void {
+    this.selectedImage.set(null);
+  }
+
+  public async submitImport(): Promise<void> {
+    if (this.isSubmitDisabled()) return;
+
+    this.isProcessing.set(true);
+    this.processingStatus.set('Extracting titles with Gemini AI...');
+
+    try {
+      let extracted: ExtractedTitleItem[] = [];
+
+      if (this.importMode() === 'text') {
+        extracted = await firstValueFrom(this.extractionService.extractTitles({ text: this.rawText }));
+      } else {
+        const img = this.selectedImage();
+        if (!img) return;
+        extracted = await firstValueFrom(
+          this.extractionService.extractTitles({
+            image: img.base64,
+            mimeType: img.mimeType
+          })
+        );
       }
 
-      if (!payload) {
+      if (extracted.length === 0) {
+        await this.toast.presentWarning('No movie or TV titles recognized. Try clearer text or another screenshot.');
         this.isProcessing.set(false);
         return;
       }
 
-      const extracted = await firstValueFrom(this.extractionService.extractTitles(payload));
-
-      if (!extracted || extracted.length === 0) {
-        await this.toast.presentWarning('No movie or TV titles recognized. Try pasting a clearer list.');
-        this.isProcessing.set(false);
-        return;
-      }
-
-      this.processingStatus.set(`Resolving ${extracted.length} titles on TMDB...`);
+      this.processingStatus.set(`Resolving ${extracted.length} title${extracted.length > 1 ? 's' : ''} on TMDB...`);
 
       const result = await this.extractionService.resolveAndQueueTitles(extracted);
 
-      this.isImportModalOpen.set(false);
+      // Reset modal state
       this.rawText = '';
       this.selectedImage.set(null);
+      this.isImportModalOpen.set(false);
+      this.isProcessing.set(false);
+
+      void this.triggerHaptic(ImpactStyle.Medium);
 
       if (result.added > 0) {
-        const skippedNote = result.skipped > 0 ? ` (${result.skipped} already saved)` : '';
-        await this.toast.presentSuccess(`Queued ${result.added} titles in your Inbox${skippedNote}!`, 3500);
+        await this.toast.presentSuccess(`Successfully queued ${result.added} title${result.added > 1 ? 's' : ''} for triage.`);
+      } else if (result.skipped > 0) {
+        await this.toast.presentInfo('All recognized titles were already present in your library.');
       } else {
-        await this.toast.presentInfo(`All ${result.total} extracted titles are already saved in your library.`);
+        await this.toast.presentWarning('No titles could be resolved or added.');
       }
-    } catch (error) {
-      console.error('[InboxPage] Extraction pipeline failed:', error);
-      await this.toast.presentError('Extraction failed. Check your network or try again.');
-    } finally {
+    } catch (err) {
+      console.error('[InboxPage] Extraction pipeline error:', err);
       this.isProcessing.set(false);
+      await this.toast.presentError('Failed to extract titles. Please verify your connection.');
     }
   }
 
   // ==========================================
-  // 👆 POINTER GESTURE ENGINE
+  // HARDWARE-ACCELERATED POINTER EVENTS
   // ==========================================
 
   public onPointerDown(event: PointerEvent): void {
     if (this.isAnimating() || this.cards().length === 0) return;
 
     const el = this.activeCardElement;
-    if (el) {
-      el.setPointerCapture(event.pointerId);
-    }
+    if (!el) return;
 
+    this.isDragging.set(true);
     this.startX = event.clientX;
     this.startY = event.clientY;
     this.currentX = 0;
     this.currentY = 0;
     this.startTime = Date.now();
-    this.isDragging.set(true);
 
-    this.applyTransform(0, 0, 0);
+    el.setPointerCapture(event.pointerId);
   }
 
   public onPointerMove(event: PointerEvent): void {
-    if (!this.isDragging() || this.isAnimating()) return;
+    if (!this.isDragging()) return;
+
+    const el = this.activeCardElement;
+    if (!el) return;
 
     this.currentX = event.clientX - this.startX;
     this.currentY = event.clientY - this.startY;
 
-    const rot = Math.max(-25, Math.min(25, this.currentX * 0.08));
-    this.applyTransform(this.currentX, this.currentY, rot);
+    const rot = (this.currentX / 16).toFixed(2);
+    el.style.setProperty('--tx', `${this.currentX}px`);
+    el.style.setProperty('--ty', `${this.currentY}px`);
+    el.style.setProperty('--rot', `${rot}deg`);
+
+    // Dynamic stamp opacity
+    const rightRatio = Math.min(Math.max(this.currentX / 110, 0), 1);
+    const leftRatio = Math.min(Math.max(-this.currentX / 110, 0), 1);
+    const upRatio = Math.min(Math.max(-this.currentY / 110, 0), 1);
+
+    el.style.setProperty('--stamp-right', rightRatio.toFixed(2));
+    el.style.setProperty('--stamp-left', leftRatio.toFixed(2));
+    el.style.setProperty('--stamp-up', upRatio.toFixed(2));
   }
 
   public onPointerUp(event: PointerEvent): void {
     if (!this.isDragging()) return;
-    this.isDragging.set(false);
 
     const el = this.activeCardElement;
-    if (el && el.hasPointerCapture(event.pointerId)) {
-      el.releasePointerCapture(event.pointerId);
-    }
-
-    const elapsed = Date.now() - this.startTime;
-    const dx = this.currentX;
-    const dy = this.currentY;
-
-    // Detect click / tap without dragging
-    if (Math.abs(dx) < 6 && Math.abs(dy) < 6 && elapsed < 300) {
-      const top = this.cards()[0];
-      if (top) {
-        this.openDetail(top);
+    if (el) {
+      try {
+        el.releasePointerCapture(event.pointerId);
+      } catch {
+        // Non-critical pointer release
       }
-      return;
     }
 
-    const vx = dx / (elapsed || 1);
-    const vy = dy / (elapsed || 1);
-
-    // Right swipe -> Watchlist
-    if (dx > 95 || (dx > 40 && vx > 0.45)) {
-      this.triggerTriage('watchlist');
-      return;
-    }
-
-    // Left swipe -> Discard
-    if (dx < -95 || (dx < -40 && vx < -0.45)) {
-      this.triggerTriage('discard');
-      return;
-    }
-
-    // Up swipe -> Watched (mostly vertical)
-    if ((dy < -90 || (dy < -40 && vy < -0.45)) && Math.abs(dx) < 85) {
-      this.triggerTriage('watched');
-      return;
-    }
-
-    // Snap back to center
-    this.snapBack();
+    this.isDragging.set(false);
+    this.evaluateDropGesture();
   }
 
   public onPointerCancel(event: PointerEvent): void {
-    if (!this.isDragging()) return;
-    this.isDragging.set(false);
+    this.onPointerUp(event);
+  }
+
+  private evaluateDropGesture(): void {
     const el = this.activeCardElement;
-    if (el && el.hasPointerCapture(event.pointerId)) {
-      el.releasePointerCapture(event.pointerId);
+    const card = this.cards()[0];
+    if (!el || !card) return;
+
+    const elapsed = Math.max(Date.now() - this.startTime, 1);
+    const velocityX = Math.abs(this.currentX) / elapsed;
+    const velocityY = Math.abs(this.currentY) / elapsed;
+
+    const isFlingX = velocityX > 0.65;
+    const isFlingY = velocityY > 0.65;
+
+    // Decision boundaries:
+    // 1. Swipe Right (>100px or fling right) -> Watchlist
+    // 2. Swipe Left (<-100px or fling left) -> Discard
+    // 3. Swipe Up (<-90px or fling up) -> Watched
+    if (this.currentY < -90 || (isFlingY && this.currentY < -40)) {
+      this.animateExitAndCommit(card, 'watched');
+    } else if (this.currentX > 100 || (isFlingX && this.currentX > 40)) {
+      this.animateExitAndCommit(card, 'watchlist');
+    } else if (this.currentX < -100 || (isFlingX && this.currentX < -40)) {
+      this.animateExitAndCommit(card, 'discard');
+    } else {
+      // Snap back to resting position
+      this.animateSnapBack(el);
     }
-    this.snapBack();
   }
 
-  private applyTransform(x: number, y: number, rot: number): void {
-    const el = this.activeCardElement;
-    if (!el) return;
-
-    el.style.setProperty('--tx', `${x}px`);
-    el.style.setProperty('--ty', `${y}px`);
-    el.style.setProperty('--rot', `${rot}deg`);
-
-    const rightOpacity = Math.max(0, Math.min(1, (x - 30) / 60));
-    const leftOpacity = Math.max(0, Math.min(1, (-x - 30) / 60));
-    const upOpacity = (y < -30 && Math.abs(x) < 70) ? Math.max(0, Math.min(1, (-y - 30) / 60)) : 0;
-
-    el.style.setProperty('--stamp-right', String(rightOpacity));
-    el.style.setProperty('--stamp-left', String(leftOpacity));
-    el.style.setProperty('--stamp-up', String(upOpacity));
-  }
-
-  private snapBack(): void {
-    const el = this.activeCardElement;
-    if (!el) return;
-
-    el.classList.add('exiting');
-    this.applyTransform(0, 0, 0);
+  private animateSnapBack(el: HTMLElement): void {
+    this.isAnimating.set(true);
+    el.style.transition = 'transform 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    this.resetTransform(el);
 
     setTimeout(() => {
-      el.classList.remove('exiting');
-    }, 250);
+      el.style.transition = '';
+      this.isAnimating.set(false);
+    }, 240);
   }
 
-  // ==========================================
-  // ⚡ TRIAGE ACTIONS & OPTIMISTIC UNDO
-  // ==========================================
-
   public triggerTriage(action: 'watchlist' | 'watched' | 'discard'): void {
-    const list = this.cards();
-    if (list.length === 0 || this.isAnimating()) return;
+    if (this.isAnimating() || this.cards().length === 0) return;
+    const card = this.cards()[0];
+    if (!card) return;
+    void this.triggerHaptic(ImpactStyle.Light);
+    this.animateExitAndCommit(card, action);
+  }
 
-    const card = list[0];
-    const el = this.activeCardElement;
-
+  private animateExitAndCommit(card: InboxCardVm, action: 'watchlist' | 'watched' | 'discard'): void {
     this.isAnimating.set(true);
+    const el = this.activeCardElement;
+    void this.triggerHaptic(ImpactStyle.Medium);
 
     if (el) {
       el.classList.add('exiting');
@@ -463,6 +651,7 @@ export class InboxPage {
           next.delete(card.id);
           return next;
         });
+        void this.triggerHaptic(ImpactStyle.Light);
       },
       () => {
         // Dismissed naturally: commit mutation to RxDB
@@ -510,12 +699,13 @@ export class InboxPage {
   }
 
   public async onClearAll(): Promise<void> {
+    this.selectedIds.set(new Set());
     const count = await this.storage.clearInbox();
     await this.toast.presentInfo(`Cleared ${count} items from Inbox queue.`);
   }
 
   // ==========================================
-  // 🌱 DEMO POPULATOR (For quick testing)
+  // DEMO POPULATOR (For quick testing)
   // ==========================================
 
   public async populateDemoTitles(): Promise<void> {
@@ -528,20 +718,7 @@ export class InboxPage {
           poster_path: '/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg',
           release_date: '2010-07-15',
           vote_average: 8.4,
-          overview: 'Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets, is offered a chance to regain his old life.',
-          genres: [{ id: 28, name: 'Action' }, { id: 878, name: 'Sci-Fi' }]
-        }
-      },
-      {
-        tmdbId: 693134,
-        mediaType: 'movie',
-        payload: {
-          title: 'Dune: Part Two',
-          poster_path: '/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
-          release_date: '2024-02-27',
-          vote_average: 8.2,
-          overview: 'Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge against the conspirators who destroyed his family.',
-          genres: [{ id: 878, name: 'Sci-Fi' }, { id: 12, name: 'Adventure' }]
+          overview: 'Cobb, a skilled thief who steals corporate secrets through dream-sharing technology, is given the inverse task of planting an idea into the mind of a CEO.'
         }
       },
       {
@@ -549,23 +726,32 @@ export class InboxPage {
         mediaType: 'tv',
         payload: {
           name: 'Breaking Bad',
-          poster_path: '/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
+          poster_path: '/ztkUQFLlC19CCMYHW9o1zWhJAGq.jpg',
           first_air_date: '2008-01-20',
           vote_average: 8.9,
-          overview: 'Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and begins manufacturing and selling methamphetamine with a former student.',
-          genres: [{ id: 18, name: 'Drama' }, { id: 80, name: 'Crime' }]
+          overview: 'A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student.'
         }
       },
       {
-        tmdbId: 124800,
+        tmdbId: 438631,
+        mediaType: 'movie',
+        payload: {
+          title: 'Dune',
+          poster_path: '/d5NXSklXo0qyIYkgV94XAgMIckC.jpg',
+          release_date: '2021-09-15',
+          vote_average: 7.8,
+          overview: 'Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe.'
+        }
+      },
+      {
+        tmdbId: 119051,
         mediaType: 'tv',
         payload: {
-          name: 'Severance',
-          poster_path: '/1VAM768eA2WuhB9U81s4g4s3i4z.jpg',
-          first_air_date: '2022-02-17',
+          name: 'Wednesday',
+          poster_path: '/9PFonB99qQwygh2ZewTM0nQ94AD.jpg',
+          first_air_date: '2022-11-23',
           vote_average: 8.4,
-          overview: 'Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives.',
-          genres: [{ id: 18, name: 'Drama' }, { id: 9648, name: 'Mystery' }, { id: 878, name: 'Sci-Fi' }]
+          overview: 'A sleuthing, supernaturally infused mystery charting Wednesday Addams\' years as a student at Nevermore Academy.'
         }
       }
     ];
@@ -573,28 +759,30 @@ export class InboxPage {
     for (const item of demoItems) {
       await this.storage.addToInbox(item.tmdbId, item.mediaType, item.payload);
     }
-    await this.toast.presentSuccess('Loaded 4 demo titles into your Inbox queue.');
+
+    void this.triggerHaptic(ImpactStyle.Light);
+    await this.toast.presentSuccess('Loaded 4 sample titles into Inbox.');
   }
 
-  // ==========================================
-  // 🛠️ VM CONVERTER
-  // ==========================================
-
   private toCardVm(doc: ContentDocType): InboxCardVm {
-    const payload = (doc.payload ?? {}) as Record<string, unknown>;
-    const title = String(payload['title'] || payload['name'] || `#${doc.tmdbId}`);
-    const rawPath = (payload['poster_path'] || payload['profile_path'] || payload['posterUrl']) as string | undefined;
-    const posterUrl = resolveMediaImageUrl(rawPath, 'w780');
+    const p = (doc.payload ?? {}) as Record<string, unknown>;
+    const isMovie = doc.mediaType !== 'tv';
+    const rawTitle = (isMovie ? p['title'] : p['name']) as string | undefined;
+    const title = rawTitle ?? 'Untitled Title';
+    const posterPath = (p['poster_path'] as string | undefined) ?? null;
+    const posterUrl = resolveMediaImageUrl(posterPath, 'w500');
 
-    const rawDate = String(payload['release_date'] || payload['first_air_date'] || '');
-    const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : undefined;
-    const rawRating = Number(payload['vote_average'] || 0);
-    const rating = rawRating > 0 ? rawRating.toFixed(1) : undefined;
-    const overview = String(payload['overview'] || '');
+    const dateStr = (isMovie ? p['release_date'] : p['first_air_date']) as string | undefined;
+    const year = dateStr ? dateStr.substring(0, 4) : undefined;
+    const voteAvg = p['vote_average'] as number | undefined;
+    const rating = voteAvg && voteAvg > 0 ? voteAvg.toFixed(1) : undefined;
 
-    const parts: string[] = [doc.mediaType === 'tv' ? 'TV Series' : 'Movie'];
+    const parts: string[] = [isMovie ? 'Movie' : 'TV Series'];
     if (year) parts.push(year);
     if (rating) parts.push(`★ ${rating}`);
+    const metaSubtitle = parts.join(' • ');
+
+    const overview = (p['overview'] as string | undefined) ?? 'No overview available for this candidate.';
 
     return {
       id: doc.id,
@@ -602,7 +790,7 @@ export class InboxPage {
       mediaType: doc.mediaType === 'tv' ? 'tv' : 'movie',
       title,
       posterUrl,
-      metaSubtitle: parts.join(' • '),
+      metaSubtitle,
       overview,
       year,
       rating,
