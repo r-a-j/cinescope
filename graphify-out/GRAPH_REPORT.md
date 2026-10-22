@@ -1,16 +1,16 @@
 # Graph Report - cinescope  (2026-10-22)
 
 ## Corpus Check
-- 226 files · ~190,957 words
+- 226 files · ~190,920 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1780 nodes · 2499 edges · 279 communities (208 shown, 71 thin omitted)
+- 1780 nodes · 2499 edges · 278 communities (207 shown, 71 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8a2d8a4f`
+- Built from commit: `2523d232`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -73,7 +73,6 @@
 - [[_COMMUNITY_Community 179|Community 179]]
 - [[_COMMUNITY_Community 180|Community 180]]
 - [[_COMMUNITY_Community 181|Community 181]]
-- [[_COMMUNITY_Community 182|Community 182]]
 - [[_COMMUNITY_Community 183|Community 183]]
 - [[_COMMUNITY_Community 184|Community 184]]
 - [[_COMMUNITY_Community 187|Community 187]]
@@ -183,11 +182,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (279 total, 71 thin omitted)
+## Communities (278 total, 71 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.44
-Nodes (4): TmdbPersonListItemDto, TmdbTrendingService, initialState, TmdbTrendingMixedItemDto
+Cohesion: 0.33
+Nodes (4): TmdbReviewDetailDto, TmdbAuthorDetailsDto, TmdbReviewDto, TmdbReviewsService
 
 ### Community 1 - "Community 1"
 Cohesion: 0.21
@@ -215,7 +214,7 @@ Nodes (9): TmdbGenreDto, TmdbGenreListDto, TmdbMovieDetailDto, TmdbProductionCom
 
 ### Community 13 - "Community 13"
 Cohesion: 0.13
-Nodes (12): TmdbCreditDetailDto, TmdbCreditMediaDto, TmdbCreditMediaSeasonDto, TmdbCreditPersonDto, TmdbReviewDetailDto, TmdbAuthorDetailsDto, TmdbReviewDto, BaseMediaService (+4 more)
+Nodes (13): TmdbCreditDetailDto, TmdbCreditMediaDto, TmdbCreditMediaSeasonDto, TmdbCreditPersonDto, TmdbExternalSource, TmdbFindResultsDto, TmdbTvEpisodeResultDto, TmdbTvSeasonResultDto (+5 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.13
@@ -246,8 +245,8 @@ Cohesion: 0.47
 Nodes (3): TmdbPersonCastCreditDto, TmdbPersonCreditBaseDto, TmdbPersonCrewCreditDto
 
 ### Community 22 - "Community 22"
-Cohesion: 0.17
-Nodes (13): TmdbDiscoverMovieParamsDto, TmdbDiscoverTvParamsDto, applyFiltersToMovieParams(), applyFiltersToTvParams(), CollectionLoaderService, getDiscoverSortBy(), getDiscoverTvSortBy(), mapMoviesToSwimlane() (+5 more)
+Cohesion: 0.14
+Nodes (17): TmdbDiscoverMovieParamsDto, TmdbDiscoverTvParamsDto, TmdbPersonListItemDto, applyFiltersToMovieParams(), applyFiltersToTvParams(), CollectionLoaderService, getDiscoverSortBy(), getDiscoverTvSortBy() (+9 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.20
@@ -316,10 +315,6 @@ Nodes (3): TmdbPersonTranslationDataDto, TmdbPersonTranslationItemDto, TmdbPerso
 ### Community 181 - "Community 181"
 Cohesion: 0.06
 Nodes (19): TmdbCertificationItemDto, TmdbCertificationResponseDto, TmdbTvAggregateCreditsResponseDto, TmdbTvAlternativeTitleDto, TmdbTvAlternativeTitlesResponseDto, TmdbTvChangesResponseDto, TmdbTvContentRatingsResponseDto, TmdbTvCreditsResponseDto (+11 more)
-
-### Community 182 - "Community 182"
-Cohesion: 0.33
-Nodes (5): TmdbExternalSource, TmdbFindResultsDto, TmdbTvEpisodeResultDto, TmdbTvSeasonResultDto, TmdbFindService
 
 ### Community 183 - "Community 183"
 Cohesion: 0.40
@@ -469,12 +464,12 @@ Nodes (4): CineScope User Guide, Core Capabilities, Guide Directory, Key Highlig
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BaseMediaService` connect `Community 13` to `Community 0`, `Community 3`, `Community 165`, `Community 166`, `Community 5`, `Community 12`, `Community 269`, `Community 279`, `Community 176`, `Community 16`, `Community 181`, `Community 182`, `Community 22`, `Community 252`, `Community 285`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `BaseMediaService` connect `Community 13` to `Community 0`, `Community 3`, `Community 165`, `Community 166`, `Community 5`, `Community 12`, `Community 269`, `Community 176`, `Community 16`, `Community 181`, `Community 22`, `Community 279`, `Community 252`, `Community 285`?**
+  _High betweenness centrality (0.041) - this node is a cross-community bridge._
 - **Why does `PersonDetailPage` connect `Community 234` to `Community 21`, `Community 166`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `TmdbTvService` connect `Community 5` to `Community 0`, `Community 165`, `Community 41`, `Community 12`, `Community 13`, `Community 14`, `Community 181`, `Community 22`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `TmdbTvService` connect `Community 5` to `Community 165`, `Community 41`, `Community 12`, `Community 13`, `Community 14`, `Community 181`, `Community 22`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `buildParams()` (e.g. with `.discoverMovies()` and `.discoverTv()`) actually correct?**
   _`buildParams()` has 45 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `parser`, `DEFAULT_SOURCES`, `FeedItem` to the rest of the system?**

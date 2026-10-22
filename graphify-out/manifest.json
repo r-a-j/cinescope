@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "cinescope/capacitor.config.ts": {
-    "mtime": 1792232106.1722987,
-    "ast_hash": "d596664d6d6e0c1895adc50bf13e3649",
+    "mtime": 1792693670.5055623,
+    "ast_hash": "16be4f49bce40aa321402cfb86388749",
     "semantic_hash": ""
   },
   "cinescope/eslint.config.mjs": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792237530.787705,
-    "ast_hash": "48d100b09680fdf03793b908b84cc520",
+    "mtime": 1792693684.835171,
+    "ast_hash": "f5d8fb2b8b59028f318e7b004bdbee2f",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.ts": {
-    "mtime": 1792232106.1770203,
-    "ast_hash": "b4ddfc24addc4e76725d897d66b186d3",
+    "mtime": 1792693664.7199824,
+    "ast_hash": "eafc81380e620fe4bcd7d4fa616099e3",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.routes.ts": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "docs/user-docs/index.md": {
-    "mtime": 1792674254.323096,
-    "ast_hash": "453cc118689669574a32a2e9fd9e0b59",
+    "mtime": 1792674415.6755252,
+    "ast_hash": "0c9ce32953f47ec85bfa1514865b2107",
     "semantic_hash": ""
   },
   "help.txt": {
@@ -2750,28 +2750,28 @@
     "semantic_hash": ""
   },
   "docs/user-docs/ai-smart-search.md": {
-    "mtime": 1792674272.7924871,
-    "ast_hash": "28d5be17d0e1c1474fc6f235b60ab245",
+    "mtime": 1792674415.6735249,
+    "ast_hash": "d3dbbadcc59a39f002f603a5e0819c2b",
     "semantic_hash": ""
   },
   "docs/user-docs/discover-and-feeds.md": {
-    "mtime": 1792674280.8146493,
-    "ast_hash": "7016b7cc9a016746c133e3d8a9b28aeb",
+    "mtime": 1792674415.6745238,
+    "ast_hash": "8b530ff2ffd63fc0722337eb885a6f05",
     "semantic_hash": ""
   },
   "docs/user-docs/getting-started.md": {
-    "mtime": 1792674262.9710884,
-    "ast_hash": "040fdbd3193af52eb3f043db2e45874c",
+    "mtime": 1792674415.6745238,
+    "ast_hash": "6677a67421d26c8ad97ac1faae2f6b29",
     "semantic_hash": ""
   },
   "docs/user-docs/media-details-and-streaming.md": {
-    "mtime": 1792674289.0259156,
-    "ast_hash": "66d28456b5b233cb5be1a3432ce2c239",
+    "mtime": 1792674415.6755252,
+    "ast_hash": "8d076a423338e83ec8be3046104f15b6",
     "semantic_hash": ""
   },
   "docs/user-docs/watchlist-and-offline.md": {
-    "mtime": 1792674298.8478374,
-    "ast_hash": "f9c90ccf066adae6eb222fc3ce803b64",
+    "mtime": 1792674415.676525,
+    "ast_hash": "c18b59126ac2075489757c3d92af2d09",
     "semantic_hash": ""
   }
 }
