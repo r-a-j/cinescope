@@ -117,50 +117,65 @@ export class StorageService {
         if (this.streamsInitialized) return;
         try {
             const db = this.dbService.db;
-            this.streamsInitialized = true;
+            if (!db?.content || !db?.settings) {
+                return;
+            }
 
             // Single-pass indexed RxDB stream (uses the `addedAt` index instead of two unindexed `$in` scans)
             db.content.find({
                 sort: [{ addedAt: 'desc' }]
-            }).$.subscribe((docs) => {
-                const watchlist: ContentDocType[] = [];
-                const watched: ContentDocType[] = [];
-                const favoritePeople: ContentDocType[] = [];
+            }).$.subscribe({
+                next: (docs) => {
+                    const watchlist: ContentDocType[] = [];
+                    const watched: ContentDocType[] = [];
+                    const favoritePeople: ContentDocType[] = [];
 
-                for (const d of docs) {
-                    const docJson = d.toJSON() as ContentDocType;
-                    if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
-                        favoritePeople.push(docJson);
-                    } else if (docJson.lists.includes('watched')) {
-                        watched.push(docJson);
-                    } else if (docJson.lists.includes('watchlist')) {
-                        watchlist.push(docJson);
+                    for (const d of docs) {
+                        const docJson = d.toJSON() as ContentDocType;
+                        if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
+                            favoritePeople.push(docJson);
+                        } else if (docJson.lists.includes('watched')) {
+                            watched.push(docJson);
+                        } else if (docJson.lists.includes('watchlist')) {
+                            watchlist.push(docJson);
+                        }
                     }
-                }
 
-                this.watchlistItems.set(watchlist);
-                this.watchedItems.set(watched);
-                this.favoritePeople.set(favoritePeople);
+                    this.watchlistItems.set(watchlist);
+                    this.watchedItems.set(watched);
+                    this.favoritePeople.set(favoritePeople);
 
-                // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
-                const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
-                const priorityPosterUrls: string[] = [];
-                for (const doc of topDocs) {
-                    const payload = doc.payload as Record<string, unknown> | undefined;
-                    const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
-                    if (rawPath) {
-                        priorityPosterUrls.push(resolveMediaImageUrl(rawPath, 'w342'));
+                    // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
+                    const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
+                    const priorityPosterUrls: string[] = [];
+                    for (const doc of topDocs) {
+                        const payload = doc.payload as Record<string, unknown> | undefined;
+                        const rawPath = (payload?.['poster_path'] || payload?.['profile_path'] || payload?.['posterUrl']) as string | undefined;
+                        if (rawPath) {
+                            priorityPosterUrls.push(resolveMediaImageUrl(rawPath, 'w342'));
+                        }
                     }
+                    setTimeout(() => {
+                        this.posterCache.prewarmUrls(priorityPosterUrls);
+                    }, 400);
+                },
+                error: (err) => {
+                    console.error('[StorageService] Content stream error:', err);
                 }
-                setTimeout(() => {
-                    this.posterCache.prewarmUrls(priorityPosterUrls);
-                }, 400);
             });
 
-            db.settings.findOne('user_preferences').$.subscribe((doc) => {
-                this.settings.set(doc ? (doc.toJSON() as SettingsDocType) : null);
+            db.settings.findOne('user_preferences').$.subscribe({
+                next: (doc) => {
+                    this.settings.set(doc ? (doc.toJSON() as SettingsDocType) : null);
+                },
+                error: (err) => {
+                    console.error('[StorageService] Settings stream error:', err);
+                }
             });
+
+            this.streamsInitialized = true;
         } catch {
+            this.streamsInitialized = false;
             // If instantiated before APP_INITIALIZER finishes, it will be initialized on first access
         }
     }

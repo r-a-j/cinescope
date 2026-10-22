@@ -1,8 +1,8 @@
-import { Component, ChangeDetectionStrategy, input, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, signal, computed, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, Platform } from '@ionic/angular/standalone';
 import { TmdbVideoDto } from '../../../../core/dtos/common/video.dto';
 import { CastMemberVm } from '../../media-detail.page';
 
@@ -328,9 +328,11 @@ import { CastMemberVm } from '../../media-detail.page';
     }
   `]
 })
-export class CastVideoGalleryComponent {
+export class CastVideoGalleryComponent implements OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
+  private platform = inject(Platform);
+  private backButtonSub: (() => void) | null = null;
 
   public castList = input.required<CastMemberVm[]>();
   public videos = input.required<TmdbVideoDto[]>();
@@ -360,9 +362,26 @@ export class CastVideoGalleryComponent {
 
   public openVideo(video: TmdbVideoDto): void {
     this.activeVideo.set(video);
+    if (!this.backButtonSub) {
+      const sub = this.platform.backButton.subscribeWithPriority(9999, (): void => {
+        this.closeVideo();
+      });
+      this.backButtonSub = (): void => sub.unsubscribe();
+    }
   }
 
   public closeVideo(): void {
     this.activeVideo.set(null);
+    if (this.backButtonSub) {
+      this.backButtonSub();
+      this.backButtonSub = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.backButtonSub) {
+      this.backButtonSub();
+      this.backButtonSub = null;
+    }
   }
 }

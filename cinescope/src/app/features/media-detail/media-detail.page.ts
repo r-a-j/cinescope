@@ -189,6 +189,7 @@ export class MediaDetailPage implements OnInit {
   private toast = inject(ToastService);
 
   private castVideoGallery = viewChild(CastVideoGalleryComponent);
+  private content = viewChild(IonContent);
 
   public mediaType = signal<'movie' | 'tv'>('movie');
   public tmdbId = signal<number>(0);
@@ -877,6 +878,13 @@ export class MediaDetailPage implements OnInit {
         return;
       }
 
+      // Reset in-page interaction state when navigating to another title
+      this.overviewExpanded.set(false);
+      this.selectedSeasonNumber.set(1);
+      this.selectedWatchRegion.set('US');
+      this.preview.set(null);
+      void this.content()?.scrollToTop(0);
+
       this.mediaType.set(validType);
       this.tmdbId.set(idParam);
       this.hydratePreviewState(idParam, validType);
@@ -887,7 +895,20 @@ export class MediaDetailPage implements OnInit {
   private hydratePreviewState(id: number, type: 'movie' | 'tv'): void {
     const navState = history.state as { preview?: MediaPreviewState } | undefined;
     if (navState?.preview && Number(navState.preview.id) === id) {
-      this.preview.set(navState.preview);
+      const prev = { ...navState.preview };
+      const cachedDoc = this.storage.getCachedDoc(id, type);
+      if (cachedDoc?.payload) {
+        const p = cachedDoc.payload as Record<string, unknown>;
+        const rawPoster = (p['poster_path'] || p['posterUrl']) as string | undefined;
+        const rawBackdrop = (p['backdrop_path'] || p['backdropUrl']) as string | undefined;
+        if (!prev.posterUrl && rawPoster) {
+          prev.posterUrl = resolveMediaImageUrl(rawPoster, 'w500');
+        }
+        if (!prev.backdropUrl && rawBackdrop) {
+          prev.backdropUrl = resolveMediaImageUrl(rawBackdrop, 'w1280');
+        }
+      }
+      this.preview.set(prev);
       return;
     }
 
@@ -944,15 +965,19 @@ export class MediaDetailPage implements OnInit {
           res.seasons?.find((s) => s.season_number === 1) ??
           res.seasons?.find((s) => s.season_number > 0) ??
           res.seasons?.[0];
-        if (firstSeason) {
+        if (firstSeason && this.tmdbId() === id && this.mediaType() === type) {
           await this.selectSeason(firstSeason.season_number);
         }
       }
-      this.isLoading.set(false);
+      if (this.tmdbId() === id && this.mediaType() === type) {
+        this.isLoading.set(false);
+      }
     } catch (err) {
       console.error('[MediaDetailPage] Failed to load details:', err);
-      this.error.set('Could not load complete details. Showing available offline info.');
-      this.isLoading.set(false);
+      if (this.tmdbId() === id && this.mediaType() === type) {
+        this.error.set('Could not load complete details. Showing available offline info.');
+        this.isLoading.set(false);
+      }
     }
   }
 
@@ -976,6 +1001,7 @@ export class MediaDetailPage implements OnInit {
       const seasonDetail = await firstValueFrom(
         this.tvSeasonsService.getTvSeasonDetails(seriesId, seasonNumber)
       );
+      if (this.tmdbId() !== seriesId) return;
       this.seasonDetailsMap.update((map) => ({
         ...map,
         [seasonNumber]: seasonDetail
@@ -983,7 +1009,9 @@ export class MediaDetailPage implements OnInit {
     } catch (err) {
       console.warn(`[MediaDetailPage] Failed to load Season ${seasonNumber}:`, err);
     } finally {
-      this.isSeasonLoading.set(false);
+      if (this.tmdbId() === seriesId && this.selectedSeasonNumber() === seasonNumber) {
+        this.isSeasonLoading.set(false);
+      }
     }
   }
 
@@ -1110,7 +1138,11 @@ export class MediaDetailPage implements OnInit {
   }
 
   public goBack(): void {
-    this.navCtrl.back();
+    if (window.history.length > 1) {
+      this.navCtrl.back();
+    } else {
+      this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
+    }
   }
 
   private formatCurrency(value: number): string {

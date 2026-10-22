@@ -112,23 +112,26 @@ export class DiscoverPage implements OnInit, AfterViewInit {
     }
 
     public async onPullRefresh(event: CustomEvent): Promise<void> {
-        const section = this.activeSection();
-        if (section === 'trending') {
-            await this.store.loadTrendingData(true);
-        } else if (section === 'desi-hub') {
-            await this.store.loadDesiHubData(true);
-        } else if (section === 'bollywood') {
-            await this.store.loadBollywoodData(true);
-        } else if (section === 'top-rated') {
-            await this.store.loadTopRatedData(true);
-        } else if (section === 'actors') {
-            await this.store.loadActorsData(true);
-        } else if (section === 'news') {
-            await this.feedService.refreshFeed();
-        }
         const target = event.target as HTMLIonRefresherElement | null;
-        if (target) {
-            await target.complete();
+        try {
+            const section = this.activeSection();
+            if (section === 'trending') {
+                await this.store.loadTrendingData(true);
+            } else if (section === 'desi-hub') {
+                await this.store.loadDesiHubData(true);
+            } else if (section === 'bollywood') {
+                await this.store.loadBollywoodData(true);
+            } else if (section === 'top-rated') {
+                await this.store.loadTopRatedData(true);
+            } else if (section === 'actors') {
+                await this.store.loadActorsData(true);
+            } else if (section === 'news') {
+                await this.feedService.refreshFeed();
+            }
+        } finally {
+            if (target) {
+                await target.complete();
+            }
         }
     }
 

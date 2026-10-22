@@ -163,7 +163,7 @@ export const TrendingStore = signalStore(
     ) => ({
 
         async loadTrendingData(force = false): Promise<void> {
-            if (!force && store.movies().length > 0 && store.tvShows().length > 0) {
+            if (!force && ((store.movies().length > 0 && store.tvShows().length > 0) || store.isLoading())) {
                 return;
             }
             patchState(store, { isLoading: true, error: null });

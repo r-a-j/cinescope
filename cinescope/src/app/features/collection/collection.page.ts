@@ -166,7 +166,7 @@ interface CollectionCardVm {
         <!-- Poster Grid -->
         @if (displayedCards().length > 0) {
           <div class="collection-grid">
-            @for (card of displayedCards(); track card.item.id; let idx = $index) {
+            @for (card of displayedCards(); track (card.item.mediaType ? card.item.mediaType + '-' + card.item.id : card.item.id); let idx = $index) {
               <div class="collection-card" [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
                 <div class="poster-wrap">
                   <app-poster-card
@@ -616,7 +616,11 @@ export class CollectionPage implements OnInit, AfterViewInit {
   }
 
   public goBack(): void {
-    this.navCtrl.back();
+    if (window.history.length > 1) {
+      this.navCtrl.back();
+    } else {
+      this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
+    }
   }
 
   public onScroll(): void {
@@ -796,8 +800,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
       );
 
       if (res.items.length > 0) {
-        const existingIds = new Set(this.rawItems().map((i) => i.id));
-        const unique = res.items.filter((i) => !existingIds.has(i.id));
+        const existingIds = new Set(this.rawItems().map((i) => `${i.mediaType || 'media'}-${i.id}`));
+        const unique = res.items.filter((i) => !existingIds.has(`${i.mediaType || 'media'}-${i.id}`));
         if (unique.length > 0) {
           this.rawItems.update((curr) => [...curr, ...unique]);
         }

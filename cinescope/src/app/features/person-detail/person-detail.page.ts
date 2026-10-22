@@ -6,7 +6,8 @@ import {
   HostListener,
   inject,
   signal,
-  computed
+  computed,
+  viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -116,6 +117,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   private actionSheetCtrl = inject(ActionSheetController);
 
   public personId = signal<number>(0);
+  private content = viewChild(IonContent);
   public isLoading = signal<boolean>(true);
   public preview = signal<PersonPreviewState | null>(null);
   public person = signal<TmdbPersonDetailDto | null>(null);
@@ -610,6 +612,17 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (!id || Number.isNaN(id)) return;
+
+      // Reset stale view state when transitioning to another artist
+      this.person.set(null);
+      this.preview.set(null);
+      this.closeLightbox();
+      this.bioExpanded.set(false);
+      this.activeCreditTab.set('movies');
+      this.sortBy.set('newest');
+      this.visibleCreditsLimit.set(25);
+      void this.content()?.scrollToTop(0);
+
       this.personId.set(id);
 
       const navState = history.state as { preview?: PersonPreviewState } | undefined;
@@ -655,8 +668,13 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       }
     } catch (err) {
       console.error('[PersonDetailPage] Failed to load person details:', err);
+      if (this.personId() === id) {
+        this.person.set(null);
+      }
     } finally {
-      this.isLoading.set(false);
+      if (this.personId() === id) {
+        this.isLoading.set(false);
+      }
     }
   }
 
@@ -670,13 +688,17 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   public openMediaDetail(entry: FilmographyEntryVm): void {
+    const rawBackdrop = entry.rawPayload?.['backdrop_path'] as string | undefined;
+    const overview = entry.rawPayload?.['overview'] as string | undefined;
     void this.router.navigate(['/media', entry.mediaType, entry.id], {
       state: {
         preview: {
           id: entry.id,
           mediaType: entry.mediaType,
           title: entry.title,
+          overview,
           posterUrl: entry.posterUrl,
+          backdropUrl: rawBackdrop ? resolveMediaImageUrl(rawBackdrop, 'w1280') : undefined,
           releaseYear: entry.year,
           rating: entry.rating || undefined
         }
@@ -730,7 +752,11 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   public goBack(): void {
-    this.navCtrl.back();
+    if (window.history.length > 1) {
+      this.navCtrl.back();
+    } else {
+      this.navCtrl.navigateRoot('/tabs/discover', { animationDirection: 'back' });
+    }
   }
 
   private mapCastToVm(c: TmdbPersonCastCreditDto): FilmographyEntryVm {
