@@ -1,6 +1,13 @@
 # CineScope
 
-CineScope is an offline-first cinematic tracking and discovery platform built with Angular 21, Ionic 8, and Capacitor 8, powered by a high-resilience Google Gemini AI orchestration gateway and a Node.js serverless Backend-for-Frontend (BFF) on Vercel.
+An offline-first cinematic tracking and discovery platform designed for film and television enthusiasts. CineScope delivers conversational semantic search powered by Google Gemini AI, seamless local-first offline catalog caching, real-time streaming availability across global providers, and high-density watchlist management.
+
+[![Angular](https://img.shields.io/badge/Angular-21-DD0031?style=flat&logo=angular&logoColor=white)](https://angular.dev/)
+[![Ionic](https://img.shields.io/badge/Ionic-8-3880FF?style=flat&logo=ionic&logoColor=white)](https://ionicframework.com/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?style=flat&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-AI_Engine-8E75B2?style=flat&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![RxDB](https://img.shields.io/badge/RxDB-Offline_First-EE1C25?style=flat)](https://rxdb.info/)
+[![Vercel](https://img.shields.io/badge/Vercel-Serverless_BFF-000000?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
 
 ## Application Showcase
 
@@ -137,7 +144,7 @@ flowchart TD
 
 This repository is managed as a monorepo via PNPM Workspaces:
 
-- `cinescope/`: Cross-platform mobile app (Angular 21 Signals, Ionic 8, Capacitor 8, RxDB persistent local database).
+- `cinescope/`: Cross-platform mobile app (Angular Signals, Ionic, Capacitor, RxDB persistent local database).
 - `cinescope-api/`: Serverless Backend-for-Frontend gateway (Vercel functions, rate limiting, SSRF guard, Gemini orchestration).
 - `docs/`: Docusaurus technical documentation hub and OpenAPI specifications.
 
