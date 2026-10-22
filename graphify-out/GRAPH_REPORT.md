@@ -1,7 +1,7 @@
 # Graph Report - cinescope  (2026-10-22)
 
 ## Corpus Check
-- 226 files · ~191,659 words
+- 226 files · ~191,807 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ad7aa350`
+- Built from commit: `053d659c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -185,7 +185,7 @@
 ## Communities (278 total, 68 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (6): TmdbTvEpisodesService, TmdbTvEpisodeDetailDto, TmdbTvEpisodeExternalIdsDto, TmdbTvEpisodeTranslationDataDto, TmdbTvEpisodeTranslationItemDto, TmdbTvEpisodeTranslationsResponseDto
 
 ### Community 1 - "Community 1"
@@ -197,7 +197,7 @@ Cohesion: 0.14
 Nodes (3): CollectionPage, CollectionFilterOptions, CollectionSortMode
 
 ### Community 3 - "Community 3"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (5): TmdbTvSeasonsService, TmdbTvSeasonExternalIdsDto, TmdbTvSeasonTranslationDataDto, TmdbTvSeasonTranslationItemDto, TmdbTvSeasonTranslationsResponseDto
 
 ### Community 5 - "Community 5"
@@ -237,7 +237,7 @@ Cohesion: 0.20
 Nodes (9): 1. Crew & Composer Searches, 2. Plot Tropes & Complex Scenarios, 3. Vibe, Mood & Era, Application Showcase, Example Search Prompts, Gemini AI Smart Search, Multi-Section Search Results, Resilience & Offline Fallbacks (+1 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.25
+Cohesion: 0.33
 Nodes (5): TmdbTvEpisodeChangesResponseDto, TmdbTvSeasonChangesResponseDto, TmdbTvChangeGroupDto, TmdbTvChangeItemDto, TmdbTvChangesResponseDto
 
 ### Community 22 - "Community 22"
