@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { checkRateLimit } from '../lib/rate-limiter';
 
 export interface GoogleRpcRetryInfo {
     retryDelay?: string;
@@ -11,10 +12,69 @@ export interface GoogleGenerativeAIError extends Error {
     errorDetails?: GoogleRpcRetryInfo[];
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+/**
+ * Strict server-side whitelist of cost-effective, high-speed Gemini models.
+ * Prevents arbitrary model injection or forced invocation of expensive tiers.
+ */
+const ALLOWED_GEMINI_MODELS = new Set([
+    'gemini-3.1-flash-lite-preview',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
+]);
+
+const DEFAULT_MODEL = 'gemini-3.1-flash-lite-preview';
+const MAX_FALLBACK_MODELS = 3;
+const MAX_QUERY_LENGTH = 300;
+
+const SYSTEM_SEARCH_ORCHESTRATOR_INSTRUCTION = `
+You are an elite cinematic search engine orchestrator for the International Movie Database (TMDB).
+Analyze the user's semantic search query carefully.
+
+Your task is NOT to return a hardcoded list of movies. Instead, deduce the user's ultimate goal and return an Execution Graph of API calls that the frontend engine will execute against TMDB's Discover endpoints to provide massive, exhaustively scrollable lists.
+
+You must return ONLY a raw, valid JSON object containing a "sections" array. Do NOT wrap output in markdown code blocks.
+
+CRITICAL JSON SCHEMA TO FOLLOW:
+{
+    "sections": [
+        {
+            "title": "String", // e.g. "Hugh Jackman's Greatest Hits", "90s Sci-Fi Mindbenders", "Top Results"
+            "action": "discover_movies" | "discover_tv" | "exact_match", // EXACT MATCH should only be used if they search for a highly specific, single movie title. Otherwise default to discover.
+            "parameters": {
+                "person_name": "String", // (Only if a specific actor/director/crew member is detected in the query. We will resolve their TMDB ID later)
+                "genres": [Number], // TMDB Genre IDs. MAPPINGS: Action=28, Adventure=12, Animation=16, Comedy=35, Crime=80, Documentary=99, Drama=18, Family=10751, Fantasy=14, History=36, Horror=27, Music=10402, Mystery=9648, Romance=10749, Sci-Fi=878, Thriller=53, War=10752, Western=37.
+                "keywords": ["String"], // 1-3 highly descriptive keyword strings (e.g., "space travel", "cyberpunk", "time loop", "plot twist"). We will resolve these to TMDB IDs later.
+                "sort_by": "popularity.desc" | "primary_release_date.desc" | "primary_release_date.asc" | "vote_average.desc", // Default to popularity.desc unless "oldest", "latest", or "best" is implied.
+                "query": "String" // ONLY provide this if action is 'exact_match'. The exact title of the movie/tv show/person.
+            }
+        }
+    ]
+}
+
+EXAMPLES:
+User Query: "movies about space travel with matthew mcconaughey"
+Output: {"sections": [{"title": "Matthew McConaughey in Space", "action": "discover_movies", "parameters": {"person_name": "Matthew McConaughey", "genres": [878], "keywords": ["space travel", "astronaut"], "sort_by": "popularity.desc"}}]}
+
+User Query: "that show about the crystal meth teacher"
+Output: {"sections": [{"title": "Breaking Bad", "action": "exact_match", "parameters": {"query": "Breaking Bad"}}]}
+
+User Query: "Mallika sherawat hits"
+Output: {"sections": [{"title": "Mallika Sherawat Hits", "action": "discover_movies", "parameters": {"person_name": "Mallika Sherawat", "sort_by": "popularity.desc"}}]}
+
+User Query: "Hugh Jackman movies... top 5 latest and oldest"
+Output: {
+    "sections": [
+        {"title": "Latest Hugh Jackman", "action": "discover_movies", "parameters": {"person_name": "Hugh Jackman", "sort_by": "primary_release_date.desc"}},
+        {"title": "Classic Oldest Hits", "action": "discover_movies", "parameters": {"person_name": "Hugh Jackman", "sort_by": "primary_release_date.asc"}}
+    ]
+}
+
+If the query is nonsensical or unrelated to cinema/TV, return {"sections": []}.
+`;
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
-    // 1. Handle CORS Preflight perfectly
+    // 1. Handle CORS Preflight
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -22,10 +82,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         return res.status(200).end();
     }
 
-    // Apply standard CORS headers to actual payload
     res.setHeader('Access-Control-Allow-Origin', '*');
 
-    // 2. Strict Application Guard
+    // 2. Client Origin Guard
     if (req.headers['x-cinescope-client'] !== 'CS-Mobile-App-2026') {
         return res.status(403).json({ error: 'Forbidden. Invalid Client Origin.' });
     }
@@ -34,109 +93,114 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    try {
-        const { query, models = ['gemini-3.1-flash-lite-preview'] } = req.body as { query?: string, models?: string[] };
+    // 3. IP Rate Limiting Guard (25 requests / min per IP)
+    if (!checkRateLimit(req, res, { windowSec: 60, maxRequests: 25 })) {
+        return res;
+    }
 
-        if (!query) {
-            return res.status(400).json({ error: 'Search query is required' });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.error('[API - Gemini] Missing GEMINI_API_KEY in environment.');
+        return res.status(500).json({ error: 'Internal Server Configuration Error' });
+    }
+
+    try {
+        const body = (req.body || {}) as { query?: unknown; models?: unknown };
+
+        // 3. Strict Input Length & Type Validation
+        if (!body.query || typeof body.query !== 'string') {
+            return res.status(400).json({ error: 'Search query is required and must be a string.' });
         }
 
-        const prompt = `
-            You are an elite, highly intelligent cinematic search engine orchestrator for the International Movie Database (TMDB).
-            Analyze the user's semantic search query carefully.
+        const sanitizedQuery = body.query.trim();
+        if (sanitizedQuery.length === 0) {
+            return res.status(400).json({ error: 'Search query cannot be empty.' });
+        }
 
-            Your task is NOT to return a hardcoded list of movies. Instead, deduce the user's ultimate goal and return an **Execution Graph** of API calls that my frontend engine will execute against TMDB's Discover endpoints to provide massive, exhaustively scrollable lists.
-            
-            You must return ONLY a raw, valid JSON array of section objects. DO NOT wrap the output in markdown blocks.
+        if (sanitizedQuery.length > MAX_QUERY_LENGTH) {
+            return res.status(400).json({
+                error: `Search query exceeds maximum length of ${MAX_QUERY_LENGTH} characters.`
+            });
+        }
 
-            CRITICAL JSON SCHEMA TO FOLLOW FOR EACH OBJECT:
-            {
-                "sections": [
-                    {
-                        "title": "String", // e.g. "Hugh Jackman's Greatest Hits", "90s Sci-Fi Mindbenders", "Top Results"
-                        "action": "discover_movies" | "discover_tv" | "exact_match", // EXACT MATCH should only be used if they search for a highly specific, single movie title. Otherwise default to discover.
-                        "parameters": {
-                            "person_name": "String", // (Only if a specific actor/director/crew member is detected in the query. We will resolve their TMDB ID later)
-                            "genres": [Number], // TMDB Genre IDs. MAPPINGS: Action=28, Adventure=12, Animation=16, Comedy=35, Crime=80, Documentary=99, Drama=18, Family=10751, Fantasy=14, History=36, Horror=27, Music=10402, Mystery=9648, Romance=10749, Sci-Fi=878, Thriller=53, War=10752, Western=37.
-                            "keywords": ["String"], // 1-3 highly descriptive keyword strings (e.g., "space travel", "cyberpunk", "time loop", "plot twist"). We will resolve these to TMDB IDs later.
-                            "sort_by": "popularity.desc" | "primary_release_date.desc" | "primary_release_date.asc" | "vote_average.desc", // Default to popularity.desc unless "oldest", "latest", or "best" is implied.
-                            "query": "String" // ONLY provide this if action is 'exact_match'. The exact title of the movie/tv show/person.
-                        }
-                    }
-                ]
-            }
+        // 4. Model Whitelisting & Fallback Sanitization
+        let candidateModels: string[] = [];
+        if (Array.isArray(body.models)) {
+            candidateModels = body.models
+                .filter((m): m is string => typeof m === 'string' && ALLOWED_GEMINI_MODELS.has(m))
+                .slice(0, MAX_FALLBACK_MODELS);
+        }
 
-            EXAMPLES:
-            User Query: "movies about space travel with matthew mcconaughey"
-            Output: {"sections": [{"title": "Matthew McConaughey in Space", "action": "discover_movies", "parameters": {"person_name": "Matthew McConaughey", "genres": [878], "keywords": ["space travel", "astronaut"], "sort_by": "popularity.desc"}}]}
+        const modelsToAttempt = candidateModels.length > 0 ? candidateModels : [DEFAULT_MODEL];
 
-            User Query: "that show about the crystal meth teacher"
-            Output: {"sections": [{"title": "Breaking Bad", "action": "exact_match", "parameters": {"query": "Breaking Bad"}}]}
-
-            User Query: "Mallika sherawat hits"
-            Output: {"sections": [{"title": "Mallika Sherawat Hits", "action": "discover_movies", "parameters": {"person_name": "Mallika Sherawat", "sort_by": "popularity.desc"}}]}
-
-            User Query: "Hugh Jackman movies... top 5 latest and oldest"
-            Output: {
-                "sections": [
-                    {"title": "Latest Hugh Jackman", "action": "discover_movies", "parameters": {"person_name": "Hugh Jackman", "sort_by": "primary_release_date.desc"}},
-                    {"title": "Classic Oldest Hits", "action": "discover_movies", "parameters": {"person_name": "Hugh Jackman", "sort_by": "primary_release_date.asc"}}
-                ]
-            }
-
-            If the query is nonsensical, return {"sections": []}.
-            User Query: "${query}"
-        `;
-
+        const genAI = new GoogleGenerativeAI(apiKey);
         let success = false;
         let mediaTitles: unknown[] = [];
         let lastError: unknown = null;
         let quotaError: unknown = null;
 
-        console.log(`[API - Gemini Fallback] Starting Cascading Fallback Loop for query: "${query}"`);
+        console.log(`[API - Gemini Fallback] Starting Cascading Fallback Loop for query length: ${sanitizedQuery.length}`);
 
-        // 3. Fallback Model Engine
-        for (const modelId of models) {
+        // 5. Fallback Model Engine with Native systemInstruction Separation
+        for (const modelId of modelsToAttempt) {
             try {
                 console.log(`[API - Gemini Fallback] Attempting Model: ${modelId}`);
 
                 const model = genAI.getGenerativeModel({
                     model: modelId,
-                    generationConfig: { responseMimeType: 'application/json' }
+                    systemInstruction: {
+                        role: 'system',
+                        parts: [{ text: SYSTEM_SEARCH_ORCHESTRATOR_INSTRUCTION }]
+                    },
+                    generationConfig: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.2
+                    }
                 });
 
-                const result = await model.generateContent(prompt);
+                // User input isolated cleanly into user message turn
+                const result = await model.generateContent({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: `User Query: ${JSON.stringify(sanitizedQuery)}` }]
+                        }
+                    ]
+                });
+
                 const responseText: string = result.response.text().trim();
 
                 try {
                     let cleanJson = responseText.replace(/```json/gi, '').replace(/```/gi, '').trim();
 
-                    // Match an object containing the sections array to avoid trailing markdown
                     const objectMatch = cleanJson.match(/\{.*"sections".*\}/s);
                     if (objectMatch) {
                         cleanJson = objectMatch[0];
                     }
 
                     const parsed = JSON.parse(cleanJson);
-                    if (!parsed || !Array.isArray(parsed.sections)) throw new Error('Root JSON does not contain a "sections" array.');
-                    mediaTitles = parsed.sections;
+                    if (!parsed || !Array.isArray(parsed.sections)) {
+                        throw new Error('Root JSON does not contain a "sections" array.');
+                    }
+
+                    mediaTitles = parsed.sections.filter(
+                        (s: any) => s && typeof s === 'object' && typeof s.title === 'string' && typeof s.action === 'string'
+                    );
                     console.log(`[API - Gemini Fallback] Parsed Entities from ${modelId} - Found ${mediaTitles.length} items.`);
-                    console.log('-------response check-------', result.response.text());
 
                     success = true;
                     break;
 
                 } catch (parseError) {
-                    console.error(`[API - Gemini Fallback] ${modelId} Hallucinated Invalid JSON. Raw Text:`, responseText);
-                    throw new Error(`Model ${modelId} hallucinated invalid JSON.`);
+                    console.error(`[API - Gemini Fallback] ${modelId} returned invalid JSON:`, parseError);
+                    throw new Error(`Model ${modelId} returned invalid JSON.`);
                 }
 
             } catch (err: unknown) {
                 const typedErr = err as GoogleGenerativeAIError;
-                console.warn(`[API - Gemini Fallback] ${modelId} failed. Reason:`, typedErr.message);
+                console.warn(`[API - Gemini Fallback] ${modelId} failed:`, typedErr.message);
                 lastError = typedErr;
 
-                // If it's a structural API error for Quota, prioritize it!
                 if (typedErr?.status === 429 || typedErr?.message?.includes('429') || typedErr?.message?.includes('Quota')) {
                     quotaError = typedErr;
                 }
@@ -145,7 +209,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
         if (!success) {
             console.error('[API - Gemini Fallback] ALL fallback models were completely exhausted!');
-            // Prioritize returning the Quota error if we got one, otherwise the last error (like 404 Not Found)
             throw quotaError || lastError || new Error('All models exhausted without success.');
         }
 
@@ -174,7 +237,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             return res.status(429).json({ error: 'AI Quota Exceeded. Please slow down.', retryAfter });
         }
 
-        // Add the actual error message to the 500 response so we can debug it immediately!
-        return res.status(500).json({ error: 'Internal Server Error', details: msg });
+        // Return a clean error without exposing upstream details, tokens, or internal tracebacks
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
