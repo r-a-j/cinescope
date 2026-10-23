@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { DatabaseService } from '../database/database.service';
 import { ContentDocType } from '../database/schemas/content.schema';
 import { SettingsDocType } from '../database/schemas/settings.schema';
+import { RegionService } from './region.service';
 import { SearchHistoryDocType } from '../database/schemas/search-history.schema';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
@@ -91,7 +92,9 @@ export interface BackupImportResult {
 export class StorageService {
     private dbService = inject(DatabaseService);
     private posterCache = inject(PosterCacheService);
+    private regionService = inject(RegionService);
     private streamsInitialized = false;
+    private autoDetectTriggered = false;
 
     // ==========================================
     // ⚡ REACTIVE SIGNALS (Global App State Bridge)
@@ -101,6 +104,8 @@ export class StorageService {
     public readonly inboxItems = signal<ContentDocType[]>([]);
     public readonly favoritePeople = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
+    public readonly userRegion = computed<string>(() => this.settings()?.region || 'IN');
+    public readonly isManualRegion = computed<boolean>(() => this.settings()?.isManualRegion ?? false);
 
     public readonly inboxCount = computed<number>(() => this.inboxItems().length);
 
@@ -194,7 +199,12 @@ export class StorageService {
 
             db.settings.findOne('user_preferences').$.subscribe({
                 next: (doc) => {
-                    this.settings.set(doc ? (doc.toJSON() as SettingsDocType) : null);
+                    const settingsDoc = doc ? (doc.toJSON() as SettingsDocType) : null;
+                    this.settings.set(settingsDoc);
+                    if (settingsDoc && !settingsDoc.isManualRegion && !this.autoDetectTriggered) {
+                        this.autoDetectTriggered = true;
+                        void this.autoDetectAndApplyRegion();
+                    }
                 },
                 error: (err) => {
                     console.error('[StorageService] Settings stream error:', err);
@@ -294,6 +304,20 @@ export class StorageService {
     // ==========================================
     // ✍️ MUTATIONS (Write, Update, Delete)
     // ==========================================
+
+    public async autoDetectAndApplyRegion(): Promise<string> {
+        try {
+            const result = await this.regionService.detectRegion();
+            await this.updateSettings({
+                region: result.resolvedRegion,
+                isManualRegion: false
+            });
+            return result.resolvedRegion;
+        } catch (err) {
+            console.warn('[StorageService] Failed to auto-detect region:', err);
+            return 'IN';
+        }
+    }
 
     public async updateSettings(updates: Partial<SettingsDocType>): Promise<void> {
         this.initReactiveStreams();
@@ -806,7 +830,11 @@ export class StorageService {
             await this.dbService.db.settings.upsert({
                 id: 'user_preferences',
                 allowAdultContent: Boolean(rawSettings.allowAdultContent),
-                theme: validTheme
+                theme: validTheme,
+                region: typeof (rawSettings as Record<string, unknown>)['region'] === 'string'
+                    ? ((rawSettings as Record<string, unknown>)['region'] as string).trim().toUpperCase()
+                    : 'IN',
+                isManualRegion: Boolean((rawSettings as Record<string, unknown>)['isManualRegion'])
             });
         }
 

@@ -81,7 +81,7 @@ export class DatabaseService {
                 });
 
                 // ==========================================
-                // 🛑 STRATEGIC MILESTONE VERIFICATION
+                // STRATEGIC MILESTONE VERIFICATION
                 // ==========================================
                 // Ensure default settings exist without overwriting existing user preferences.
                 const existingPrefs = await this.dbInstance.settings.findOne('user_preferences').exec();
@@ -89,15 +89,17 @@ export class DatabaseService {
                     await this.dbInstance.settings.insert({
                         id: 'user_preferences',
                         allowAdultContent: false,
-                        theme: 'system'
+                        theme: 'system',
+                        region: 'IN',
+                        isManualRegion: false
                     });
                 }
 
                 const testDoc = await this.dbInstance.settings.findOne('user_preferences').exec();
 
-                console.log('✅ MILESTONE PASSED: Database Write & Read Successful!');
-                console.log('✅ VERIFICATION DATA:', testDoc?.toJSON());
-                console.log('🎬 CINESCOPE Database Initialized Successfully');
+                console.log('[DatabaseService] Database Write & Read Successful');
+                console.log('[DatabaseService] Settings initialized:', testDoc?.toJSON());
+                console.log('[DatabaseService] CineScope Database Initialized Successfully');
                 // ==========================================
 
             } catch (error) {
