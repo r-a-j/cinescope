@@ -1,0 +1,99 @@
+<section class="watch-providers-section">
+      <div class="section-header-row">
+        <h3 class="section-heading">WHERE TO WATCH</h3>
+        @if (availableRegions().length > 1) {
+          <div class="region-selector">
+            @for (reg of availableRegions(); track reg) {
+              <button
+                type="button"
+                class="region-chip"
+                [class.active]="selectedRegion() === reg"
+                (click)="regionChange.emit(reg)">
+                {{ reg }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (tvNetworks().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label">Original Network</span>
+          <div class="provider-pills-row">
+            @for (net of tvNetworks(); track net.id) {
+              <div class="network-pill">
+                @if (net.logo_path) {
+                  <img [src]="resolveLogo(net.logo_path)" [alt]="net.name" class="network-logo" />
+                }
+                <span>{{ net.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (streamingProviders().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label stream-badge">STREAM</span>
+          <div class="provider-pills-row">
+            @for (prov of streamingProviders(); track prov.provider_id) {
+              <div class="provider-chip">
+                <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
+                <span>{{ prov.provider_name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (rentAndBuyProviders().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label rent-buy-badge">RENT / BUY</span>
+          <div class="provider-pills-row">
+            @for (prov of rentAndBuyProviders(); track prov.provider_id) {
+              <div class="provider-chip">
+                <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
+                <span>{{ prov.provider_name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (rentOnlyProviders().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label rent-badge">RENT</span>
+          <div class="provider-pills-row">
+            @for (prov of rentOnlyProviders(); track prov.provider_id) {
+              <div class="provider-chip">
+                <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
+                <span>{{ prov.provider_name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (buyOnlyProviders().length > 0) {
+        <div class="provider-tier">
+          <span class="tier-label buy-badge">BUY</span>
+          <div class="provider-pills-row">
+            @for (prov of buyOnlyProviders(); track prov.provider_id) {
+              <div class="provider-chip">
+                <img [src]="resolveLogo(prov.logo_path)" [alt]="prov.provider_name" class="provider-icon" />
+                <span>{{ prov.provider_name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (justWatchLink(); as jwLink) {
+        <div class="justwatch-footer">
+          <span>Streaming availability powered by JustWatch</span>
+          <a [href]="jwLink" target="_blank" rel="noopener noreferrer" class="jw-link">
+            Open Watch Links <ion-icon name="open-outline"></ion-icon>
+          </a>
+        </div>
+      }
+    </section>

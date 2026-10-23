@@ -1,0 +1,178 @@
+<!-- Floating Top Navigation Bar -->
+    <div class="floating-nav">
+      <div class="nav-left">
+        <button type="button" class="nav-pill-btn" (click)="backClick.emit()" aria-label="Go Back">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </button>
+        <button type="button" class="nav-pill-btn" (click)="homeClick.emit()" aria-label="Go to Home">
+          <ion-icon name="home-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="nav-pill-btn" (click)="shareClick.emit()" aria-label="Share">
+          <ion-icon name="share-social-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cinematic Hero Section -->
+    <div class="hero-stage">
+      <!-- Softly blurred ambient poster glow while high-res widescreen backdrop loads -->
+      <img
+        [src]="posterUrl()"
+        alt=""
+        aria-hidden="true"
+        class="hero-ambient-underlay" />
+
+      @if (backdropUrl(); as bgUrl) {
+        <img
+          [src]="bgUrl"
+          [alt]="title()"
+          class="hero-backdrop-img"
+          [class.is-loaded]="isBackdropLoaded()"
+          decoding="async"
+          fetchpriority="high"
+          (load)="onBackdropLoad()" />
+      }
+      <div class="hero-backdrop-scrim"></div>
+
+      <div class="hero-foreground">
+        <!-- Poster Thumbnail -->
+        <div class="hero-poster-frame">
+          <img
+            [src]="posterUrl()"
+            [alt]="title()"
+            class="hero-poster-img"
+            decoding="async"
+            fetchpriority="high" />
+          @if (bookmarkState() !== 'none') {
+            <div class="poster-state-ribbon" [class.is-watched]="bookmarkState() === 'watched'">
+              <ion-icon [name]="bookmarkState() === 'watched' ? 'checkmark-circle' : 'bookmark'"></ion-icon>
+              <span>{{ bookmarkState() === 'watched' ? 'WATCHED' : 'WATCHLIST' }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Core Identity & Metadata -->
+        <div class="hero-meta-col">
+          <div class="meta-badges-row">
+            <span class="type-pill" [class.is-tv]="mediaType() === 'tv'">
+              {{ mediaType() === 'tv' ? 'TV SERIES' : 'MOVIE' }}
+            </span>
+
+            @if (originCountry(); as origin) {
+              <span class="origin-pill" [attr.title]="origin.countryName">
+                <span class="origin-flag">{{ origin.flag }}</span>
+                @if (origin.culturalLabel) {
+                  <span class="origin-cultural">{{ origin.culturalLabel }}</span>
+                } @else {
+                  <span class="origin-code">{{ origin.code }}</span>
+                }
+              </span>
+            }
+
+            @if (mediaType() === 'tv' && networks().length > 0) {
+              @for (net of networks().slice(0, 2); track net.id) {
+                <span class="network-badge-pill" [attr.title]="net.name">
+                  @if (resolveNetworkLogo(net.logo_path); as logoUrl) {
+                    <img [src]="logoUrl" [alt]="net.name" class="network-badge-logo" />
+                  } @else {
+                    <span class="network-badge-text">{{ net.name }}</span>
+                  }
+                </span>
+              }
+            }
+
+            @if (certification()) {
+              <span class="cert-pill">{{ certification() }}</span>
+            }
+
+            @if (productionStatus(); as pStatus) {
+              <span
+                class="status-pill"
+                [class.is-live]="pStatus.isLive"
+                [class.is-ended]="pStatus.isEnded && !pStatus.isCanceled"
+                [class.is-canceled]="pStatus.isCanceled"
+                [attr.title]="pStatus.tooltip">
+                @if (pStatus.isLive) {
+                  <span class="pulse-dot" aria-hidden="true"></span>
+                }
+                {{ pStatus.label }}
+              </span>
+            } @else if (statusLabel()) {
+              <span class="status-pill">{{ statusLabel() }}</span>
+            }
+          </div>
+
+          <h1 class="detail-title">{{ title() }}</h1>
+
+          @if (originalTitle()) {
+            <div class="original-title">{{ originalTitle() }}</div>
+          }
+
+          <div class="stats-inline-row">
+            @if (ratingValue()) {
+              <div class="rating-chip">
+                <ion-icon name="star"></ion-icon>
+                <span class="rating-num">{{ ratingValue() }}</span>
+                @if (voteCountLabel()) {
+                  <span class="vote-count">({{ voteCountLabel() }})</span>
+                }
+              </div>
+            }
+
+            @if (releaseYearLabel()) {
+              <span class="stat-dot">•</span>
+              <span class="stat-text">{{ releaseYearLabel() }}</span>
+            }
+
+            @if (runtimeLabel()) {
+              <span class="stat-dot">•</span>
+              <span class="stat-text">{{ runtimeLabel() }}</span>
+            }
+          </div>
+
+          @if (genres().length > 0) {
+            <div class="genre-chips-row">
+              @for (genre of genres(); track genre) {
+                <span class="genre-chip">{{ genre }}</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Primary Action Bar -->
+    <div class="action-bar-section">
+      <div class="action-buttons-grid">
+        <button
+          type="button"
+          class="action-btn watchlist-btn"
+          [class.active]="bookmarkState() === 'watchlist'"
+          (click)="watchlistToggle.emit()">
+          <ion-icon [name]="bookmarkState() === 'watchlist' ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+          <span>{{ bookmarkState() === 'watchlist' ? 'In Watchlist' : 'Watchlist' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="action-btn watched-btn"
+          [class.active]="bookmarkState() === 'watched'"
+          (click)="watchedToggle.emit()">
+          <ion-icon [name]="bookmarkState() === 'watched' ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+          <span>{{ bookmarkState() === 'watched' ? 'Watched' : 'Mark Watched' }}</span>
+        </button>
+
+        @if (hasTrailer()) {
+          <button
+            type="button"
+            class="action-btn trailer-btn"
+            (click)="trailerClick.emit()">
+            <ion-icon name="play-circle-outline"></ion-icon>
+            <span>Trailer</span>
+          </button>
+        }
+      </div>
+    </div>
