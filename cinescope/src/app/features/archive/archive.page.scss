@@ -1,0 +1,269 @@
+.archive-toolbar {
+      --background: #000000;
+      --border-width: 0 0 1px 0;
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
+    ion-segment-button {
+      --color: rgba(255, 255, 255, 0.5);
+      --color-checked: #ffffff;
+      --indicator-color: var(--ion-color-primary);
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #000000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      overflow-x: auto;
+    }
+    .filter-chip {
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .filter-chip.active {
+      background: var(--ion-color-primary);
+      color: #ffffff;
+      border-color: var(--ion-color-primary);
+    }
+    .archive-panes-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .archive-pane {
+      width: 100%;
+    }
+    .archive-pane.pane-hidden {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .empty-archive {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      padding: 0 32px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .empty-archive ion-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      color: rgba(255, 255, 255, 0.25);
+    }
+    .empty-archive h2 {
+      color: #ffffff;
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+    .empty-archive p {
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .archive-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px 7px;
+      padding: 12px 10px 28px;
+    }
+    @media (min-width: 640px) {
+      .archive-grid {
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 16px 12px;
+        padding: 16px 16px 36px;
+      }
+    }
+    .archive-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+      content-visibility: auto;
+      contain-intrinsic-size: 80px 160px;
+    }
+    .archive-grid.fade-phase-a .archive-card,
+    .people-grid.fade-phase-a .person-card {
+      animation: magicFadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: var(--enter-delay, 0ms);
+    }
+    .archive-grid.fade-phase-b .archive-card,
+    .people-grid.fade-phase-b .person-card {
+      animation: magicFadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-delay: var(--enter-delay, 0ms);
+    }
+    @keyframes magicFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .archive-card ::ng-deep .poster-container {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 3;
+      border-radius: 6px;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .archive-card:active ::ng-deep .poster-container {
+      transform: scale(0.95);
+    }
+    .archive-card ::ng-deep .bookmark-btn {
+      width: 26px;
+      height: 26px;
+      top: 5px;
+      right: 5px;
+      background: rgba(12, 12, 16, 0.78);
+      backdrop-filter: blur(8px);
+
+      .custom-icon {
+        width: 8px;
+      }
+    }
+    .archive-card-title {
+      margin-top: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.25;
+      color: rgba(255, 255, 255, 0.88);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 1px;
+    }
+    .archive-card-meta {
+      margin-top: 1.5px;
+      font-size: 9.5px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.45);
+      text-align: center;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 1px;
+    }
+    .people-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 12px 10px;
+      padding: 14px 12px 28px;
+    }
+    .person-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 8px 10px;
+      cursor: pointer;
+      content-visibility: auto;
+      contain-intrinsic-size: 140px 170px;
+      transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+    }
+    .person-card:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .person-card-avatar-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    .person-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      background: #18181b;
+      display: block;
+    }
+    .person-card-info {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .person-card-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #ffffff;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .person-card-dept {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2px;
+      margin-bottom: 8px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .person-progress-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .person-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .person-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e50914, #ff3b5c);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .person-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .progress-counts {
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-pct {
+      font-weight: 600;
+      color: #ff3b5c;
+      font-variant-numeric: tabular-nums;
+    }

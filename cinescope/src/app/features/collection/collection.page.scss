@@ -1,0 +1,245 @@
+.collection-content {
+      --background: #09090d;
+      color: #ffffff;
+    }
+    .collection-shell {
+      min-height: 100%;
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 32px);
+    }
+    .collection-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: calc(env(safe-area-inset-top, 16px) + 12px) 16px 14px;
+      background: rgba(9, 9, 13, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .topbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 14px 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.07);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+    .back-btn:active {
+      transform: scale(0.95);
+      background: rgba(229, 9, 20, 0.25);
+    }
+    .back-btn ion-icon {
+      font-size: 18px;
+    }
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.07);
+      color: #ffffff;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+    .home-btn:active {
+      transform: scale(0.95);
+      background: rgba(229, 9, 20, 0.25);
+    }
+    .home-btn ion-icon {
+      font-size: 18px;
+    }
+    .topbar-titles {
+      min-width: 0;
+      flex: 1;
+    }
+    .topbar-kicker {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: var(--ion-color-primary);
+      text-transform: uppercase;
+    }
+    .topbar-heading {
+      margin: 2px 0 0;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+    }
+    .collection-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #0b0b10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .control-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.45);
+      flex-shrink: 0;
+      width: 48px;
+    }
+    .chips-track {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+    .chips-track::-webkit-scrollbar {
+      display: none;
+    }
+    .control-chip {
+      flex: 0 0 auto;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+    .control-chip:active {
+      transform: scale(0.96);
+    }
+    .control-chip.active {
+      background: var(--ion-color-primary, #e50914);
+      border-color: var(--ion-color-primary, #e50914);
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .reset-chip {
+      background: rgba(229, 9, 20, 0.15);
+      border-color: rgba(229, 9, 20, 0.45);
+      color: #ff6b6b;
+      font-weight: 700;
+    }
+    .collection-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px 12px;
+      padding: 16px;
+    }
+    .collection-card {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      animation: cardRiseIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--card-delay, 0ms);
+    }
+    @keyframes cardRiseIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .poster-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .rating-pill {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(10, 10, 14, 0.85);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fbbf24;
+      font-size: 10.5px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+    .rating-pill ion-icon {
+      font-size: 10px;
+    }
+    .card-info {
+      margin-top: 7px;
+      padding: 0 2px;
+      cursor: pointer;
+    }
+    .card-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-meta {
+      margin-top: 2px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.52);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .empty-collection {
+      padding: 64px 24px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .empty-back-btn {
+      margin-top: 12px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    ion-infinite-scroll {
+      margin-top: 12px;
+      margin-bottom: 24px;
+    }
+    ion-infinite-scroll-content {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 13px;
+      font-weight: 600;
+    }

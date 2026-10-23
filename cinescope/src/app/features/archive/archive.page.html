@@ -1,5 +1,174 @@
 <app-header></app-header>
 
-<ion-content color="background">
-    <h1 style="color: white; text-align: center; margin-top: 50px;">ARCHIVE TAB</h1>
-</ion-content>
+    <ion-toolbar class="archive-toolbar">
+      <ion-segment [value]="activeTab()" (ionChange)="onTabChange($event)">
+        <ion-segment-button value="watchlist">
+          <ion-label>WATCHLIST ({{ storage.watchlistItems().length }})</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="watched">
+          <ion-label>WATCHED ({{ storage.watchedItems().length }})</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="people">
+          <ion-label>PEOPLE ({{ storage.favoritePeople().length }})</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </ion-toolbar>
+
+    @if (activeTab() !== 'people' && activeTabItems().length > 0) {
+      <div class="filter-bar">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="currentMediaFilter() === 'all'"
+          (click)="setMediaFilter('all')">
+          All ({{ activeTabItems().length }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="currentMediaFilter() === 'movie'"
+          (click)="setMediaFilter('movie')">
+          Movies ({{ movieCount() }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="currentMediaFilter() === 'tv'"
+          (click)="setMediaFilter('tv')">
+          TV Shows ({{ tvCount() }})
+        </button>
+      </div>
+    }
+
+    <ion-content color="background">
+      <div class="archive-panes-wrapper">
+        <!-- Keep-Alive Watchlist Pane (uses visibility/opacity instead of display:none so Chromium never evicts decoded GPU textures) -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watchlist'">
+          @if (filteredWatchlist().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="bookmark-outline"></ion-icon>
+              @if (storage.watchlistItems().length > 0) {
+                <h2>NO {{ watchlistMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHLIST</h2>
+                <p>You don't have any {{ watchlistMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} saved to your watchlist.</p>
+              } @else {
+                <h2>YOUR WATCHLIST IS EMPTY</h2>
+                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              }
+            </div>
+          } @else {
+            <div
+              class="archive-grid"
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
+              @for (vm of visibleWatchlist(); track vm.id; let idx = $index) {
+                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
+                  <app-poster-card
+                    [title]="vm.title"
+                    [imageUrl]="vm.posterUrl"
+                    [priority]="idx < 12"
+                    [showBookmark]="true"
+                    bookmarkState="watchlist"
+                    (cardClick)="onOpenDetail(vm)"
+                    (bookmarkToggle)="onToggleBookmark(vm.doc)">
+                  </app-poster-card>
+                  <div class="archive-card-title">{{ vm.title }}</div>
+                  <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Keep-Alive Watched Pane -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watched'">
+          @if (filteredWatched().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+              @if (storage.watchedItems().length > 0) {
+                <h2>NO {{ watchedMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHED</h2>
+                <p>You don't have any {{ watchedMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} marked as watched.</p>
+              } @else {
+                <h2>NO WATCHED TITLES YET</h2>
+                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+              }
+            </div>
+          } @else {
+            <div
+              class="archive-grid"
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
+              @for (vm of visibleWatched(); track vm.id; let idx = $index) {
+                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
+                  <app-poster-card
+                    [title]="vm.title"
+                    [imageUrl]="vm.posterUrl"
+                    [priority]="idx < 12"
+                    [showBookmark]="true"
+                    bookmarkState="watched"
+                    (cardClick)="onOpenDetail(vm)"
+                    (bookmarkToggle)="onToggleBookmark(vm.doc)">
+                  </app-poster-card>
+                  <div class="archive-card-title">{{ vm.title }}</div>
+                  <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Keep-Alive Favorite People Pane -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'people'">
+          @if (favoritePeopleCards().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="heart-outline"></ion-icon>
+              <h2>NO FAVORITE ARTISTS YET</h2>
+              <p>Explore actors and directors on CineScope, tap the heart icon on their profile, and track your filmography progress here.</p>
+            </div>
+          } @else {
+            <div
+              class="people-grid"
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
+              @for (person of favoritePeopleCards(); track person.id; let idx = $index) {
+                <div
+                  class="person-card"
+                  [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
+                  (click)="onOpenPersonDetail(person)"
+                  tabindex="0"
+                  role="button"
+                  (keyup.enter)="onOpenPersonDetail(person)">
+                  <div class="person-card-avatar-wrap">
+                    <img
+                      [src]="person.profileUrl"
+                      [alt]="person.name"
+                      class="person-avatar"
+                      loading="lazy" />
+                  </div>
+
+                  <div class="person-card-info">
+                    <span class="person-card-name">{{ person.name }}</span>
+                    <span class="person-card-dept">{{ person.department }}</span>
+
+                    <div class="person-progress-block">
+                      <div class="person-progress-bar">
+                        <div class="person-progress-fill" [style.width.%]="person.percent"></div>
+                      </div>
+                      <div class="person-progress-meta">
+                        <span class="progress-counts">{{ person.watched }}/{{ person.total }} watched</span>
+                        <span class="progress-pct">{{ person.percent }}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (hasMoreItems()) {
+        <ion-infinite-scroll threshold="750px" (ionInfinite)="onLoadMore($event)">
+          <ion-infinite-scroll-content loadingSpinner="crescent"></ion-infinite-scroll-content>
+        </ion-infinite-scroll>
+      }
+    </ion-content>

@@ -1,0 +1,367 @@
+:host { display: block; }
+    .detail-section {
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      .section-heading { margin-bottom: 0; }
+    }
+    .section-heading {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+    }
+    .episode-pulse-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .pulse-card {
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      &.upcoming {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(16, 185, 129, 0.08));
+        border-color: rgba(99, 102, 241, 0.4);
+      }
+      &.is-finale { border-color: rgba(245, 158, 11, 0.4); }
+    }
+    .pulse-badges-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .pulse-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #6366f1;
+      color: #fff;
+      &.muted {
+        background: rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
+    .milestone-badge {
+      display: inline-flex;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .milestone-series-finale { background: #f59e0b; color: #000; }
+    .milestone-season-finale { background: #e50914; color: #fff; }
+    .milestone-mid-season { background: #8b5cf6; color: #fff; }
+    .milestone-premiere { background: #10b981; color: #fff; }
+    .pulse-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .pulse-meta, .episode-submeta {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.58);
+      display: flex;
+      gap: 5px;
+    }
+    .pulse-overview {
+      margin: 8px 0 0;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.78);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .season-tabs-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+    }
+    .season-tab-card {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.85);
+      cursor: pointer;
+      &.active {
+        background: rgba(229, 9, 20, 0.22);
+        border-color: var(--ion-color-primary, #e50914);
+        color: #fff;
+      }
+    }
+    .season-mini-poster {
+      width: 34px;
+      height: 50px;
+      border-radius: 5px;
+      object-fit: cover;
+    }
+    .season-tab-title {
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+    .season-tab-meta {
+      margin-top: 3px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.58);
+      display: flex;
+      gap: 4px;
+    }
+    .season-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 28px 0;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 13px;
+    }
+    .season-overview-box {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .episodes-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 540px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .episode-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .episode-card.is-finale {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(255, 255, 255, 0.03));
+    }
+    .episode-top-row {
+      display: flex;
+      gap: 12px;
+    }
+    .episode-still-wrapper {
+      position: relative;
+      width: 118px;
+      min-width: 118px;
+      height: 70px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #141418;
+      img { width: 100%; height: 100%; object-fit: cover; }
+    }
+    .ep-number-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.78);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .ep-milestone-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .episode-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .episode-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .episode-name {
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .episode-rating {
+      flex-shrink: 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fbbf24;
+    }
+    .episode-crew-line {
+      margin-top: 4px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.65);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px 5px;
+      line-height: 1.35;
+    }
+    .crew-role-label {
+      font-weight: 700;
+      font-size: 9.5px;
+      color: rgba(255, 255, 255, 0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .crew-person-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      &:active { color: var(--ion-color-primary, #e50914); }
+    }
+    .crew-dot {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 9px;
+      margin: 0 1px;
+    }
+    .comma {
+      color: rgba(255, 255, 255, 0.5);
+      margin-right: 2px;
+    }
+    .episode-synopsis {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: rgba(255, 255, 255, 0.78);
+      &.clamped {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+    .ep-expand-btn {
+      align-self: flex-start;
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--ion-color-primary, #e50914);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .episode-guest-stars-section {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .gs-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: rgba(255, 255, 255, 0.48);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .guest-stars-scroll {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+      &::-webkit-scrollbar { display: none; }
+    }
+    .guest-star-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px;
+      padding: 3px 9px 3px 3px;
+      cursor: pointer;
+      flex-shrink: 0;
+      &:active {
+        transform: scale(0.96);
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+    .guest-avatar-wrap {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+      img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    }
+    .guest-avatar-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .guest-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .guest-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .guest-character {
+      font-size: 9.5px;
+      color: rgba(255, 255, 255, 0.5);
+      white-space: nowrap;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }

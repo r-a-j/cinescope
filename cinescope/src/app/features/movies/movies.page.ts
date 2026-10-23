@@ -7,12 +7,7 @@ import { HeaderComponent } from 'src/app/shared/components/header/header.compone
   standalone: true,
   imports: [IonContent, HeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <app-header></app-header>
-    
-    <ion-content color="background">
-      <h1 style="color: white; text-align: center; margin-top: 50px;">MOVIES TAB</h1>
-    </ion-content>
-  `,
+  templateUrl: './movies.page.html',
+  styleUrls: ['./movies.page.scss'],
 })
 export class MoviesPage { }

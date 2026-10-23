@@ -1,0 +1,170 @@
+<!-- MOVIE COLLECTION BANNER -->
+    @if (collection(); as col) {
+      <section class="detail-section">
+        <div class="collection-banner">
+          @if (col.backdrop_path || col.poster_path) {
+            <img
+              [src]="resolveCollectionImage(col.backdrop_path || col.poster_path)"
+              [alt]="col.name"
+              class="collection-bg"
+              loading="lazy" />
+          }
+          <div class="collection-overlay">
+            <span class="collection-kicker">PART OF THE FRANCHISE</span>
+            <h4 class="collection-title">{{ col.name }}</h4>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- BOX OFFICE, PRODUCTION FACTS, KEYWORDS & EXTERNAL LINKS -->
+    @if (productionFacts().length > 0 || keywords().length > 0 || externalLinks().length > 0) {
+      <section class="detail-section">
+        <h3 class="section-heading">DETAILS & PRODUCTION</h3>
+
+        @if (productionFacts().length > 0) {
+          <div class="facts-grid">
+            @for (fact of productionFacts(); track fact.label) {
+              <div class="fact-box">
+                <span class="fact-label">{{ fact.label }}</span>
+                <span class="fact-val">{{ fact.value }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        @if (keywords().length > 0) {
+          <div class="keywords-block">
+            <span class="sub-label">Themes & Keywords</span>
+            <div class="keywords-cloud">
+              @for (kw of keywords(); track kw.id) {
+                <span class="keyword-tag">#{{ kw.name }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (externalLinks().length > 0) {
+          <div class="external-links-row">
+            @for (ext of externalLinks(); track ext.label) {
+              <a
+                [href]="ext.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ext-link-pill">
+                <ion-icon [name]="ext.icon"></ion-icon>
+                <span>{{ ext.label }}</span>
+              </a>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- COMMUNITY & CRITIC REVIEWS -->
+    <section class="detail-section">
+      <div class="reviews-section-header">
+        <h3 class="section-heading">COMMUNITY REVIEWS</h3>
+        @if (reviews().length > 0) {
+          <span class="reviews-count-badge">{{ reviews().length }}</span>
+        }
+      </div>
+
+      @if (reviews().length > 0) {
+        <div class="reviews-stack">
+          @for (rev of reviews(); track rev.id) {
+            <div class="review-card">
+              <div class="review-header">
+                <div class="review-author-group">
+                  <div class="review-author">{{ rev.author }}</div>
+                  @if (rev.created_at) {
+                    <div class="review-date">{{ rev.created_at.slice(0, 10) }}</div>
+                  }
+                </div>
+                @if (rev.author_details.rating) {
+                  <span class="review-score">★ {{ rev.author_details.rating }}/10</span>
+                }
+              </div>
+              <p
+                class="review-body"
+                [class.clamped]="!expandedReviewIds()[rev.id] && rev.content.length > 280">
+                {{ rev.content }}
+              </p>
+              @if (rev.content.length > 280) {
+                <button
+                  type="button"
+                  class="text-toggle-btn"
+                  (click)="toggleReviewExpand(rev.id)">
+                  {{ expandedReviewIds()[rev.id] ? 'Show less' : 'Read full review' }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="reviews-more-bar">
+          <span class="more-bar-label">More critic & audience reviews:</span>
+          <div class="more-buttons-group">
+            @if (imdbReviewUrl(); as url) {
+              <a
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ext-review-pill imdb-pill">
+                <ion-icon name="star"></ion-icon>
+                <span>IMDb Reviews</span>
+                <ion-icon name="open-outline" class="pill-open"></ion-icon>
+              </a>
+            }
+            @if (rottenTomatoesUrl(); as url) {
+              <a
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ext-review-pill rt-pill">
+                <span class="rt-icon">🍅</span>
+                <span>Rotten Tomatoes</span>
+                <ion-icon name="open-outline" class="pill-open"></ion-icon>
+              </a>
+            }
+          </div>
+        </div>
+      } @else {
+        <!-- Fallback Empty State with Direct Buttons to IMDb & Rotten Tomatoes -->
+        <div class="reviews-empty-box">
+          <div class="empty-icon-wrap">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+          </div>
+          <div class="empty-content">
+            <h4 class="empty-heading">No Written TMDB Reviews Yet</h4>
+            <p class="empty-text">
+              Community reviews for this {{ mediaType() === 'tv' ? 'TV series' : 'movie' }} haven't been submitted to TMDB yet. Explore verified audience feedback and critic reviews on:
+            </p>
+            <div class="empty-buttons-row">
+              @if (imdbReviewUrl(); as url) {
+                <a
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ext-review-btn imdb-btn">
+                  <ion-icon name="star"></ion-icon>
+                  <span>Read on IMDb</span>
+                  <ion-icon name="open-outline" class="btn-open"></ion-icon>
+                </a>
+              }
+              @if (rottenTomatoesUrl(); as url) {
+                <a
+                  [href]="url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ext-review-btn rt-btn">
+                  <span class="rt-icon">🍅</span>
+                  <span>Rotten Tomatoes</span>
+                  <ion-icon name="open-outline" class="btn-open"></ion-icon>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </section>

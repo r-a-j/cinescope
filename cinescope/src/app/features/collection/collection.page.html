@@ -1,0 +1,198 @@
+<ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll()" class="collection-content">
+      <div class="collection-shell">
+        <!-- Top Navigation Header with Back Button -->
+        <header class="collection-topbar">
+          <div class="topbar-actions">
+            <button type="button" class="back-btn" aria-label="Go Back" (click)="goBack()">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+              <span>Back</span>
+            </button>
+            <button type="button" class="home-btn" aria-label="Go to Home" (click)="goToHome()">
+              <ion-icon name="home-outline"></ion-icon>
+            </button>
+          </div>
+
+          <div class="topbar-titles">
+            <span class="topbar-kicker">COLLECTION • {{ hasActiveFilters() ? displayedCards().length + ' OF ' + rawItems().length : rawItems().length }} TITLES</span>
+            <h1 class="topbar-heading">{{ collectionTitle() }}</h1>
+          </div>
+        </header>
+
+        <!-- Controls: Primary Sort Row + Multi-Select Filter Row -->
+        @if (rawItems().length > 1 && !isPersonCollection()) {
+          <div class="collection-controls">
+            <!-- Row 1: Primary Sort Order -->
+            <div class="control-row">
+              <span class="control-label">SORT</span>
+              <div class="chips-track">
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'featured'"
+                  (click)="setSortMode('featured')">
+                  Featured
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'rating'"
+                  (click)="setSortMode('rating')">
+                  ★ Top Rated
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'newest'"
+                  (click)="setSortMode('newest')">
+                  Newest
+                </button>
+                <button
+                  type="button"
+                  class="control-chip sort-chip"
+                  [class.active]="sortMode() === 'alpha'"
+                  (click)="setSortMode('alpha')">
+                  A–Z
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Multi-Select Filter Chips -->
+            <div class="control-row">
+              <span class="control-label">FILTER</span>
+              <div class="chips-track">
+                @if (hasActiveFilters()) {
+                  <button
+                    type="button"
+                    class="control-chip reset-chip"
+                    (click)="resetFilters()">
+                    Reset ✕
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().minRating !== null"
+                  (click)="toggleRatingFilter()">
+                  ★ 7.0+
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().recentOnly"
+                  (click)="toggleRecentFilter()">
+                  📅 Recent
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().highVotesOnly"
+                  (click)="toggleHighVotesFilter()">
+                  🔥 100+ Votes
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('action')"
+                  (click)="toggleGenreFilter('action')">
+                  Action
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('comedy')"
+                  (click)="toggleGenreFilter('comedy')">
+                  Comedy
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('drama')"
+                  (click)="toggleGenreFilter('drama')">
+                  Drama
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('thriller')"
+                  (click)="toggleGenreFilter('thriller')">
+                  Thriller
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('scifi')"
+                  (click)="toggleGenreFilter('scifi')">
+                  Sci-Fi
+                </button>
+                <button
+                  type="button"
+                  class="control-chip filter-chip"
+                  [class.active]="filters().genres.includes('romance')"
+                  (click)="toggleGenreFilter('romance')">
+                  Romance
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Poster Grid -->
+        @if (displayedCards().length > 0) {
+          <div class="collection-grid">
+            @for (card of displayedCards(); track (card.item.mediaType ? card.item.mediaType + '-' + card.item.id : card.item.id); let idx = $index) {
+              <div class="collection-card" [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
+                <div class="poster-wrap">
+                  <app-poster-card
+                    [title]="card.item.title"
+                    [imageUrl]="card.item.posterUrl || 'assets/placeholders/placeholder.webp'"
+                    [priority]="idx < 12"
+                    [showBookmark]="card.item.mediaType !== 'person'"
+                    [bookmarkState]="getBookmarkState(card.item)"
+                    (cardClick)="onCardClick(card.item)"
+                    (bookmarkToggle)="onToggleBookmark(card.item)">
+                  </app-poster-card>
+                  @if (card.ratingValue > 0) {
+                    <div class="rating-pill">
+                      <ion-icon name="star"></ion-icon>
+                      {{ card.ratingValue.toFixed(1) }}
+                    </div>
+                  }
+                </div>
+
+                <div
+                  class="card-info"
+                  tabindex="0"
+                  (click)="onCardClick(card.item)"
+                  (keyup.enter)="onCardClick(card.item)">
+                  <div class="card-title">{{ card.item.title }}</div>
+                  @if (card.metaLine) {
+                    <div class="card-meta">{{ card.metaLine }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Infinite Scroll with 500px Preloading Threshold -->
+          <ion-infinite-scroll
+            threshold="500px"
+            [disabled]="!hasMore()"
+            (ionInfinite)="loadMore($event)">
+            <ion-infinite-scroll-content
+              loadingSpinner="crescent"
+              loadingText="Loading more titles...">
+            </ion-infinite-scroll-content>
+          </ion-infinite-scroll>
+        } @else {
+          <div class="empty-collection">
+            @if (hasActiveFilters()) {
+              <p>No titles match the selected filters.</p>
+              <button type="button" class="empty-back-btn" (click)="resetFilters()">Clear Filters</button>
+            } @else {
+              <p>No items in this collection.</p>
+              <button type="button" class="empty-back-btn" (click)="goBack()">Go Back</button>
+            }
+          </div>
+        }
+      </div>
+    </ion-content>
