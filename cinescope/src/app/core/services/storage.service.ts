@@ -13,10 +13,28 @@ export type TmdbPayload = Record<string, unknown>;
 
 export interface CinescopeBackupPayload {
     version: number;
+    appVersion?: string | undefined;
+    app?: string | undefined;
     exportedAt: string;
     settings: SettingsDocType | null;
     content: ContentDocType[];
     searchHistory: SearchHistoryDocType[];
+}
+
+export interface BackupInspectionResult {
+    isValid: boolean;
+    format: 'modern' | 'legacy' | 'unknown';
+    version: number;
+    appVersion?: string | undefined;
+    exportedAt?: string | undefined;
+    totalTitles: number;
+    watchlistCount: number;
+    watchedCount: number;
+    inboxCount: number;
+    favoritePeopleCount: number;
+    historyCount: number;
+    hasSettings: boolean;
+    error?: string | undefined;
 }
 
 export interface LegacyGenreItem {
@@ -45,6 +63,7 @@ export interface LegacyContentItem {
 
 export interface LegacyBackupPayload {
     version?: number;
+    appVersion?: string;
     createdAt?: string;
     app?: string;
     data?: {
@@ -61,6 +80,8 @@ export interface BackupImportResult {
     contentCount: number;
     watchlistCount: number;
     watchedCount: number;
+    inboxCount: number;
+    favoritePeopleCount: number;
     historyCount: number;
 }
 
@@ -604,6 +625,126 @@ export class StorageService {
         return docs.length;
     }
 
+    public inspectBackupJson(rawJson: string): BackupInspectionResult {
+        const cleanJson = rawJson.replace(/^\uFEFF/, '').trim();
+        let parsed: (Partial<CinescopeBackupPayload> & LegacyBackupPayload) | null = null;
+
+        try {
+            parsed = JSON.parse(cleanJson);
+        } catch {
+            return {
+                isValid: false,
+                format: 'unknown',
+                version: 0,
+                totalTitles: 0,
+                watchlistCount: 0,
+                watchedCount: 0,
+                inboxCount: 0,
+                favoritePeopleCount: 0,
+                historyCount: 0,
+                hasSettings: false,
+                error: 'The selected file is not a valid JSON document.'
+            };
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+            return {
+                isValid: false,
+                format: 'unknown',
+                version: 0,
+                totalTitles: 0,
+                watchlistCount: 0,
+                watchedCount: 0,
+                inboxCount: 0,
+                favoritePeopleCount: 0,
+                historyCount: 0,
+                hasSettings: false,
+                error: 'Backup file root is not an object.'
+            };
+        }
+
+        // 1. Inspect Modern CineScope Format
+        if (Array.isArray(parsed.content)) {
+            let watchlistCount = 0;
+            let watchedCount = 0;
+            let inboxCount = 0;
+            let favoritePeopleCount = 0;
+
+            for (const item of parsed.content) {
+                if (!item || typeof item !== 'object') continue;
+                const tmdbId = Number(item.tmdbId ?? item.id);
+                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+
+                const lists = Array.isArray(item.lists) ? item.lists : [];
+                if (item.mediaType === 'person' && lists.includes('favorite')) {
+                    favoritePeopleCount++;
+                } else if (lists.includes('inbox')) {
+                    inboxCount++;
+                } else if (lists.includes('watched')) {
+                    watchedCount++;
+                } else if (lists.includes('watchlist')) {
+                    watchlistCount++;
+                }
+            }
+
+            const totalTitles = parsed.content.length;
+            const historyCount = Array.isArray(parsed.searchHistory) ? parsed.searchHistory.length : 0;
+            const hasSettings = Boolean(parsed.settings && typeof parsed.settings === 'object');
+
+            return {
+                isValid: totalTitles > 0 || historyCount > 0 || hasSettings,
+                format: 'modern',
+                version: parsed.version ?? 1,
+                appVersion: parsed.appVersion,
+                exportedAt: parsed.exportedAt,
+                totalTitles,
+                watchlistCount,
+                watchedCount,
+                inboxCount,
+                favoritePeopleCount,
+                historyCount,
+                hasSettings
+            };
+        }
+
+        // 2. Inspect Legacy CineScope v1 Format
+        const legacyData = parsed.data;
+        if (legacyData && typeof legacyData === 'object') {
+            const watchlistCount = Array.isArray(legacyData.watchlist_contents) ? legacyData.watchlist_contents.length : 0;
+            const watchedCount = Array.isArray(legacyData.watched_contents) ? legacyData.watched_contents.length : 0;
+            const totalTitles = watchlistCount + watchedCount;
+            const hasSettings = Boolean(legacyData.settings && typeof legacyData.settings === 'object');
+
+            return {
+                isValid: totalTitles > 0 || hasSettings,
+                format: 'legacy',
+                version: parsed.version ?? 1,
+                exportedAt: parsed.createdAt,
+                totalTitles,
+                watchlistCount,
+                watchedCount,
+                inboxCount: 0,
+                favoritePeopleCount: 0,
+                historyCount: 0,
+                hasSettings
+            };
+        }
+
+        return {
+            isValid: false,
+            format: 'unknown',
+            version: 0,
+            totalTitles: 0,
+            watchlistCount: 0,
+            watchedCount: 0,
+            inboxCount: 0,
+            favoritePeopleCount: 0,
+            historyCount: 0,
+            hasSettings: false,
+            error: 'The file does not contain recognized CineScope library records.'
+        };
+    }
+
     public async exportBackupJson(): Promise<string> {
         this.initReactiveStreams();
         const [settingsDoc, contentDocs, historyDocs] = await Promise.all([
@@ -614,10 +755,27 @@ export class StorageService {
 
         const payload: CinescopeBackupPayload = {
             version: 1,
+            appVersion: '1.1.0',
+            app: 'CineScope',
             exportedAt: new Date().toISOString(),
             settings: settingsDoc ? (settingsDoc.toJSON() as SettingsDocType) : null,
-            content: contentDocs.map((d) => d.toJSON() as ContentDocType),
-            searchHistory: historyDocs.map((d) => d.toJSON() as SearchHistoryDocType)
+            content: contentDocs.map((d) => {
+                const json = d.toJSON() as ContentDocType;
+                const clean = { ...json };
+                delete (clean as Record<string, unknown>)['_rev'];
+                delete (clean as Record<string, unknown>)['_deleted'];
+                delete (clean as Record<string, unknown>)['_meta'];
+                delete (clean as Record<string, unknown>)['_attachments'];
+                return clean;
+            }),
+            searchHistory: historyDocs.map((d) => {
+                const json = d.toJSON() as SearchHistoryDocType;
+                const clean = { ...json };
+                delete (clean as Record<string, unknown>)['_rev'];
+                delete (clean as Record<string, unknown>)['_deleted'];
+                delete (clean as Record<string, unknown>)['_meta'];
+                return clean;
+            })
         };
 
         return JSON.stringify(payload, null, 2);
@@ -625,7 +783,8 @@ export class StorageService {
 
     public async importBackupJson(rawJson: string): Promise<BackupImportResult> {
         this.initReactiveStreams();
-        const parsed = JSON.parse(rawJson) as Partial<CinescopeBackupPayload> & LegacyBackupPayload;
+        const cleanJson = rawJson.replace(/^\uFEFF/, '').trim();
+        const parsed = JSON.parse(cleanJson) as Partial<CinescopeBackupPayload> & LegacyBackupPayload;
 
         if (!parsed || typeof parsed !== 'object') {
             throw new Error('Invalid backup file format.');
@@ -633,9 +792,11 @@ export class StorageService {
 
         let watchlistCount = 0;
         let watchedCount = 0;
+        let inboxCount = 0;
+        let favoritePeopleCount = 0;
         let historyCount = 0;
 
-        // 1. Restore Settings (supports both v4 `parsed.settings` and Legacy v1 `parsed.data.settings`)
+        // 1. Restore Settings (supports both modern `parsed.settings` and Legacy v1 `parsed.data.settings`)
         const rawSettings = parsed.settings ?? parsed.data?.settings;
         if (rawSettings && typeof rawSettings === 'object') {
             const rawTheme = rawSettings.theme;
@@ -676,20 +837,66 @@ export class StorageService {
             }
         }
 
-        // 3. Restore Modern v4 Format (`parsed.content`)
+        // 3. Restore Modern Format (`parsed.content`) with strict schema normalization & sanitization
         if (Array.isArray(parsed.content)) {
-            for (const item of parsed.content) {
-                if (item && item.id && item.tmdbId && item.mediaType && Array.isArray(item.lists)) {
-                    docsById.set(item.id, item);
+            for (const raw of parsed.content) {
+                if (!raw || typeof raw !== 'object') continue;
+
+                const tmdbId = Number(raw.tmdbId ?? raw.id);
+                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+
+                const mediaType = (raw.mediaType === 'tv' || raw.mediaType === 'person')
+                    ? raw.mediaType
+                    : 'movie';
+
+                const docId = typeof raw.id === 'string' && raw.id.trim().length > 0
+                    ? raw.id.trim()
+                    : this.generateId(tmdbId, mediaType);
+
+                const lists = Array.isArray(raw.lists) && raw.lists.length > 0
+                    ? raw.lists.map(String)
+                    : ['watchlist'];
+
+                const addedAt = typeof raw.addedAt === 'string' && Number.isFinite(Date.parse(raw.addedAt))
+                    ? raw.addedAt
+                    : new Date().toISOString();
+
+                const payload = raw.payload && typeof raw.payload === 'object'
+                    ? (raw.payload as TmdbPayload)
+                    : { id: tmdbId, media_type: mediaType };
+
+                const cleanDoc: ContentDocType = {
+                    id: docId,
+                    tmdbId,
+                    mediaType,
+                    lists,
+                    addedAt,
+                    payload
+                };
+
+                if (raw.watchedAt && typeof raw.watchedAt === 'string' && Number.isFinite(Date.parse(raw.watchedAt))) {
+                    cleanDoc.watchedAt = raw.watchedAt;
                 }
+
+                docsById.set(docId, cleanDoc);
             }
         }
 
         const docsToUpsert = Array.from(docsById.values());
         if (docsToUpsert.length > 0) {
-            await this.dbService.db.content.bulkUpsert(docsToUpsert);
+            // Batch into chunks of 250 to ensure zero memory exhaustion and IndexedDB transaction limits
+            const CHUNK_SIZE = 250;
+            for (let i = 0; i < docsToUpsert.length; i += CHUNK_SIZE) {
+                const chunk = docsToUpsert.slice(i, i + CHUNK_SIZE);
+                await this.dbService.db.content.bulkUpsert(chunk);
+            }
+
             for (const doc of docsToUpsert) {
-                if (doc.lists.includes('watched')) {
+                if (doc.mediaType === 'person' && doc.lists.includes('favorite')) {
+                    favoritePeopleCount++;
+                } else if (doc.lists.includes('inbox')) {
+                    inboxCount++;
+                } else if (doc.lists.includes('watched')) {
                     watchedCount++;
                 } else if (doc.lists.includes('watchlist')) {
                     watchlistCount++;
@@ -697,14 +904,26 @@ export class StorageService {
             }
         }
 
-        // 4. Restore Search History (if present)
+        // 4. Restore Search History (if present) in chunks
         if (Array.isArray(parsed.searchHistory)) {
-            const validHistory = parsed.searchHistory.filter(
-                (entry): entry is SearchHistoryDocType =>
-                    Boolean(entry && entry.query && typeof entry.timestamp === 'number')
-            );
+            const validHistory: SearchHistoryDocType[] = [];
+            for (const entry of parsed.searchHistory) {
+                if (entry && typeof entry.query === 'string' && entry.query.trim().length > 0) {
+                    const timestamp = typeof entry.timestamp === 'number' && Number.isFinite(entry.timestamp)
+                        ? entry.timestamp
+                        : Date.now();
+                    validHistory.push({
+                        query: entry.query.trim().slice(0, 100),
+                        timestamp
+                    });
+                }
+            }
             if (validHistory.length > 0) {
-                await this.dbService.db.searchHistory.bulkUpsert(validHistory);
+                const CHUNK_SIZE = 250;
+                for (let i = 0; i < validHistory.length; i += CHUNK_SIZE) {
+                    const chunk = validHistory.slice(i, i + CHUNK_SIZE);
+                    await this.dbService.db.searchHistory.bulkUpsert(chunk);
+                }
                 historyCount = validHistory.length;
             }
         }
@@ -713,6 +932,8 @@ export class StorageService {
             contentCount: docsToUpsert.length,
             watchlistCount,
             watchedCount,
+            inboxCount,
+            favoritePeopleCount,
             historyCount
         };
     }
