@@ -1,15 +1,16 @@
 <section class="watch-providers-section">
-      <div class="section-header-row">
+      <div class="section-header-block">
         <h3 class="section-heading">WHERE TO WATCH</h3>
         @if (availableRegions().length > 1) {
-          <div class="region-selector">
+          <div class="region-chips-scroll">
             @for (reg of availableRegions(); track reg) {
               <button
                 type="button"
                 class="region-chip"
                 [class.active]="selectedRegion() === reg"
                 (click)="regionChange.emit(reg)">
-                {{ reg }}
+                <img [src]="getCountryFlagUrl(reg)" [alt]="reg" class="region-chip-flag" loading="lazy" (error)="onFlagError($event)" />
+                <span class="region-chip-code">{{ reg }}</span>
               </button>
             }
           </div>

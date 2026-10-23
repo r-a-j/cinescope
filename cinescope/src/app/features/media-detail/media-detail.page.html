@@ -105,7 +105,7 @@
     @if (availableWatchRegions().length > 0 || tvNetworks().length > 0) {
       <app-watch-providers-panel
         [availableRegions]="availableWatchRegions()"
-        [selectedRegion]="selectedWatchRegion()"
+        [selectedRegion]="effectiveWatchRegion()"
         [tvNetworks]="tvNetworks()"
         [streamingProviders]="streamingProviders()"
         [rentProviders]="rentProviders()"

@@ -26,7 +26,33 @@
         </ion-item>
     </ion-list> -->
 
-    <ion-list inset="true" class="cinescope-list">
+        <ion-list inset="true" class="cinescope-list">
+        <ion-list-header>
+            <ion-label>Content & Region</ion-label>
+        </ion-list-header>
+        <ion-item button (click)="openRegionModal()" lines="none">
+            <div slot="start" class="settings-region-flag-wrap">
+                <img
+                    [src]="getCountryFlagUrl(storage.userRegion())"
+                    [alt]="currentRegionName()"
+                    class="settings-region-flag"
+                    (error)="onFlagError($event)" />
+                <span class="settings-flag-fallback">{{ storage.userRegion() }}</span>
+            </div>
+            <ion-label>
+                <h3>Streaming & Content Region</h3>
+                <p>{{ currentRegionName() }}</p>
+            </ion-label>
+            <div slot="end" class="region-meta-tag">
+                <span class="region-mode-pill" [class.manual]="storage.isManualRegion()">
+                    {{ storage.isManualRegion() ? 'Manual' : 'Auto' }}
+                </span>
+                <ion-note class="region-badge-note">{{ storage.userRegion() }}</ion-note>
+            </div>
+        </ion-item>
+    </ion-list>
+
+<ion-list inset="true" class="cinescope-list">
         <ion-list-header>
             <ion-label>Data Management</ion-label>
         </ion-list-header>
@@ -231,3 +257,141 @@
     </ng-template>
 </ion-modal>
 
+
+
+<!-- ==========================================
+     STREAMING & CONTENT REGION SELECTOR MODAL
+     ========================================== -->
+<ion-modal
+    [isOpen]="isRegionModalOpen()"
+    (didDismiss)="closeRegionModal()"
+    [initialBreakpoint]="0.85"
+    [breakpoints]="[0, 0.85, 1.0]"
+    class="region-modal-sheet">
+    <ng-template>
+        <div class="region-modal-container">
+            <!-- Modal Header -->
+            <div class="region-modal-header">
+                <div class="modal-title-row">
+                    <div class="title-with-badge">
+                        <div class="title-icon-badge region-badge">
+                            <ion-icon name="globe-outline"></ion-icon>
+                        </div>
+                        <div>
+                            <h3 class="modal-title">STREAMING REGION</h3>
+                            <p class="modal-subtitle">Choose country for OTT watch providers & releases</p>
+                        </div>
+                    </div>
+                    <button type="button" class="modal-close-btn" (click)="closeRegionModal()" aria-label="Close modal">
+                        <ion-icon name="close-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controls (Active Glance + Auto-Detect + Search) -->
+            <div class="region-modal-controls">
+                <!-- Active Region Preview Card -->
+                <div class="active-region-card">
+                    <div class="active-region-flag-box">
+                        <img
+                            [src]="getCountryFlagUrl(storage.userRegion())"
+                            [alt]="currentRegionName()"
+                            class="active-region-flag"
+                            (error)="onFlagError($event)" />
+                        <span class="active-region-flag-code">{{ storage.userRegion() }}</span>
+                    </div>
+                    <div class="active-region-meta">
+                        <span class="active-region-label">Current Streaming Region</span>
+                        <span class="active-region-title">{{ currentRegionName() }}</span>
+                    </div>
+                    <span class="active-mode-pill" [class.manual]="storage.isManualRegion()">
+                        {{ storage.isManualRegion() ? 'Manual' : 'Auto' }}
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    class="auto-detect-btn"
+                    [disabled]="isDetectingRegion()"
+                    (click)="autoDetectRegion()">
+                    <div class="auto-detect-icon">
+                        @if (isDetectingRegion()) {
+                            <ion-spinner name="crescent"></ion-spinner>
+                        } @else {
+                            <ion-icon name="locate-outline"></ion-icon>
+                        }
+                    </div>
+                    <div class="auto-detect-text">
+                        <span class="auto-detect-title">Auto-Detect My Location</span>
+                        <span class="auto-detect-sub">3-signal consensus (Locale, Timezone, IP)</span>
+                    </div>
+                </button>
+
+                <div class="region-search-wrap">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input
+                        type="text"
+                        class="region-search-input"
+                        placeholder="Search country or code (e.g. India, Germany, US)..."
+                        [value]="regionSearchQuery()"
+                        (input)="onRegionSearch($event)" />
+                    @if (regionSearchQuery()) {
+                        <button type="button" class="search-clear-btn" (click)="clearRegionSearch()" aria-label="Clear search">
+                            <ion-icon name="close-circle"></ion-icon>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Scrollable Country List -->
+            <ion-content class="region-modal-content" [scrollY]="true">
+                @if (isLoadingRegions()) {
+                    <div class="region-loading">
+                        <ion-spinner name="crescent" color="primary"></ion-spinner>
+                        <p>Loading available regions...</p>
+                    </div>
+                } @else {
+                    <div class="region-list">
+                        @for (reg of filteredRegions(); track reg.iso_3166_1) {
+                            <button
+                                type="button"
+                                class="region-item"
+                                [class.active]="reg.iso_3166_1 === storage.userRegion()"
+                                (click)="selectRegion(reg)">
+                                <div class="region-flag-box">
+                                    <img
+                                        [src]="getCountryFlagUrl(reg.iso_3166_1)"
+                                        [alt]="reg.english_name"
+                                        class="region-flag-img"
+                                        loading="lazy"
+                                        (error)="onFlagError($event)" />
+                                    <span class="region-flag-fallback">{{ reg.iso_3166_1 }}</span>
+                                </div>
+                                <div class="region-item-info">
+                                    <span class="region-item-name">{{ reg.english_name }}</span>
+                                    <div class="region-item-sub">
+                                        <span class="region-item-code-tag">{{ reg.iso_3166_1 }}</span>
+                                        @if (reg.native_name && reg.native_name !== reg.english_name) {
+                                            <span class="region-item-native">{{ reg.native_name }}</span>
+                                        }
+                                    </div>
+                                </div>
+                                @if (reg.iso_3166_1 === storage.userRegion()) {
+                                    <div class="region-active-badge">
+                                        <ion-icon name="checkmark-circle"></ion-icon>
+                                        <span>ACTIVE</span>
+                                    </div>
+                                }
+                            </button>
+                        } @empty {
+                            <div class="region-empty">
+                                <ion-icon name="search-outline"></ion-icon>
+                                <p>No matching countries found</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </ion-content>
+        </div>
+    </ng-template>
+</ion-modal>

@@ -116,4 +116,16 @@ export class WatchProvidersPanelComponent {
   public resolveLogo(path: string | null | undefined): string {
     return resolveMediaImageUrl(path, 'w185');
   }
+
+  public getCountryFlagUrl(countryCode: string | null | undefined): string {
+    if (!countryCode || countryCode.length !== 2) return '';
+    return 'https://flagcdn.com/w40/' + countryCode.toLowerCase() + '.png';
+  }
+
+  public onFlagError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+    }
+  }
 }

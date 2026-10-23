@@ -208,7 +208,7 @@ export class MediaDetailPage implements OnInit {
   public tvDetail = signal<TmdbTvDetailDto | null>(null);
 
   // Watch Providers region selection
-  public selectedWatchRegion = signal<string>('IN');
+  public selectedWatchRegion = signal<string | null>(null);
 
   // TV Season & Episode Explorer state
   public selectedSeasonNumber = signal<number>(1);
@@ -406,11 +406,12 @@ export class MediaDetailPage implements OnInit {
   });
 
   public certification = computed<string | null>(() => {
+    const preferred = [this.storage.userRegion(), ...PREFERRED_REGIONS].filter((v, i, a) => a.indexOf(v) === i);
     const m = this.movieDetail();
     if (m) {
       const relDates = m['release_dates'] as { results?: TmdbReleaseDateGroupDto[] } | undefined;
       const groups = relDates?.results || [];
-      for (const region of PREFERRED_REGIONS) {
+      for (const region of preferred) {
         const group = groups.find((g) => g.iso_3166_1 === region);
         const cert = group?.release_dates?.find((r) => r.certification && r.certification.trim().length > 0)?.certification;
         if (cert) return cert.trim();
@@ -425,7 +426,7 @@ export class MediaDetailPage implements OnInit {
     if (t) {
       const ratingsObj = t['content_ratings'] as { results?: TmdbTvContentRatingDto[] } | undefined;
       const list = ratingsObj?.results || [];
-      for (const region of PREFERRED_REGIONS) {
+      for (const region of preferred) {
         const match = list.find((r) => r.iso_3166_1 === region && r.rating?.trim());
         if (match) return match.rating.trim();
       }
@@ -481,19 +482,35 @@ export class MediaDetailPage implements OnInit {
     const map = this.watchProvidersMap();
     const keys = Object.keys(map);
     if (keys.length === 0) return [];
-    const prioritized = PREFERRED_REGIONS.filter((r) => keys.includes(r));
-    const others = keys.filter((k) => !PREFERRED_REGIONS.includes(k)).slice(0, 6);
+    const userReg = this.storage.userRegion();
+    const priority = [userReg, 'IN', 'DE', 'US', 'GB', 'CA', 'AU'].filter((v, i, a) => a.indexOf(v) === i);
+    const prioritized = priority.filter((r) => keys.includes(r));
+    const others = keys.filter((k) => !priority.includes(k)).slice(0, 6);
     return [...prioritized, ...others];
+  });
+
+  public effectiveWatchRegion = computed<string>(() => {
+    const map = this.watchProvidersMap();
+    const sel = this.selectedWatchRegion();
+    if (sel && map[sel]) {
+      return sel;
+    }
+    const userReg = this.storage.userRegion();
+    if (map[userReg]) {
+      return userReg;
+    }
+    if (map['IN']) {
+      return 'IN';
+    }
+    const avail = this.availableWatchRegions();
+    return avail.length > 0 ? avail[0] : userReg;
   });
 
   public activeWatchRegionData = computed<TmdbWatchProviderRegionDto | null>(() => {
     const map = this.watchProvidersMap();
-    const sel = this.selectedWatchRegion();
-    if (map[sel]) return map[sel];
-    const first = this.availableWatchRegions()[0];
-    return first ? map[first] : null;
+    const region = this.effectiveWatchRegion();
+    return map[region] || null;
   });
-
   public streamingProviders = computed<TmdbWatchProviderDto[]>(() => {
     const data = this.activeWatchRegionData();
     if (!data) return [];
@@ -885,7 +902,7 @@ export class MediaDetailPage implements OnInit {
       // Reset in-page interaction state when navigating to another title
       this.overviewExpanded.set(false);
       this.selectedSeasonNumber.set(1);
-      this.selectedWatchRegion.set('US');
+      this.selectedWatchRegion.set(null);
       this.preview.set(null);
       void this.content()?.scrollToTop(0);
 
@@ -987,7 +1004,14 @@ export class MediaDetailPage implements OnInit {
 
   private syncDefaultWatchRegion(): void {
     const regions = this.availableWatchRegions();
-    if (regions.length > 0 && !regions.includes(this.selectedWatchRegion())) {
+    if (regions.length === 0) return;
+
+    const userRegion = this.storage.userRegion();
+    if (regions.includes(userRegion)) {
+      this.selectedWatchRegion.set(userRegion);
+    } else if (regions.includes('IN')) {
+      this.selectedWatchRegion.set('IN');
+    } else {
       this.selectedWatchRegion.set(regions[0]);
     }
   }

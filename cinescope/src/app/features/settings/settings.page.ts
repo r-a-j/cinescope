@@ -14,11 +14,16 @@ import {
     trashOutline, cloudDownloadOutline, cloudUploadOutline,
     logoGithub, mailOutline, informationCircleOutline,
     downloadOutline, shareSocialOutline, closeOutline,
-    folderOutline, chevronForwardOutline
+    folderOutline, chevronForwardOutline, globeOutline,
+    locateOutline, searchOutline, closeCircle, checkmarkCircle
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
+import { RegionService } from 'src/app/core/services/region.service';
 import { ApiCacheService } from 'src/app/core/services/api-cache.service';
 import { PosterCacheService } from 'src/app/core/services/poster-cache.service';
+import { TmdbWatchProvidersService } from 'src/app/core/services/tmdb-watch-providers.service';
+import { TmdbWatchRegionDto } from 'src/app/core/dtos/watch-providers/watch-provider.dto';
+import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 
@@ -50,8 +55,34 @@ export class SettingsPage implements OnInit {
     private alertCtrl = inject(AlertController);
     private actionSheetCtrl = inject(ActionSheetController);
     private searchStore = inject(SearchStore);
+    private watchProvidersService = inject(TmdbWatchProvidersService);
+    public regionService = inject(RegionService);
 
         public appVersion = signal<string>('1.1.0');
+    // Region selector state
+    public isRegionModalOpen = signal<boolean>(false);
+    public availableRegions = signal<TmdbWatchRegionDto[]>([]);
+    public regionSearchQuery = signal<string>('');
+    public isLoadingRegions = signal<boolean>(false);
+    public isDetectingRegion = signal<boolean>(false);
+
+    public filteredRegions = computed<TmdbWatchRegionDto[]>(() => {
+        const query = this.regionSearchQuery().toLowerCase().trim();
+        const list = this.availableRegions();
+        if (!query) return list;
+        return list.filter(r =>
+            r.english_name.toLowerCase().includes(query) ||
+            r.iso_3166_1.toLowerCase().includes(query) ||
+            (r.native_name && r.native_name.toLowerCase().includes(query))
+        );
+    });
+
+    public currentRegionName = computed<string>(() => {
+        const code = this.storage.userRegion();
+        const match = this.availableRegions().find(r => r.iso_3166_1 === code);
+        if (match) return match.english_name;
+        return this.regionService.resolveCountryName(code);
+    });
     public isBackupModalOpen = signal<boolean>(false);
     public isExporting = signal<boolean>(false);
     public exportingAction = signal<'downloads' | 'share' | null>(null);
@@ -67,8 +98,82 @@ export class SettingsPage implements OnInit {
             trashOutline, cloudDownloadOutline, cloudUploadOutline,
             logoGithub, mailOutline, informationCircleOutline,
             downloadOutline, shareSocialOutline, closeOutline,
-            folderOutline, chevronForwardOutline
+            folderOutline, chevronForwardOutline, globeOutline,
+    locateOutline, searchOutline, closeCircle, checkmarkCircle
         });
+    }
+
+    // --- REGION MANAGEMENT ---
+    public async openRegionModal(): Promise<void> {
+        this.isRegionModalOpen.set(true);
+        this.regionSearchQuery.set('');
+        if (this.availableRegions().length === 0) {
+            // Immediate pre-population from static fallback for instant offline responsiveness
+            this.availableRegions.set(this.regionService.getStaticFallbackRegions());
+            this.isLoadingRegions.set(true);
+            try {
+                const res = await firstValueFrom(this.watchProvidersService.getAvailableRegions());
+                if (res?.results && Array.isArray(res.results)) {
+                    const sorted = [...res.results].sort((a, b) => a.english_name.localeCompare(b.english_name));
+                    this.availableRegions.set(sorted);
+                }
+            } catch (err) {
+                console.warn('[SettingsPage] Using static fallback regions for TMDB watch providers', err);
+            } finally {
+                this.isLoadingRegions.set(false);
+            }
+        }
+    }
+
+    public closeRegionModal(): void {
+        this.isRegionModalOpen.set(false);
+        this.regionSearchQuery.set('');
+    }
+
+    public onRegionSearch(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        this.regionSearchQuery.set(input?.value || '');
+    }
+
+    public clearRegionSearch(): void {
+        this.regionSearchQuery.set('');
+    }
+
+    public async selectRegion(region: TmdbWatchRegionDto): Promise<void> {
+        await this.storage.updateSettings({
+            region: region.iso_3166_1,
+            isManualRegion: true
+        });
+        await this.toast.presentSuccess(`Region updated to ${region.english_name} (${region.iso_3166_1})`, 2500);
+        this.closeRegionModal();
+    }
+
+    public async autoDetectRegion(): Promise<void> {
+        if (this.isDetectingRegion()) return;
+        this.isDetectingRegion.set(true);
+        try {
+            const detectedCode = await this.storage.autoDetectAndApplyRegion();
+            const name = this.regionService.resolveCountryName(detectedCode);
+            await this.toast.presentSuccess(`Auto-detected region: ${name} (${detectedCode})`, 3000);
+            this.closeRegionModal();
+        } catch (err) {
+            console.error('Auto-detection failed', err);
+            await this.toast.presentError('Could not detect region. Defaulted to India (IN).');
+        } finally {
+            this.isDetectingRegion.set(false);
+        }
+    }
+
+    public getCountryFlagUrl(countryCode: string | null | undefined): string {
+        if (!countryCode || countryCode.length !== 2) return '';
+        return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+    }
+
+    public onFlagError(event: Event): void {
+        const img = event.target as HTMLImageElement;
+        if (img) {
+            img.style.display = 'none';
+        }
     }
 
     async ngOnInit(): Promise<void> {
