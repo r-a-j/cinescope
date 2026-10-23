@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
-    "mtime": 1792761508.9274473,
-    "ast_hash": "54bad4fc66ff3a19588f115911b47807",
+    "mtime": 1792762599.8019652,
+    "ast_hash": "a19e14e7d40488ad6184d452168ae499",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.html": {
@@ -1330,8 +1330,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.html": {
-    "mtime": 1792761508.921305,
-    "ast_hash": "349df2491f66a9b2ca0c63df29ee3511",
+    "mtime": 1792762635.6077833,
+    "ast_hash": "3788cae2568bfb4a05f897053ebd305f",
     "semantic_hash": ""
   },
   "cinescope/src/app/layout/tabs/tabs.component.html": {
