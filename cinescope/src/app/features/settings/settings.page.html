@@ -42,7 +42,7 @@
             <ion-icon slot="start" name="trash-outline" color="danger"></ion-icon>
             <ion-label color="danger">Clear Search History & Cache</ion-label>
         </ion-item>
-        <ion-item button (click)="createBackup()">
+        <ion-item button (click)="openBackupModal()">
             <ion-icon slot="start" name="cloud-download-outline"></ion-icon>
             <ion-label>
                 <h3>Backup / Share Library (JSON)</h3>
@@ -102,3 +102,132 @@
     </div>
 
 </ion-content>
+
+<!-- ==========================================
+     PREMIUM BACKUP DESTINATION MODAL
+     ========================================== -->
+<ion-modal
+    [isOpen]="isBackupModalOpen()"
+    (didDismiss)="closeBackupModal()"
+    [initialBreakpoint]="1"
+    [breakpoints]="[0, 1]"
+    class="backup-modal-sheet">
+    <ng-template>
+        <div class="backup-modal-container">
+            <!-- Modal Header -->
+            <div class="backup-modal-header">
+                <div class="modal-title-row">
+                    <div class="title-with-badge">
+                        <div class="title-icon-badge">
+                            <ion-icon name="cloud-download-outline"></ion-icon>
+                        </div>
+                        <div>
+                            <h3 class="modal-title">EXPORT LIBRARY BACKUP</h3>
+                            <p class="modal-subtitle">Snapshot of your entire CineScope library</p>
+                        </div>
+                    </div>
+                    <button type="button" class="modal-close-btn" (click)="closeBackupModal()" aria-label="Close modal">
+                        <ion-icon name="close-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="backup-modal-body">
+                <!-- Overview Stats Card -->
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <span class="overview-label">INCLUDED IN THIS BACKUP</span>
+                        <span class="overview-format-pill">v{{ appVersion() }} JSON</span>
+                    </div>
+                    <div class="overview-stats-grid">
+                        <div class="stat-cell">
+                            <span class="stat-number">{{ storage.watchlistItems().length }}</span>
+                            <span class="stat-title">Watchlist</span>
+                        </div>
+                        <div class="stat-cell">
+                            <span class="stat-number">{{ storage.watchedItems().length }}</span>
+                            <span class="stat-title">Watched</span>
+                        </div>
+                        <div class="stat-cell">
+                            <span class="stat-number">{{ storage.inboxItems().length }}</span>
+                            <span class="stat-title">Inbox Queue</span>
+                        </div>
+                        <div class="stat-cell">
+                            <span class="stat-number">{{ storage.favoritePeople().length }}</span>
+                            <span class="stat-title">People</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Destinations -->
+                <div class="destination-section">
+                    <span class="destination-title">SELECT EXPORT DESTINATION</span>
+
+                    <!-- Option 1: Save to Downloads -->
+                    <button
+                        type="button"
+                        class="destination-card"
+                        [disabled]="isExporting()"
+                        (click)="executeSaveToDownloads()">
+                        <div class="dest-icon-container dest-download">
+                            <ion-icon name="download-outline"></ion-icon>
+                        </div>
+                        <div class="dest-info">
+                            <div class="dest-header-row">
+                                <span class="dest-name">Save to Device Downloads</span>
+                            </div>
+                            <p class="dest-desc">Directly write to your phone's public Download directory for immediate offline safekeeping.</p>
+                            <div class="dest-path-pill">
+                                <ion-icon name="folder-outline"></ion-icon>
+                                <span>Download/{{ backupFileName() }}</span>
+                            </div>
+                        </div>
+                        <div class="dest-arrow">
+                            @if (exportingAction() === 'downloads') {
+                                <ion-spinner name="crescent" color="danger"></ion-spinner>
+                            } @else {
+                                <ion-icon name="chevron-forward-outline"></ion-icon>
+                            }
+                        </div>
+                    </button>
+
+                    <!-- Option 2: Share / Cloud Backup -->
+                    <button
+                        type="button"
+                        class="destination-card"
+                        [disabled]="isExporting()"
+                        (click)="executeShareFile()">
+                        <div class="dest-icon-container dest-share">
+                            <ion-icon name="share-social-outline"></ion-icon>
+                        </div>
+                        <div class="dest-info">
+                            <div class="dest-header-row">
+                                <span class="dest-name">Share or Cloud Backup</span>
+                            </div>
+                            <p class="dest-desc">Open the system share sheet to send to Google Drive, WhatsApp, Gmail, or your preferred storage app.</p>
+                            <div class="dest-path-pill">
+                                <ion-icon name="cloud-upload-outline"></ion-icon>
+                                <span>Google Drive • WhatsApp • Email</span>
+                            </div>
+                        </div>
+                        <div class="dest-arrow">
+                            @if (exportingAction() === 'share') {
+                                <ion-spinner name="crescent" color="primary"></ion-spinner>
+                            } @else {
+                                <ion-icon name="chevron-forward-outline"></ion-icon>
+                            }
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Privacy & Safety Assurance -->
+                <div class="privacy-note">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    <span>Your collection is stored locally on this device. Backups are standard open JSON, never transmitted to external analytics servers.</span>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</ion-modal>
+

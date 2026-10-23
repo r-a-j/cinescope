@@ -1,17 +1,20 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { App } from '@capacitor/app';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { NavController } from '@ionic/angular';
 import {
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle,
     IonContent, IonList, IonListHeader, IonLabel, IonItem, IonNote,
-    IonToggle, AlertController
+    AlertController, ActionSheetController, IonModal, IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
     arrowBackOutline, contrastOutline, shieldCheckmarkOutline,
     trashOutline, cloudDownloadOutline, cloudUploadOutline,
-    logoGithub, mailOutline, informationCircleOutline
+    logoGithub, mailOutline, informationCircleOutline,
+    downloadOutline, shareSocialOutline, closeOutline,
+    folderOutline, chevronForwardOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { ApiCacheService } from 'src/app/core/services/api-cache.service';
@@ -19,13 +22,20 @@ import { PosterCacheService } from 'src/app/core/services/poster-cache.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 
+interface NativeBackupPlugin {
+    saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
+    shareFile(options: { filename: string; content: string; title: string }): Promise<{ success: boolean }>;
+}
+
+const NativeBackup = registerPlugin<NativeBackupPlugin>('NativeBackup');
+
 @Component({
     selector: 'app-settings',
     standalone: true,
     imports: [
         CommonModule, IonHeader, IonToolbar, IonButtons, IonButton, IonIcon,
         IonTitle, IonContent, IonList, IonListHeader, IonLabel, IonItem, IonNote,
-        IonToggle
+        IonModal, IonSpinner
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './settings.page.html',
@@ -38,15 +48,26 @@ export class SettingsPage implements OnInit {
     private posterCache = inject(PosterCacheService);
     private toast = inject(ToastService);
     private alertCtrl = inject(AlertController);
+    private actionSheetCtrl = inject(ActionSheetController);
     private searchStore = inject(SearchStore);
 
-    public appVersion = signal<string>('1.1.0');
+        public appVersion = signal<string>('1.1.0');
+    public isBackupModalOpen = signal<boolean>(false);
+    public isExporting = signal<boolean>(false);
+    public exportingAction = signal<'downloads' | 'share' | null>(null);
+
+    public backupFileName = computed<string>(() => {
+        const dateStr = new Date().toISOString().slice(0, 10);
+        return `cinescope-backup-${dateStr}.json`;
+    });
 
     constructor() {
         addIcons({
             arrowBackOutline, contrastOutline, shieldCheckmarkOutline,
             trashOutline, cloudDownloadOutline, cloudUploadOutline,
-            logoGithub, mailOutline, informationCircleOutline
+            logoGithub, mailOutline, informationCircleOutline,
+            downloadOutline, shareSocialOutline, closeOutline,
+            folderOutline, chevronForwardOutline
         });
     }
 
@@ -127,35 +148,112 @@ export class SettingsPage implements OnInit {
         );
     }
 
-    public async createBackup(): Promise<void> {
+        private downloadWebFile(blob: Blob, fileName: string): void {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    public openBackupModal(): void {
+        this.isBackupModalOpen.set(true);
+    }
+
+    public closeBackupModal(): void {
+        if (this.isExporting()) return;
+        this.isBackupModalOpen.set(false);
+        this.exportingAction.set(null);
+    }
+
+    public createBackup(): void {
+        this.openBackupModal();
+    }
+
+    public async executeSaveToDownloads(): Promise<void> {
+        if (this.isExporting()) return;
+        this.isExporting.set(true);
+        this.exportingAction.set('downloads');
+        const fileName = this.backupFileName();
+
         try {
             const json = await this.storage.exportBackupJson();
-            const fileName = `cinescope-backup-${new Date().toISOString().slice(0, 10)}.json`;
-            const blob = new Blob([json], { type: 'application/json' });
 
-            // Support native mobile share sheet if available (great for Family & Friends WhatsApp/Drive backup)
-            const file = new File([blob], fileName, { type: 'application/json' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: 'Cinescope Backup',
-                    text: 'My Cinescope Watchlist & Watched Backup',
-                    files: [file]
+            if (Capacitor.isNativePlatform()) {
+                const result = await NativeBackup.saveToDownloads({
+                    filename: fileName,
+                    content: json
                 });
-                await this.toast.presentSuccess('Backup shared successfully!');
+                await this.toast.presentSuccess(`Saved to ${result.filePath}!`, 3500);
+                this.closeBackupModal();
                 return;
             }
 
-            // Fallback download
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            anchor.href = url;
-            anchor.download = fileName;
-            anchor.click();
-            URL.revokeObjectURL(url);
-            await this.toast.presentSuccess(`Saved ${fileName}`);
+            // Web browser download
+            const blob = new Blob([json], { type: 'application/json' });
+            this.downloadWebFile(blob, fileName);
+            await this.toast.presentSuccess(`Saved ${fileName}!`, 3000);
+            this.closeBackupModal();
         } catch (err) {
-            console.error('Backup failed', err);
-            await this.toast.presentError('Failed to create backup');
+            console.error('Save to downloads failed', err);
+            await this.toast.presentError('Could not save to Downloads folder.');
+        } finally {
+            this.isExporting.set(false);
+            this.exportingAction.set(null);
+        }
+    }
+
+    public async executeShareFile(): Promise<void> {
+        if (this.isExporting()) return;
+        this.isExporting.set(true);
+        this.exportingAction.set('share');
+        const fileName = this.backupFileName();
+
+        try {
+            const json = await this.storage.exportBackupJson();
+
+            if (Capacitor.isNativePlatform()) {
+                await NativeBackup.shareFile({
+                    filename: fileName,
+                    content: json,
+                    title: 'CineScope Library Backup'
+                });
+                this.closeBackupModal();
+                return;
+            }
+
+            // Web share
+            const blob = new Blob([json], { type: 'application/json' });
+            const file = new File([blob], fileName, { type: 'application/json' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'CineScope Backup',
+                        text: 'My CineScope Collection Backup',
+                        files: [file]
+                    });
+                    await this.toast.presentSuccess('Backup shared successfully!');
+                    this.closeBackupModal();
+                    return;
+                } catch (shareErr) {
+                    if (shareErr instanceof Error && shareErr.name === 'AbortError') {
+                        return;
+                    }
+                    console.warn('Web share failed, falling back to download:', shareErr);
+                }
+            }
+
+            // Fallback download
+            this.downloadWebFile(blob, fileName);
+            await this.toast.presentSuccess(`Saved ${fileName}!`, 3000);
+            this.closeBackupModal();
+        } catch (err) {
+            console.error('Share backup failed', err);
+            await this.toast.presentError('Could not open share sheet.');
+        } finally {
+            this.isExporting.set(false);
+            this.exportingAction.set(null);
         }
     }
 
@@ -171,24 +269,67 @@ export class SettingsPage implements OnInit {
 
         try {
             const rawJson = await this.readFileAsText(file);
-            const { watchlistCount, watchedCount, contentCount, historyCount } =
-                await this.storage.importBackupJson(rawJson.trim());
-            await this.searchStore.loadRecentSearches();
+            const cleanJson = rawJson.replace(/^\uFEFF/, '').trim();
+            const inspection = this.storage.inspectBackupJson(cleanJson);
 
-            if (watchlistCount > 0 || watchedCount > 0) {
-                await this.toast.presentSuccess(
-                    `Restored ${watchlistCount} Watchlist & ${watchedCount} Watched title(s)!`,
-                    3500
+            if (!inspection.isValid) {
+                await this.toast.presentError(
+                    inspection.error || 'The selected file is not a valid CineScope backup.'
                 );
-            } else {
-                await this.toast.presentSuccess(
-                    `Restored ${contentCount} library title(s) & ${historyCount} search(es)!`,
-                    3000
-                );
+                return;
             }
+
+            // Format inspection summary
+            const formatLabel = inspection.format === 'legacy' ? 'Legacy CineScope v1' : `CineScope v${inspection.appVersion || '1.x'}`;
+            const dateLabel = inspection.exportedAt ? ` from ${inspection.exportedAt.slice(0, 10)}` : '';
+
+            const details: string[] = [];
+            if (inspection.watchlistCount > 0) details.push(`• Watchlist: ${inspection.watchlistCount} title(s)`);
+            if (inspection.watchedCount > 0) details.push(`• Watched: ${inspection.watchedCount} title(s)`);
+            if (inspection.inboxCount > 0) details.push(`• Inbox Queue: ${inspection.inboxCount} title(s)`);
+            if (inspection.favoritePeopleCount > 0) details.push(`• Favorite People: ${inspection.favoritePeopleCount}`);
+            if (inspection.historyCount > 0) details.push(`• Search History: ${inspection.historyCount} queries`);
+            if (inspection.hasSettings) details.push('• Preferences & Settings');
+
+            const alert = await this.alertCtrl.create({
+                header: 'Restore Library Backup?',
+                subHeader: `${formatLabel}${dateLabel} (${inspection.totalTitles} items)`,
+                message: `This backup contains:\n\n${details.join('\n')}\n\nExisting items with matching IDs will be safely merged and updated into your library. Do you want to proceed?`,
+                buttons: [
+                    {
+                        text: 'Cancel',
+                        role: 'cancel'
+                    },
+                    {
+                        text: 'Restore Library',
+                        handler: async (): Promise<void> => {
+                            try {
+                                const result = await this.storage.importBackupJson(cleanJson);
+                                await Promise.all([
+                                    this.storage.getSettings(),
+                                    this.searchStore.loadRecentSearches()
+                                ]);
+
+                                const summary: string[] = [];
+                                if (result.watchlistCount > 0) summary.push(`${result.watchlistCount} Watchlist`);
+                                if (result.watchedCount > 0) summary.push(`${result.watchedCount} Watched`);
+                                if (result.inboxCount > 0) summary.push(`${result.inboxCount} Inbox`);
+
+                                const restoredText = summary.length > 0 ? summary.join(', ') : `${result.contentCount} titles`;
+                                await this.toast.presentSuccess(`Successfully restored ${restoredText}!`, 3500);
+                            } catch (importErr) {
+                                console.error('Restore commit failed', importErr);
+                                await this.toast.presentError('Failed to restore backup data.');
+                            }
+                        }
+                    }
+                ]
+            });
+
+            await alert.present();
         } catch (err) {
-            console.error('Restore failed', err);
-            await this.toast.presentError('Invalid or corrupted backup JSON file');
+            console.error('Restore preview failed', err);
+            await this.toast.presentError('Invalid or unreadable backup file.');
         } finally {
             if (input) {
                 input.value = '';
