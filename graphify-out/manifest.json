@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
-    "mtime": 1792713539.9528584,
-    "ast_hash": "bf546a72ab2b765be49ae35d92a9ad57",
+    "mtime": 1792869021.5484674,
+    "ast_hash": "d530f683626f5b9cabaeb2ca1939abe0",
     "semantic_hash": ""
   },
   "cinescope-api/tsconfig.json": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792713539.9549706,
-    "ast_hash": "eb5f17cdd3a2c708d19e7d28d46d0aa0",
+    "mtime": 1792869019.1966214,
+    "ast_hash": "7ab2ec54285022031d338cee8db806c1",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1792860588.9987364,
-    "ast_hash": "82efd0d02c4cf15fbf7caa2843b6ddc1",
+    "mtime": 1792869007.2591486,
+    "ast_hash": "87cfc337dee498af75da613373fa4a90",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -815,8 +815,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
-    "mtime": 1792771107.3809228,
-    "ast_hash": "9358a9d0abf3df055f0b79de20aa08a8",
+    "mtime": 1792869028.6546795,
+    "ast_hash": "bfccf57d377fce3e3762e1bf35eaa6fc",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.ts": {
@@ -970,8 +970,8 @@
     "semantic_hash": ""
   },
   "docs/package.json": {
-    "mtime": 1792713539.9574897,
-    "ast_hash": "c74b3e8cb21bbb74b4af99af525d1b56",
+    "mtime": 1792869023.2335403,
+    "ast_hash": "f29bbd6d5979813a1e5dbecc8262b48c",
     "semantic_hash": ""
   },
   "docs/sidebarsDev.ts": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.html": {
-    "mtime": 1792771107.3776648,
-    "ast_hash": "313cb35fe9f41d9b4409058b48c6edcc",
+    "mtime": 1792869030.361624,
+    "ast_hash": "a5f7e5408c06ae88b926e4d09e0c58fc",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.html": {

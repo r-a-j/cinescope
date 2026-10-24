@@ -1095,7 +1095,7 @@ export class StorageService {
 
         const payload: CinescopeBackupPayload = {
             version: 1,
-            appVersion: '1.1.0',
+            appVersion: '1.2.0',
             app: 'CineScope',
             exportedAt: new Date().toISOString(),
             settings: settingsDoc ? (settingsDoc.toJSON() as SettingsDocType) : null,
