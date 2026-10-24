@@ -90,12 +90,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         });
     }
 
-    const { collectionId, collectionName, parts } = req.body || {};
-    if (!collectionId || !collectionName) {
-        return res.status(400).json({ error: 'Missing required fields: collectionId and collectionName.' });
+    const { collectionId, collectionName, franchiseName, parts, knownTitles } = req.body || {};
+    const finalCollectionName = (collectionName || franchiseName || '').trim();
+    if (!finalCollectionName) {
+        return res.status(400).json({ error: 'Missing required field: collectionName or franchiseName.' });
     }
+    const finalCollectionId = collectionId || `intel_${finalCollectionName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
 
-    const cacheKey = `franchise_intel_${collectionId}`;
+    const cacheKey = `franchise_intel_${finalCollectionId}`;
     const cached = getQueryCache(cacheKey);
     if (cached) {
         return res.status(200).json(cached);
@@ -106,10 +108,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         return res.status(500).json({ error: 'Server misconfigured. GEMINI_API_KEY is missing.' });
     }
 
+    const titlesList = Array.isArray(parts)
+        ? parts.map((p: { title?: string; release_date?: string }) => `${p.title || 'Unknown'} (${p.release_date?.slice(0, 4) || 'N/A'})`).join(', ')
+        : (Array.isArray(knownTitles) ? knownTitles.join(', ') : 'Not provided');
+
     const prompt = `Analyze this collection:
-Collection TMDB ID: ${collectionId}
-Collection Name: "${collectionName}"
-Parts: ${Array.isArray(parts) ? parts.map((p: { title?: string; release_date?: string }) => `${p.title || 'Unknown'} (${p.release_date?.slice(0, 4) || 'N/A'})`).join(', ') : 'Not provided'}
+Collection TMDB ID: ${finalCollectionId}
+Collection Name: "${finalCollectionName}"
+Parts: ${titlesList}
 `;
 
     const genAI = new GoogleGenerativeAI(apiKey);

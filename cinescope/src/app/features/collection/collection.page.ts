@@ -10,7 +10,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline, homeOutline, star, albumsOutline, filmOutline,
-  tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparklesOutline, timeOutline
+  tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline
 } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
@@ -270,7 +270,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   constructor() {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,
-      tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparklesOutline, timeOutline
+      tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline
     });
   }
 

@@ -93,17 +93,23 @@ export class FranchiseIntelService {
     }
 
     try {
-      const response = await firstValueFrom(
-        this.http.post<FranchiseIntelResponse>(this.bffUrl, {
-          collectionId,
-          collectionName,
-          parts: (parts || []).map((p) => ({
-            id: p.id,
-            title: p.title,
-            release_date: p.release_date
-          }))
-        })
+      const payload = {
+        collectionId,
+        collectionName,
+        franchiseName: collectionName,
+        parts: (parts || []).map((p) => ({
+          id: p.id,
+          title: p.title,
+          release_date: p.release_date
+        })),
+        knownTitles: (parts || []).map((p) => p.title)
+      };
+
+      const rawResponse = await firstValueFrom(
+        this.http.post<Record<string, unknown>>(this.bffUrl, payload)
       );
+
+      const response = this.normalizeResponse(rawResponse);
 
       // Record cooldown in production
       if (!isDevMode() && typeof window !== 'undefined' && window.localStorage) {
@@ -125,6 +131,48 @@ export class FranchiseIntelService {
         data: null
       };
     }
+  }
+
+  private normalizeResponse(raw: Record<string, unknown>): FranchiseIntelResponse {
+    const isShared = Boolean(raw['isSharedUniverse'] ?? raw['isSubFranchise']);
+    const parentUniverse = raw['parentUniverse'] as Record<string, unknown> | undefined;
+    const universeTitle = (raw['universeTitle'] || parentUniverse?.['name'] || raw['universeName']) as string | undefined;
+    const connectionInsight = (raw['connectionInsight'] || parentUniverse?.['connectionInsight']) as string | undefined;
+
+    const rawCanon = (raw['canonTitles'] || []) as {
+      title: string;
+      year?: number;
+      mediaType?: 'movie' | 'tv';
+      media_type?: 'movie' | 'tv';
+      importance?: 'essential' | 'recommended' | 'optional';
+    }[];
+
+    const canonTitles = rawCanon.map((c) => ({
+      title: c.title,
+      year: c.year,
+      media_type: (c.media_type || c.mediaType || 'movie') as 'movie' | 'tv',
+      importance: c.importance || 'essential'
+    }));
+
+    let siblingFranchises = raw['siblingFranchises'] as { id: number; name: string }[] | undefined;
+    if (!siblingFranchises && Array.isArray(parentUniverse?.['siblingSagas'])) {
+      siblingFranchises = (parentUniverse['siblingSagas'] as string[]).map((name, idx) => ({
+        id: 90000 + idx,
+        name
+      }));
+    }
+
+    const universeId = (raw['universeId'] || (universeTitle ? universeTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_') : 'universe')) as string;
+
+    return {
+      isSharedUniverse: isShared,
+      universeTitle,
+      universeId,
+      connectionInsight,
+      canonTitles,
+      siblingFranchises,
+      recommendedWatchOrder: raw['recommendedWatchOrder'] as string[] | undefined
+    };
   }
 
   /**
