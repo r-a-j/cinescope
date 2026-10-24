@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792841792.9442115,
-    "ast_hash": "1d374121a91dbe9175ffaa70f46f96d0",
+    "mtime": 1792860249.2686932,
+    "ast_hash": "d3052e32c31c3a8da742385c18845fce",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792858921.8423202,
-    "ast_hash": "ac00e89dc93f1d4d3611f04a88068005",
+    "mtime": 1792860230.9499235,
+    "ast_hash": "3e330dd6b367b6e98a7ffc910f325d6d",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
-    "mtime": 1792858949.3074386,
-    "ast_hash": "6454fdf686df759ef0edc15883151c89",
+    "mtime": 1792860252.1912994,
+    "ast_hash": "c0e1a17c7b4b32f48c9ca1d161b5bef6",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
@@ -2850,8 +2850,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-aggregator.service.ts": {
-    "mtime": 1792858856.45805,
-    "ast_hash": "4fb5d4ff10eecc24f4a1bf48cf13889c",
+    "mtime": 1792860227.1354892,
+    "ast_hash": "028f8cf3e90b717d37099898400623cd",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-intel.service.ts": {

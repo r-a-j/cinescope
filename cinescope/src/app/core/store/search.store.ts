@@ -284,10 +284,17 @@ export const SearchStore = signalStore(
                         patchState(store, { sortIntent, cleanQuery });
 
                         // Search TMDB collections in parallel for dedicated franchise tab & spotlight
-                        searchService.searchCollections(cleanQuery, 1).pipe(
+                        const collectionQuery = cleanQuery
+                            .replace(/\b(saga|franchise|series|trilogy|quadrilogy|duology)\b/gi, '')
+                            .replace(/\s+/g, ' ')
+                            .trim() || cleanQuery;
+
+                        searchService.searchCollections(collectionQuery, 1).pipe(
                             catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
                         ).subscribe({
                             next: (colRes) => {
+                                // Guard against stale responses if user changed or cleared query
+                                if (store.query() !== query) return;
                                 patchState(store, {
                                     collectionResults: colRes.results || [],
                                     isSearchingCollections: false

@@ -15,7 +15,7 @@ import {
 } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
-import { StorageService } from '../../core/services/storage.service';
+import { StorageService, getLocalTodayIso } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
@@ -185,7 +185,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     const watchedKeys = this.storageService.watchedMediaKeys();
     const watchlistDocs = this.storageService.watchlistItems();
     const watchlistKeys = new Set(watchlistDocs.map((d) => d.id));
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = getLocalTodayIso();
 
     // Sort items chronologically to identify accurate released count & "Up Next"
     const sorted = [...items].sort((a, b) => {

@@ -56,10 +56,24 @@ export class SearchPage implements OnInit {
   ];
 
   public readonly matchingUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
-    const query = this.store.query().trim().toLowerCase();
-    if (!query) return [];
+    const rawQuery = this.store.query().trim().toLowerCase();
+    if (!rawQuery) return [];
+    const stemQuery = rawQuery
+      .replace(/\b(saga|franchise|collection|series|universe)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim() || rawQuery;
+
     const all = this.franchiseAggregator.activeUserFranchises();
-    return all.filter((f) => f.name.toLowerCase().includes(query));
+    return all.filter((f) => {
+      const nameLower = f.name.toLowerCase();
+      if (nameLower.includes(rawQuery) || (stemQuery.length >= 2 && nameLower.includes(stemQuery))) {
+        return true;
+      }
+      if (f.siblingFranchises?.some((s) => s.name.toLowerCase().includes(stemQuery))) {
+        return true;
+      }
+      return false;
+    });
   });
 
   public trackById(index: number, item: { id: number | string }): number | string {
@@ -107,10 +121,14 @@ export class SearchPage implements OnInit {
     if (query.trim()) {
       this.store.saveSearchToHistory(query);
     }
-    void this.router.navigate(['/collection', collection.id], {
+    const targetId =
+      'isUniverse' in collection && collection.isUniverse && collection.universeId
+        ? collection.universeId
+        : collection.id;
+    void this.router.navigate(['/collection', targetId], {
       state: {
         preview: {
-          id: collection.id,
+          id: targetId,
           name: collection.name,
           posterUrl: this.resolveImage(collection.poster_path),
           backdropUrl: collection.backdrop_path ? resolveMediaImageUrl(collection.backdrop_path, 'w1280') : undefined

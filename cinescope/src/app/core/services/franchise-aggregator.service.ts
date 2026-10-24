@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { StorageService, checkMediaReleaseStatus } from './storage.service';
+import { StorageService, checkMediaReleaseStatus, getLocalTodayIso } from './storage.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
 import { TmdbMoviesService } from './tmdb-movies.service';
 import { FranchiseCollectionSummary, FranchisePart } from '../models/franchise.model';
@@ -35,7 +35,7 @@ export class FranchiseAggregatorService {
 
   private readonly metaCache = new Map<number, CachedCollectionMeta>();
   private readonly dismissedIds = new Set<string>();
-  private readonly inFlightRequests = new Set<number>();
+  private readonly inFlightPromises = new Map<number, Promise<CachedCollectionMeta | null>>();
   private readonly inFlightMovieLookups = new Set<number>();
   private readonly pendingMovieQueue: { tmdbId: number; docId: string }[] = [];
   private activeMovieLookupWorkers = 0;
@@ -57,6 +57,7 @@ export class FranchiseAggregatorService {
    * (either via collected movies or explicit tracking, and not dismissed).
    */
   public isFranchiseTracked(id: number | string): boolean {
+    this.cacheRevision(); // Ensure signal consumers track dismissal/tracking updates
     const idStr = String(id);
     if (this.dismissedIds.has(idStr)) return false;
     if (this.storage.isFranchiseSaved(id)) return true;
@@ -127,7 +128,7 @@ export class FranchiseAggregatorService {
     completionPercentage: number;
     upNextPart: FranchisePart | null;
   } {
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = getLocalTodayIso();
 
     if (!parts || parts.length === 0) {
       return {
@@ -574,7 +575,7 @@ export class FranchiseAggregatorService {
       const cached = this.metaCache.get(collection.id);
       const isExpired = cached ? Date.now() - cached.cachedAt >= CACHE_TTL_MS : true;
 
-      if ((!cached || isExpired) && !this.inFlightRequests.has(collection.id)) {
+      if ((!cached || isExpired) && !this.inFlightPromises.has(collection.id)) {
         this.fetchAndCacheCollection(collection.id).catch(() => {
           // Graceful ignore: offline or network issue
         });
@@ -618,55 +619,60 @@ export class FranchiseAggregatorService {
     }
   }
 
-  private async fetchAndCacheCollection(collectionId: number): Promise<CachedCollectionMeta | null> {
-    if (this.inFlightRequests.has(collectionId)) {
-      return this.metaCache.get(collectionId) ?? null;
+  private fetchAndCacheCollection(collectionId: number): Promise<CachedCollectionMeta | null> {
+    const existing = this.inFlightPromises.get(collectionId);
+    if (existing) {
+      return existing;
     }
 
-    this.inFlightRequests.add(collectionId);
-    try {
-      const details: TmdbCollectionDetailDto = await firstValueFrom(
-        this.tmdbCollections.getCollectionDetails(collectionId)
-      );
+    const promise = (async (): Promise<CachedCollectionMeta | null> => {
+      try {
+        const details: TmdbCollectionDetailDto = await firstValueFrom(
+          this.tmdbCollections.getCollectionDetails(collectionId)
+        );
 
-      const parts: FranchisePart[] = (details.parts || []).map((p) => ({
-        id: p.id,
-        title: p.title,
-        mediaType: 'movie',
-        overview: p.overview,
-        poster_path: p.poster_path,
-        backdrop_path: p.backdrop_path,
-        release_date: p.release_date,
-        vote_average: p.vote_average,
-        vote_count: p.vote_count
-      }));
+        const parts: FranchisePart[] = (details.parts || []).map((p) => ({
+          id: p.id,
+          title: p.title,
+          mediaType: 'movie',
+          overview: p.overview,
+          poster_path: p.poster_path,
+          backdrop_path: p.backdrop_path,
+          release_date: p.release_date,
+          vote_average: p.vote_average,
+          vote_count: p.vote_count
+        }));
 
-      const cached: CachedCollectionMeta = {
-        cachedAt: Date.now(),
-        name: details.name,
-        overview: details.overview,
-        poster_path: details.poster_path,
-        backdrop_path: details.backdrop_path,
-        totalParts: parts.length,
-        parts
-      };
+        const cached: CachedCollectionMeta = {
+          cachedAt: Date.now(),
+          name: details.name,
+          overview: details.overview,
+          poster_path: details.poster_path,
+          backdrop_path: details.backdrop_path,
+          totalParts: parts.length,
+          parts
+        };
 
-      this.metaCache.set(collectionId, cached);
+        this.metaCache.set(collectionId, cached);
 
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem(`${CACHE_PREFIX}${collectionId}`, JSON.stringify(cached));
-        } catch {
-          // Quota exceeded safe catch
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem(`${CACHE_PREFIX}${collectionId}`, JSON.stringify(cached));
+          } catch {
+            // Quota exceeded safe catch
+          }
         }
-      }
 
-      this.cacheRevision.update((r) => r + 1);
-      return cached;
-    } catch {
-      return null;
-    } finally {
-      this.inFlightRequests.delete(collectionId);
-    }
+        this.cacheRevision.update((r) => r + 1);
+        return cached;
+      } catch {
+        return null;
+      } finally {
+        this.inFlightPromises.delete(collectionId);
+      }
+    })();
+
+    this.inFlightPromises.set(collectionId, promise);
+    return promise;
   }
 }
