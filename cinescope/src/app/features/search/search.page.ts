@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild, computed } from '@angular/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,14 +11,18 @@ import {
 import { addIcons } from 'ionicons';
 import {
   timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
+  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
+  layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
 } from 'ionicons/icons';
-import { SearchStore } from '../../core/store/search.store';
+import { SearchStore, SearchFilter } from '../../core/store/search.store';
 import { TmdbMultiSearchResultDto } from '../../core/services/tmdb-search.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
+import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
+import { TmdbCollectionListItemDto } from '../../core/dtos/collections/collection-list-item.dto';
 
 @Component({
   selector: 'app-search',
@@ -34,6 +38,7 @@ import { BookmarkState } from '../../shared/components/poster-card/poster-card.c
 })
 export class SearchPage implements OnInit {
   public store = inject(SearchStore);
+  public franchiseAggregator = inject(FranchiseAggregatorService);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
   private navCtrl = inject(NavController);
@@ -41,7 +46,22 @@ export class SearchPage implements OnInit {
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
-  public trackById(index: number, item: { id: number }): number {
+  public readonly filterOptions: { id: SearchFilter; label: string; icon: string }[] = [
+    { id: 'all', label: 'All', icon: 'layers-outline' },
+    { id: 'movie', label: 'Movies', icon: 'film-outline' },
+    { id: 'tv', label: 'TV Series', icon: 'tv-outline' },
+    { id: 'collection', label: 'Franchises', icon: 'albums-outline' },
+    { id: 'person', label: 'People', icon: 'person-outline' }
+  ];
+
+  public readonly matchingUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
+    const query = this.store.query().trim().toLowerCase();
+    if (!query) return [];
+    const all = this.franchiseAggregator.activeUserFranchises();
+    return all.filter((f) => f.name.toLowerCase().includes(query));
+  });
+
+  public trackById(index: number, item: { id: number | string }): number | string {
     return item.id;
   }
   public trackByString(index: number, item: string): string {
@@ -51,12 +71,34 @@ export class SearchPage implements OnInit {
   constructor() {
     addIcons({
       timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
+      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
+      layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
     });
   }
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
+  }
+
+  public setFilter(filter: SearchFilter): void {
+    this.store.setActiveFilter(filter);
+  }
+
+  public onCollectionClick(collection: TmdbCollectionListItemDto | FranchiseCollectionSummary): void {
+    const query = this.store.query();
+    if (query.trim()) {
+      this.store.saveSearchToHistory(query);
+    }
+    void this.router.navigate(['/collection', collection.id], {
+      state: {
+        preview: {
+          id: collection.id,
+          name: collection.name,
+          posterUrl: this.resolveImage(collection.poster_path),
+          backdropUrl: collection.backdrop_path ? resolveMediaImageUrl(collection.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
   }
 
   public resolveImage(path: string | null | undefined): string {

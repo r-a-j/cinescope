@@ -5,6 +5,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from '../services/tmdb-search.service';
+import { TmdbCollectionListItemDto } from '../dtos/collections/collection-list-item.dto';
 import { TmdbMoviesService } from '../services/tmdb-movies.service';
 import { TmdbPeopleService } from '../services/tmdb-people.service';
 import { TmdbTvService } from '../services/tmdb-tv.service';
@@ -13,12 +14,16 @@ import { DatabaseService } from '../database/database.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
 
 export type CategorizedSearchResult = TmdbMultiSearchResultDto & { smart_category?: string };
+export type SearchFilter = 'all' | 'movie' | 'tv' | 'collection' | 'person';
 
 interface SearchState {
     query: string;
     cleanQuery: string;
     sortIntent: 'latest' | 'oldest' | 'rating' | null;
+    activeFilter: SearchFilter;
     results: TmdbMultiSearchResultDto[];
+    collectionResults: TmdbCollectionListItemDto[];
+    isSearchingCollections: boolean;
     isLoading: boolean;
     isAppending: boolean;
     error: string | null;
@@ -38,7 +43,10 @@ const initialState: SearchState = {
     query: '',
     cleanQuery: '',
     sortIntent: null,
+    activeFilter: 'all',
     results: [],
+    collectionResults: [],
+    isSearchingCollections: false,
     isLoading: false,
     isAppending: false,
     error: null,
@@ -57,7 +65,7 @@ const initialState: SearchState = {
 export const SearchStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
-    withComputed(({ smartResults }) => ({
+    withComputed(({ smartResults, results, collectionResults, activeFilter }) => ({
         smartResultGroups: computed(() => {
             const groups = new Map<string, CategorizedSearchResult[]>();
             smartResults().forEach(item => {
@@ -68,6 +76,18 @@ export const SearchStore = signalStore(
             });
             // Re-map Map into iterable arrays for the Angular HTML loop
             return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+        }),
+        filteredResults: computed(() => {
+            const filter = activeFilter();
+            const list = results();
+            if (filter === 'all' || filter === 'collection') {
+                return list;
+            }
+            return list.filter(item => item.media_type === filter);
+        }),
+        topCollectionSpotlight: computed(() => {
+            const collections = collectionResults();
+            return collections.length > 0 ? collections[0] : null;
         })
     })),
     withMethods((
@@ -208,6 +228,10 @@ export const SearchStore = signalStore(
                 }
             },
 
+            setActiveFilter(filter: SearchFilter): void {
+                patchState(store, { activeFilter: filter });
+            },
+
             toggleSmartSearch(): void {
                 if (store.lastSmartQuery() === store.query() && store.smartResults().length > 0) {
                     patchState(store, { showSmartUI: !store.showSmartUI() });
@@ -223,12 +247,12 @@ export const SearchStore = signalStore(
                         patchState(store, { query, page: 1, error: null });
                         if (!query.trim()) {
                             patchState(store, {
-                                results: [], isLoading: false, hasMore: false,
+                                results: [], collectionResults: [], isLoading: false, isSearchingCollections: false, hasMore: false,
                                 isSmartSearching: false, showSmartUI: false, smartResults: [],
                                 smartSearchError: null, lastSmartQuery: null, smartSearchRetryTimer: 0
                             });
                         } else {
-                            patchState(store, { isLoading: true });
+                            patchState(store, { isLoading: true, isSearchingCollections: true });
                             // Hide the smart UI if they change queries while it's active
                             if (store.showSmartUI()) {
                                 patchState(store, { showSmartUI: false });
@@ -258,6 +282,18 @@ export const SearchStore = signalStore(
                         if (!cleanQuery) cleanQuery = query;
 
                         patchState(store, { sortIntent, cleanQuery });
+
+                        // Search TMDB collections in parallel for dedicated franchise tab & spotlight
+                        searchService.searchCollections(cleanQuery, 1).pipe(
+                            catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
+                        ).subscribe({
+                            next: (colRes) => {
+                                patchState(store, {
+                                    collectionResults: colRes.results || [],
+                                    isSearchingCollections: false
+                                });
+                            }
+                        });
 
                         return searchService.searchMulti(cleanQuery, 1).pipe(
                             tap({
