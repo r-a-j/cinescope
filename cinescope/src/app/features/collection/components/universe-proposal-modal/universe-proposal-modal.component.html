@@ -1,0 +1,67 @@
+<div class="modal-backdrop" (click)="onDismiss()" (keyup.enter)="onDismiss()" tabindex="0">
+  <div class="modal-sheet" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0">
+    <div class="drag-handle"></div>
+
+    <header class="modal-header">
+      <div class="header-badge">
+        <ion-icon name="sparkles"></ion-icon>
+        <span>SHARED UNIVERSE DISCOVERED</span>
+      </div>
+      <button type="button" class="close-btn" (click)="onDismiss()" aria-label="Close Modal">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      <h2 class="universe-title">{{ universeTitle }}</h2>
+
+      @if (connectionInsight) {
+        <p class="connection-insight">{{ connectionInsight }}</p>
+      }
+
+      <div class="metrics-row">
+        <div class="metric-capsule">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <span>{{ canonCount }} Canon Titles Included</span>
+        </div>
+      </div>
+
+      @if (siblingFranchises && siblingFranchises.length > 0) {
+        <div class="sagas-section">
+          <span class="sagas-label">CONNECTED SAGAS &amp; COLLECTIONS</span>
+          <div class="sagas-track">
+            @for (saga of siblingFranchises; track saga.id) {
+              <span class="saga-chip">
+                <ion-icon name="albums-outline"></ion-icon>
+                {{ saga.name }}
+              </span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="action-btn primary-btn"
+        [disabled]="isResolving"
+        (click)="onConfirm()">
+        @if (isResolving) {
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>Resolving Canon Titles...</span>
+        } @else {
+          <span>Explore Entire Universe</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="action-btn secondary-btn"
+        [disabled]="isResolving"
+        (click)="onDismiss()">
+        Keep Sub-Collection
+      </button>
+    </footer>
+  </div>
+</div>

@@ -50,6 +50,22 @@
             <div class="progress-fill" [style.width.%]="completionMetrics()!.percentage"></div>
           </div>
         </div>
+
+        @if (numericCollectionId() && !isUniverseCollection()) {
+          <button
+            type="button"
+            class="discover-universe-btn"
+            [disabled]="isAnalyzingUniverse()"
+            (click)="triggerDiscoverUniverse()">
+            @if (isAnalyzingUniverse()) {
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>Reasoning Universe with AI...</span>
+            } @else {
+              <ion-icon name="sparkles"></ion-icon>
+              <span>Discover Universe with AI</span>
+            }
+          </button>
+        }
       </div>
     }
 
@@ -343,4 +359,16 @@
       </div>
     }
   </div>
+
+  @if (showUniverseModal() && universeProposal()) {
+    <app-universe-proposal-modal
+      [universeTitle]="universeProposal()!.universeTitle || 'Shared Universe'"
+      [connectionInsight]="universeProposal()!.connectionInsight"
+      [canonCount]="universeProposal()!.canonTitles?.length || 0"
+      [siblingFranchises]="universeProposal()!.siblingFranchises"
+      [isResolving]="isResolvingCanon()"
+      (confirmAscend)="confirmAscension()"
+      (dismiss)="showUniverseModal.set(false)">
+    </app-universe-proposal-modal>
+  }
 </ion-content>

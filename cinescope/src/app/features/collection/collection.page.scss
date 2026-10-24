@@ -349,3 +349,43 @@
     .franchise-controls {
       background: #09090d;
     }
+
+    .discover-universe-btn {
+      width: 100%;
+      height: 42px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(14, 165, 233, 0.08) 100%);
+      color: #38bdf8;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.18);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:active {
+        transform: scale(0.98);
+        background: rgba(56, 189, 248, 0.25);
+      }
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      ion-spinner {
+        --color: #38bdf8;
+        width: 18px;
+        height: 18px;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }

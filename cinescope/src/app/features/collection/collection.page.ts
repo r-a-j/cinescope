@@ -5,7 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
-  IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, NavController
+  IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonSpinner, NavController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -19,7 +19,9 @@ import { ToastService } from '../../core/services/toast.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
-import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
+import { FranchiseIntelService } from '../../core/services/franchise-intel.service';
+import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../../core/models/franchise.model';
+import { UniverseProposalModalComponent } from './components/universe-proposal-modal/universe-proposal-modal.component';
 import {
   CollectionLoaderService,
   CollectionQueryContext,
@@ -38,7 +40,16 @@ interface CollectionCardVm {
 @Component({
   selector: 'app-collection-page',
   standalone: true,
-  imports: [CommonModule, IonContent, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, PosterCardComponent],
+  imports: [
+    CommonModule,
+    IonContent,
+    IonIcon,
+    IonSpinner,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
+    PosterCardComponent,
+    UniverseProposalModalComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './collection.page.html',
   styleUrls: ['./collection.page.scss'],
@@ -52,6 +63,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private navService = inject(NavigationService);
   private collectionLoader = inject(CollectionLoaderService);
   private franchiseAggregator = inject(FranchiseAggregatorService);
+  private franchiseIntel = inject(FranchiseIntelService);
   private cdr = inject(ChangeDetectorRef);
 
   @ViewChild(IonContent, { static: false }) private content?: IonContent;
@@ -63,6 +75,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
   public isFranchiseCollection = signal<boolean>(false);
   public isUniverseCollection = signal<boolean>(false);
   public franchiseSummary = signal<FranchiseCollectionSummary | null>(null);
+  public numericCollectionId = signal<number | null>(null);
+
+  // AI Universe Reasoning States
+  public isAnalyzingUniverse = signal<boolean>(false);
+  public isResolvingCanon = signal<boolean>(false);
+  public universeProposal = signal<FranchiseIntelResponse | null>(null);
+  public showUniverseModal = signal<boolean>(false);
 
   public rawItems = signal<SwimlaneItem[]>([]);
   public sortMode = signal<CollectionSortMode>('featured');
@@ -319,6 +338,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
       // Check numeric TMDB collection ID
       const numId = parseInt(idParam, 10);
       if (!isNaN(numId)) {
+        this.numericCollectionId.set(numId);
         this.isFranchiseCollection.set(true);
         this.isUniverseCollection.set(false);
         this.isLoadingMore.set(true);
@@ -648,6 +668,117 @@ export class CollectionPage implements OnInit, AfterViewInit {
       if (this.hasMore()) {
         await this.checkAndPreloadNext();
       }
+    }
+  }
+
+  // ==========================================
+  // AI UNIVERSE REASONING & ASCENSION
+  // ==========================================
+
+  public async triggerDiscoverUniverse(): Promise<void> {
+    const colId = this.numericCollectionId();
+    if (!colId || this.isAnalyzingUniverse()) return;
+
+    const cooldown = this.franchiseIntel.getCooldownStatus(colId);
+    if (cooldown.isCooldown) {
+      await this.toastService.presentInfo(
+        `Next scan available in ${cooldown.hoursRemaining} hrs`,
+        2500
+      );
+      return;
+    }
+
+    this.isAnalyzingUniverse.set(true);
+
+    try {
+      const parts: FranchisePart[] = this.rawItems().map((it) => ({
+        id: Number(it.id),
+        title: it.title,
+        mediaType: it.mediaType === 'tv' ? 'tv' : 'movie'
+      }));
+
+      const res = await this.franchiseIntel.analyzeUniverse(colId, this.collectionTitle(), parts);
+
+      if (res.isCooldown) {
+        await this.toastService.presentInfo(
+          res.message || `Next scan available in ${res.hoursRemaining || 3} hrs`,
+          2500
+        );
+        return;
+      }
+
+      if (res.data?.isSharedUniverse && res.data.universeTitle) {
+        this.universeProposal.set(res.data);
+        this.showUniverseModal.set(true);
+      } else {
+        await this.toastService.presentInfo(
+          'This is a self-contained saga with no separate shared universe.',
+          2200
+        );
+      }
+    } catch {
+      await this.toastService.presentError('Failed to analyze universe. Please try again.', 2000);
+    } finally {
+      this.isAnalyzingUniverse.set(false);
+      this.cdr.detectChanges();
+    }
+  }
+
+  public async confirmAscension(): Promise<void> {
+    const proposal = this.universeProposal();
+    if (!proposal || this.isResolvingCanon()) return;
+
+    this.isResolvingCanon.set(true);
+
+    try {
+      const canonTitles = proposal.canonTitles || [];
+      const resolvedParts = await this.franchiseIntel.resolveCanonItems(canonTitles);
+
+      const universeId = proposal.universeId || `universe_${Date.now()}`;
+      const universeSummary: FranchiseCollectionSummary = {
+        id: universeId,
+        name: proposal.universeTitle || 'Shared Universe',
+        overview: this.collectionOverview() || proposal.connectionInsight,
+        poster_path: resolvedParts[0]?.poster_path ?? null,
+        backdrop_path: this.collectionBackdrop() ? null : resolvedParts[0]?.backdrop_path ?? null,
+        totalParts: resolvedParts.length,
+        collectedCount: 0,
+        watchedCount: 0,
+        watchlistCount: 0,
+        completionPercentage: 0,
+        isUniverse: true,
+        universeId,
+        parentUniverseTitle: proposal.universeTitle,
+        connectionInsight: proposal.connectionInsight,
+        parts: resolvedParts,
+        siblingFranchises: proposal.siblingFranchises
+      };
+
+      await this.storageService.saveUniverse(universeId, universeSummary);
+
+      this.showUniverseModal.set(false);
+      await this.toastService.presentSuccess(
+        `Ascended to "${universeSummary.name}"!`,
+        2200
+      );
+
+      // Navigate to the newly created universe collection
+      void this.router.navigate(['/collection', universeId], {
+        state: {
+          title: universeSummary.name,
+          preview: {
+            id: universeId,
+            name: universeSummary.name,
+            backdropUrl: this.collectionBackdrop() || undefined
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Failed to ascend to universe:', err);
+      await this.toastService.presentError('Failed to ascend to universe.', 2000);
+    } finally {
+      this.isResolvingCanon.set(false);
+      this.cdr.detectChanges();
     }
   }
 
