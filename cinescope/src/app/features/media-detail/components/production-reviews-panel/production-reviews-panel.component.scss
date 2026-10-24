@@ -20,9 +20,22 @@
       min-height: 112px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       padding: 18px;
       border: 1px solid rgba(255, 255, 255, 0.14);
       background: #14141a;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+
+      &.is-universe-banner {
+        border-color: rgba(56, 189, 248, 0.38);
+      }
+
+      &:active {
+        transform: scale(0.98);
+        border-color: rgba(56, 189, 248, 0.4);
+      }
     }
     .collection-bg {
       position: absolute;
@@ -30,23 +43,67 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: brightness(0.45);
+      filter: brightness(0.4);
     }
     .collection-overlay {
       position: relative;
       z-index: 2;
+      flex: 1;
+      min-width: 0;
     }
     .collection-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 10px;
       font-weight: 800;
       letter-spacing: 1px;
       color: #fbbf24;
+
+      &.universe-kicker {
+        color: #38bdf8;
+      }
     }
     .collection-title {
       margin: 4px 0 0;
       font-size: 18px;
       font-weight: 800;
       color: #ffffff;
+    }
+    .collection-progress-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 280px;
+
+      .mini-progress-track {
+        flex: 1;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .mini-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+        border-radius: 999px;
+      }
+
+      .mini-progress-text {
+        font-size: 11px;
+        font-weight: 700;
+        color: #bae6fd;
+        white-space: nowrap;
+      }
+    }
+    .collection-arrow {
+      position: relative;
+      z-index: 2;
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      flex-shrink: 0;
     }
     .facts-grid {
       display: grid;

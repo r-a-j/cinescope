@@ -715,6 +715,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   public async toggleEntryBookmark(entry: FilmographyEntryVm, event: Event): Promise<void> {
+    const prevState = this.storage.getBookmarkState(entry.id, entry.mediaType);
     event.stopPropagation();
     const nextState = await this.storage.cycleBookmark(entry.id, entry.mediaType, {
       ...entry.rawPayload,
@@ -722,6 +723,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       title: entry.title,
       name: entry.title,
       posterUrl: entry.posterUrl,
+      releaseYear: entry.year,
       media_type: entry.mediaType
     });
 
@@ -729,6 +731,8 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       await this.toast.presentSuccess(`Added "${entry.title}" to Watchlist`, 1800);
     } else if (nextState === 'watched') {
       await this.toast.presentInfo(`Marked "${entry.title}" as Watched`, 1800);
+    } else if (prevState === 'watchlist') {
+      await this.toast.presentWarning(`Removed "${entry.title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
     } else {
       await this.toast.presentWarning(`Removed "${entry.title}" from Archive`, 1800);
     }

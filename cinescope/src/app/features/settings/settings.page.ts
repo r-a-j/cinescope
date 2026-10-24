@@ -58,7 +58,7 @@ export class SettingsPage implements OnInit {
     private watchProvidersService = inject(TmdbWatchProvidersService);
     public regionService = inject(RegionService);
 
-        public appVersion = signal<string>('1.1.0');
+        public appVersion = signal<string>('1.2.0');
     // Region selector state
     public isRegionModalOpen = signal<boolean>(false);
     public availableRegions = signal<TmdbWatchRegionDto[]>([]);
@@ -184,7 +184,7 @@ export class SettingsPage implements OnInit {
                 this.appVersion.set(info.version);
             }
         } catch {
-            this.appVersion.set('1.1.0');
+            this.appVersion.set('1.2.0');
         }
     }
 

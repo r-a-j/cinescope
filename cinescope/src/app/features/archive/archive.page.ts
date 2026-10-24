@@ -12,11 +12,13 @@ import {
   IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { bookmarkOutline, checkmarkDoneCircleOutline, heart, heartOutline, trophyOutline } from 'ionicons/icons';
+import { bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline, albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
+import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
@@ -65,19 +67,57 @@ export interface FavoritePersonCardVm {
 export class ArchivePage implements AfterViewInit {
   @ViewChild(IonContent, { static: false }) private content?: IonContent;
   private scrollEl: HTMLElement | null = null;
-  private scrollPositions: Record<'watchlist' | 'watched' | 'people', number> = {
+  private scrollPositions: Record<'watchlist' | 'watched' | 'franchises' | 'people', number> = {
     watchlist: 0,
     watched: 0,
+    franchises: 0,
     people: 0
   };
 
   public storage = inject(StorageService);
+  public franchiseAggregator = inject(FranchiseAggregatorService);
   private toast = inject(ToastService);
   private router = inject(Router);
 
-  public activeTab = signal<'watchlist' | 'watched' | 'people'>('watchlist');
+  public activeTab = signal<'watchlist' | 'watched' | 'franchises' | 'people'>('watchlist');
   public watchlistMediaFilter = signal<'all' | 'movie' | 'tv'>('all');
   public watchedMediaFilter = signal<'all' | 'movie' | 'tv'>('all');
+  public franchiseFilter = signal<'all' | 'in_progress' | 'completed' | 'universes'>('all');
+
+  public userFranchises = computed<FranchiseCollectionSummary[]>(() => {
+    return this.franchiseAggregator.activeUserFranchises();
+  });
+
+  public franchiseCounts = computed(() => {
+    const all = this.userFranchises();
+    let inProgress = 0;
+    let completed = 0;
+    let universes = 0;
+    for (const f of all) {
+      if (f.isUniverse) universes++;
+      if (f.completionPercentage >= 100 && f.totalParts > 0) {
+        completed++;
+      } else if (f.watchedCount > 0 || f.watchlistCount > 0) {
+        inProgress++;
+      }
+    }
+    return { all: all.length, inProgress, completed, universes };
+  });
+
+  public filteredFranchises = computed<FranchiseCollectionSummary[]>(() => {
+    const list = this.userFranchises();
+    const filter = this.franchiseFilter();
+    if (filter === 'universes') {
+      return list.filter((f) => Boolean(f.isUniverse));
+    }
+    if (filter === 'completed') {
+      return list.filter((f) => f.completionPercentage >= 100 && f.totalParts > 0);
+    }
+    if (filter === 'in_progress') {
+      return list.filter((f) => f.completionPercentage < 100);
+    }
+    return list;
+  });
 
   public currentMediaFilter = computed<'all' | 'movie' | 'tv'>(() => {
     return this.activeTab() === 'watchlist'
@@ -150,14 +190,17 @@ export class ArchivePage implements AfterViewInit {
   });
 
   public hasMoreItems = computed<boolean>(() => {
-    if (this.activeTab() === 'people') return false;
+    if (this.activeTab() === 'people' || this.activeTab() === 'franchises') return false;
     return this.activeTab() === 'watchlist'
       ? this.visibleWatchlist().length < this.filteredWatchlist().length
       : this.visibleWatched().length < this.filteredWatched().length;
   });
 
   constructor() {
-    addIcons({ bookmarkOutline, checkmarkDoneCircleOutline, heart, heartOutline, trophyOutline });
+    addIcons({
+      bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline,
+      albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline
+    });
   }
 
   public ionViewWillEnter(): void {
@@ -169,8 +212,8 @@ export class ArchivePage implements AfterViewInit {
   }
 
   public async onTabChange(event: Event): Promise<void> {
-    const val = (event as CustomEvent).detail?.value as 'watchlist' | 'watched' | 'people' | undefined;
-    if (val === 'watchlist' || val === 'watched' || val === 'people') {
+    const val = (event as CustomEvent).detail?.value as 'watchlist' | 'watched' | 'franchises' | 'people' | undefined;
+    if (val === 'watchlist' || val === 'watched' || val === 'franchises' || val === 'people') {
       if (val === this.activeTab()) return;
 
       const prev = this.activeTab();
@@ -287,6 +330,7 @@ export class ArchivePage implements AfterViewInit {
     if (doc.mediaType === 'person') return;
     const payload = doc.payload as Record<string, unknown> | undefined;
     const title = String(payload?.['title'] || payload?.['name'] || `#${doc.tmdbId}`);
+    const prevState = this.getBookmarkState(doc);
     const nextState = await this.storage.cycleBookmark(
       doc.tmdbId,
       doc.mediaType,
@@ -294,6 +338,8 @@ export class ArchivePage implements AfterViewInit {
     );
     if (nextState === 'watched') {
       await this.toast.presentInfo(`Moved "${title}" to Watched`, 1800);
+    } else if (nextState === 'none' && prevState === 'watchlist') {
+      await this.toast.presentWarning(`Removed "${title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
     } else if (nextState === 'none') {
       await this.toast.presentWarning(`Removed "${title}" from Archive`, 1800);
     }
@@ -310,5 +356,78 @@ export class ArchivePage implements AfterViewInit {
         }
       }
     });
+  }
+
+  public resolvePoster(path: string | null | undefined): string {
+    return resolveMediaImageUrl(path, 'w342');
+  }
+
+  public onFranchiseClick(f: FranchiseCollectionSummary): void {
+    void this.router.navigate(['/collection', f.id], {
+      state: {
+        title: f.name,
+        preview: {
+          id: f.id,
+          name: f.name,
+          posterUrl: this.resolvePoster(f.poster_path),
+          backdropUrl: f.backdrop_path ? resolveMediaImageUrl(f.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
+  }
+
+  public setFranchiseFilter(filter: 'all' | 'in_progress' | 'completed' | 'universes'): void {
+    if (this.franchiseFilter() === filter) return;
+    this.franchiseFilter.set(filter);
+    this.triggerFadeAnimation();
+    this.scrollPositions['franchises'] = 0;
+    if (this.scrollEl) {
+      this.scrollEl.scrollTop = 0;
+    } else {
+      void this.content?.scrollToTop(0);
+    }
+  }
+
+  public onOpenUpNextPart(event: Event, f: FranchiseCollectionSummary): void {
+    event.stopPropagation();
+    const next = f.upNextPart;
+    if (!next) {
+      this.onFranchiseClick(f);
+      return;
+    }
+    const mediaType = next.mediaType === 'tv' ? 'tv' : 'movie';
+    void this.router.navigate(['/media', mediaType, next.id], {
+      state: {
+        preview: {
+          id: next.id,
+          mediaType,
+          title: next.title,
+          posterUrl: this.resolvePoster(next.poster_path),
+          backdropUrl: next.backdrop_path ? resolveMediaImageUrl(next.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
+  }
+
+  public isDirectlySaved(f: FranchiseCollectionSummary): boolean {
+    return Boolean(f.isUniverse || this.storage.isFranchiseSaved(f.id));
+  }
+
+  public async onRemoveFranchiseOrUniverse(event: Event, f: FranchiseCollectionSummary): Promise<void> {
+    event.stopPropagation();
+    await this.franchiseAggregator.untrackFranchise(f.id, Boolean(f.isUniverse));
+    if (f.isUniverse) {
+      await this.toast.presentWarning(`Removed "${f.name}" universe from tracking`, 2000);
+    } else {
+      await this.toast.presentWarning(`Untracked "${f.name}" from Franchises`, 2000);
+    }
+  }
+
+  public async onRemoveUniverse(event: Event, f: FranchiseCollectionSummary): Promise<void> {
+    return this.onRemoveFranchiseOrUniverse(event, f);
+  }
+
+  public goToDiscoverFranchises(): void {
+    void this.router.navigate(['/search']);
   }
 }

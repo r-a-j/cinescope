@@ -139,6 +139,7 @@
 
     <!-- Collection Banner, Production/Box Office Facts, Keywords, External Links & Community Reviews -->
     <app-production-reviews-panel
+      [mediaId]="tmdbId()"
       [collection]="movieDetail()?.belongs_to_collection || null"
       [productionFacts]="productionFacts()"
       [keywords]="keywords()"

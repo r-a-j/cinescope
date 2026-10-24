@@ -1,18 +1,42 @@
-<!-- MOVIE COLLECTION BANNER -->
-    @if (collection(); as col) {
+<!-- FRANCHISE / SHARED UNIVERSE BANNER (Supports both Movies & TV Series in Universes) -->
+    @if (activeFranchiseSummary() || collection()) {
+      @let activeSum = activeFranchiseSummary();
+      @let tmdbCol = collection();
+      @let targetCol = activeSum || tmdbCol!;
       <section class="detail-section">
-        <div class="collection-banner">
-          @if (col.backdrop_path || col.poster_path) {
+        <div
+          class="collection-banner"
+          [class.is-universe-banner]="activeSum?.isUniverse"
+          tabindex="0"
+          role="button"
+          (click)="onCollectionClick(targetCol)"
+          (keyup.enter)="onCollectionClick(targetCol)">
+          @if (targetCol.backdrop_path || targetCol.poster_path || tmdbCol?.backdrop_path || tmdbCol?.poster_path) {
             <img
-              [src]="resolveCollectionImage(col.backdrop_path || col.poster_path)"
-              [alt]="col.name"
+              [src]="resolveCollectionImage(targetCol.backdrop_path || tmdbCol?.backdrop_path || targetCol.poster_path || tmdbCol?.poster_path)"
+              [alt]="targetCol.name"
               class="collection-bg"
               loading="lazy" />
           }
           <div class="collection-overlay">
-            <span class="collection-kicker">PART OF THE FRANCHISE</span>
-            <h4 class="collection-title">{{ col.name }}</h4>
+            <span class="collection-kicker" [class.universe-kicker]="activeSum?.isUniverse">
+              <ion-icon [name]="activeSum?.isUniverse ? 'sparkles' : 'albums-outline'"></ion-icon>
+              {{ activeSum?.isUniverse ? 'PART OF SHARED UNIVERSE' : 'PART OF THE FRANCHISE' }}
+            </span>
+            <h4 class="collection-title">{{ targetCol.name }}</h4>
+
+            @if (activeSum) {
+              <div class="collection-progress-row">
+                <div class="mini-progress-track">
+                  <div class="mini-progress-fill" [style.width.%]="activeSum.completionPercentage"></div>
+                </div>
+                <span class="mini-progress-text">
+                  {{ activeSum.watchedCount }}/{{ activeSum.totalParts }} Watched ({{ activeSum.completionPercentage }}%)
+                </span>
+              </div>
+            }
           </div>
+          <ion-icon name="chevron-forward-outline" class="collection-arrow"></ion-icon>
         </div>
       </section>
     }

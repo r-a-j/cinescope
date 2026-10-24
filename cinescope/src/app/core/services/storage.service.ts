@@ -8,9 +8,104 @@ import { SearchHistoryDocType } from '../database/schemas/search-history.schema'
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { PosterCacheService } from './poster-cache.service';
+import { FranchiseCollectionSummary } from '../models/franchise.model';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
+
+export interface MediaReleaseCheckResult {
+    isReleased: boolean;
+    releaseLabel: string;
+}
+
+/**
+ * Returns local calendar date in `YYYY-MM-DD` format (avoiding UTC day-shift bugs).
+ */
+export function getLocalTodayIso(): string {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Smart release-status checker that handles:
+ * - Full dates (`YYYY-MM-DD`), including tomorrow vs today within the same year
+ * - Year + Month (`YYYY-MM`)
+ * - Year-only (`2027` via `release_date`, `first_air_date`, `year`, or `releaseYear`)
+ * - Missing dates / TBA (`release_date: ""` or `status: "In Production" / "Planned" / "Rumored"`)
+ */
+export function checkMediaReleaseStatus(
+    payload?: Record<string, unknown> | null,
+    referenceDateIso?: string
+): MediaReleaseCheckResult {
+    if (!payload) {
+        return { isReleased: true, releaseLabel: '' };
+    }
+
+    const todayIso = referenceDateIso || getLocalTodayIso();
+    const currentYear = parseInt(todayIso.slice(0, 4), 10);
+    const currentYearMonth = todayIso.slice(0, 7);
+
+    const rawStatus = String(payload['status'] || '').trim();
+    const isUnreleasedStatus = /^(rumored|planned|in production|post production|upcoming|pilot)$/i.test(rawStatus);
+
+    const rawDate = String(
+        payload['release_date'] ??
+        payload['first_air_date'] ??
+        payload['releaseDate'] ??
+        payload['firstAirDate'] ??
+        ''
+    ).trim();
+
+    // 1. Full YYYY-MM-DD date (e.g. "2026-10-25" releasing tomorrow vs "2026-10-24" today)
+    const fullDateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (fullDateMatch && fullDateMatch[1]) {
+        const datePart = fullDateMatch[1];
+        if (datePart > todayIso) {
+            return { isReleased: false, releaseLabel: datePart };
+        }
+        return { isReleased: true, releaseLabel: datePart };
+    }
+
+    // 2. Partial YYYY-MM date (e.g. "2026-12")
+    const ymMatch = rawDate.match(/^(\d{4}-\d{2})$/);
+    if (ymMatch && ymMatch[1]) {
+        const ymPart = ymMatch[1];
+        if (ymPart > currentYearMonth) {
+            return { isReleased: false, releaseLabel: ymPart };
+        }
+        return { isReleased: true, releaseLabel: ymPart };
+    }
+
+    // 3. Year-only (e.g. "2027" in rawDate or in year / releaseYear fields)
+    const rawYearField = payload['year'] ?? payload['releaseYear'] ?? payload['release_year'];
+    const yearCandidate = rawDate.match(/^(\d{4})$/)?.[1]
+        || (rawYearField !== undefined && rawYearField !== null ? String(rawYearField).trim() : '');
+    const yearMatch = yearCandidate.match(/^(\d{4})/);
+    if (yearMatch && yearMatch[1]) {
+        const yearNum = parseInt(yearMatch[1], 10);
+        if (yearNum > currentYear) {
+            return { isReleased: false, releaseLabel: String(yearNum) };
+        }
+        if (yearNum === currentYear && isUnreleasedStatus) {
+            return { isReleased: false, releaseLabel: `${rawStatus} (${yearNum})` };
+        }
+        return { isReleased: true, releaseLabel: String(yearNum) };
+    }
+
+    // 4. No date or year present at all
+    if (isUnreleasedStatus) {
+        return { isReleased: false, releaseLabel: rawStatus || 'TBA' };
+    }
+
+    if ('release_date' in payload || 'first_air_date' in payload || payload['isUpcoming'] === true) {
+        return { isReleased: false, releaseLabel: 'TBA' };
+    }
+
+    return { isReleased: true, releaseLabel: '' };
+}
 
 export interface CinescopeBackupPayload {
     version: number;
@@ -103,6 +198,7 @@ export class StorageService {
     public readonly watchedItems = signal<ContentDocType[]>([]);
     public readonly inboxItems = signal<ContentDocType[]>([]);
     public readonly favoritePeople = signal<ContentDocType[]>([]);
+    public readonly savedUniverses = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
     public readonly userRegion = computed<string>(() => this.settings()?.region || 'IN');
     public readonly isManualRegion = computed<boolean>(() => this.settings()?.isManualRegion ?? false);
@@ -159,11 +255,14 @@ export class StorageService {
                     const watched: ContentDocType[] = [];
                     const inbox: ContentDocType[] = [];
                     const favoritePeople: ContentDocType[] = [];
+                    const savedUniverses: ContentDocType[] = [];
 
                     for (const d of docs) {
                         const docJson = d.toJSON() as ContentDocType;
                         if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
                             favoritePeople.push(docJson);
+                        } else if (docJson.lists.includes('universe') || docJson.lists.includes('franchise')) {
+                            savedUniverses.push(docJson);
                         } else if (docJson.lists.includes('inbox')) {
                             inbox.push(docJson);
                         } else if (docJson.lists.includes('watched')) {
@@ -177,6 +276,7 @@ export class StorageService {
                     this.watchedItems.set(watched);
                     this.inboxItems.set(inbox);
                     this.favoritePeople.set(favoritePeople);
+                    this.savedUniverses.set(savedUniverses);
 
                     // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
                     const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
@@ -329,7 +429,16 @@ export class StorageService {
     }
 
     /**
-     * Cycles an item's bookmark state: 'none' -> 'watchlist' -> 'watched' -> 'none'.
+     * Verifies whether a media payload has already been released.
+     */
+    public checkReleaseStatus(payload?: TmdbPayload | null): MediaReleaseCheckResult {
+        return checkMediaReleaseStatus(payload);
+    }
+
+    /**
+     * Cycles an item's bookmark state:
+     * - For released titles: 'none' -> 'watchlist' -> 'watched' -> 'none'
+     * - For unreleased/future titles: 'none' -> 'watchlist' -> 'none' (cannot mark future titles as Watched)
      */
     public async cycleBookmark(
         tmdbId: number,
@@ -343,8 +452,13 @@ export class StorageService {
             await this.addToWatchlist(tmdbId, mediaType, payload);
             return 'watchlist';
         } else if (current === 'watchlist') {
-            await this.moveToWatched(tmdbId, mediaType);
-            return 'watched';
+            const moved = await this.moveToWatched(tmdbId, mediaType, payload);
+            if (moved) {
+                return 'watched';
+            }
+            // Title is unreleased (future date/year or TBA) — skip 'watched' and remove from Watchlist
+            await this.removeMedia(tmdbId, mediaType);
+            return 'none';
         } else {
             await this.removeMedia(tmdbId, mediaType);
             return 'none';
@@ -365,18 +479,33 @@ export class StorageService {
         });
     }
 
-    public async moveToWatched(tmdbId: number, mediaType: 'movie' | 'tv', payload?: TmdbPayload): Promise<void> {
+    /**
+     * Moves a title to the 'watched' list only if its release date/year is in the past or today.
+     * Returns `false` if the title has not been released yet.
+     */
+    public async moveToWatched(tmdbId: number, mediaType: 'movie' | 'tv', payload?: TmdbPayload): Promise<boolean> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
         const doc = await this.dbService.db.content.findOne(docId).exec();
+        const existingPayload = (doc?.toJSON() as ContentDocType | undefined)?.payload as TmdbPayload | undefined;
+        const effectivePayload = payload ? { ...(existingPayload || {}), ...payload } : existingPayload;
+
+        const releaseCheck = checkMediaReleaseStatus(effectivePayload);
+        if (!releaseCheck.isReleased) {
+            return false;
+        }
 
         if (doc) {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
                 docData.lists = ['watched']; // Overwrite lists to only be 'watched'
                 docData.watchedAt = new Date().toISOString();
+                if (effectivePayload) {
+                    docData.payload = effectivePayload;
+                }
                 return docData;
             });
-        } else if (payload) {
+            return true;
+        } else if (effectivePayload) {
             const now = new Date().toISOString();
             await this.dbService.db.content.upsert({
                 id: docId,
@@ -385,9 +514,11 @@ export class StorageService {
                 lists: ['watched'],
                 addedAt: now,
                 watchedAt: now,
-                payload
+                payload: effectivePayload
             });
+            return true;
         }
+        return false;
     }
 
     public async removeMedia(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): Promise<void> {
@@ -447,19 +578,30 @@ export class StorageService {
     }
 
     /**
-     * Moves a triaged item from Inbox to Watched.
+     * Moves a triaged item from Inbox to Watched (or to Watchlist if not yet released).
      */
-    public async moveInboxToWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+    public async moveInboxToWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<boolean> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
         const doc = await this.dbService.db.content.findOne(docId).exec();
         if (doc) {
+            const data = doc.toJSON() as ContentDocType;
+            const releaseCheck = checkMediaReleaseStatus(data.payload as TmdbPayload | undefined);
+            if (!releaseCheck.isReleased) {
+                await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                    d.lists = ['watchlist'];
+                    return d;
+                });
+                return false;
+            }
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                 d.lists = ['watched'];
                 d.watchedAt = new Date().toISOString();
                 return d;
             });
+            return true;
         }
+        return false;
     }
 
     /**
@@ -469,8 +611,172 @@ export class StorageService {
         await this.removeMedia(tmdbId, mediaType);
     }
 
+    // ==========================================
+    // UNIVERSE & FRANCHISE ENGINE PERSISTENCE
+    // ==========================================
+
+    private hashString(str: string): number {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash) || 1;
+    }
+
+    /**
+     * Persists an AI-ascended universe in RxDB content collection.
+     * Normalizes leading `universe_` prefixes to prevent duplicate `universe_universe_*` documents.
+     */
+    public async saveUniverse(universeId: string | number, payload: FranchiseCollectionSummary): Promise<void> {
+        this.initReactiveStreams();
+        const cleanKey = String(universeId).replace(/^(universe_)+/, '');
+        const canonicalUniverseId = `universe_${cleanKey}`;
+        const docId = canonicalUniverseId;
+        const numericTmdbId = typeof universeId === 'number'
+            ? universeId
+            : this.hashString(canonicalUniverseId);
+
+        const normalizedPayload: FranchiseCollectionSummary = {
+            ...payload,
+            id: canonicalUniverseId,
+            universeId: canonicalUniverseId
+        };
+
+        await this.dbService.db.content.upsert({
+            id: docId,
+            tmdbId: numericTmdbId,
+            mediaType: 'movie',
+            lists: ['universe', 'franchise'],
+            addedAt: new Date().toISOString(),
+            payload: normalizedPayload as unknown as TmdbPayload
+        });
+
+        // Clean up any legacy double-prefixed document (`universe_universe_*`) if present
+        const legacyDuplicateId = `universe_universe_${cleanKey}`;
+        const legacyDoc = await this.dbService.db.content.findOne(legacyDuplicateId).exec();
+        if (legacyDoc) {
+            await legacyDoc.remove();
+        }
+    }
+
+    /**
+     * Removes an AI-ascended universe from RxDB without affecting individual user library movies.
+     */
+    public async removeUniverse(universeId: string | number): Promise<void> {
+        this.initReactiveStreams();
+        const cleanKey = String(universeId).replace(/^(universe_)+/, '');
+        const candidateIds = [`universe_${cleanKey}`, `universe_universe_${cleanKey}`, String(universeId)];
+        for (const cid of candidateIds) {
+            const doc = await this.dbService.db.content.findOne(cid).exec();
+            if (doc) {
+                await doc.remove();
+            }
+        }
+        const all = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['universe'] } }
+        }).exec();
+        for (const d of all) {
+            const p = d.payload as Record<string, unknown> | undefined;
+            const pIdClean = String(p?.['id'] || '').replace(/^(universe_)+/, '');
+            const pUniClean = String(p?.['universeId'] || '').replace(/^(universe_)+/, '');
+            if (
+                pIdClean === cleanKey ||
+                pUniClean === cleanKey ||
+                String(d.tmdbId) === String(universeId)
+            ) {
+                await d.remove();
+            }
+        }
+    }
+
+    /**
+     * Persists a franchise collection directly in RxDB content collection.
+     */
+    public async saveFranchise(collectionId: number | string, payload: FranchiseCollectionSummary): Promise<void> {
+        this.initReactiveStreams();
+        const cleanKey = String(collectionId).replace(/^(franchise_)+/, '');
+        const docId = `franchise_${cleanKey}`;
+        const numericTmdbId = typeof collectionId === 'number'
+            ? collectionId
+            : (Number(cleanKey) || this.hashString(cleanKey));
+
+        await this.dbService.db.content.upsert({
+            id: docId,
+            tmdbId: numericTmdbId,
+            mediaType: 'movie',
+            lists: ['franchise'],
+            addedAt: new Date().toISOString(),
+            payload: payload as unknown as TmdbPayload
+        });
+    }
+
+    /**
+     * Removes a franchise collection from RxDB without affecting individual user library movies.
+     */
+    public async removeFranchise(collectionId: number | string): Promise<void> {
+        this.initReactiveStreams();
+        const cleanKey = String(collectionId).replace(/^(franchise_)+/, '');
+        const docId = `franchise_${cleanKey}`;
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.remove();
+            return;
+        }
+        const all = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['franchise'] } }
+        }).exec();
+        for (const d of all) {
+            const p = d.payload as Record<string, unknown> | undefined;
+            if (
+                String(p?.['id']) === cleanKey ||
+                String(p?.['id']) === String(collectionId) ||
+                String(d.tmdbId) === cleanKey
+            ) {
+                await d.remove();
+            }
+        }
+    }
+
+    /**
+     * Checks if a franchise or universe is saved directly in user library.
+     */
+    public isFranchiseSaved(collectionId: number | string): boolean {
+        const idStr = String(collectionId);
+        const cleanKey = idStr.replace(/^(universe_|franchise_)+/, '');
+        return this.savedUniverses().some((doc) => {
+            const p = doc.payload as Record<string, unknown> | undefined;
+            const pIdClean = String(p?.['id'] || '').replace(/^(universe_|franchise_)+/, '');
+            const pUniClean = String(p?.['universeId'] || '').replace(/^(universe_|franchise_)+/, '');
+            return doc.id === `franchise_${cleanKey}` ||
+                   doc.id === `universe_${cleanKey}` ||
+                   doc.id === `universe_universe_${cleanKey}` ||
+                   String(doc.tmdbId) === idStr ||
+                   pIdClean === cleanKey ||
+                   pUniClean === cleanKey;
+        });
+    }
+
+    /**
+     * Incrementally patches a media item's payload in RxDB.
+     */
+    public async updateMediaPayload(docId: string, patch: Record<string, unknown>): Promise<void> {
+        this.initReactiveStreams();
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                docData.payload = {
+                    ...((docData.payload as Record<string, unknown>) || {}),
+                    ...patch
+                } as unknown as TmdbPayload;
+                return docData;
+            });
+        }
+    }
+
     /**
      * Bulk moves multiple inbox items into Watchlist or Watched.
+     * Unreleased items cannot be moved to Watched and are routed to Watchlist instead.
      */
     public async bulkMoveInbox(
         items: { tmdbId: number; mediaType: 'movie' | 'tv' }[],
@@ -482,9 +788,14 @@ export class StorageService {
             const docId = this.generateId(item.tmdbId, item.mediaType);
             const doc = await this.dbService.db.content.findOne(docId).exec();
             if (doc) {
+                const currentData = doc.toJSON() as ContentDocType;
+                const isReleased = checkMediaReleaseStatus(currentData.payload as TmdbPayload | undefined).isReleased;
+                const effectiveList: 'watchlist' | 'watched' =
+                    targetList === 'watched' && !isReleased ? 'watchlist' : targetList;
+
                 await doc.incrementalModify((d: ContentDocType): ContentDocType => {
-                    d.lists = [targetList];
-                    if (targetList === 'watched') {
+                    d.lists = [effectiveList];
+                    if (effectiveList === 'watched') {
                         d.watchedAt = now;
                     }
                     return d;
@@ -608,13 +919,18 @@ export class StorageService {
             selector: { id: { $in: docIds } }
         }).exec();
 
-        const promises: Promise<unknown>[] = docs.map((doc) =>
-            doc.incrementalModify((docData: ContentDocType): ContentDocType => {
-                docData.lists = ['watched'];
-                docData.watchedAt = new Date().toISOString();
-                return docData;
+        const promises: Promise<unknown>[] = docs
+            .filter((doc) => {
+                const d = doc.toJSON() as ContentDocType;
+                return checkMediaReleaseStatus(d.payload as TmdbPayload | undefined).isReleased;
             })
-        );
+            .map((doc) =>
+                doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                    docData.lists = ['watched'];
+                    docData.watchedAt = new Date().toISOString();
+                    return docData;
+                })
+            );
 
         await Promise.all(promises);
     }
@@ -779,7 +1095,7 @@ export class StorageService {
 
         const payload: CinescopeBackupPayload = {
             version: 1,
-            appVersion: '1.1.0',
+            appVersion: '1.2.0',
             app: 'CineScope',
             exportedAt: new Date().toISOString(),
             settings: settingsDoc ? (settingsDoc.toJSON() as SettingsDocType) : null,

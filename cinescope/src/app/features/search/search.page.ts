@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild, computed } from '@angular/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
   IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
@@ -11,14 +11,18 @@ import {
 import { addIcons } from 'ionicons';
 import {
   timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
+  personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
+  layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
 } from 'ionicons/icons';
-import { SearchStore } from '../../core/store/search.store';
+import { SearchStore, SearchFilter } from '../../core/store/search.store';
 import { TmdbMultiSearchResultDto } from '../../core/services/tmdb-search.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
+import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
+import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
+import { TmdbCollectionListItemDto } from '../../core/dtos/collections/collection-list-item.dto';
 
 @Component({
   selector: 'app-search',
@@ -34,14 +38,45 @@ import { BookmarkState } from '../../shared/components/poster-card/poster-card.c
 })
 export class SearchPage implements OnInit {
   public store = inject(SearchStore);
+  public franchiseAggregator = inject(FranchiseAggregatorService);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
   private navCtrl = inject(NavController);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
-  public trackById(index: number, item: { id: number }): number {
+  public readonly filterOptions: { id: SearchFilter; label: string; icon: string }[] = [
+    { id: 'all', label: 'All', icon: 'layers-outline' },
+    { id: 'movie', label: 'Movies', icon: 'film-outline' },
+    { id: 'tv', label: 'TV Series', icon: 'tv-outline' },
+    { id: 'collection', label: 'Franchises', icon: 'albums-outline' },
+    { id: 'person', label: 'People', icon: 'person-outline' }
+  ];
+
+  public readonly matchingUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
+    const rawQuery = this.store.query().trim().toLowerCase();
+    if (!rawQuery) return [];
+    const stemQuery = rawQuery
+      .replace(/\b(saga|franchise|collection|series|universe)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim() || rawQuery;
+
+    const all = this.franchiseAggregator.activeUserFranchises();
+    return all.filter((f) => {
+      const nameLower = f.name.toLowerCase();
+      if (nameLower.includes(rawQuery) || (stemQuery.length >= 2 && nameLower.includes(stemQuery))) {
+        return true;
+      }
+      if (f.siblingFranchises?.some((s) => s.name.toLowerCase().includes(stemQuery))) {
+        return true;
+      }
+      return false;
+    });
+  });
+
+  public trackById(index: number, item: { id: number | string }): number | string {
     return item.id;
   }
   public trackByString(index: number, item: string): string {
@@ -51,12 +86,55 @@ export class SearchPage implements OnInit {
   constructor() {
     addIcons({
       timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
-      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle
+      personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
+      layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
     });
   }
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
+    this.applyQueryParams();
+  }
+
+  public ionViewWillEnter(): void {
+    this.applyQueryParams();
+  }
+
+  private applyQueryParams(): void {
+    const qParams = this.route.snapshot.queryParams;
+    const filterParam = qParams['filter'] as SearchFilter | undefined;
+    if (filterParam && this.filterOptions.some((o) => o.id === filterParam)) {
+      this.store.setActiveFilter(filterParam);
+    }
+    const queryParam = typeof qParams['q'] === 'string' ? qParams['q'].trim() : '';
+    if (queryParam) {
+      this.store.searchQuery(queryParam);
+    }
+  }
+
+  public setFilter(filter: SearchFilter): void {
+    this.store.setActiveFilter(filter);
+  }
+
+  public onCollectionClick(collection: TmdbCollectionListItemDto | FranchiseCollectionSummary): void {
+    const query = this.store.query();
+    if (query.trim()) {
+      this.store.saveSearchToHistory(query);
+    }
+    const targetId =
+      'isUniverse' in collection && collection.isUniverse && collection.universeId
+        ? collection.universeId
+        : collection.id;
+    void this.router.navigate(['/collection', targetId], {
+      state: {
+        preview: {
+          id: targetId,
+          name: collection.name,
+          posterUrl: this.resolveImage(collection.poster_path),
+          backdropUrl: collection.backdrop_path ? resolveMediaImageUrl(collection.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
   }
 
   public resolveImage(path: string | null | undefined): string {
@@ -160,11 +238,14 @@ export class SearchPage implements OnInit {
         title,
         posterUrl: this.resolveImage(item.poster_path)
       };
+      const prevState = this.storageService.getBookmarkState(item.id, item.media_type);
       const nextState = await this.storageService.cycleBookmark(item.id, item.media_type, payload);
       if (nextState === 'watchlist') {
         await this.toastService.presentSuccess(`Added "${title}" to Watchlist`, 1800);
       } else if (nextState === 'watched') {
         await this.toastService.presentInfo(`Marked "${title}" as Watched`, 1800);
+      } else if (prevState === 'watchlist') {
+        await this.toastService.presentWarning(`Removed "${title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
       } else {
         await this.toastService.presentWarning(`Removed "${title}" from Archive`, 1800);
       }

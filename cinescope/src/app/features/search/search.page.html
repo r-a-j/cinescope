@@ -4,7 +4,7 @@
       <ion-back-button defaultHref="/"></ion-back-button>
     </ion-buttons>
     <ion-searchbar 
-      placeholder="Search movies, tv, people..." 
+      placeholder="Search movies, tv, franchises, people..." 
       [value]="store.query()"
       (ionInput)="onSearchChange($event)"
       (ionSearch)="onSearchSubmit()"
@@ -14,18 +14,33 @@
       class="custom-searchbar">
     </ion-searchbar>
   </ion-toolbar>
+
+  <!-- Category Filter Bar -->
+  <div class="search-filters-bar" role="tablist">
+    @for (filter of filterOptions; track filter.id) {
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="store.activeFilter() === filter.id"
+        (click)="setFilter(filter.id)"
+        role="tab"
+        [attr.aria-selected]="store.activeFilter() === filter.id">
+        <ion-icon [name]="filter.icon"></ion-icon>
+        <span>{{ filter.label }}</span>
+      </button>
+    }
+  </div>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <!-- Smart Search AI Banner (Floating) -->
   @if (store.query() && store.query().length >= 5) {
     <div class="smart-search-banner">
-      
       <!-- Loading State: AI is actively executing -->
       @if (store.isSmartSearching()) {
         <div class="banner-content loading">
           <ion-spinner name="dots" color="primary"></ion-spinner>
-          <span>✨ Analyzing query with AI...</span>
+          <span>Analyzing query with AI...</span>
         </div>
       }
 
@@ -50,7 +65,7 @@
         <div class="banner-content ready" tabindex="0" (click)="store.toggleSmartSearch()" (keyup.enter)="store.toggleSmartSearch()">
           <ion-icon [name]="store.showSmartUI() ? 'close-circle' : 'sparkles'" color="primary"></ion-icon>
           <span>
-            {{ store.showSmartUI() ? 'Close Smart Results' : '✨ Smart advanced results ready! [Tap to View]' }}
+            {{ store.showSmartUI() ? 'Close Smart Results' : 'Smart advanced results ready [Tap to View]' }}
           </span>
         </div>
       }
@@ -59,15 +74,14 @@
       @else {
         <div class="banner-content ready" tabindex="0" (click)="triggerSmartSearch()" (keyup.enter)="triggerSmartSearch()">
           <ion-icon name="sparkles" color="primary"></ion-icon>
-          <span>✨ AI Deep Search: Tap to analyze query!</span>
+          <span>AI Deep Search: Tap to analyze query</span>
         </div>
       }
-
     </div>
   }
 
   <!-- Loading State (Initial) -->
-  @if (store.isLoading() && store.results().length === 0) {
+  @if (store.isLoading() && store.results().length === 0 && !store.collectionResults().length) {
     <div class="status-container">
       <ion-spinner name="crescent"></ion-spinner>
       <p>Searching universe...</p>
@@ -100,155 +114,279 @@
     <div class="status-container empty-state">
       <ion-icon name="search-outline"></ion-icon>
       <h3>What to watch next?</h3>
-      <p>Find movies, TV shows, and your favorite actors.</p>
+      <p>Find movies, TV shows, franchises, and your favorite actors.</p>
     </div>
   }
 
-  <!-- No Results Found -->
-  @if (store.query() && store.results().length === 0 && !store.isLoading() && !store.showSmartUI()) {
-    <div class="status-container empty-state">
-      <ion-icon name="film-outline"></ion-icon>
-      <h3>NO RESULTS FOUND</h3>
-      <p>We couldn't find anything matching "{{store.query()}}".</p>
-    </div>
-  }
+  <!-- FRANCHISES VIEW (When Franchises filter is active) -->
+  @if (store.activeFilter() === 'collection' && store.query()) {
+    <div class="franchise-search-section">
+      <!-- 1. Matching User Library Franchises (Pinned at Top) -->
+      @if (matchingUserFranchises().length > 0) {
+        <div class="section-block">
+          <div class="section-header">
+            <ion-icon name="ribbon-outline"></ion-icon>
+            <h4>IN YOUR LIBRARY</h4>
+          </div>
+          <div class="franchise-list">
+            @for (f of matchingUserFranchises(); track f.id) {
+              <div class="franchise-card in-library" tabindex="0" (click)="onCollectionClick(f)" (keyup.enter)="onCollectionClick(f)">
+                <div class="cover-wrapper">
+                  <img [src]="resolveImage(f.poster_path)" [alt]="f.name" loading="lazy">
+                  <span class="type-badge" [class.is-universe]="f.isUniverse">
+                    {{ f.isUniverse ? 'UNIVERSE' : 'FRANCHISE' }}
+                  </span>
+                </div>
+                <div class="meta-wrapper">
+                  <h4>{{ f.name }}</h4>
+                  <div class="library-progress-pill">
+                    <span class="pill-label">In Your Library &bull; {{ f.watchedCount }} of {{ f.totalParts }} Watched ({{ f.completionPercentage }}%)</span>
+                    <div class="mini-progress-track">
+                      <div class="mini-progress-fill" [style.width.%]="f.completionPercentage"></div>
+                    </div>
+                  </div>
+                  @if (f.overview) {
+                    <p class="overview-snippet">{{ f.overview }}</p>
+                  }
+                </div>
+                <div class="action-arrow">
+                  <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
 
-  <!-- CSS Grid Content (Swaps based on Smart toggle) -->
-  @if (!store.showSmartUI() && store.results().length > 0) {
-    <div class="search-grid">
-      @for (item of store.results(); track item.id) {
-        @switch (item.media_type) {
-          @case ('movie') {
-            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
-                <button
-                  type="button"
-                  class="quick-bookmark-btn"
-                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                  [class.is-watched]="getBookmarkState(item) === 'watched'"
-                  (click)="onQuickBookmark(item, $event)"
-                  aria-label="Toggle Bookmark">
-                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                </button>
-                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+      <!-- 2. TMDB Collections Search Results -->
+      @if (store.collectionResults().length > 0) {
+        <div class="section-block">
+          <div class="section-header">
+            <ion-icon name="albums-outline"></ion-icon>
+            <h4>TMDB FRANCHISE COLLECTIONS</h4>
+          </div>
+          <div class="franchise-list">
+            @for (col of store.collectionResults(); track col.id) {
+              <div class="franchise-card" tabindex="0" (click)="onCollectionClick(col)" (keyup.enter)="onCollectionClick(col)">
+                <div class="cover-wrapper">
+                  <img [src]="resolveImage(col.poster_path)" [alt]="col.name" loading="lazy">
+                  <span class="type-badge">COLLECTION</span>
+                </div>
+                <div class="meta-wrapper">
+                  <h4>{{ col.name }}</h4>
+                  @if (col.overview) {
+                    <p class="overview-snippet">{{ col.overview }}</p>
+                  }
+                  <span class="view-cta">View Collection &rarr;</span>
+                </div>
+                <div class="action-arrow">
+                  <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
               </div>
-              <div class="content-info">
-                <h4>{{ item.title }}</h4>
-                <!-- Fallback to empty if release_date not there safely -->
-                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
-              </div>
-            </div>
-          }
-          @case ('tv') {
-            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <!-- Using type casting logically, item.name since it is tv -->
-                <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
-                <button
-                  type="button"
-                  class="quick-bookmark-btn"
-                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                  [class.is-watched]="getBookmarkState(item) === 'watched'"
-                  (click)="onQuickBookmark(item, $event)"
-                  aria-label="Toggle Bookmark">
-                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                </button>
-                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
-              </div>
-              <div class="content-info">
-                <h4>{{ item.name }}</h4>
-                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
-              </div>
-            </div>
-          }
-          @case ('person') {
-            <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
-                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
-              </div>
-              <div class="content-info">
-                <h4>{{ item.name }}</h4>
-                <p>{{ item.known_for_department || 'Person' }}</p>
-              </div>
-            </div>
-          }
-        }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Empty Franchises Search -->
+      @if (matchingUserFranchises().length === 0 && store.collectionResults().length === 0 && !store.isLoading() && !store.isSearchingCollections()) {
+        <div class="status-container empty-state">
+          <ion-icon name="albums-outline"></ion-icon>
+          <h3>NO FRANCHISES FOUND</h3>
+          <p>We couldn't find any franchise collections matching "{{ store.query() }}".</p>
+        </div>
       }
     </div>
   }
 
-  <!-- Smart Results Grid -->
-  @if (store.showSmartUI() && store.smartResultGroups().length > 0) {
-    <div class="smart-categories">
-      @for (group of store.smartResultGroups(); track group.title) {
-        <h3 class="smart-category-title">{{ group.title }}</h3>
-        <div class="search-grid smart-grid">
-          @for (item of group.items; track item.id) {
-            @switch (item.media_type) {
-          @case ('movie') {
-            <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
-                <button
-                  type="button"
-                  class="quick-bookmark-btn"
-                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                  [class.is-watched]="getBookmarkState(item) === 'watched'"
-                  (click)="onQuickBookmark(item, $event)"
-                  aria-label="Toggle Bookmark">
-                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                </button>
-                <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
-              </div>
-              <div class="content-info">
-                <h4>{{ item.title }}</h4>
-                <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+  <!-- ALL & CATEGORY VIEWS (All, Movies, TV, People) -->
+  @if (store.activeFilter() !== 'collection') {
+    <!-- Franchise Spotlight Banner (In 'All' tab if match exists) -->
+    @if (store.activeFilter() === 'all' && store.query() && !store.showSmartUI()) {
+      @if (matchingUserFranchises().length > 0) {
+        <div class="franchise-spotlight" tabindex="0" (click)="onCollectionClick(matchingUserFranchises()[0])" (keyup.enter)="onCollectionClick(matchingUserFranchises()[0])">
+          <div class="spotlight-tag">
+            <ion-icon name="ribbon-outline"></ion-icon>
+            <span>IN YOUR LIBRARY &bull; FRANCHISE SPOTLIGHT</span>
+          </div>
+          <div class="spotlight-body">
+            <div class="spotlight-cover">
+              <img [src]="resolveImage(matchingUserFranchises()[0].poster_path)" [alt]="matchingUserFranchises()[0].name" loading="lazy">
+            </div>
+            <div class="spotlight-details">
+              <h4>{{ matchingUserFranchises()[0].name }}</h4>
+              <p class="progress-caption">{{ matchingUserFranchises()[0].watchedCount }} of {{ matchingUserFranchises()[0].totalParts }} Watched ({{ matchingUserFranchises()[0].completionPercentage }}%)</p>
+              <div class="mini-progress-track">
+                <div class="mini-progress-fill" [style.width.%]="matchingUserFranchises()[0].completionPercentage"></div>
               </div>
             </div>
-          }
-          @case ('tv') {
-            <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
-                <button
-                  type="button"
-                  class="quick-bookmark-btn"
-                  [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                  [class.is-watched]="getBookmarkState(item) === 'watched'"
-                  (click)="onQuickBookmark(item, $event)"
-                  aria-label="Toggle Bookmark">
-                  <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                </button>
-                <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
-              </div>
-              <div class="content-info">
-                <h4>{{ item.name }}</h4>
-                <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
-              </div>
+            <ion-icon name="chevron-forward-outline" class="spotlight-arrow"></ion-icon>
+          </div>
+        </div>
+      } @else if (store.topCollectionSpotlight()) {
+        <div class="franchise-spotlight" tabindex="0" (click)="onCollectionClick(store.topCollectionSpotlight()!)" (keyup.enter)="onCollectionClick(store.topCollectionSpotlight()!)">
+          <div class="spotlight-tag">
+            <ion-icon name="albums-outline"></ion-icon>
+            <span>FRANCHISE COLLECTION SPOTLIGHT</span>
+          </div>
+          <div class="spotlight-body">
+            <div class="spotlight-cover">
+              <img [src]="resolveImage(store.topCollectionSpotlight()!.poster_path)" [alt]="store.topCollectionSpotlight()!.name" loading="lazy">
             </div>
-          }
-          @case ('person') {
-            <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-              <div class="poster-container">
-                <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
-                <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
-              </div>
-              <div class="content-info">
-                <h4>{{ item.name }}</h4>
-                <p>{{ item.known_for_department || 'Person' }}</p>
-              </div>
+            <div class="spotlight-details">
+              <h4>{{ store.topCollectionSpotlight()!.name }}</h4>
+              <p class="spotlight-overview">{{ store.topCollectionSpotlight()!.overview || 'Explore the complete film saga.' }}</p>
             </div>
-          }
-        }
+            <ion-icon name="chevron-forward-outline" class="spotlight-arrow"></ion-icon>
+          </div>
+        </div>
       }
+    }
+
+    <!-- No Results Found -->
+    @if (store.query() && store.filteredResults().length === 0 && !store.isLoading() && !store.showSmartUI()) {
+      <div class="status-container empty-state">
+        <ion-icon name="film-outline"></ion-icon>
+        <h3>NO RESULTS FOUND</h3>
+        <p>We couldn't find anything matching "{{store.query()}}".</p>
       </div>
     }
-    </div>
-  }
 
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore() || store.showSmartUI()">
-    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
+    <!-- Standard CSS Grid Content -->
+    @if (!store.showSmartUI() && store.filteredResults().length > 0) {
+      <div class="search-grid">
+        @for (item of store.filteredResults(); track item.id) {
+          @switch (item.media_type) {
+            @case ('movie') {
+              <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                <div class="poster-container">
+                  <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
+                  <button
+                    type="button"
+                    class="quick-bookmark-btn"
+                    [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                    [class.is-watched]="getBookmarkState(item) === 'watched'"
+                    (click)="onQuickBookmark(item, $event)"
+                    aria-label="Toggle Bookmark">
+                    <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                  </button>
+                  <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+                </div>
+                <div class="content-info">
+                  <h4>{{ item.title }}</h4>
+                  <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+                </div>
+              </div>
+            }
+            @case ('tv') {
+              <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                <div class="poster-container">
+                  <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
+                  <button
+                    type="button"
+                    class="quick-bookmark-btn"
+                    [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                    [class.is-watched]="getBookmarkState(item) === 'watched'"
+                    (click)="onQuickBookmark(item, $event)"
+                    aria-label="Toggle Bookmark">
+                    <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                  </button>
+                  <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+                </div>
+                <div class="content-info">
+                  <h4>{{ item.name }}</h4>
+                  <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+                </div>
+              </div>
+            }
+            @case ('person') {
+              <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                <div class="poster-container">
+                  <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
+                  <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+                </div>
+                <div class="content-info">
+                  <h4>{{ item.name }}</h4>
+                  <p>{{ item.known_for_department || 'Person' }}</p>
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+
+    <!-- Smart Results Grid -->
+    @if (store.showSmartUI() && store.smartResultGroups().length > 0) {
+      <div class="smart-categories">
+        @for (group of store.smartResultGroups(); track group.title) {
+          <h3 class="smart-category-title">{{ group.title }}</h3>
+          <div class="search-grid smart-grid">
+            @for (item of group.items; track item.id) {
+              @switch (item.media_type) {
+                @case ('movie') {
+                  <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                    <div class="poster-container">
+                      <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
+                      <button
+                        type="button"
+                        class="quick-bookmark-btn"
+                        [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                        [class.is-watched]="getBookmarkState(item) === 'watched'"
+                        (click)="onQuickBookmark(item, $event)"
+                        aria-label="Toggle Bookmark">
+                        <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                      </button>
+                      <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+                    </div>
+                    <div class="content-info">
+                      <h4>{{ item.title }}</h4>
+                      <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+                    </div>
+                  </div>
+                }
+                @case ('tv') {
+                  <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                    <div class="poster-container">
+                      <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
+                      <button
+                        type="button"
+                        class="quick-bookmark-btn"
+                        [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                        [class.is-watched]="getBookmarkState(item) === 'watched'"
+                        (click)="onQuickBookmark(item, $event)"
+                        aria-label="Toggle Bookmark">
+                        <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                      </button>
+                      <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+                    </div>
+                    <div class="content-info">
+                      <h4>{{ item.name }}</h4>
+                      <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+                    </div>
+                  </div>
+                }
+                @case ('person') {
+                  <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
+                    <div class="poster-container">
+                      <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
+                      <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+                    </div>
+                    <div class="content-info">
+                      <h4>{{ item.name }}</h4>
+                      <p>{{ item.known_for_department || 'Person' }}</p>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore() || store.showSmartUI()">
+      <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  }
 </ion-content>

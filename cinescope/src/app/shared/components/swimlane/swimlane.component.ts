@@ -104,11 +104,14 @@ export class SwimlaneComponent {
             media_type: mediaType
         };
 
+        const prevState = this.storageService.getBookmarkState(Number(item.id), mediaType);
         const nextState = await this.storageService.cycleBookmark(Number(item.id), mediaType, payload);
         if (nextState === 'watchlist') {
             await this.toastService.presentSuccess(`Added "${item.title}" to Watchlist`, 1800);
         } else if (nextState === 'watched') {
             await this.toastService.presentInfo(`Marked "${item.title}" as Watched`, 1800);
+        } else if (prevState === 'watchlist') {
+            await this.toastService.presentWarning(`Removed "${item.title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
         } else {
             await this.toastService.presentWarning(`Removed "${item.title}" from Archive`, 1800);
         }
