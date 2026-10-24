@@ -1,7 +1,8 @@
 import {
   Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject,
-  signal, computed, ViewChild, ChangeDetectorRef
+  signal, computed, ViewChild, ChangeDetectorRef, DestroyRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
@@ -10,7 +11,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline, homeOutline, star, albumsOutline, filmOutline,
-  tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline
+  tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
 } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
@@ -18,7 +19,7 @@ import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
-import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
+import { FranchiseAggregatorService, isPartReleased } from '../../core/services/franchise-aggregator.service';
 import { FranchiseIntelService } from '../../core/services/franchise-intel.service';
 import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../../core/models/franchise.model';
 import { UniverseProposalModalComponent } from './components/universe-proposal-modal/universe-proposal-modal.component';
@@ -35,6 +36,10 @@ interface CollectionCardVm {
   metaLine: string;
   ratingValue: number;
   yearValue: string;
+  isUpcoming: boolean;
+  chronologicalOrder?: number | undefined;
+  isUpNext?: boolean | undefined;
+  isWatched?: boolean | undefined;
 }
 
 @Component({
@@ -65,6 +70,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private franchiseAggregator = inject(FranchiseAggregatorService);
   private franchiseIntel = inject(FranchiseIntelService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild(IonContent, { static: false }) private content?: IonContent;
   @ViewChild(IonInfiniteScroll, { static: false }) private infiniteScroll?: IonInfiniteScroll;
@@ -80,6 +86,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   // AI Universe Reasoning States
   public isAnalyzingUniverse = signal<boolean>(false);
   public isResolvingCanon = signal<boolean>(false);
+  public isSyncingUniverse = signal<boolean>(false);
   public universeProposal = signal<FranchiseIntelResponse | null>(null);
   public showUniverseModal = signal<boolean>(false);
 
@@ -118,39 +125,128 @@ export class CollectionPage implements OnInit, AfterViewInit {
   });
 
   public isCurrentFranchiseSaved = computed<boolean>(() => {
+    if (this.isUniverseCollection()) {
+      const uniId = this.franchiseSummary()?.universeId || this.franchiseSummary()?.id;
+      if (uniId) {
+        return this.franchiseAggregator.isFranchiseTracked(uniId);
+      }
+    }
     const numId = this.numericCollectionId();
     if (numId) {
-      return this.storageService.isFranchiseSaved(numId);
+      return this.franchiseAggregator.isFranchiseTracked(numId);
     }
     const queryCtx = this.queryContext();
     if (queryCtx?.id) {
-      return this.storageService.isFranchiseSaved(queryCtx.id);
+      return this.franchiseAggregator.isFranchiseTracked(queryCtx.id);
     }
     return false;
+  });
+
+  /**
+   * Detects if the current numeric collection is already subsumed under an Ascended Universe in RxDB,
+   * allowing the user to jump straight to their Universe without re-running AI!
+   */
+  public existingParentUniverse = computed<FranchiseCollectionSummary | null>(() => {
+    if (this.isUniverseCollection()) return null;
+    const colId = this.numericCollectionId();
+    if (!colId) return null;
+
+    const allActive = this.franchiseAggregator.activeUserFranchises();
+    const items = this.rawItems();
+    const firstMovieId = items[0]?.id;
+
+    for (const f of allActive) {
+      if (!f.isUniverse) continue;
+      if (f.siblingFranchises?.some((s) => s.id === colId)) {
+        return f;
+      }
+      if (firstMovieId && f.parts?.some((p) => Number(p.id) === Number(firstMovieId) && (p.mediaType || 'movie') === 'movie')) {
+        return f;
+      }
+    }
+    return null;
   });
 
   public completionMetrics = computed(() => {
     if (!this.isFranchiseCollection()) return null;
     const items = this.rawItems();
-    const total = items.length;
-    if (total === 0) return { watched: 0, watchlist: 0, total: 0, percentage: 0 };
+    if (items.length === 0) {
+      return {
+        watched: 0,
+        watchlist: 0,
+        total: 0,
+        upcomingCount: 0,
+        percentage: 0,
+        upNextItem: null as SwimlaneItem | null,
+        upNextYear: ''
+      };
+    }
 
     const watchedKeys = this.storageService.watchedMediaKeys();
     const watchlistDocs = this.storageService.watchlistItems();
     const watchlistKeys = new Set(watchlistDocs.map((d) => d.id));
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    // Sort items chronologically to identify accurate released count & "Up Next"
+    const sorted = [...items].sort((a, b) => {
+      const dA = String(a.payload?.['release_date'] || a.payload?.['first_air_date'] || '').trim();
+      const dB = String(b.payload?.['release_date'] || b.payload?.['first_air_date'] || '').trim();
+      if (!dA && !dB) return 0;
+      if (!dA) return 1;
+      if (!dB) return -1;
+      return dA.localeCompare(dB);
+    });
+
+    const hasAnyDated = sorted.some((it) =>
+      Boolean(String(it.payload?.['release_date'] || it.payload?.['first_air_date'] || '').trim())
+    );
 
     let watched = 0;
     let watchlist = 0;
-    for (const it of items) {
+    let releasedCount = 0;
+    let upcomingCount = 0;
+    let upNextItem: SwimlaneItem | null = null;
+    let upNextYear = '';
+
+    for (const it of sorted) {
       const key = `${it.mediaType || 'movie'}_${it.id}`;
-      if (watchedKeys.has(key)) {
+      const isWatched = watchedKeys.has(key);
+      const isWatchlist = watchlistKeys.has(key);
+      const rawDate = String(it.payload?.['release_date'] || it.payload?.['first_air_date'] || '').trim();
+      const released = hasAnyDated
+        ? isPartReleased({ id: Number(it.id), title: it.title, release_date: rawDate }, todayIso)
+        : true;
+
+      if (released || isWatched) {
+        releasedCount++;
+      } else {
+        upcomingCount++;
+      }
+
+      if (isWatched) {
         watched++;
-      } else if (watchlistKeys.has(key)) {
+      } else if (isWatchlist) {
         watchlist++;
       }
+
+      if (!isWatched && released && !upNextItem) {
+        upNextItem = it;
+        upNextYear = rawDate.length >= 4 ? rawDate.slice(0, 4) : '';
+      }
     }
-    const percentage = total > 0 ? Math.min(100, Math.round((watched / total) * 100)) : 0;
-    return { watched, watchlist, total, percentage };
+
+    const effectiveTotal = releasedCount > 0 ? releasedCount : items.length;
+    const percentage = effectiveTotal > 0 ? Math.min(100, Math.round((watched / effectiveTotal) * 100)) : 0;
+
+    return {
+      watched,
+      watchlist,
+      total: effectiveTotal,
+      upcomingCount,
+      percentage,
+      upNextItem,
+      upNextYear
+    };
   });
 
   public mediaTypeCounts = computed(() => {
@@ -178,10 +274,11 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const key = `${it.mediaType || 'movie'}_${it.id}`;
       if (watchedKeys.has(key)) {
         watched++;
-      } else if (watchlistKeys.has(key)) {
-        watchlist++;
       } else {
         unwatched++;
+        if (watchlistKeys.has(key)) {
+          watchlist++;
+        }
       }
     }
 
@@ -194,6 +291,32 @@ export class CollectionPage implements OnInit, AfterViewInit {
     let vms = this.rawItems().map((item) => this.toCardVm(item));
 
     if (isFranchise) {
+      const watchedKeys = this.storageService.watchedMediaKeys();
+      const watchlistDocs = this.storageService.watchlistItems();
+      const watchlistKeys = new Set(watchlistDocs.map((d) => d.id));
+      const upNext = this.completionMetrics()?.upNextItem;
+
+      // 0. Assign canonical chronological watch order (#1, #2, #3...) before any filtering
+      const chronoSorted = [...vms].sort((a, b) => {
+        if (!a.yearValue && !b.yearValue) return 0;
+        if (!a.yearValue) return 1;
+        if (!b.yearValue) return -1;
+        return a.yearValue.localeCompare(b.yearValue);
+      });
+
+      chronoSorted.forEach((card, index) => {
+        const key = `${card.item.mediaType || 'movie'}_${card.item.id}`;
+        card.chronologicalOrder = index + 1;
+        card.isWatched = watchedKeys.has(key);
+        card.isUpNext = Boolean(
+          upNext &&
+          Number(upNext.id) === Number(card.item.id) &&
+          (upNext.mediaType || 'movie') === (card.item.mediaType || 'movie')
+        );
+      });
+
+      vms = chronoSorted;
+
       // 1. Media Type Filter
       const mFilter = this.mediaTypeFilter();
       if (mFilter !== 'all') {
@@ -203,10 +326,6 @@ export class CollectionPage implements OnInit, AfterViewInit {
       // 2. Library Status Filter
       const lFilter = this.libraryFilter();
       if (lFilter !== 'all') {
-        const watchedKeys = this.storageService.watchedMediaKeys();
-        const watchlistDocs = this.storageService.watchlistItems();
-        const watchlistKeys = new Set(watchlistDocs.map((d) => d.id));
-
         vms = vms.filter((card) => {
           const key = `${card.item.mediaType || 'movie'}_${card.item.id}`;
           const isWatched = watchedKeys.has(key);
@@ -214,7 +333,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
           if (lFilter === 'watched') return isWatched;
           if (lFilter === 'watchlist') return isWatchlist;
-          if (lFilter === 'unwatched') return !isWatched && !isWatchlist;
+          if (lFilter === 'unwatched') return !isWatched;
           return true;
         });
       }
@@ -229,13 +348,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
       if (mode === 'alpha') {
         return [...vms].sort((a, b) => a.item.title.localeCompare(b.item.title));
       }
-      // Default: Chronological (Oldest First)
-      return [...vms].sort((a, b) => {
-        if (!a.yearValue && !b.yearValue) return 0;
-        if (!a.yearValue) return 1;
-        if (!b.yearValue) return -1;
-        return a.yearValue.localeCompare(b.yearValue);
-      });
+      // Default: Chronological (Oldest First, already sorted in step 0)
+      return vms;
     }
 
     // Standard Non-Franchise Discovery Pipeline
@@ -282,12 +396,35 @@ export class CollectionPage implements OnInit, AfterViewInit {
   constructor() {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,
-      tvOutline, checkmarkCircle, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline
+      tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
     });
   }
 
+  public activeSortLabel = computed(() => {
+    const mode = this.sortMode();
+    if (mode === 'newest') return 'Newest';
+    if (mode === 'rating') return 'Top Rated';
+    if (mode === 'alpha') return 'A–Z';
+    return this.isFranchiseCollection() ? 'Timeline' : 'Featured';
+  });
+
+  public cycleSortMode(): void {
+    const order: CollectionSortMode[] = ['featured', 'newest', 'rating', 'alpha'];
+    const currentIdx = order.indexOf(this.sortMode());
+    const nextMode = order[(currentIdx + 1) % order.length] || 'featured';
+    this.setSortMode(nextMode);
+  }
+
   ngOnInit(): void {
-    void this.extractNavigationState();
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.mediaTypeFilter.set('all');
+        this.libraryFilter.set('all');
+        this.sortMode.set('featured');
+        void this.content?.scrollToTop(200);
+        void this.extractNavigationState();
+      });
   }
 
   public ionViewWillEnter(): void {
@@ -325,14 +462,23 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
         if (found) {
           const uni = found.payload as unknown as FranchiseCollectionSummary;
-          this.collectionTitle.set(uni.name);
-          this.collectionOverview.set(uni.overview || null);
-          this.collectionBackdrop.set(uni.backdrop_path ? resolveMediaImageUrl(uni.backdrop_path, 'w1280') : null);
+          const nonCollectionPattern = /disney\+|canon series|tv series|television|phase\s*\d|streaming|one-shots|specials/i;
+          const initialSiblings = (uni.siblingFranchises || []).filter((s) => s?.name && !nonCollectionPattern.test(s.name));
+          const displayUni: FranchiseCollectionSummary = {
+            ...uni,
+            siblingFranchises: initialSiblings
+          };
+
+          this.collectionTitle.set(displayUni.name);
+          this.collectionOverview.set(displayUni.connectionInsight || displayUni.overview || null);
+          const fallbackBackdrop = displayUni.backdrop_path || displayUni.parts?.find((p) => p.backdrop_path)?.backdrop_path || null;
+          this.collectionBackdrop.set(fallbackBackdrop ? resolveMediaImageUrl(fallbackBackdrop, 'w1280') : null);
           this.isFranchiseCollection.set(true);
           this.isUniverseCollection.set(true);
-          this.franchiseSummary.set(uni);
+          this.franchiseSummary.set(displayUni);
+          this.numericCollectionId.set(null);
 
-          const items: SwimlaneItem[] = (uni.parts || []).map((part) => ({
+          const items: SwimlaneItem[] = (displayUni.parts || []).map((part) => ({
             id: part.id,
             mediaType: part.mediaType || 'movie',
             title: part.title,
@@ -343,6 +489,15 @@ export class CollectionPage implements OnInit, AfterViewInit {
           this.rawItems.set(items);
           this.hasMore.set(false);
           this.cdr.detectChanges();
+
+          // Self-heal existing saved universe: verify sibling collections and expand canon with live TMDB 2024-2027+ releases
+          const isAlreadyExpandedV2 = Boolean((uni as unknown as { canonExpandedV2?: boolean }).canonExpandedV2);
+          const needsSiblingVerification = (uni.siblingFranchises || []).some(
+            (s) => !s.id || s.id <= 0 || (s.id >= 90000 && s.id <= 90100) || nonCollectionPattern.test(s.name) || /\b(saga|mcu|dceu)\b/i.test(s.name)
+          );
+          if (!isAlreadyExpandedV2 || needsSiblingVerification) {
+            void this.syncUniverseCanon(true);
+          }
           return;
         }
       }
@@ -359,7 +514,22 @@ export class CollectionPage implements OnInit, AfterViewInit {
         if (cached) {
           this.collectionTitle.set(cached.name);
           this.collectionOverview.set(cached.overview || null);
-          this.collectionBackdrop.set(cached.backdrop_path ? resolveMediaImageUrl(cached.backdrop_path, 'w1280') : null);
+          const fallbackBackdrop = cached.backdrop_path || cached.parts?.find((p) => p.backdrop_path)?.backdrop_path || null;
+          this.collectionBackdrop.set(fallbackBackdrop ? resolveMediaImageUrl(fallbackBackdrop, 'w1280') : null);
+          this.franchiseSummary.set({
+            id: numId,
+            name: cached.name,
+            overview: cached.overview,
+            poster_path: cached.poster_path ?? cached.parts?.find((p) => p.poster_path)?.poster_path ?? null,
+            backdrop_path: fallbackBackdrop,
+            totalParts: cached.totalParts,
+            collectedCount: 0,
+            watchedCount: 0,
+            watchlistCount: 0,
+            completionPercentage: 0,
+            isUniverse: false,
+            parts: cached.parts
+          });
 
           const items: SwimlaneItem[] = (cached.parts || []).map((p) => ({
             id: p.id,
@@ -375,6 +545,31 @@ export class CollectionPage implements OnInit, AfterViewInit {
           this.cdr.detectChanges();
           return;
         }
+
+        // Offline Fallback: Check if user saved this numeric franchise in RxDB
+        const savedDoc = this.storageService.savedUniverses().find((d) => d.id === `franchise_${numId}` || d.tmdbId === numId);
+        if (savedDoc) {
+          const savedSummary = savedDoc.payload as unknown as FranchiseCollectionSummary;
+          this.collectionTitle.set(savedSummary.name);
+          this.collectionOverview.set(savedSummary.overview || null);
+          this.collectionBackdrop.set(savedSummary.backdrop_path ? resolveMediaImageUrl(savedSummary.backdrop_path, 'w1280') : null);
+          this.franchiseSummary.set(savedSummary);
+
+          const items: SwimlaneItem[] = (savedSummary.parts || []).map((p) => ({
+            id: p.id,
+            mediaType: p.mediaType || 'movie',
+            title: p.title,
+            posterUrl: resolveMediaImageUrl(p.poster_path, 'w500'),
+            bookmarkState: 'none',
+            payload: p as unknown as Record<string, unknown>
+          }));
+          this.rawItems.set(items);
+          this.hasMore.set(false);
+          this.isLoadingMore.set(false);
+          this.cdr.detectChanges();
+          return;
+        }
+        this.isLoadingMore.set(false);
       }
     }
 
@@ -736,6 +931,206 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
   }
 
+  public openExistingUniverse(uni: FranchiseCollectionSummary): void {
+    const targetId = uni.universeId || uni.id;
+    void this.router.navigate(['/collection', targetId], {
+      state: {
+        title: uni.name,
+        preview: {
+          id: targetId,
+          name: uni.name,
+          backdropUrl: uni.backdrop_path ? resolveMediaImageUrl(uni.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
+  }
+
+  public async onSiblingFranchiseClick(sib: { id: number; name: string }): Promise<void> {
+    const isSyntheticId = !sib.id || sib.id <= 0 || (sib.id >= 90000 && sib.id <= 90100);
+    if (!isSyntheticId) {
+      void this.router.navigate(['/collection', sib.id], {
+        state: {
+          title: sib.name,
+          preview: {
+            id: sib.id,
+            name: sib.name
+          }
+        }
+      });
+      return;
+    }
+
+    const verified = await this.franchiseIntel.resolveSiblingCollections([sib]);
+    const match = verified[0];
+    if (match && match.id > 0) {
+      void this.router.navigate(['/collection', match.id], {
+        state: {
+          title: match.name,
+          preview: {
+            id: match.id,
+            name: match.name
+          }
+        }
+      });
+      return;
+    }
+
+    await this.toastService.presentInfo(`"${sib.name}" is already included in this universe timeline.`, 2000);
+  }
+
+  public async markUpNextAsWatched(event: Event, item: SwimlaneItem): Promise<void> {
+    event.stopPropagation();
+    const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+    const numId = this.numericCollectionId();
+    const collectionRef = numId ? {
+      id: numId,
+      name: this.collectionTitle(),
+      poster_path: this.franchiseSummary()?.poster_path,
+      backdrop_path: this.franchiseSummary()?.backdrop_path
+    } : undefined;
+
+    const payload = item.payload
+      ? {
+          ...(item.payload as Record<string, unknown>),
+          belongs_to_collection: (item.payload as Record<string, unknown>)['belongs_to_collection'] || collectionRef
+        }
+      : {
+          id: Number(item.id),
+          title: item.title,
+          name: item.title,
+          posterUrl: item.posterUrl,
+          media_type: mediaType,
+          belongs_to_collection: collectionRef
+        };
+
+    const moved = await this.storageService.moveToWatched(Number(item.id), mediaType, payload);
+    if (moved) {
+      await this.toastService.presentInfo(`Marked "${item.title}" as Watched`, 1800);
+    } else {
+      await this.toastService.presentWarning(`Cannot mark "${item.title}" as Watched — not released yet`, 2000);
+    }
+  }
+
+  public async markAllReleasedAsWatched(): Promise<void> {
+    const items = this.rawItems();
+    if (items.length === 0) return;
+
+    const watchedKeys = this.storageService.watchedMediaKeys();
+    const numId = this.numericCollectionId();
+    const collectionRef = numId ? {
+      id: numId,
+      name: this.collectionTitle(),
+      poster_path: this.franchiseSummary()?.poster_path,
+      backdrop_path: this.franchiseSummary()?.backdrop_path
+    } : undefined;
+
+    let markedCount = 0;
+    for (const item of items) {
+      if (item.mediaType === 'person') continue;
+      const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+      const key = `${mediaType}_${item.id}`;
+      if (watchedKeys.has(key)) continue;
+
+      const payload = item.payload
+        ? {
+            ...(item.payload as Record<string, unknown>),
+            belongs_to_collection: (item.payload as Record<string, unknown>)['belongs_to_collection'] || collectionRef
+          }
+        : {
+            id: Number(item.id),
+            title: item.title,
+            name: item.title,
+            posterUrl: item.posterUrl,
+            media_type: mediaType,
+            belongs_to_collection: collectionRef
+          };
+
+      if (!this.storageService.checkReleaseStatus(payload).isReleased) {
+        continue; // Skip unreleased future titles
+      }
+
+      const moved = await this.storageService.moveToWatched(Number(item.id), mediaType, payload);
+      if (moved) {
+        markedCount++;
+      }
+    }
+
+    if (markedCount > 0) {
+      await this.toastService.presentSuccess(`Marked ${markedCount} released titles as Watched`, 2200);
+    }
+  }
+
+  public async syncUniverseCanon(silent = false): Promise<void> {
+    const uni = this.franchiseSummary();
+    if (!uni || !this.isUniverseCollection() || this.isSyncingUniverse()) return;
+
+    this.isSyncingUniverse.set(true);
+    try {
+      const verifiedSiblings = await this.franchiseIntel.resolveSiblingCollections(uni.siblingFranchises || []);
+
+      // If user clicked manual Sync, also check if AI has newer canon titles for the first sibling collection
+      let baseParts: FranchisePart[] = [...(uni.parts || [])];
+      if (!silent && verifiedSiblings.length > 0 && verifiedSiblings[0]) {
+        const seedSib = verifiedSiblings[0];
+        const aiRes = await this.franchiseIntel.analyzeUniverse(seedSib.id, seedSib.name, baseParts, true);
+        if (aiRes.data?.canonTitles?.length) {
+          const aiParts = await this.franchiseIntel.resolveCanonItems(aiRes.data.canonTitles, baseParts);
+          const mapByKey = new Map<string, FranchisePart>();
+          for (const p of [...baseParts, ...aiParts]) {
+            mapByKey.set(`${p.mediaType || 'movie'}_${p.id}`, p);
+          }
+          baseParts = Array.from(mapByKey.values());
+        }
+      }
+
+      const expandedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
+        uni.name,
+        String(uni.universeId || uni.id),
+        baseParts,
+        verifiedSiblings
+      );
+
+      const addedCount = Math.max(0, expandedParts.length - (uni.parts?.length || 0));
+      const updatedUni: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
+        ...uni,
+        totalParts: expandedParts.length,
+        parts: expandedParts,
+        siblingFranchises: verifiedSiblings,
+        canonExpandedV2: true
+      };
+
+      this.franchiseSummary.set(updatedUni);
+      const items: SwimlaneItem[] = expandedParts.map((part) => ({
+        id: part.id,
+        mediaType: part.mediaType || 'movie',
+        title: part.title,
+        posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+        bookmarkState: 'none',
+        payload: part as unknown as Record<string, unknown>
+      }));
+      this.rawItems.set(items);
+      this.cdr.detectChanges();
+
+      const targetUniKey = String(uni.universeId || uni.id).replace(/^universe_/, '');
+      await this.storageService.saveUniverse(targetUniKey, updatedUni);
+
+      if (!silent) {
+        if (addedCount > 0) {
+          await this.toastService.presentSuccess(`Synced Universe: +${addedCount} new Movie & TV titles added!`, 2200);
+        } else {
+          await this.toastService.presentInfo(`Universe timeline is up to date (${expandedParts.length} titles).`, 1800);
+        }
+      }
+    } catch {
+      if (!silent) {
+        await this.toastService.presentError('Failed to sync universe canon.', 1800);
+      }
+    } finally {
+      this.isSyncingUniverse.set(false);
+      this.cdr.detectChanges();
+    }
+  }
+
   public async confirmAscension(): Promise<void> {
     const proposal = this.universeProposal();
     if (!proposal || this.isResolvingCanon()) return;
@@ -744,15 +1139,56 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
     try {
       const canonTitles = proposal.canonTitles || [];
-      const resolvedParts = await this.franchiseIntel.resolveCanonItems(canonTitles);
+      const currentParts: FranchisePart[] = this.rawItems().map((it) => {
+        const p = it.payload as Record<string, unknown> | undefined;
+        return {
+          id: Number(it.id),
+          title: it.title,
+          mediaType: it.mediaType === 'tv' ? 'tv' : 'movie',
+          overview: p?.['overview'] as string | undefined,
+          poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
+          backdrop_path: p?.['backdrop_path'] as string | undefined,
+          release_date: p?.['release_date'] as string | undefined,
+          first_air_date: p?.['first_air_date'] as string | undefined,
+          vote_average: p?.['vote_average'] as number | undefined,
+          vote_count: p?.['vote_count'] as number | undefined
+        };
+      });
+
+      const baseResolvedParts = await this.franchiseIntel.resolveCanonItems(canonTitles, currentParts);
 
       const universeId = proposal.universeId || `universe_${Date.now()}`;
-      const universeSummary: FranchiseCollectionSummary = {
+      const universeTitle = proposal.universeTitle || 'Shared Universe';
+
+      // Ensure starting numeric collection is also included in siblingFranchises and all siblings are verified TMDB collections
+      const colId = this.numericCollectionId();
+      const rawSiblings = [...(proposal.siblingFranchises || [])];
+      const siblings = await this.franchiseIntel.resolveSiblingCollections(
+        rawSiblings,
+        colId ? { id: colId, name: this.collectionTitle() } : undefined
+      );
+
+      // Augment AI canon with live TMDB sibling collection parts + keyword/studio discovery (Movies + TV)
+      const resolvedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
+        universeTitle,
+        universeId,
+        baseResolvedParts,
+        siblings
+      );
+
+      const rawBackdropPath = this.franchiseSummary()?.backdrop_path
+        || resolvedParts.find((p) => p.backdrop_path)?.backdrop_path
+        || null;
+      const rawPosterPath = resolvedParts.find((p) => p.poster_path)?.poster_path
+        || this.franchiseSummary()?.poster_path
+        || null;
+
+      const universeSummary: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
         id: universeId,
-        name: proposal.universeTitle || 'Shared Universe',
-        overview: this.collectionOverview() || proposal.connectionInsight,
-        poster_path: resolvedParts[0]?.poster_path ?? null,
-        backdrop_path: this.collectionBackdrop() ? null : resolvedParts[0]?.backdrop_path ?? null,
+        name: universeTitle,
+        overview: proposal.connectionInsight || this.collectionOverview() || undefined,
+        poster_path: rawPosterPath,
+        backdrop_path: rawBackdropPath,
         totalParts: resolvedParts.length,
         collectedCount: 0,
         watchedCount: 0,
@@ -763,7 +1199,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
         parentUniverseTitle: proposal.universeTitle,
         connectionInsight: proposal.connectionInsight,
         parts: resolvedParts,
-        siblingFranchises: proposal.siblingFranchises
+        siblingFranchises: siblings,
+        canonExpandedV2: true
       };
 
       await this.storageService.saveUniverse(universeId, universeSummary);
@@ -781,7 +1218,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
           preview: {
             id: universeId,
             name: universeSummary.name,
-            backdropUrl: this.collectionBackdrop() || undefined
+            backdropUrl: rawBackdropPath ? resolveMediaImageUrl(rawBackdropPath, 'w1280') : (this.collectionBackdrop() || undefined)
           }
         }
       });
@@ -837,7 +1274,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
       id: numId,
       name: this.collectionTitle(),
       poster_path: this.franchiseSummary()?.poster_path,
-      backdrop_path: this.collectionBackdrop()
+      backdrop_path: this.franchiseSummary()?.backdrop_path
     } : undefined;
 
     const payload = item.payload
@@ -854,37 +1291,63 @@ export class CollectionPage implements OnInit, AfterViewInit {
           belongs_to_collection: collectionRef
         };
 
+    const prevState = this.getBookmarkState(item);
     const nextState = await this.storageService.cycleBookmark(Number(item.id), mediaType, payload);
     if (nextState === 'watchlist') {
       await this.toastService.presentSuccess(`Added "${item.title}" to Watchlist`, 1800);
     } else if (nextState === 'watched') {
       await this.toastService.presentInfo(`Marked "${item.title}" as Watched`, 1800);
+    } else if (prevState === 'watchlist') {
+      await this.toastService.presentWarning(`Removed "${item.title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
     } else {
       await this.toastService.presentWarning(`Removed "${item.title}" from Archive`, 1800);
     }
   }
 
   public async toggleSaveCurrentFranchise(): Promise<void> {
+    if (this.isUniverseCollection()) {
+      const currentUniSummary = this.franchiseSummary();
+      const uniId = currentUniSummary?.universeId || currentUniSummary?.id;
+      if (!uniId) return;
+      if (this.isCurrentFranchiseSaved()) {
+        await this.franchiseAggregator.untrackFranchise(uniId, true);
+        await this.toastService.presentWarning(`Untracked "${this.collectionTitle()}" from Franchises`, 1800);
+      } else if (currentUniSummary) {
+        await this.franchiseAggregator.trackFranchise(String(uniId), currentUniSummary);
+        await this.toastService.presentSuccess(`Tracking "${this.collectionTitle()}" in Franchises`, 1800);
+      }
+      return;
+    }
+
     const numId = this.numericCollectionId();
     const targetId = numId || this.queryContext()?.id;
     if (!targetId) return;
 
     if (this.isCurrentFranchiseSaved()) {
-      await this.storageService.removeFranchise(targetId);
-      await this.toastService.presentWarning(`Removed "${this.collectionTitle()}" from Franchises`, 1800);
+      await this.franchiseAggregator.untrackFranchise(targetId, false);
+      await this.toastService.presentWarning(`Untracked "${this.collectionTitle()}" from Franchises`, 1800);
     } else {
-      const summary: FranchiseCollectionSummary = this.franchiseSummary() || {
+      const existingSummary = this.franchiseSummary();
+      const firstPoster = existingSummary?.poster_path
+        || (this.rawItems()[0]?.payload?.['poster_path'] as string | undefined)
+        || this.rawItems()[0]?.posterUrl;
+      const firstBackdrop = existingSummary?.backdrop_path
+        || (this.rawItems()[0]?.payload?.['backdrop_path'] as string | undefined)
+        || this.collectionBackdrop()
+        || undefined;
+
+      const summary: FranchiseCollectionSummary = {
         id: targetId,
         name: this.collectionTitle(),
-        overview: this.collectionOverview() || undefined,
-        poster_path: undefined,
-        backdrop_path: this.collectionBackdrop() || undefined,
-        totalParts: this.rawItems().length,
+        overview: this.collectionOverview() || existingSummary?.overview || undefined,
+        poster_path: firstPoster,
+        backdrop_path: firstBackdrop,
+        totalParts: this.completionMetrics()?.total || this.rawItems().length,
         collectedCount: this.completionMetrics()?.watched || 0,
         watchedCount: this.completionMetrics()?.watched || 0,
         watchlistCount: this.completionMetrics()?.watchlist || 0,
         completionPercentage: this.completionMetrics()?.percentage || 0,
-        isUniverse: this.isUniverseCollection(),
+        isUniverse: false,
         parts: this.rawItems().map((it) => {
           const p = it.payload as Record<string, unknown> | undefined;
           return {
@@ -893,13 +1356,15 @@ export class CollectionPage implements OnInit, AfterViewInit {
             mediaType: (it.mediaType === 'tv' ? 'tv' : 'movie') as 'movie' | 'tv',
             poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
             backdrop_path: p?.['backdrop_path'] as string | undefined,
-            release_date: (p?.['release_date'] || p?.['first_air_date']) as string | undefined
+            release_date: (p?.['release_date'] || p?.['first_air_date']) as string | undefined,
+            vote_average: p?.['vote_average'] as number | undefined,
+            vote_count: p?.['vote_count'] as number | undefined
           };
         })
       };
 
-      await this.storageService.saveFranchise(targetId, summary);
-      await this.toastService.presentSuccess(`Saved "${this.collectionTitle()}" to Franchises`, 1800);
+      await this.franchiseAggregator.trackFranchise(targetId, summary);
+      await this.toastService.presentSuccess(`Tracking "${this.collectionTitle()}" in Franchises`, 1800);
     }
   }
 
@@ -909,22 +1374,27 @@ export class CollectionPage implements OnInit, AfterViewInit {
         item,
         metaLine: item.subtitle ? `Known for: ${item.subtitle}` : 'Actor',
         ratingValue: 0,
-        yearValue: ''
+        yearValue: '',
+        isUpcoming: false
       };
     }
 
     const payload = item.payload;
-    const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
+    const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '').trim();
     const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : '';
     const rating = Number(payload?.['vote_average'] || 0);
+    const isUpcoming = Boolean(this.isFranchiseCollection() && !this.storageService.checkReleaseStatus(payload).isReleased);
+
     const parts: string[] = [item.mediaType === 'tv' ? 'TV Series' : 'Movie'];
     if (year) parts.push(year);
+    else if (isUpcoming) parts.push('TBA');
 
     return {
       item,
       metaLine: item.subtitle || parts.join(' • '),
       ratingValue: rating,
-      yearValue: rawDate
+      yearValue: rawDate,
+      isUpcoming
     };
   }
 }

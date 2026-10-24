@@ -1056,6 +1056,7 @@ export class MediaDetailPage implements OnInit {
         poster_path: m.poster_path,
         backdrop_path: m.backdrop_path,
         release_date: m.release_date,
+        status: m.status,
         vote_average: m.vote_average,
         genres: m.genres,
         media_type: 'movie',
@@ -1071,6 +1072,7 @@ export class MediaDetailPage implements OnInit {
         poster_path: t.poster_path,
         backdrop_path: t.backdrop_path,
         first_air_date: t.first_air_date,
+        status: t.status,
         vote_average: t.vote_average,
         genres: t.genres,
         media_type: 'tv'
@@ -1082,6 +1084,7 @@ export class MediaDetailPage implements OnInit {
       title: prev?.title || '',
       name: prev?.title || '',
       posterUrl: prev?.posterUrl || '',
+      releaseYear: prev?.releaseYear || this.releaseYearLabel(),
       media_type: this.mediaType()
     };
   }
@@ -1111,8 +1114,19 @@ export class MediaDetailPage implements OnInit {
       await this.storage.removeMedia(id, type);
       await this.toast.presentWarning(`Removed "${itemTitle}" from Watched`, 1800);
     } else {
-      await this.storage.moveToWatched(id, type, this.buildStoragePayload());
-      await this.toast.presentInfo(`Marked "${itemTitle}" as Watched`, 1800);
+      const payload = this.buildStoragePayload();
+      const releaseCheck = this.storage.checkReleaseStatus(payload);
+      if (!releaseCheck.isReleased) {
+        const suffix = releaseCheck.releaseLabel ? ` (${releaseCheck.releaseLabel})` : '';
+        await this.toast.presentWarning(`Cannot mark "${itemTitle}" as Watched — not released yet${suffix}`, 2200);
+        return;
+      }
+      const moved = await this.storage.moveToWatched(id, type, payload);
+      if (moved) {
+        await this.toast.presentInfo(`Marked "${itemTitle}" as Watched`, 1800);
+      } else {
+        await this.toast.presentWarning(`Cannot mark "${itemTitle}" as Watched — not released yet`, 2200);
+      }
     }
   }
 

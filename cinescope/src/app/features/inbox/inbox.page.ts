@@ -822,7 +822,10 @@ export class InboxPage {
       if (action === 'watchlist') {
         await this.storage.moveInboxToWatchlist(card.tmdbId, card.mediaType);
       } else if (action === 'watched') {
-        await this.storage.moveInboxToWatched(card.tmdbId, card.mediaType);
+        const moved = await this.storage.moveInboxToWatched(card.tmdbId, card.mediaType);
+        if (!moved) {
+          await this.toast.presentWarning(`"${card.title}" is not released yet — saved to Watchlist instead`, 2200);
+        }
       } else {
         await this.storage.discardFromInbox(card.tmdbId, card.mediaType);
       }

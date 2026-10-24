@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { StorageService } from './storage.service';
+import { StorageService, checkMediaReleaseStatus } from './storage.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
 import { TmdbMoviesService } from './tmdb-movies.service';
 import { FranchiseCollectionSummary, FranchisePart } from '../models/franchise.model';
@@ -17,7 +17,13 @@ interface CachedCollectionMeta {
 }
 
 const CACHE_PREFIX = 'cinescope_franchise_meta_';
+const DISMISSED_FRANCHISES_KEY = 'cinescope_dismissed_franchises_v1';
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const MAX_CONCURRENT_MOVIE_LOOKUPS = 4;
+
+export function isPartReleased(part: FranchisePart, todayIso?: string): boolean {
+  return checkMediaReleaseStatus(part as unknown as Record<string, unknown>, todayIso).isReleased;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -28,8 +34,11 @@ export class FranchiseAggregatorService {
   private tmdbMovies = inject(TmdbMoviesService);
 
   private readonly metaCache = new Map<number, CachedCollectionMeta>();
+  private readonly dismissedIds = new Set<string>();
   private readonly inFlightRequests = new Set<number>();
   private readonly inFlightMovieLookups = new Set<number>();
+  private readonly pendingMovieQueue: { tmdbId: number; docId: string }[] = [];
+  private activeMovieLookupWorkers = 0;
   private readonly cacheRevision = signal<number>(0);
 
   constructor() {
@@ -44,6 +53,183 @@ export class FranchiseAggregatorService {
   }
 
   /**
+   * Checks whether a franchise or universe is currently tracked in the user's Franchises Hub
+   * (either via collected movies or explicit tracking, and not dismissed).
+   */
+  public isFranchiseTracked(id: number | string): boolean {
+    const idStr = String(id);
+    if (this.dismissedIds.has(idStr)) return false;
+    if (this.storage.isFranchiseSaved(id)) return true;
+    return this.activeUserFranchises().some(
+      (f) => String(f.id) === idStr || String(f.universeId) === idStr
+    );
+  }
+
+  /**
+   * Explicitly tracks a franchise or universe in the user's Franchises Hub (and clears any prior dismissal).
+   */
+  public async trackFranchise(id: number | string, summary: FranchiseCollectionSummary): Promise<void> {
+    const idStr = String(id);
+    if (this.dismissedIds.has(idStr)) {
+      this.dismissedIds.delete(idStr);
+      this.persistDismissedIds();
+    }
+    if (summary.isUniverse) {
+      await this.storage.saveUniverse(idStr, summary);
+    } else {
+      await this.storage.saveFranchise(id, summary);
+    }
+    this.cacheRevision.update((r) => r + 1);
+  }
+
+  /**
+   * Untracks / removes a franchise or universe from the user's Franchises Hub.
+   * Also records dismissal so auto-detected single-movie collections do not reappear unless re-tracked.
+   */
+  public async untrackFranchise(id: number | string, isUniverse = false): Promise<void> {
+    const idStr = String(id);
+    this.dismissedIds.add(idStr);
+    this.persistDismissedIds();
+
+    if (isUniverse) {
+      await this.storage.removeUniverse(id);
+    } else {
+      await this.storage.removeFranchise(id);
+    }
+    this.cacheRevision.update((r) => r + 1);
+  }
+
+  private persistDismissedIds(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(DISMISSED_FRANCHISES_KEY, JSON.stringify(Array.from(this.dismissedIds)));
+      }
+    } catch {
+      // Safe fallback
+    }
+  }
+
+  /**
+   * Computes released-aware completion stats and the chronological "Up Next" unwatched part.
+   */
+  public computePartsProgress(
+    parts: FranchisePart[],
+    watchedMediaKeys: Set<string>,
+    watchlistMediaKeys: Set<string>,
+    fallbackTotal = 1
+  ): {
+    totalParts: number;
+    releasedPartsCount: number;
+    upcomingPartsCount: number;
+    watchedCount: number;
+    watchlistCount: number;
+    collectedCount: number;
+    completionPercentage: number;
+    upNextPart: FranchisePart | null;
+  } {
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    if (!parts || parts.length === 0) {
+      return {
+        totalParts: fallbackTotal,
+        releasedPartsCount: fallbackTotal,
+        upcomingPartsCount: 0,
+        watchedCount: 0,
+        watchlistCount: 0,
+        collectedCount: 0,
+        completionPercentage: 0,
+        upNextPart: null
+      };
+    }
+
+    // Sort parts chronologically by release/air date (undated items at the end)
+    const sortedParts = [...parts].sort((a, b) => {
+      const dA = (a.release_date || a.first_air_date || '').trim();
+      const dB = (b.release_date || b.first_air_date || '').trim();
+      if (!dA && !dB) return 0;
+      if (!dA) return 1;
+      if (!dB) return -1;
+      return dA.localeCompare(dB);
+    });
+
+    const hasAnyDatedPart = sortedParts.some((p) => Boolean((p.release_date || p.first_air_date || '').trim()));
+
+    let releasedPartsCount = 0;
+    let upcomingPartsCount = 0;
+    let watchedCount = 0;
+    let watchlistCount = 0;
+    let upNextPart: FranchisePart | null = null;
+
+    for (const part of sortedParts) {
+      const type = part.mediaType || 'movie';
+      const key = `${type}_${part.id}`;
+      const isWatched = watchedMediaKeys.has(key);
+      const isWatchlist = watchlistMediaKeys.has(key);
+
+      const released = hasAnyDatedPart ? isPartReleased(part, todayIso) : true;
+      if (released || isWatched) {
+        releasedPartsCount++;
+      } else {
+        upcomingPartsCount++;
+      }
+
+      if (isWatched) {
+        watchedCount++;
+      } else if (isWatchlist) {
+        watchlistCount++;
+      }
+
+      if (!isWatched && released && !upNextPart) {
+        upNextPart = part;
+      }
+    }
+
+    // Denominator for completion % uses released parts so future 2028/2030 announcements never block 100% completion
+    const effectiveTotal = releasedPartsCount > 0 ? releasedPartsCount : sortedParts.length;
+    const collectedCount = watchedCount + watchlistCount;
+    const completionPercentage = effectiveTotal > 0
+      ? Math.min(100, Math.round((watchedCount / effectiveTotal) * 100))
+      : 0;
+
+    return {
+      totalParts: effectiveTotal,
+      releasedPartsCount,
+      upcomingPartsCount,
+      watchedCount,
+      watchlistCount,
+      collectedCount,
+      completionPercentage,
+      upNextPart
+    };
+  }
+
+  /**
+   * Finds if a specific Movie or TV Show belongs to an active Universe or Franchise in the user's library.
+   */
+  public findFranchiseForMedia(tmdbId: number, mediaType: 'movie' | 'tv', collectionIdHint?: number | null): FranchiseCollectionSummary | null {
+    const active = this.activeUserFranchises();
+    // 1. Prefer an Ascended Universe that contains this Movie or TV series
+    for (const f of active) {
+      if (f.isUniverse && Array.isArray(f.parts)) {
+        const match = f.parts.some((p) => Number(p.id) === Number(tmdbId) && (p.mediaType || 'movie') === mediaType);
+        if (match) return f;
+      }
+    }
+    // 2. Check by collectionIdHint or part membership in standard franchises
+    if (collectionIdHint) {
+      const byColId = active.find((f) => !f.isUniverse && Number(f.id) === Number(collectionIdHint));
+      if (byColId) return byColId;
+    }
+    for (const f of active) {
+      if (Array.isArray(f.parts)) {
+        const match = f.parts.some((p) => Number(p.id) === Number(tmdbId) && (p.mediaType || 'movie') === mediaType);
+        if (match) return f;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Reactive computed list of all franchises and universes derived from user library.
    */
   public readonly activeUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
@@ -53,14 +239,19 @@ export class FranchiseAggregatorService {
     const watchlist = this.storage.watchlistItems();
     const watched = this.storage.watchedItems();
     const savedUniverses = this.storage.savedUniverses();
+    const watchedMediaKeys = this.storage.watchedMediaKeys();
+    const watchlistMediaKeys = new Set(watchlist.map((d) => d.id));
 
     const collectionMap = new Map<number, {
       id: number;
       name: string;
+      overview?: string | undefined;
       poster_path?: string | null | undefined;
       backdrop_path?: string | null | undefined;
+      savedParts?: FranchisePart[] | undefined;
       watchlistMovieIds: Set<number>;
       watchedMovieIds: Set<number>;
+      isDirectlySaved?: boolean | undefined;
     }>();
 
     // Scan watchlist items
@@ -122,89 +313,181 @@ export class FranchiseAggregatorService {
     }
 
     const summaries: FranchiseCollectionSummary[] = [];
+    const subsumedCollectionIds = new Set<number>();
+    const universeMediaKeys = new Set<string>();
 
-    // 1. Process Movie Collections
-    for (const [collectionId, group] of collectionMap.entries()) {
-      const cached = this.metaCache.get(collectionId);
-      const totalParts = cached?.totalParts ?? Math.max(group.watchedMovieIds.size + group.watchlistMovieIds.size, 1);
-      const watchedCount = group.watchedMovieIds.size;
-      const watchlistCount = group.watchlistMovieIds.size;
-      const collectedCount = new Set([...group.watchedMovieIds, ...group.watchlistMovieIds]).size;
-      const completionPercentage = totalParts > 0
-        ? Math.min(100, Math.round((watchedCount / totalParts) * 100))
-        : 0;
-
-      summaries.push({
-        id: collectionId,
-        name: cached?.name || group.name,
-        overview: cached?.overview,
-        poster_path: cached?.poster_path ?? group.poster_path,
-        backdrop_path: cached?.backdrop_path ?? group.backdrop_path,
-        totalParts,
-        collectedCount,
-        watchedCount,
-        watchlistCount,
-        completionPercentage,
-        isUniverse: false,
-        parts: cached?.parts
-      });
-    }
-
-    // 2. Process AI-Ascended Universes from RxDB
-    const watchedMediaKeys = this.storage.watchedMediaKeys();
-    const watchlistDocs = this.storage.watchlistItems();
-    const watchlistMediaKeys = new Set(watchlistDocs.map((d) => d.id));
-
+    // 1. Process AI-Ascended Universes & Directly Saved Franchises from RxDB first
     for (const uniDoc of savedUniverses) {
       const uniPayload = uniDoc.payload as unknown as FranchiseCollectionSummary | undefined;
       if (!uniPayload) continue;
 
-      const universeId = uniPayload.universeId || String(uniDoc.tmdbId);
-      const canonParts = uniPayload.parts || [];
-      const totalParts = canonParts.length || uniPayload.totalParts || 1;
+      const isUniverse = Boolean(
+        uniPayload.isUniverse ?? (uniDoc.lists ? uniDoc.lists.includes('universe') && !uniDoc.lists.includes('franchise') : false)
+      );
 
-      let watchedCount = 0;
-      let watchlistCount = 0;
+      if (!isUniverse) {
+        // Directly saved numeric TMDB Franchise: merge with collectionMap so cold cache still has full parts & artwork
+        const numericId = typeof uniPayload.id === 'number'
+          ? uniPayload.id
+          : (typeof uniDoc.tmdbId === 'number' ? uniDoc.tmdbId : parseInt(String(uniPayload.id), 10));
 
-      for (const part of canonParts) {
-        const type = part.mediaType || 'movie';
-        const key = `${type}_${part.id}`;
-        if (watchedMediaKeys.has(key)) {
-          watchedCount++;
-        } else if (watchlistMediaKeys.has(key)) {
-          watchlistCount++;
+        if (numericId && !isNaN(numericId)) {
+          const existing = collectionMap.get(numericId);
+          if (existing) {
+            existing.isDirectlySaved = true;
+            existing.overview = existing.overview || uniPayload.overview;
+            existing.poster_path = existing.poster_path || uniPayload.poster_path;
+            existing.backdrop_path = existing.backdrop_path || uniPayload.backdrop_path;
+            existing.savedParts = uniPayload.parts;
+          } else {
+            collectionMap.set(numericId, {
+              id: numericId,
+              name: uniPayload.name,
+              overview: uniPayload.overview,
+              poster_path: uniPayload.poster_path,
+              backdrop_path: uniPayload.backdrop_path,
+              savedParts: uniPayload.parts,
+              watchlistMovieIds: new Set<number>(),
+              watchedMovieIds: new Set<number>(),
+              isDirectlySaved: true
+            });
+          }
+          continue;
         }
       }
 
-      const collectedCount = watchedCount + watchlistCount;
-      const completionPercentage = totalParts > 0
-        ? Math.min(100, Math.round((watchedCount / totalParts) * 100))
-        : 0;
+      // True AI-Ascended Shared Universe
+      const universeId = uniPayload.universeId || String(uniPayload.id || uniDoc.id);
+      const canonParts = uniPayload.parts || [];
 
-      const numericId = typeof uniPayload.id === 'number' ? uniPayload.id : (typeof uniDoc.tmdbId === 'number' ? uniDoc.tmdbId : null);
-      if (numericId && collectionMap.has(numericId)) {
-        continue;
+      // Track sibling franchises and media keys so redundant sub-collections are subsumed cleanly
+      if (Array.isArray(uniPayload.siblingFranchises)) {
+        for (const sib of uniPayload.siblingFranchises) {
+          if (sib && typeof sib.id === 'number') {
+            subsumedCollectionIds.add(sib.id);
+          }
+        }
+      }
+      for (const part of canonParts) {
+        universeMediaKeys.add(`${part.mediaType || 'movie'}_${part.id}`);
       }
 
-      const isUniverse = Boolean(uniPayload.isUniverse ?? (uniDoc.lists ? uniDoc.lists.includes('universe') : true));
+      const stats = this.computePartsProgress(
+        canonParts,
+        watchedMediaKeys,
+        watchlistMediaKeys,
+        uniPayload.totalParts || 1
+      );
+
+      const fallbackPoster = uniPayload.poster_path || canonParts.find((p) => p.poster_path)?.poster_path || null;
+      const fallbackBackdrop = uniPayload.backdrop_path || canonParts.find((p) => p.backdrop_path)?.backdrop_path || null;
 
       summaries.push({
         id: universeId,
         name: uniPayload.name,
         overview: uniPayload.overview,
-        poster_path: uniPayload.poster_path,
-        backdrop_path: uniPayload.backdrop_path,
-        totalParts,
-        collectedCount,
-        watchedCount,
-        watchlistCount,
-        completionPercentage,
-        isUniverse,
+        poster_path: fallbackPoster,
+        backdrop_path: fallbackBackdrop,
+        totalParts: stats.totalParts,
+        releasedPartsCount: stats.releasedPartsCount,
+        upcomingPartsCount: stats.upcomingPartsCount,
+        collectedCount: stats.collectedCount,
+        watchedCount: stats.watchedCount,
+        watchlistCount: stats.watchlistCount,
+        completionPercentage: stats.completionPercentage,
+        upNextPart: stats.upNextPart,
+        isUniverse: true,
         universeId,
         parentUniverseTitle: uniPayload.parentUniverseTitle,
         connectionInsight: uniPayload.connectionInsight,
         parts: canonParts,
         siblingFranchises: uniPayload.siblingFranchises
+      });
+    }
+
+    // 2. Process Movie Collections
+    for (const [collectionId, group] of collectionMap.entries()) {
+      // Respect user dismissal if they explicitly untracked this auto-detected collection
+      if (!group.isDirectlySaved && this.dismissedIds.has(String(collectionId))) {
+        continue;
+      }
+
+      // If this sub-collection wasn't explicitly bookmarked as a standalone franchise AND is already subsumed by an Ascended Universe, skip duplicate card
+      if (!group.isDirectlySaved) {
+        if (subsumedCollectionIds.has(collectionId)) {
+          continue;
+        }
+        const userMovieIds = [...group.watchedMovieIds, ...group.watchlistMovieIds];
+        if (userMovieIds.length > 0 && userMovieIds.every((mId) => universeMediaKeys.has(`movie_${mId}`))) {
+          continue;
+        }
+      }
+
+      const cached = this.metaCache.get(collectionId);
+      const effectiveParts = cached?.parts || group.savedParts;
+
+      let totalParts: number;
+      let releasedPartsCount: number | undefined;
+      let upcomingPartsCount: number | undefined;
+      let watchedCount: number;
+      let watchlistCount: number;
+      let collectedCount: number;
+      let completionPercentage: number;
+      let upNextPart: FranchisePart | null = null;
+
+      if (effectiveParts && effectiveParts.length > 0) {
+        const stats = this.computePartsProgress(
+          effectiveParts,
+          watchedMediaKeys,
+          watchlistMediaKeys,
+          cached?.totalParts || effectiveParts.length
+        );
+        totalParts = stats.totalParts;
+        releasedPartsCount = stats.releasedPartsCount;
+        upcomingPartsCount = stats.upcomingPartsCount;
+        watchedCount = stats.watchedCount;
+        watchlistCount = stats.watchlistCount;
+        collectedCount = stats.collectedCount;
+        completionPercentage = stats.completionPercentage;
+        upNextPart = stats.upNextPart;
+      } else {
+        watchedCount = group.watchedMovieIds.size;
+        watchlistCount = group.watchlistMovieIds.size;
+        collectedCount = new Set([...group.watchedMovieIds, ...group.watchlistMovieIds]).size;
+        totalParts = Math.max(collectedCount, 1);
+        releasedPartsCount = totalParts;
+        upcomingPartsCount = 0;
+        completionPercentage = totalParts > 0
+          ? Math.min(100, Math.round((watchedCount / totalParts) * 100))
+          : 0;
+      }
+
+      const fallbackPoster = cached?.poster_path
+        ?? group.poster_path
+        ?? effectiveParts?.find((p) => p.poster_path)?.poster_path
+        ?? null;
+
+      const fallbackBackdrop = cached?.backdrop_path
+        ?? group.backdrop_path
+        ?? effectiveParts?.find((p) => p.backdrop_path)?.backdrop_path
+        ?? null;
+
+      summaries.push({
+        id: collectionId,
+        name: cached?.name || group.name,
+        overview: cached?.overview || group.overview,
+        poster_path: fallbackPoster,
+        backdrop_path: fallbackBackdrop,
+        totalParts,
+        releasedPartsCount,
+        upcomingPartsCount,
+        collectedCount,
+        watchedCount,
+        watchlistCount,
+        completionPercentage,
+        upNextPart,
+        isUniverse: false,
+        parts: effectiveParts
       });
     }
 
@@ -235,6 +518,16 @@ export class FranchiseAggregatorService {
     if (typeof window === 'undefined' || !window.localStorage) return;
 
     try {
+      const rawDismissed = localStorage.getItem(DISMISSED_FRANCHISES_KEY);
+      if (rawDismissed) {
+        const parsedDismissed = JSON.parse(rawDismissed);
+        if (Array.isArray(parsedDismissed)) {
+          for (const id of parsedDismissed) {
+            if (id) this.dismissedIds.add(String(id));
+          }
+        }
+      }
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith(CACHE_PREFIX)) {
@@ -265,12 +558,11 @@ export class FranchiseAggregatorService {
       const docId = item.id || (tmdbId ? `movie_${tmdbId}` : undefined);
       if (!tmdbId || !docId) continue;
 
-      // 1. If belongs_to_collection is undefined, the movie has not been inspected for franchise membership
+      // 1. If belongs_to_collection is undefined, enqueue movie for throttled franchise membership lookup
       if (payload && payload['belongs_to_collection'] === undefined) {
         if (!this.inFlightMovieLookups.has(tmdbId)) {
-          this.resolveMovieFranchise(tmdbId, docId).catch(() => {
-            // Graceful ignore
-          });
+          this.inFlightMovieLookups.add(tmdbId);
+          this.pendingMovieQueue.push({ tmdbId, docId });
         }
         continue;
       }
@@ -288,10 +580,27 @@ export class FranchiseAggregatorService {
         });
       }
     }
+
+    this.drainMovieLookupQueue();
+  }
+
+  private drainMovieLookupQueue(): void {
+    while (this.activeMovieLookupWorkers < MAX_CONCURRENT_MOVIE_LOOKUPS && this.pendingMovieQueue.length > 0) {
+      const next = this.pendingMovieQueue.shift();
+      if (!next) break;
+      this.activeMovieLookupWorkers++;
+      this.resolveMovieFranchise(next.tmdbId, next.docId)
+        .catch(() => {
+          // Graceful ignore
+        })
+        .finally(() => {
+          this.activeMovieLookupWorkers--;
+          this.drainMovieLookupQueue();
+        });
+    }
   }
 
   private async resolveMovieFranchise(tmdbId: number, docId: string): Promise<void> {
-    this.inFlightMovieLookups.add(tmdbId);
     try {
       const details = await firstValueFrom(this.tmdbMovies.getMovieDetails(tmdbId));
       const belongs = details?.belongs_to_collection || null;

@@ -43,6 +43,48 @@
       </div>
     }
 
+    @if (activeTab() === 'franchises' && userFranchises().length > 0) {
+      <div class="filter-bar franchise-filter-bar">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="franchiseFilter() === 'all'"
+          (click)="setFranchiseFilter('all')">
+          All ({{ franchiseCounts().all }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="franchiseFilter() === 'in_progress'"
+          (click)="setFranchiseFilter('in_progress')">
+          In Progress ({{ franchiseCounts().inProgress }})
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="franchiseFilter() === 'completed'"
+          (click)="setFranchiseFilter('completed')">
+          Completed ({{ franchiseCounts().completed }})
+        </button>
+        @if (franchiseCounts().universes > 0) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="franchiseFilter() === 'universes'"
+            (click)="setFranchiseFilter('universes')">
+            Universes ({{ franchiseCounts().universes }})
+          </button>
+        }
+        <button
+          type="button"
+          class="filter-chip discover-chip"
+          (click)="goToDiscoverFranchises()">
+          <ion-icon name="search-outline"></ion-icon>
+          <span>Find Saga</span>
+        </button>
+      </div>
+    }
+
     <ion-content color="background">
       <div class="archive-panes-wrapper">
         <!-- Keep-Alive Watchlist Pane -->
@@ -126,11 +168,20 @@
           @if (userFranchises().length === 0) {
             <div class="empty-archive">
               <ion-icon name="albums-outline"></ion-icon>
-              <h2>NO FRANCHISES DISCOVERED YET</h2>
-              <p>Add movies from film sagas (like John Wick, Avengers, or Dhoom) to your Watchlist or Watched to track your franchise completion automatically.</p>
+              <h2>NO FRANCHISES TRACKED YET</h2>
+              <p>Add movies from film sagas (like John Wick, Avengers, or Dhoom) to your library, or search for any franchise to track your watch order and completion.</p>
               <button type="button" class="discover-franchises-btn" (click)="goToDiscoverFranchises()">
                 <ion-icon name="search-outline"></ion-icon>
-                <span>Discover Franchises</span>
+                <span>Search Franchises & Universes</span>
+              </button>
+            </div>
+          } @else if (filteredFranchises().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="trophy-outline"></ion-icon>
+              <h2>NO MATCHING SAGAS</h2>
+              <p>No franchises match this filter yet. Switch back to "All" to view your tracked sagas.</p>
+              <button type="button" class="discover-franchises-btn" (click)="setFranchiseFilter('all')">
+                <span>Show All Sagas</span>
               </button>
             </div>
           } @else {
@@ -138,9 +189,11 @@
               class="franchise-archive-grid"
               [class.fade-phase-a]="fadePhase() === 'a'"
               [class.fade-phase-b]="fadePhase() === 'b'">
-              @for (f of userFranchises(); track f.id; let idx = $index) {
+              @for (f of filteredFranchises(); track f.id; let idx = $index) {
                 <div
                   class="franchise-archive-card"
+                  [class.is-universe-card]="f.isUniverse"
+                  [class.is-completed-card]="f.completionPercentage >= 100 && f.totalParts > 0"
                   [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
                   tabindex="0"
                   role="button"
@@ -149,28 +202,70 @@
                   <div class="card-cover-wrapper">
                     <img [src]="resolvePoster(f.poster_path)" [alt]="f.name" loading="lazy">
                     <span class="type-badge" [class.is-universe]="f.isUniverse">
-                      {{ f.isUniverse ? 'UNIVERSE' : 'FRANCHISE' }}
+                      {{ f.isUniverse ? 'UNIVERSE' : 'SAGA' }}
                     </span>
-                    @if (isDirectlySaved(f)) {
+                  </div>
+
+                  <div class="card-body">
+                    <div class="card-header-row">
+                      <h4>{{ f.name }}</h4>
                       <button
                         type="button"
-                        class="delete-universe-btn"
-                        [attr.aria-label]="f.isUniverse ? 'Remove Universe' : 'Remove Franchise'"
+                        class="untrack-btn"
+                        [attr.aria-label]="'Untrack ' + f.name"
+                        title="Remove from Franchises"
                         (click)="onRemoveFranchiseOrUniverse($event, f)">
-                        <ion-icon name="trash-outline"></ion-icon>
+                        <ion-icon name="close-outline"></ion-icon>
                       </button>
-                    }
-                  </div>
-                  <div class="card-body">
-                    <h4>{{ f.name }}</h4>
+                    </div>
+
                     <div class="progress-block">
-                      <div class="progress-track">
-                        <div class="progress-fill" [style.width.%]="f.completionPercentage"></div>
-                      </div>
                       <div class="progress-meta">
-                        <span class="counts-label">{{ f.watchedCount }}/{{ f.totalParts }} watched</span>
-                        <span class="pct-label">{{ f.completionPercentage }}%</span>
+                        <span class="counts-label">
+                          <strong>{{ f.watchedCount }}</strong> of <strong>{{ f.totalParts }}</strong> watched
+                          @if (f.upcomingPartsCount && f.upcomingPartsCount > 0) {
+                            <span class="upcoming-inline">+{{ f.upcomingPartsCount }} upcoming</span>
+                          }
+                        </span>
+                        <span
+                          class="pct-label"
+                          [class.completed-pct]="f.completionPercentage >= 100 && f.totalParts > 0">
+                          {{ f.completionPercentage }}%
+                        </span>
                       </div>
+                      <div class="progress-track">
+                        <div
+                          class="progress-fill"
+                          [class.completed-fill]="f.completionPercentage >= 100 && f.totalParts > 0"
+                          [class.universe-fill]="f.isUniverse && f.completionPercentage < 100"
+                          [style.width.%]="f.completionPercentage">
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card-footer-row">
+                      @if (f.completionPercentage >= 100 && f.totalParts > 0) {
+                        <div class="next-step-pill completed-pill">
+                          <ion-icon name="checkmark-circle"></ion-icon>
+                          <span>All Released Titles Watched</span>
+                        </div>
+                      } @else if (f.upNextPart) {
+                        <button
+                          type="button"
+                          class="next-step-pill resume-pill"
+                          (click)="onOpenUpNextPart($event, f)">
+                          <ion-icon name="play-outline"></ion-icon>
+                          <span class="next-text">
+                            {{ f.watchedCount > 0 ? 'Next:' : 'Start:' }} {{ f.upNextPart.title }}
+                          </span>
+                          <ion-icon name="arrow-forward-outline" class="next-arrow"></ion-icon>
+                        </button>
+                      } @else {
+                        <div class="next-step-pill open-pill">
+                          <span>Open Saga Timeline</span>
+                          <ion-icon name="arrow-forward-outline" class="next-arrow"></ion-icon>
+                        </div>
+                      }
                     </div>
                   </div>
                 </div>

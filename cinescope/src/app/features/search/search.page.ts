@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild, computed
 import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
   IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
@@ -43,6 +43,7 @@ export class SearchPage implements OnInit {
   private toastService = inject(ToastService);
   private navCtrl = inject(NavController);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
@@ -78,6 +79,23 @@ export class SearchPage implements OnInit {
 
   ngOnInit(): void {
     this.store.loadRecentSearches();
+    this.applyQueryParams();
+  }
+
+  public ionViewWillEnter(): void {
+    this.applyQueryParams();
+  }
+
+  private applyQueryParams(): void {
+    const qParams = this.route.snapshot.queryParams;
+    const filterParam = qParams['filter'] as SearchFilter | undefined;
+    if (filterParam && this.filterOptions.some((o) => o.id === filterParam)) {
+      this.store.setActiveFilter(filterParam);
+    }
+    const queryParam = typeof qParams['q'] === 'string' ? qParams['q'].trim() : '';
+    if (queryParam) {
+      this.store.searchQuery(queryParam);
+    }
   }
 
   public setFilter(filter: SearchFilter): void {
@@ -202,11 +220,14 @@ export class SearchPage implements OnInit {
         title,
         posterUrl: this.resolveImage(item.poster_path)
       };
+      const prevState = this.storageService.getBookmarkState(item.id, item.media_type);
       const nextState = await this.storageService.cycleBookmark(item.id, item.media_type, payload);
       if (nextState === 'watchlist') {
         await this.toastService.presentSuccess(`Added "${title}" to Watchlist`, 1800);
       } else if (nextState === 'watched') {
         await this.toastService.presentInfo(`Marked "${title}" as Watched`, 1800);
+      } else if (prevState === 'watchlist') {
+        await this.toastService.presentWarning(`Removed "${title}" from Watchlist (not released yet — cannot mark Watched)`, 2200);
       } else {
         await this.toastService.presentWarning(`Removed "${title}" from Archive`, 1800);
       }

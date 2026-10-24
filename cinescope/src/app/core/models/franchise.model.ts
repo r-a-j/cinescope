@@ -9,6 +9,7 @@ export interface FranchisePart {
   first_air_date?: string | undefined;
   vote_average?: number | undefined;
   vote_count?: number | undefined;
+  importance?: 'essential' | 'recommended' | 'optional' | undefined;
 }
 
 export interface FranchiseUniverseCanonItem {
@@ -32,10 +33,13 @@ export interface FranchiseCollectionSummary {
   poster_path?: string | null | undefined;
   backdrop_path?: string | null | undefined;
   totalParts: number;
+  releasedPartsCount?: number | undefined;
+  upcomingPartsCount?: number | undefined;
   collectedCount: number;
   watchedCount: number;
   watchlistCount: number;
   completionPercentage: number;
+  upNextPart?: FranchisePart | null | undefined;
   isUniverse?: boolean | undefined;
   universeId?: string | undefined;
   parentUniverseTitle?: string | undefined;

@@ -13,6 +13,100 @@ import { FranchiseCollectionSummary } from '../models/franchise.model';
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
 
+export interface MediaReleaseCheckResult {
+    isReleased: boolean;
+    releaseLabel: string;
+}
+
+/**
+ * Returns local calendar date in `YYYY-MM-DD` format (avoiding UTC day-shift bugs).
+ */
+export function getLocalTodayIso(): string {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Smart release-status checker that handles:
+ * - Full dates (`YYYY-MM-DD`), including tomorrow vs today within the same year
+ * - Year + Month (`YYYY-MM`)
+ * - Year-only (`2027` via `release_date`, `first_air_date`, `year`, or `releaseYear`)
+ * - Missing dates / TBA (`release_date: ""` or `status: "In Production" / "Planned" / "Rumored"`)
+ */
+export function checkMediaReleaseStatus(
+    payload?: Record<string, unknown> | null,
+    referenceDateIso?: string
+): MediaReleaseCheckResult {
+    if (!payload) {
+        return { isReleased: true, releaseLabel: '' };
+    }
+
+    const todayIso = referenceDateIso || getLocalTodayIso();
+    const currentYear = parseInt(todayIso.slice(0, 4), 10);
+    const currentYearMonth = todayIso.slice(0, 7);
+
+    const rawStatus = String(payload['status'] || '').trim();
+    const isUnreleasedStatus = /^(rumored|planned|in production|post production|upcoming|pilot)$/i.test(rawStatus);
+
+    const rawDate = String(
+        payload['release_date'] ??
+        payload['first_air_date'] ??
+        payload['releaseDate'] ??
+        payload['firstAirDate'] ??
+        ''
+    ).trim();
+
+    // 1. Full YYYY-MM-DD date (e.g. "2026-10-25" releasing tomorrow vs "2026-10-24" today)
+    const fullDateMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (fullDateMatch && fullDateMatch[1]) {
+        const datePart = fullDateMatch[1];
+        if (datePart > todayIso) {
+            return { isReleased: false, releaseLabel: datePart };
+        }
+        return { isReleased: true, releaseLabel: datePart };
+    }
+
+    // 2. Partial YYYY-MM date (e.g. "2026-12")
+    const ymMatch = rawDate.match(/^(\d{4}-\d{2})$/);
+    if (ymMatch && ymMatch[1]) {
+        const ymPart = ymMatch[1];
+        if (ymPart > currentYearMonth) {
+            return { isReleased: false, releaseLabel: ymPart };
+        }
+        return { isReleased: true, releaseLabel: ymPart };
+    }
+
+    // 3. Year-only (e.g. "2027" in rawDate or in year / releaseYear fields)
+    const rawYearField = payload['year'] ?? payload['releaseYear'] ?? payload['release_year'];
+    const yearCandidate = rawDate.match(/^(\d{4})$/)?.[1]
+        || (rawYearField !== undefined && rawYearField !== null ? String(rawYearField).trim() : '');
+    const yearMatch = yearCandidate.match(/^(\d{4})/);
+    if (yearMatch && yearMatch[1]) {
+        const yearNum = parseInt(yearMatch[1], 10);
+        if (yearNum > currentYear) {
+            return { isReleased: false, releaseLabel: String(yearNum) };
+        }
+        if (yearNum === currentYear && isUnreleasedStatus) {
+            return { isReleased: false, releaseLabel: `${rawStatus} (${yearNum})` };
+        }
+        return { isReleased: true, releaseLabel: String(yearNum) };
+    }
+
+    // 4. No date or year present at all
+    if (isUnreleasedStatus) {
+        return { isReleased: false, releaseLabel: rawStatus || 'TBA' };
+    }
+
+    if ('release_date' in payload || 'first_air_date' in payload || payload['isUpcoming'] === true) {
+        return { isReleased: false, releaseLabel: 'TBA' };
+    }
+
+    return { isReleased: true, releaseLabel: '' };
+}
+
 export interface CinescopeBackupPayload {
     version: number;
     appVersion?: string | undefined;
@@ -335,7 +429,16 @@ export class StorageService {
     }
 
     /**
-     * Cycles an item's bookmark state: 'none' -> 'watchlist' -> 'watched' -> 'none'.
+     * Verifies whether a media payload has already been released.
+     */
+    public checkReleaseStatus(payload?: TmdbPayload | null): MediaReleaseCheckResult {
+        return checkMediaReleaseStatus(payload);
+    }
+
+    /**
+     * Cycles an item's bookmark state:
+     * - For released titles: 'none' -> 'watchlist' -> 'watched' -> 'none'
+     * - For unreleased/future titles: 'none' -> 'watchlist' -> 'none' (cannot mark future titles as Watched)
      */
     public async cycleBookmark(
         tmdbId: number,
@@ -349,8 +452,13 @@ export class StorageService {
             await this.addToWatchlist(tmdbId, mediaType, payload);
             return 'watchlist';
         } else if (current === 'watchlist') {
-            await this.moveToWatched(tmdbId, mediaType);
-            return 'watched';
+            const moved = await this.moveToWatched(tmdbId, mediaType, payload);
+            if (moved) {
+                return 'watched';
+            }
+            // Title is unreleased (future date/year or TBA) — skip 'watched' and remove from Watchlist
+            await this.removeMedia(tmdbId, mediaType);
+            return 'none';
         } else {
             await this.removeMedia(tmdbId, mediaType);
             return 'none';
@@ -371,18 +479,33 @@ export class StorageService {
         });
     }
 
-    public async moveToWatched(tmdbId: number, mediaType: 'movie' | 'tv', payload?: TmdbPayload): Promise<void> {
+    /**
+     * Moves a title to the 'watched' list only if its release date/year is in the past or today.
+     * Returns `false` if the title has not been released yet.
+     */
+    public async moveToWatched(tmdbId: number, mediaType: 'movie' | 'tv', payload?: TmdbPayload): Promise<boolean> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
         const doc = await this.dbService.db.content.findOne(docId).exec();
+        const existingPayload = (doc?.toJSON() as ContentDocType | undefined)?.payload as TmdbPayload | undefined;
+        const effectivePayload = payload ? { ...(existingPayload || {}), ...payload } : existingPayload;
+
+        const releaseCheck = checkMediaReleaseStatus(effectivePayload);
+        if (!releaseCheck.isReleased) {
+            return false;
+        }
 
         if (doc) {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
                 docData.lists = ['watched']; // Overwrite lists to only be 'watched'
                 docData.watchedAt = new Date().toISOString();
+                if (effectivePayload) {
+                    docData.payload = effectivePayload;
+                }
                 return docData;
             });
-        } else if (payload) {
+            return true;
+        } else if (effectivePayload) {
             const now = new Date().toISOString();
             await this.dbService.db.content.upsert({
                 id: docId,
@@ -391,9 +514,11 @@ export class StorageService {
                 lists: ['watched'],
                 addedAt: now,
                 watchedAt: now,
-                payload
+                payload: effectivePayload
             });
+            return true;
         }
+        return false;
     }
 
     public async removeMedia(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): Promise<void> {
@@ -453,19 +578,30 @@ export class StorageService {
     }
 
     /**
-     * Moves a triaged item from Inbox to Watched.
+     * Moves a triaged item from Inbox to Watched (or to Watchlist if not yet released).
      */
-    public async moveInboxToWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+    public async moveInboxToWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<boolean> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
         const doc = await this.dbService.db.content.findOne(docId).exec();
         if (doc) {
+            const data = doc.toJSON() as ContentDocType;
+            const releaseCheck = checkMediaReleaseStatus(data.payload as TmdbPayload | undefined);
+            if (!releaseCheck.isReleased) {
+                await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                    d.lists = ['watchlist'];
+                    return d;
+                });
+                return false;
+            }
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                 d.lists = ['watched'];
                 d.watchedAt = new Date().toISOString();
                 return d;
             });
+            return true;
         }
+        return false;
     }
 
     /**
@@ -742,13 +878,18 @@ export class StorageService {
             selector: { id: { $in: docIds } }
         }).exec();
 
-        const promises: Promise<unknown>[] = docs.map((doc) =>
-            doc.incrementalModify((docData: ContentDocType): ContentDocType => {
-                docData.lists = ['watched'];
-                docData.watchedAt = new Date().toISOString();
-                return docData;
+        const promises: Promise<unknown>[] = docs
+            .filter((doc) => {
+                const d = doc.toJSON() as ContentDocType;
+                return checkMediaReleaseStatus(d.payload as TmdbPayload | undefined).isReleased;
             })
-        );
+            .map((doc) =>
+                doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                    docData.lists = ['watched'];
+                    docData.watchedAt = new Date().toISOString();
+                    return docData;
+                })
+            );
 
         await Promise.all(promises);
     }

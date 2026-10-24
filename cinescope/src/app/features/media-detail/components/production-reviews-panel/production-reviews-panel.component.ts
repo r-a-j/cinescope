@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { star, openOutline, chatbubblesOutline } from 'ionicons/icons';
+import { star, openOutline, chatbubblesOutline, sparkles, albumsOutline, chevronForwardOutline } from 'ionicons/icons';
 import { TmdbBelongsToCollectionDto } from '../../../../core/dtos/movies/movie-detail.dto';
 import { TmdbKeywordDto } from '../../../../core/dtos/keywords/keyword.dto';
 import { TmdbReviewDto } from '../../../../core/dtos/reviews/review.dto';
 import { ExternalLinkVm } from '../../media-detail.page';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
+import { FranchiseAggregatorService } from '../../../../core/services/franchise-aggregator.service';
+import { FranchiseCollectionSummary } from '../../../../core/models/franchise.model';
 
 @Component({
   selector: 'app-production-reviews-panel',
@@ -20,6 +22,8 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 })
 export class ProductionReviewsPanelComponent {
   private router = inject(Router);
+  private franchiseAggregator = inject(FranchiseAggregatorService);
+  public mediaId = input<number>(0);
   public collection = input<TmdbBelongsToCollectionDto | null>(null);
   public productionFacts = input.required<{ label: string; value: string }[]>();
   public keywords = input.required<TmdbKeywordDto[]>();
@@ -30,6 +34,17 @@ export class ProductionReviewsPanelComponent {
   public imdbId = input<string | null>(null);
 
   public expandedReviewIds = signal<Record<string, boolean>>({});
+
+  /**
+   * Resolves if this Movie or TV Series belongs to an active Universe or Franchise in the user's library.
+   */
+  public activeFranchiseSummary = computed<FranchiseCollectionSummary | null>(() => {
+    const id = this.mediaId();
+    const type = this.mediaType();
+    const colId = this.collection()?.id ?? null;
+    if (!id && !colId) return null;
+    return this.franchiseAggregator.findFranchiseForMedia(id, type, colId);
+  });
 
   public imdbReviewUrl = computed<string | null>(() => {
     const id = this.imdbId();
@@ -50,7 +65,7 @@ export class ProductionReviewsPanelComponent {
   });
 
   constructor() {
-    addIcons({ star, openOutline, chatbubblesOutline });
+    addIcons({ star, openOutline, chatbubblesOutline, sparkles, albumsOutline, chevronForwardOutline });
   }
 
   public toggleReviewExpand(reviewId: string): void {
@@ -64,7 +79,7 @@ export class ProductionReviewsPanelComponent {
     return resolveMediaImageUrl(path, 'w780');
   }
 
-  public onCollectionClick(col: TmdbBelongsToCollectionDto): void {
+  public onCollectionClick(col: TmdbBelongsToCollectionDto | FranchiseCollectionSummary): void {
     if (!col || !col.id) return;
     void this.router.navigate(['/collection', col.id], {
       state: {

@@ -1,15 +1,6 @@
 <ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll()" class="collection-content">
   <div class="collection-shell">
-    
-    <!-- Hero Backdrop Banner (High-Res with Obsidian Gradient) -->
-    @if (collectionBackdrop()) {
-      <div class="collection-hero-backdrop" [class.has-backdrop]="!!collectionBackdrop()">
-        <img [src]="collectionBackdrop()!" [alt]="collectionTitle()" class="backdrop-img">
-        <div class="backdrop-gradient-overlay"></div>
-      </div>
-    }
-
-    <!-- Top Navigation Header with Back and Home Buttons -->
+    <!-- Top Navigation Header with Back and Home Buttons (Sticky at very top) -->
     <header class="collection-topbar" [class.overlay-topbar]="!!collectionBackdrop()">
       <div class="topbar-actions">
         <button type="button" class="back-btn" aria-label="Go Back" (click)="goBack()">
@@ -23,173 +14,234 @@
 
       <div class="topbar-titles">
         <span class="topbar-kicker">
-          {{ isUniverseCollection() ? 'UNIVERSE' : (isFranchiseCollection() ? 'FRANCHISE COLLECTION' : 'COLLECTION') }} • {{ displayedCards().length }} OF {{ rawItems().length }} TITLES
+          {{ isUniverseCollection() ? 'UNIVERSE' : (isFranchiseCollection() ? 'FRANCHISE SAGA' : 'COLLECTION') }} • {{ displayedCards().length }} OF {{ rawItems().length }} TITLES
         </span>
         <h1 class="topbar-heading">{{ collectionTitle() }}</h1>
       </div>
     </header>
 
+    <!-- Hero Backdrop Banner (Atmospheric Stage with Smooth Fade) -->
+    @if (collectionBackdrop()) {
+      <div class="collection-hero-backdrop" [class.has-backdrop]="!!collectionBackdrop()">
+        <img [src]="collectionBackdrop()!" [alt]="collectionTitle()" class="backdrop-img">
+        <div class="backdrop-gradient-overlay"></div>
+      </div>
+    }
+
     <!-- Franchise & Universe Progress Dashboard -->
     @if (isFranchiseCollection() && completionMetrics()) {
-      <div class="franchise-header-section">
+      <div class="franchise-header-section" [class.over-hero]="!!collectionBackdrop()">
         @if (collectionOverview()) {
           <p class="collection-description">{{ collectionOverview() }}</p>
         }
 
-        <div class="franchise-progress-card">
-          <div class="progress-info">
-            <span class="progress-stats">
-              {{ completionMetrics()!.watched }} of {{ completionMetrics()!.total }} watched ({{ completionMetrics()!.percentage }}%)
-            </span>
-            <span class="watchlist-badge">
-              <ion-icon name="bookmark"></ion-icon>
-              {{ completionMetrics()!.watchlist }} Watchlist
-            </span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" [style.width.%]="completionMetrics()!.percentage"></div>
-          </div>
-        </div>
-
+        <!-- Compact Horizontal Action Strip -->
         <div class="franchise-actions-bar">
-          @if (numericCollectionId() && !isUniverseCollection()) {
-            <button
-              type="button"
-              class="discover-universe-btn"
-              [disabled]="isAnalyzingUniverse()"
-              (click)="triggerDiscoverUniverse()">
-              @if (isAnalyzingUniverse()) {
-                <ion-spinner name="crescent"></ion-spinner>
-                <span>Reasoning Universe with AI...</span>
-              } @else {
-                <ion-icon name="sparkles"></ion-icon>
-                <span>Discover Universe with AI</span>
-              }
-            </button>
-          }
-
           <button
             type="button"
             class="save-franchise-btn"
             [class.saved]="isCurrentFranchiseSaved()"
             (click)="toggleSaveCurrentFranchise()">
-            <ion-icon [name]="isCurrentFranchiseSaved() ? 'bookmark' : 'bookmark-outline'"></ion-icon>
-            <span>{{ isCurrentFranchiseSaved() ? 'Franchise Saved' : 'Save Franchise' }}</span>
+            <ion-icon [name]="isCurrentFranchiseSaved() ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+            <span>{{ isCurrentFranchiseSaved() ? 'Tracking' : 'Track Saga' }}</span>
           </button>
-        </div>
-      </div>
-    }
 
-    <!-- Controls: Dual-Axis Filtering for Franchises -->
-    @if (isFranchiseCollection() && rawItems().length > 1) {
-      <div class="collection-controls franchise-controls">
-        <!-- Row 1: Media Type Filter (For mixed movie/tv universes) -->
-        @if (mediaTypeCounts().tv > 0) {
-          <div class="control-row">
-            <span class="control-label">MEDIA</span>
-            <div class="chips-track">
+          @if (isUniverseCollection()) {
+            <button
+              type="button"
+              class="discover-universe-btn"
+              [disabled]="isSyncingUniverse()"
+              (click)="syncUniverseCanon(false)">
+              @if (isSyncingUniverse()) {
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Syncing Canon...</span>
+              } @else {
+                <ion-icon name="sync-outline"></ion-icon>
+                <span>Sync Canon</span>
+              }
+            </button>
+          }
+
+          @if (numericCollectionId() && !isUniverseCollection()) {
+            @if (existingParentUniverse(); as parentUni) {
               <button
                 type="button"
-                class="control-chip filter-chip"
-                [class.active]="mediaTypeFilter() === 'all'"
-                (click)="setMediaTypeFilter('all')">
-                All ({{ mediaTypeCounts().all }})
+                class="discover-universe-btn"
+                (click)="openExistingUniverse(parentUni)">
+                <ion-icon name="sparkles"></ion-icon>
+                <span>{{ parentUni.name }}</span>
               </button>
+            } @else {
               <button
                 type="button"
-                class="control-chip filter-chip"
-                [class.active]="mediaTypeFilter() === 'movie'"
-                (click)="setMediaTypeFilter('movie')">
-                Movies ({{ mediaTypeCounts().movies }})
+                class="discover-universe-btn"
+                [disabled]="isAnalyzingUniverse()"
+                (click)="triggerDiscoverUniverse()">
+                @if (isAnalyzingUniverse()) {
+                  <ion-spinner name="crescent"></ion-spinner>
+                  <span>Analyzing...</span>
+                } @else {
+                  <ion-icon name="sparkles"></ion-icon>
+                  <span>AI Universe</span>
+                }
               </button>
+            }
+          }
+
+          @if (completionMetrics()!.percentage < 100 && completionMetrics()!.total > 1) {
+            <button
+              type="button"
+              class="mark-all-watched-btn"
+              (click)="markAllReleasedAsWatched()">
+              <ion-icon name="checkmark-done-outline"></ion-icon>
+              <span>Mark All</span>
+            </button>
+          }
+        </div>
+
+        <div class="franchise-progress-card">
+          <div class="progress-info">
+            <div class="progress-left">
+              <span class="progress-stats">
+                {{ completionMetrics()!.watched }} of {{ completionMetrics()!.total }} Watched
+              </span>
+              <span class="progress-pct-pill">{{ completionMetrics()!.percentage }}%</span>
+              @if (completionMetrics()!.upcomingCount > 0) {
+                <span class="upcoming-count-tag">+{{ completionMetrics()!.upcomingCount }} Upcoming</span>
+              }
+            </div>
+            @if (completionMetrics()!.watchlist > 0) {
+              <span class="watchlist-badge">
+                <ion-icon name="bookmark"></ion-icon>
+                {{ completionMetrics()!.watchlist }}
+              </span>
+            }
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="completionMetrics()!.percentage"></div>
+          </div>
+
+          @if (completionMetrics()!.upNextItem; as upNext) {
+            <div
+              class="up-next-banner"
+              tabindex="0"
+              role="button"
+              (click)="onCardClick(upNext)"
+              (keyup.enter)="onCardClick(upNext)">
+              <img
+                [src]="upNext.posterUrl || 'assets/placeholders/placeholder.webp'"
+                [alt]="upNext.title"
+                class="up-next-thumb"
+                loading="lazy" />
+              <div class="up-next-meta">
+                <span class="up-next-kicker">
+                  <ion-icon name="play-forward-outline"></ion-icon>
+                  UP NEXT IN SAGA
+                </span>
+                <span class="up-next-title">
+                  {{ upNext.title }}{{ completionMetrics()!.upNextYear ? ' (' + completionMetrics()!.upNextYear + ')' : '' }}
+                </span>
+              </div>
               <button
                 type="button"
-                class="control-chip filter-chip"
-                [class.active]="mediaTypeFilter() === 'tv'"
-                (click)="setMediaTypeFilter('tv')">
-                TV Shows ({{ mediaTypeCounts().tv }})
+                class="up-next-watched-btn"
+                title="Mark as Watched"
+                (click)="markUpNextAsWatched($event, upNext)">
+                <ion-icon name="checkmark-circle"></ion-icon>
+                <span>Watched</span>
               </button>
+            </div>
+          }
+        </div>
+
+        @if (isUniverseCollection() && franchiseSummary()?.siblingFranchises?.length) {
+          <div class="sibling-sagas-bar">
+            <span class="sibling-label">SAGAS</span>
+            <div class="sibling-chips-track">
+              @for (sib of franchiseSummary()!.siblingFranchises!; track sib.id) {
+                <button
+                  type="button"
+                  class="sibling-chip"
+                  (click)="onSiblingFranchiseClick(sib)">
+                  <ion-icon name="albums-outline"></ion-icon>
+                  <span>{{ sib.name }}</span>
+                </button>
+              }
             </div>
           </div>
         }
+      </div>
+    }
 
-        <!-- Row 2: Library Status Filter -->
-        <div class="control-row">
-          <span class="control-label">STATUS</span>
-          <div class="chips-track">
-            @if (hasActiveFilters()) {
-              <button
-                type="button"
-                class="control-chip reset-chip"
-                (click)="resetFilters()">
-                Reset
-              </button>
-            }
+    <!-- Controls: Streamlined Single-Row Toolbar for Franchises -->
+    @if (isFranchiseCollection() && rawItems().length > 1) {
+      <div class="franchise-toolbar">
+        <div class="toolbar-chips-scroll">
+          @if (hasActiveFilters()) {
             <button
               type="button"
-              class="control-chip filter-chip"
-              [class.active]="libraryFilter() === 'all'"
-              (click)="setLibraryFilter('all')">
-              All ({{ libraryCounts().all }})
+              class="toolbar-chip reset-chip"
+              (click)="resetFilters()">
+              Reset
             </button>
+          }
+          <button
+            type="button"
+            class="toolbar-chip"
+            [class.active]="libraryFilter() === 'all' && mediaTypeFilter() === 'all'"
+            (click)="setLibraryFilter('all'); setMediaTypeFilter('all')">
+            All <span>{{ libraryCounts().all }}</span>
+          </button>
+          <button
+            type="button"
+            class="toolbar-chip"
+            [class.active]="libraryFilter() === 'unwatched'"
+            (click)="setLibraryFilter('unwatched')">
+            Unwatched <span>{{ libraryCounts().unwatched }}</span>
+          </button>
+          <button
+            type="button"
+            class="toolbar-chip"
+            [class.active]="libraryFilter() === 'watched'"
+            (click)="setLibraryFilter('watched')">
+            Watched <span>{{ libraryCounts().watched }}</span>
+          </button>
+          @if (libraryCounts().watchlist > 0) {
             <button
               type="button"
-              class="control-chip filter-chip"
-              [class.active]="libraryFilter() === 'watched'"
-              (click)="setLibraryFilter('watched')">
-              Watched ({{ libraryCounts().watched }})
-            </button>
-            <button
-              type="button"
-              class="control-chip filter-chip"
+              class="toolbar-chip"
               [class.active]="libraryFilter() === 'watchlist'"
               (click)="setLibraryFilter('watchlist')">
-              Watchlist ({{ libraryCounts().watchlist }})
+              Watchlist <span>{{ libraryCounts().watchlist }}</span>
+            </button>
+          }
+          @if (mediaTypeCounts().tv > 0) {
+            <span class="toolbar-divider"></span>
+            <button
+              type="button"
+              class="toolbar-chip"
+              [class.active]="mediaTypeFilter() === 'movie'"
+              (click)="setMediaTypeFilter(mediaTypeFilter() === 'movie' ? 'all' : 'movie')">
+              Movies <span>{{ mediaTypeCounts().movies }}</span>
             </button>
             <button
               type="button"
-              class="control-chip filter-chip"
-              [class.active]="libraryFilter() === 'unwatched'"
-              (click)="setLibraryFilter('unwatched')">
-              Unwatched ({{ libraryCounts().unwatched }})
+              class="toolbar-chip"
+              [class.active]="mediaTypeFilter() === 'tv'"
+              (click)="setMediaTypeFilter(mediaTypeFilter() === 'tv' ? 'all' : 'tv')">
+              TV <span>{{ mediaTypeCounts().tv }}</span>
             </button>
-          </div>
+          }
         </div>
 
-        <!-- Row 3: Sort Order -->
-        <div class="control-row">
-          <span class="control-label">SORT</span>
-          <div class="chips-track">
-            <button
-              type="button"
-              class="control-chip sort-chip"
-              [class.active]="sortMode() === 'featured'"
-              (click)="setSortMode('featured')">
-              Chronological
-            </button>
-            <button
-              type="button"
-              class="control-chip sort-chip"
-              [class.active]="sortMode() === 'newest'"
-              (click)="setSortMode('newest')">
-              Newest
-            </button>
-            <button
-              type="button"
-              class="control-chip sort-chip"
-              [class.active]="sortMode() === 'rating'"
-              (click)="setSortMode('rating')">
-              Top Rated
-            </button>
-            <button
-              type="button"
-              class="control-chip sort-chip"
-              [class.active]="sortMode() === 'alpha'"
-              (click)="setSortMode('alpha')">
-              A–Z
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          class="toolbar-sort-btn"
+          title="Cycle Sort Order"
+          (click)="cycleSortMode()">
+          <ion-icon name="swap-vertical-outline"></ion-icon>
+          <span>{{ activeSortLabel() }}</span>
+        </button>
       </div>
     }
 
@@ -315,8 +367,25 @@
     @if (displayedCards().length > 0) {
       <div class="collection-grid">
         @for (card of displayedCards(); track (card.item.mediaType ? card.item.mediaType + '-' + card.item.id : card.item.id); let idx = $index) {
-          <div class="collection-card" [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
+          <div
+            class="collection-card"
+            [class.is-up-next-card]="card.isUpNext"
+            [class.is-watched-card]="card.isWatched"
+            [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
             <div class="poster-wrap">
+              @if (card.chronologicalOrder) {
+                <div
+                  class="step-order-badge"
+                  [class.step-up-next]="card.isUpNext"
+                  [class.step-watched]="card.isWatched">
+                  <span>#{{ card.chronologicalOrder }}</span>
+                  @if (card.isUpNext) {
+                    <span class="step-tag">NEXT</span>
+                  } @else if (card.isWatched) {
+                    <ion-icon name="checkmark-sharp"></ion-icon>
+                  }
+                </div>
+              }
               <app-poster-card
                 [title]="card.item.title"
                 [imageUrl]="card.item.posterUrl || 'assets/placeholders/placeholder.webp'"
@@ -326,7 +395,12 @@
                 (cardClick)="onCardClick(card.item)"
                 (bookmarkToggle)="onToggleBookmark(card.item)">
               </app-poster-card>
-              @if (card.ratingValue > 0) {
+              @if (card.isUpcoming) {
+                <div class="upcoming-pill">
+                  <ion-icon name="time-outline"></ion-icon>
+                  UPCOMING
+                </div>
+              } @else if (card.ratingValue > 0) {
                 <div class="rating-pill">
                   <ion-icon name="star"></ion-icon>
                   {{ card.ratingValue.toFixed(1) }}
