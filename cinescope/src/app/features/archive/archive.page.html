@@ -50,21 +50,21 @@
           class="filter-chip"
           [class.active]="franchiseFilter() === 'all'"
           (click)="setFranchiseFilter('all')">
-          All ({{ franchiseCounts().all }})
+          All <span>{{ franchiseCounts().all }}</span>
         </button>
         <button
           type="button"
           class="filter-chip"
           [class.active]="franchiseFilter() === 'in_progress'"
           (click)="setFranchiseFilter('in_progress')">
-          In Progress ({{ franchiseCounts().inProgress }})
+          Active <span>{{ franchiseCounts().inProgress }}</span>
         </button>
         <button
           type="button"
           class="filter-chip"
           [class.active]="franchiseFilter() === 'completed'"
           (click)="setFranchiseFilter('completed')">
-          Completed ({{ franchiseCounts().completed }})
+          Done <span>{{ franchiseCounts().completed }}</span>
         </button>
         @if (franchiseCounts().universes > 0) {
           <button
@@ -72,16 +72,9 @@
             class="filter-chip"
             [class.active]="franchiseFilter() === 'universes'"
             (click)="setFranchiseFilter('universes')">
-            Universes ({{ franchiseCounts().universes }})
+            Universes <span>{{ franchiseCounts().universes }}</span>
           </button>
         }
-        <button
-          type="button"
-          class="filter-chip discover-chip"
-          (click)="goToDiscoverFranchises()">
-          <ion-icon name="search-outline"></ion-icon>
-          <span>Find Saga</span>
-        </button>
       </div>
     }
 
