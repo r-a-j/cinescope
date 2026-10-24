@@ -453,12 +453,25 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const isUniverseId = idParam.startsWith('universe_') || isNaN(Number(idParam));
 
       if (isUniverseId) {
-        // Find in saved universes RxDB
+        // Find in saved universes RxDB (normalize prefix and prefer most complete canon if legacy duplicate exists)
+        const cleanParamKey = idParam.replace(/^(universe_)+/, '');
         const saved = this.storageService.savedUniverses();
-        const found = saved.find((d) => {
+        const matches = saved.filter((d) => {
           const p = d.payload as unknown as FranchiseCollectionSummary | undefined;
-          return d.id === idParam || d.id === `universe_${idParam}` || p?.universeId === idParam || String(d.tmdbId) === idParam;
+          const docClean = d.id.replace(/^(universe_)+/, '');
+          const pUniClean = String(p?.universeId || p?.id || '').replace(/^(universe_)+/, '');
+          return (
+            docClean === cleanParamKey ||
+            pUniClean === cleanParamKey ||
+            d.id === idParam ||
+            String(d.tmdbId) === idParam
+          );
         });
+        const found = matches.sort((a, b) => {
+          const pA = a.payload as unknown as FranchiseCollectionSummary | undefined;
+          const pB = b.payload as unknown as FranchiseCollectionSummary | undefined;
+          return (pB?.parts?.length || 0) - (pA?.parts?.length || 0);
+        })[0];
 
         if (found) {
           const uni = found.payload as unknown as FranchiseCollectionSummary;
@@ -1203,7 +1216,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
         canonExpandedV2: true
       };
 
-      await this.storageService.saveUniverse(universeId, universeSummary);
+      await this.franchiseAggregator.trackFranchise(universeId, universeSummary);
 
       this.showUniverseModal.set(false);
       await this.toastService.presentSuccess(

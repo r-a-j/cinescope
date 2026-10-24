@@ -52,6 +52,10 @@ export class FranchiseAggregatorService {
     });
   }
 
+  private normalizeFranchiseKey(id: number | string): string {
+    return String(id).replace(/^(universe_|franchise_)+/, '');
+  }
+
   /**
    * Checks whether a franchise or universe is currently tracked in the user's Franchises Hub
    * (either via collected movies or explicit tracking, and not dismissed).
@@ -59,10 +63,16 @@ export class FranchiseAggregatorService {
   public isFranchiseTracked(id: number | string): boolean {
     this.cacheRevision(); // Ensure signal consumers track dismissal/tracking updates
     const idStr = String(id);
-    if (this.dismissedIds.has(idStr)) return false;
+    const cleanKey = this.normalizeFranchiseKey(id);
+    if (this.dismissedIds.has(idStr) || this.dismissedIds.has(cleanKey) || this.dismissedIds.has(`universe_${cleanKey}`)) {
+      return false;
+    }
     if (this.storage.isFranchiseSaved(id)) return true;
     return this.activeUserFranchises().some(
-      (f) => String(f.id) === idStr || String(f.universeId) === idStr
+      (f) =>
+        String(f.id) === idStr ||
+        String(f.universeId) === idStr ||
+        this.normalizeFranchiseKey(f.id) === cleanKey
     );
   }
 
@@ -71,12 +81,16 @@ export class FranchiseAggregatorService {
    */
   public async trackFranchise(id: number | string, summary: FranchiseCollectionSummary): Promise<void> {
     const idStr = String(id);
-    if (this.dismissedIds.has(idStr)) {
-      this.dismissedIds.delete(idStr);
+    const cleanKey = this.normalizeFranchiseKey(id);
+    const removed =
+      this.dismissedIds.delete(idStr) ||
+      this.dismissedIds.delete(cleanKey) ||
+      this.dismissedIds.delete(`universe_${cleanKey}`);
+    if (removed) {
       this.persistDismissedIds();
     }
     if (summary.isUniverse) {
-      await this.storage.saveUniverse(idStr, summary);
+      await this.storage.saveUniverse(cleanKey, summary);
     } else {
       await this.storage.saveFranchise(id, summary);
     }
@@ -89,11 +103,16 @@ export class FranchiseAggregatorService {
    */
   public async untrackFranchise(id: number | string, isUniverse = false): Promise<void> {
     const idStr = String(id);
+    const cleanKey = this.normalizeFranchiseKey(id);
     this.dismissedIds.add(idStr);
+    this.dismissedIds.add(cleanKey);
+    if (isUniverse) {
+      this.dismissedIds.add(`universe_${cleanKey}`);
+    }
     this.persistDismissedIds();
 
     if (isUniverse) {
-      await this.storage.removeUniverse(id);
+      await this.storage.removeUniverse(cleanKey);
     } else {
       await this.storage.removeFranchise(id);
     }
@@ -316,6 +335,7 @@ export class FranchiseAggregatorService {
     const summaries: FranchiseCollectionSummary[] = [];
     const subsumedCollectionIds = new Set<number>();
     const universeMediaKeys = new Set<string>();
+    const seenUniverseKeys = new Map<string, number>(); // cleanKey -> index in summaries
 
     // 1. Process AI-Ascended Universes & Directly Saved Franchises from RxDB first
     for (const uniDoc of savedUniverses) {
@@ -358,7 +378,12 @@ export class FranchiseAggregatorService {
       }
 
       // True AI-Ascended Shared Universe
-      const universeId = uniPayload.universeId || String(uniPayload.id || uniDoc.id);
+      const rawUniId = uniPayload.universeId || String(uniPayload.id || uniDoc.id);
+      const cleanUniKey = this.normalizeFranchiseKey(rawUniId);
+      const universeId = `universe_${cleanUniKey}`;
+      if (this.dismissedIds.has(cleanUniKey) || this.dismissedIds.has(universeId)) {
+        continue;
+      }
       const canonParts = uniPayload.parts || [];
 
       // Track sibling franchises and media keys so redundant sub-collections are subsumed cleanly
@@ -383,7 +408,7 @@ export class FranchiseAggregatorService {
       const fallbackPoster = uniPayload.poster_path || canonParts.find((p) => p.poster_path)?.poster_path || null;
       const fallbackBackdrop = uniPayload.backdrop_path || canonParts.find((p) => p.backdrop_path)?.backdrop_path || null;
 
-      summaries.push({
+      const summaryObj: FranchiseCollectionSummary = {
         id: universeId,
         name: uniPayload.name,
         overview: uniPayload.overview,
@@ -403,7 +428,18 @@ export class FranchiseAggregatorService {
         connectionInsight: uniPayload.connectionInsight,
         parts: canonParts,
         siblingFranchises: uniPayload.siblingFranchises
-      });
+      };
+
+      const existingIdx = seenUniverseKeys.get(cleanUniKey);
+      if (existingIdx !== undefined) {
+        const prev = summaries[existingIdx];
+        if (prev && (summaryObj.parts?.length || 0) > (prev.parts?.length || 0)) {
+          summaries[existingIdx] = summaryObj;
+        }
+      } else {
+        seenUniverseKeys.set(cleanUniKey, summaries.length);
+        summaries.push(summaryObj);
+      }
     }
 
     // 2. Process Movie Collections

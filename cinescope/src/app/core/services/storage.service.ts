@@ -626,13 +626,22 @@ export class StorageService {
 
     /**
      * Persists an AI-ascended universe in RxDB content collection.
+     * Normalizes leading `universe_` prefixes to prevent duplicate `universe_universe_*` documents.
      */
     public async saveUniverse(universeId: string | number, payload: FranchiseCollectionSummary): Promise<void> {
         this.initReactiveStreams();
-        const docId = `universe_${universeId}`;
+        const cleanKey = String(universeId).replace(/^(universe_)+/, '');
+        const canonicalUniverseId = `universe_${cleanKey}`;
+        const docId = canonicalUniverseId;
         const numericTmdbId = typeof universeId === 'number'
             ? universeId
-            : this.hashString(universeId.toString());
+            : this.hashString(canonicalUniverseId);
+
+        const normalizedPayload: FranchiseCollectionSummary = {
+            ...payload,
+            id: canonicalUniverseId,
+            universeId: canonicalUniverseId
+        };
 
         await this.dbService.db.content.upsert({
             id: docId,
@@ -640,8 +649,15 @@ export class StorageService {
             mediaType: 'movie',
             lists: ['universe', 'franchise'],
             addedAt: new Date().toISOString(),
-            payload: payload as unknown as TmdbPayload
+            payload: normalizedPayload as unknown as TmdbPayload
         });
+
+        // Clean up any legacy double-prefixed document (`universe_universe_*`) if present
+        const legacyDuplicateId = `universe_universe_${cleanKey}`;
+        const legacyDoc = await this.dbService.db.content.findOne(legacyDuplicateId).exec();
+        if (legacyDoc) {
+            await legacyDoc.remove();
+        }
     }
 
     /**
@@ -649,18 +665,26 @@ export class StorageService {
      */
     public async removeUniverse(universeId: string | number): Promise<void> {
         this.initReactiveStreams();
-        const docId = `universe_${universeId}`;
-        const doc = await this.dbService.db.content.findOne(docId).exec();
-        if (doc) {
-            await doc.remove();
-            return;
+        const cleanKey = String(universeId).replace(/^(universe_)+/, '');
+        const candidateIds = [`universe_${cleanKey}`, `universe_universe_${cleanKey}`, String(universeId)];
+        for (const cid of candidateIds) {
+            const doc = await this.dbService.db.content.findOne(cid).exec();
+            if (doc) {
+                await doc.remove();
+            }
         }
         const all = await this.dbService.db.content.find({
             selector: { lists: { $in: ['universe'] } }
         }).exec();
         for (const d of all) {
             const p = d.payload as Record<string, unknown> | undefined;
-            if (p?.['id'] === universeId || p?.['universeId'] === universeId || String(d.tmdbId) === String(universeId)) {
+            const pIdClean = String(p?.['id'] || '').replace(/^(universe_)+/, '');
+            const pUniClean = String(p?.['universeId'] || '').replace(/^(universe_)+/, '');
+            if (
+                pIdClean === cleanKey ||
+                pUniClean === cleanKey ||
+                String(d.tmdbId) === String(universeId)
+            ) {
                 await d.remove();
             }
         }
@@ -671,10 +695,11 @@ export class StorageService {
      */
     public async saveFranchise(collectionId: number | string, payload: FranchiseCollectionSummary): Promise<void> {
         this.initReactiveStreams();
-        const docId = `franchise_${collectionId}`;
+        const cleanKey = String(collectionId).replace(/^(franchise_)+/, '');
+        const docId = `franchise_${cleanKey}`;
         const numericTmdbId = typeof collectionId === 'number'
             ? collectionId
-            : this.hashString(collectionId.toString());
+            : (Number(cleanKey) || this.hashString(cleanKey));
 
         await this.dbService.db.content.upsert({
             id: docId,
@@ -691,7 +716,8 @@ export class StorageService {
      */
     public async removeFranchise(collectionId: number | string): Promise<void> {
         this.initReactiveStreams();
-        const docId = `franchise_${collectionId}`;
+        const cleanKey = String(collectionId).replace(/^(franchise_)+/, '');
+        const docId = `franchise_${cleanKey}`;
         const doc = await this.dbService.db.content.findOne(docId).exec();
         if (doc) {
             await doc.remove();
@@ -702,7 +728,11 @@ export class StorageService {
         }).exec();
         for (const d of all) {
             const p = d.payload as Record<string, unknown> | undefined;
-            if (p?.['id'] === collectionId || String(d.tmdbId) === String(collectionId)) {
+            if (
+                String(p?.['id']) === cleanKey ||
+                String(p?.['id']) === String(collectionId) ||
+                String(d.tmdbId) === cleanKey
+            ) {
                 await d.remove();
             }
         }
@@ -713,12 +743,17 @@ export class StorageService {
      */
     public isFranchiseSaved(collectionId: number | string): boolean {
         const idStr = String(collectionId);
+        const cleanKey = idStr.replace(/^(universe_|franchise_)+/, '');
         return this.savedUniverses().some((doc) => {
             const p = doc.payload as Record<string, unknown> | undefined;
-            return doc.id === `franchise_${collectionId}` ||
-                   doc.id === `universe_${collectionId}` ||
+            const pIdClean = String(p?.['id'] || '').replace(/^(universe_|franchise_)+/, '');
+            const pUniClean = String(p?.['universeId'] || '').replace(/^(universe_|franchise_)+/, '');
+            return doc.id === `franchise_${cleanKey}` ||
+                   doc.id === `universe_${cleanKey}` ||
+                   doc.id === `universe_universe_${cleanKey}` ||
                    String(doc.tmdbId) === idStr ||
-                   String(p?.['id']) === idStr;
+                   pIdClean === cleanKey ||
+                   pUniClean === cleanKey;
         });
     }
 
@@ -741,6 +776,7 @@ export class StorageService {
 
     /**
      * Bulk moves multiple inbox items into Watchlist or Watched.
+     * Unreleased items cannot be moved to Watched and are routed to Watchlist instead.
      */
     public async bulkMoveInbox(
         items: { tmdbId: number; mediaType: 'movie' | 'tv' }[],
@@ -752,9 +788,14 @@ export class StorageService {
             const docId = this.generateId(item.tmdbId, item.mediaType);
             const doc = await this.dbService.db.content.findOne(docId).exec();
             if (doc) {
+                const currentData = doc.toJSON() as ContentDocType;
+                const isReleased = checkMediaReleaseStatus(currentData.payload as TmdbPayload | undefined).isReleased;
+                const effectiveList: 'watchlist' | 'watched' =
+                    targetList === 'watched' && !isReleased ? 'watchlist' : targetList;
+
                 await doc.incrementalModify((d: ContentDocType): ContentDocType => {
-                    d.lists = [targetList];
-                    if (targetList === 'watched') {
+                    d.lists = [effectiveList];
+                    if (effectiveList === 'watched') {
                         d.watchedAt = now;
                     }
                     return d;
