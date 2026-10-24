@@ -5,6 +5,7 @@ import { TmdbDiscoverService } from './tmdb-discover.service';
 import { TmdbMoviesService } from './tmdb-movies.service';
 import { TmdbTvService } from './tmdb-tv.service';
 import { TmdbPeopleService } from './tmdb-people.service';
+import { TmdbCollectionsService } from './tmdb-collections.service';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { TmdbMovieListItemDto } from '../dtos/movies/movie-list-item.dto';
@@ -157,6 +158,7 @@ export class CollectionLoaderService {
   private moviesService = inject(TmdbMoviesService);
   private tvService = inject(TmdbTvService);
   private peopleService = inject(TmdbPeopleService);
+  private collectionsService = inject(TmdbCollectionsService);
 
   public isServerSortable(title: string, context?: CollectionQueryContext): boolean {
     if (context?.type === 'person_credits') return true;
@@ -198,6 +200,26 @@ export class CollectionLoaderService {
       applyFiltersToMovieParams(movieParams, filters);
       const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
       return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+    }
+
+    // Franchise Collection Handler
+    if (context?.type === 'collection' && context.id) {
+      const details = await firstValueFrom(this.collectionsService.getCollectionDetails(context.id));
+      const parts = details.parts || [];
+      const items: SwimlaneItem[] = parts.map((p) => ({
+        id: p.id,
+        mediaType: 'movie',
+        title: p.title,
+        posterUrl: resolveMediaImageUrl(p.poster_path, 'w500'),
+        bookmarkState: 'none',
+        payload: {
+          ...p,
+          collection_backdrop_path: details.backdrop_path,
+          collection_overview: details.overview,
+          collection_name: details.name
+        }
+      }));
+      return { items, hasMore: false };
     }
 
     // Context-driven (Recommendations / Similar on Media Detail)
