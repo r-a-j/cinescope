@@ -8,6 +8,7 @@ import { SearchHistoryDocType } from '../database/schemas/search-history.schema'
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { PosterCacheService } from './poster-cache.service';
+import { FranchiseCollectionSummary } from '../models/franchise.model';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
@@ -103,6 +104,7 @@ export class StorageService {
     public readonly watchedItems = signal<ContentDocType[]>([]);
     public readonly inboxItems = signal<ContentDocType[]>([]);
     public readonly favoritePeople = signal<ContentDocType[]>([]);
+    public readonly savedUniverses = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
     public readonly userRegion = computed<string>(() => this.settings()?.region || 'IN');
     public readonly isManualRegion = computed<boolean>(() => this.settings()?.isManualRegion ?? false);
@@ -159,11 +161,14 @@ export class StorageService {
                     const watched: ContentDocType[] = [];
                     const inbox: ContentDocType[] = [];
                     const favoritePeople: ContentDocType[] = [];
+                    const savedUniverses: ContentDocType[] = [];
 
                     for (const d of docs) {
                         const docJson = d.toJSON() as ContentDocType;
                         if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
                             favoritePeople.push(docJson);
+                        } else if (docJson.lists.includes('universe')) {
+                            savedUniverses.push(docJson);
                         } else if (docJson.lists.includes('inbox')) {
                             inbox.push(docJson);
                         } else if (docJson.lists.includes('watched')) {
@@ -177,6 +182,7 @@ export class StorageService {
                     this.watchedItems.set(watched);
                     this.inboxItems.set(inbox);
                     this.favoritePeople.set(favoritePeople);
+                    this.savedUniverses.set(savedUniverses);
 
                     // Pre-decode top 30 Watchlist + top 30 Watched posters into GPU/RAM bitmaps
                     const topDocs = [...watchlist.slice(0, 30), ...watched.slice(0, 30)];
@@ -467,6 +473,61 @@ export class StorageService {
      */
     public async discardFromInbox(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
         await this.removeMedia(tmdbId, mediaType);
+    }
+
+    // ==========================================
+    // UNIVERSE & FRANCHISE ENGINE PERSISTENCE
+    // ==========================================
+
+    private hashString(str: string): number {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash) || 1;
+    }
+
+    /**
+     * Persists an AI-ascended universe in RxDB content collection.
+     */
+    public async saveUniverse(universeId: string | number, payload: FranchiseCollectionSummary): Promise<void> {
+        this.initReactiveStreams();
+        const docId = `universe_${universeId}`;
+        const numericTmdbId = typeof universeId === 'number'
+            ? universeId
+            : this.hashString(universeId.toString());
+
+        await this.dbService.db.content.upsert({
+            id: docId,
+            tmdbId: numericTmdbId,
+            mediaType: 'movie',
+            lists: ['universe', 'franchise'],
+            addedAt: new Date().toISOString(),
+            payload: payload as unknown as TmdbPayload
+        });
+    }
+
+    /**
+     * Removes an AI-ascended universe from RxDB without affecting individual user library movies.
+     */
+    public async removeUniverse(universeId: string | number): Promise<void> {
+        this.initReactiveStreams();
+        const docId = `universe_${universeId}`;
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.remove();
+            return;
+        }
+        const all = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['universe'] } }
+        }).exec();
+        for (const d of all) {
+            const p = d.payload as Record<string, unknown> | undefined;
+            if (p?.['id'] === universeId || p?.['universeId'] === universeId || String(d.tmdbId) === String(universeId)) {
+                await d.remove();
+            }
+        }
     }
 
     /**
