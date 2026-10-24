@@ -51,21 +51,32 @@
           </div>
         </div>
 
-        @if (numericCollectionId() && !isUniverseCollection()) {
+        <div class="franchise-actions-bar">
+          @if (numericCollectionId() && !isUniverseCollection()) {
+            <button
+              type="button"
+              class="discover-universe-btn"
+              [disabled]="isAnalyzingUniverse()"
+              (click)="triggerDiscoverUniverse()">
+              @if (isAnalyzingUniverse()) {
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Reasoning Universe with AI...</span>
+              } @else {
+                <ion-icon name="sparkles"></ion-icon>
+                <span>Discover Universe with AI</span>
+              }
+            </button>
+          }
+
           <button
             type="button"
-            class="discover-universe-btn"
-            [disabled]="isAnalyzingUniverse()"
-            (click)="triggerDiscoverUniverse()">
-            @if (isAnalyzingUniverse()) {
-              <ion-spinner name="crescent"></ion-spinner>
-              <span>Reasoning Universe with AI...</span>
-            } @else {
-              <ion-icon name="sparkles"></ion-icon>
-              <span>Discover Universe with AI</span>
-            }
+            class="save-franchise-btn"
+            [class.saved]="isCurrentFranchiseSaved()"
+            (click)="toggleSaveCurrentFranchise()">
+            <ion-icon [name]="isCurrentFranchiseSaved() ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+            <span>{{ isCurrentFranchiseSaved() ? 'Franchise Saved' : 'Save Franchise' }}</span>
           </button>
-        }
+        </div>
       </div>
     }
 

@@ -1058,7 +1058,8 @@ export class MediaDetailPage implements OnInit {
         release_date: m.release_date,
         vote_average: m.vote_average,
         genres: m.genres,
-        media_type: 'movie'
+        media_type: 'movie',
+        belongs_to_collection: m.belongs_to_collection
       };
     }
     const t = this.tvDetail();

@@ -151,12 +151,12 @@
                     <span class="type-badge" [class.is-universe]="f.isUniverse">
                       {{ f.isUniverse ? 'UNIVERSE' : 'FRANCHISE' }}
                     </span>
-                    @if (f.isUniverse) {
+                    @if (isDirectlySaved(f)) {
                       <button
                         type="button"
                         class="delete-universe-btn"
-                        aria-label="Remove Universe"
-                        (click)="onRemoveUniverse($event, f)">
+                        [attr.aria-label]="f.isUniverse ? 'Remove Universe' : 'Remove Franchise'"
+                        (click)="onRemoveFranchiseOrUniverse($event, f)">
                         <ion-icon name="trash-outline"></ion-icon>
                       </button>
                     }

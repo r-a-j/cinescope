@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StorageService } from './storage.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
+import { TmdbMoviesService } from './tmdb-movies.service';
 import { FranchiseCollectionSummary, FranchisePart } from '../models/franchise.model';
 import { TmdbCollectionDetailDto } from '../dtos/collections/collection-detail.dto';
 
@@ -24,9 +25,11 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export class FranchiseAggregatorService {
   private storage = inject(StorageService);
   private tmdbCollections = inject(TmdbCollectionsService);
+  private tmdbMovies = inject(TmdbMoviesService);
 
   private readonly metaCache = new Map<number, CachedCollectionMeta>();
   private readonly inFlightRequests = new Set<number>();
+  private readonly inFlightMovieLookups = new Set<number>();
   private readonly cacheRevision = signal<number>(0);
 
   constructor() {
@@ -178,6 +181,13 @@ export class FranchiseAggregatorService {
         ? Math.min(100, Math.round((watchedCount / totalParts) * 100))
         : 0;
 
+      const numericId = typeof uniPayload.id === 'number' ? uniPayload.id : (typeof uniDoc.tmdbId === 'number' ? uniDoc.tmdbId : null);
+      if (numericId && collectionMap.has(numericId)) {
+        continue;
+      }
+
+      const isUniverse = Boolean(uniPayload.isUniverse ?? (uniDoc.lists ? uniDoc.lists.includes('universe') : true));
+
       summaries.push({
         id: universeId,
         name: uniPayload.name,
@@ -189,7 +199,7 @@ export class FranchiseAggregatorService {
         watchedCount,
         watchlistCount,
         completionPercentage,
-        isUniverse: true,
+        isUniverse,
         universeId,
         parentUniverseTitle: uniPayload.parentUniverseTitle,
         connectionInsight: uniPayload.connectionInsight,
@@ -244,13 +254,28 @@ export class FranchiseAggregatorService {
   }
 
   private syncMissingCollectionMetadata(
-    watchlist: { mediaType: string; payload?: unknown }[],
-    watched: { mediaType: string; payload?: unknown }[]
+    watchlist: { id?: string; tmdbId?: number; mediaType: string; payload?: unknown }[],
+    watched: { id?: string; tmdbId?: number; mediaType: string; payload?: unknown }[]
   ): void {
     const all = [...watchlist, ...watched];
     for (const item of all) {
       if (item.mediaType !== 'movie') continue;
       const payload = item.payload as Record<string, unknown> | undefined;
+      const tmdbId = item.tmdbId || (payload?.['id'] as number | undefined);
+      const docId = item.id || (tmdbId ? `movie_${tmdbId}` : undefined);
+      if (!tmdbId || !docId) continue;
+
+      // 1. If belongs_to_collection is undefined, the movie has not been inspected for franchise membership
+      if (payload && payload['belongs_to_collection'] === undefined) {
+        if (!this.inFlightMovieLookups.has(tmdbId)) {
+          this.resolveMovieFranchise(tmdbId, docId).catch(() => {
+            // Graceful ignore
+          });
+        }
+        continue;
+      }
+
+      // 2. If belongs_to_collection exists and has a collection ID, hydrate collection metadata
       const collection = payload?.['belongs_to_collection'] as { id: number } | null | undefined;
       if (!collection || !collection.id) continue;
 
@@ -262,6 +287,25 @@ export class FranchiseAggregatorService {
           // Graceful ignore: offline or network issue
         });
       }
+    }
+  }
+
+  private async resolveMovieFranchise(tmdbId: number, docId: string): Promise<void> {
+    this.inFlightMovieLookups.add(tmdbId);
+    try {
+      const details = await firstValueFrom(this.tmdbMovies.getMovieDetails(tmdbId));
+      const belongs = details?.belongs_to_collection || null;
+
+      // Patch the local RxDB document payload so we don't query TMDB again
+      await this.storage.updateMediaPayload(docId, { belongs_to_collection: belongs });
+
+      if (belongs && belongs.id) {
+        await this.fetchAndCacheCollection(belongs.id);
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      this.inFlightMovieLookups.delete(tmdbId);
     }
   }
 

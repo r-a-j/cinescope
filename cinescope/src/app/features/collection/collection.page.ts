@@ -117,6 +117,18 @@ export class CollectionPage implements OnInit, AfterViewInit {
     return list.length > 0 && list[0].mediaType === 'person';
   });
 
+  public isCurrentFranchiseSaved = computed<boolean>(() => {
+    const numId = this.numericCollectionId();
+    if (numId) {
+      return this.storageService.isFranchiseSaved(numId);
+    }
+    const queryCtx = this.queryContext();
+    if (queryCtx?.id) {
+      return this.storageService.isFranchiseSaved(queryCtx.id);
+    }
+    return false;
+  });
+
   public completionMetrics = computed(() => {
     if (!this.isFranchiseCollection()) return null;
     const items = this.rawItems();
@@ -820,13 +832,27 @@ export class CollectionPage implements OnInit, AfterViewInit {
   public async onToggleBookmark(item: SwimlaneItem): Promise<void> {
     if (item.mediaType === 'person') return;
     const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
-    const payload = item.payload || {
-      id: Number(item.id),
-      title: item.title,
-      name: item.title,
-      posterUrl: item.posterUrl,
-      media_type: mediaType
-    };
+    const numId = this.numericCollectionId();
+    const collectionRef = numId ? {
+      id: numId,
+      name: this.collectionTitle(),
+      poster_path: this.franchiseSummary()?.poster_path,
+      backdrop_path: this.collectionBackdrop()
+    } : undefined;
+
+    const payload = item.payload
+      ? {
+          ...(item.payload as Record<string, unknown>),
+          belongs_to_collection: (item.payload as Record<string, unknown>)['belongs_to_collection'] || collectionRef
+        }
+      : {
+          id: Number(item.id),
+          title: item.title,
+          name: item.title,
+          posterUrl: item.posterUrl,
+          media_type: mediaType,
+          belongs_to_collection: collectionRef
+        };
 
     const nextState = await this.storageService.cycleBookmark(Number(item.id), mediaType, payload);
     if (nextState === 'watchlist') {
@@ -835,6 +861,45 @@ export class CollectionPage implements OnInit, AfterViewInit {
       await this.toastService.presentInfo(`Marked "${item.title}" as Watched`, 1800);
     } else {
       await this.toastService.presentWarning(`Removed "${item.title}" from Archive`, 1800);
+    }
+  }
+
+  public async toggleSaveCurrentFranchise(): Promise<void> {
+    const numId = this.numericCollectionId();
+    const targetId = numId || this.queryContext()?.id;
+    if (!targetId) return;
+
+    if (this.isCurrentFranchiseSaved()) {
+      await this.storageService.removeFranchise(targetId);
+      await this.toastService.presentWarning(`Removed "${this.collectionTitle()}" from Franchises`, 1800);
+    } else {
+      const summary: FranchiseCollectionSummary = this.franchiseSummary() || {
+        id: targetId,
+        name: this.collectionTitle(),
+        overview: this.collectionOverview() || undefined,
+        poster_path: undefined,
+        backdrop_path: this.collectionBackdrop() || undefined,
+        totalParts: this.rawItems().length,
+        collectedCount: this.completionMetrics()?.watched || 0,
+        watchedCount: this.completionMetrics()?.watched || 0,
+        watchlistCount: this.completionMetrics()?.watchlist || 0,
+        completionPercentage: this.completionMetrics()?.percentage || 0,
+        isUniverse: this.isUniverseCollection(),
+        parts: this.rawItems().map((it) => {
+          const p = it.payload as Record<string, unknown> | undefined;
+          return {
+            id: Number(it.id),
+            title: it.title,
+            mediaType: (it.mediaType === 'tv' ? 'tv' : 'movie') as 'movie' | 'tv',
+            poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
+            backdrop_path: p?.['backdrop_path'] as string | undefined,
+            release_date: (p?.['release_date'] || p?.['first_air_date']) as string | undefined
+          };
+        })
+      };
+
+      await this.storageService.saveFranchise(targetId, summary);
+      await this.toastService.presentSuccess(`Saved "${this.collectionTitle()}" to Franchises`, 1800);
     }
   }
 

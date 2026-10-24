@@ -341,10 +341,23 @@ export class ArchivePage implements AfterViewInit {
     });
   }
 
-  public async onRemoveUniverse(event: Event, f: FranchiseCollectionSummary): Promise<void> {
+  public isDirectlySaved(f: FranchiseCollectionSummary): boolean {
+    return Boolean(f.isUniverse || this.storage.isFranchiseSaved(f.id));
+  }
+
+  public async onRemoveFranchiseOrUniverse(event: Event, f: FranchiseCollectionSummary): Promise<void> {
     event.stopPropagation();
-    await this.storage.removeUniverse(f.id);
-    await this.toast.presentWarning(`Removed "${f.name}" umbrella universe`, 2000);
+    if (f.isUniverse) {
+      await this.storage.removeUniverse(f.id);
+      await this.toast.presentWarning(`Removed "${f.name}" umbrella universe`, 2000);
+    } else {
+      await this.storage.removeFranchise(f.id);
+      await this.toast.presentWarning(`Removed "${f.name}" from Franchises`, 2000);
+    }
+  }
+
+  public async onRemoveUniverse(event: Event, f: FranchiseCollectionSummary): Promise<void> {
+    return this.onRemoveFranchiseOrUniverse(event, f);
   }
 
   public goToDiscoverFranchises(): void {

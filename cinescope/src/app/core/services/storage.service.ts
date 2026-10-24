@@ -167,7 +167,7 @@ export class StorageService {
                         const docJson = d.toJSON() as ContentDocType;
                         if (docJson.mediaType === 'person' && docJson.lists.includes('favorite')) {
                             favoritePeople.push(docJson);
-                        } else if (docJson.lists.includes('universe')) {
+                        } else if (docJson.lists.includes('universe') || docJson.lists.includes('franchise')) {
                             savedUniverses.push(docJson);
                         } else if (docJson.lists.includes('inbox')) {
                             inbox.push(docJson);
@@ -527,6 +527,79 @@ export class StorageService {
             if (p?.['id'] === universeId || p?.['universeId'] === universeId || String(d.tmdbId) === String(universeId)) {
                 await d.remove();
             }
+        }
+    }
+
+    /**
+     * Persists a franchise collection directly in RxDB content collection.
+     */
+    public async saveFranchise(collectionId: number | string, payload: FranchiseCollectionSummary): Promise<void> {
+        this.initReactiveStreams();
+        const docId = `franchise_${collectionId}`;
+        const numericTmdbId = typeof collectionId === 'number'
+            ? collectionId
+            : this.hashString(collectionId.toString());
+
+        await this.dbService.db.content.upsert({
+            id: docId,
+            tmdbId: numericTmdbId,
+            mediaType: 'movie',
+            lists: ['franchise'],
+            addedAt: new Date().toISOString(),
+            payload: payload as unknown as TmdbPayload
+        });
+    }
+
+    /**
+     * Removes a franchise collection from RxDB without affecting individual user library movies.
+     */
+    public async removeFranchise(collectionId: number | string): Promise<void> {
+        this.initReactiveStreams();
+        const docId = `franchise_${collectionId}`;
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.remove();
+            return;
+        }
+        const all = await this.dbService.db.content.find({
+            selector: { lists: { $in: ['franchise'] } }
+        }).exec();
+        for (const d of all) {
+            const p = d.payload as Record<string, unknown> | undefined;
+            if (p?.['id'] === collectionId || String(d.tmdbId) === String(collectionId)) {
+                await d.remove();
+            }
+        }
+    }
+
+    /**
+     * Checks if a franchise or universe is saved directly in user library.
+     */
+    public isFranchiseSaved(collectionId: number | string): boolean {
+        const idStr = String(collectionId);
+        return this.savedUniverses().some((doc) => {
+            const p = doc.payload as Record<string, unknown> | undefined;
+            return doc.id === `franchise_${collectionId}` ||
+                   doc.id === `universe_${collectionId}` ||
+                   String(doc.tmdbId) === idStr ||
+                   String(p?.['id']) === idStr;
+        });
+    }
+
+    /**
+     * Incrementally patches a media item's payload in RxDB.
+     */
+    public async updateMediaPayload(docId: string, patch: Record<string, unknown>): Promise<void> {
+        this.initReactiveStreams();
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                docData.payload = {
+                    ...((docData.payload as Record<string, unknown>) || {}),
+                    ...patch
+                } as unknown as TmdbPayload;
+                return docData;
+            });
         }
     }
 
