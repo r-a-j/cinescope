@@ -23,6 +23,13 @@
       padding: 18px;
       border: 1px solid rgba(255, 255, 255, 0.14);
       background: #14141a;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+        border-color: rgba(56, 189, 248, 0.4);
+      }
     }
     .collection-bg {
       position: absolute;

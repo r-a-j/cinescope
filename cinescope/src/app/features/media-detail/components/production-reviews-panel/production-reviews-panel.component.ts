@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, input, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { star, openOutline, chatbubblesOutline } from 'ionicons/icons';
@@ -18,6 +19,7 @@ import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
   styleUrls: ['./production-reviews-panel.component.scss'],
 })
 export class ProductionReviewsPanelComponent {
+  private router = inject(Router);
   public collection = input<TmdbBelongsToCollectionDto | null>(null);
   public productionFacts = input.required<{ label: string; value: string }[]>();
   public keywords = input.required<TmdbKeywordDto[]>();
@@ -60,5 +62,20 @@ export class ProductionReviewsPanelComponent {
 
   public resolveCollectionImage(path: string | null | undefined): string {
     return resolveMediaImageUrl(path, 'w780');
+  }
+
+  public onCollectionClick(col: TmdbBelongsToCollectionDto): void {
+    if (!col || !col.id) return;
+    void this.router.navigate(['/collection', col.id], {
+      state: {
+        title: col.name,
+        preview: {
+          id: col.id,
+          name: col.name,
+          posterUrl: col.poster_path ? resolveMediaImageUrl(col.poster_path, 'w500') : undefined,
+          backdropUrl: col.backdrop_path ? resolveMediaImageUrl(col.backdrop_path, 'w1280') : undefined
+        }
+      }
+    });
   }
 }

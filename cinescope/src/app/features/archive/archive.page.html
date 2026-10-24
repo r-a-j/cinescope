@@ -3,18 +3,21 @@
     <ion-toolbar class="archive-toolbar">
       <ion-segment [value]="activeTab()" (ionChange)="onTabChange($event)">
         <ion-segment-button value="watchlist">
-          <ion-label>WATCHLIST ({{ storage.watchlistItems().length }})</ion-label>
+          <ion-label>WATCHLIST</ion-label>
         </ion-segment-button>
         <ion-segment-button value="watched">
-          <ion-label>WATCHED ({{ storage.watchedItems().length }})</ion-label>
+          <ion-label>WATCHED</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="franchises">
+          <ion-label>FRANCHISES</ion-label>
         </ion-segment-button>
         <ion-segment-button value="people">
-          <ion-label>PEOPLE ({{ storage.favoritePeople().length }})</ion-label>
+          <ion-label>PEOPLE</ion-label>
         </ion-segment-button>
       </ion-segment>
     </ion-toolbar>
 
-    @if (activeTab() !== 'people' && activeTabItems().length > 0) {
+    @if ((activeTab() === 'watchlist' || activeTab() === 'watched') && activeTabItems().length > 0) {
       <div class="filter-bar">
         <button
           type="button"
@@ -42,17 +45,17 @@
 
     <ion-content color="background">
       <div class="archive-panes-wrapper">
-        <!-- Keep-Alive Watchlist Pane (uses visibility/opacity instead of display:none so Chromium never evicts decoded GPU textures) -->
+        <!-- Keep-Alive Watchlist Pane -->
         <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watchlist'">
           @if (filteredWatchlist().length === 0) {
             <div class="empty-archive">
               <ion-icon name="bookmark-outline"></ion-icon>
               @if (storage.watchlistItems().length > 0) {
-                <h2>NO {{ watchlistMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHLIST</h2>
-                <p>You don't have any {{ watchlistMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} saved to your watchlist.</p>
+                <h2>NO {{ currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHLIST</h2>
+                <p>Try switching to "All" or add more {{ currentMediaFilter() === 'movie' ? 'movies' : 'series' }} from Discover.</p>
               } @else {
                 <h2>YOUR WATCHLIST IS EMPTY</h2>
-                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+                <p>Explore trending movies and series on CineScope and tap the bookmark icon to save titles for later.</p>
               }
             </div>
           } @else {
@@ -61,12 +64,13 @@
               [class.fade-phase-a]="fadePhase() === 'a'"
               [class.fade-phase-b]="fadePhase() === 'b'">
               @for (vm of visibleWatchlist(); track vm.id; let idx = $index) {
-                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
+                <div
+                  class="archive-card"
+                  [style.--enter-delay]="(idx < 16 ? idx * 14 : 0) + 'ms'">
                   <app-poster-card
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
-                    [priority]="idx < 12"
-                    [showBookmark]="true"
+                    [priority]="idx < 8"
                     bookmarkState="watchlist"
                     (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">
@@ -85,11 +89,11 @@
             <div class="empty-archive">
               <ion-icon name="checkmark-done-circle-outline"></ion-icon>
               @if (storage.watchedItems().length > 0) {
-                <h2>NO {{ watchedMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHED</h2>
-                <p>You don't have any {{ watchedMediaFilter() === 'movie' ? 'movies' : 'TV shows' }} marked as watched.</p>
+                <h2>NO {{ currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} MARKED AS WATCHED</h2>
+                <p>Try switching to "All" or mark your finished {{ currentMediaFilter() === 'movie' ? 'movies' : 'series' }} as watched.</p>
               } @else {
                 <h2>NO WATCHED TITLES YET</h2>
-                <p>Tap the bookmark icon on any movie or TV show in Discover or Search, or restore a backup in Settings.</p>
+                <p>Keep track of everything you have watched by cycling the bookmark icon to the red checkmark.</p>
               }
             </div>
           } @else {
@@ -98,18 +102,77 @@
               [class.fade-phase-a]="fadePhase() === 'a'"
               [class.fade-phase-b]="fadePhase() === 'b'">
               @for (vm of visibleWatched(); track vm.id; let idx = $index) {
-                <div class="archive-card" [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'">
+                <div
+                  class="archive-card"
+                  [style.--enter-delay]="(idx < 16 ? idx * 14 : 0) + 'ms'">
                   <app-poster-card
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
-                    [priority]="idx < 12"
-                    [showBookmark]="true"
+                    [priority]="idx < 8"
                     bookmarkState="watched"
                     (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">
                   </app-poster-card>
                   <div class="archive-card-title">{{ vm.title }}</div>
                   <div class="archive-card-meta">{{ vm.metaSubtitle }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Keep-Alive Franchises Pane -->
+        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'franchises'">
+          @if (userFranchises().length === 0) {
+            <div class="empty-archive">
+              <ion-icon name="albums-outline"></ion-icon>
+              <h2>NO FRANCHISES DISCOVERED YET</h2>
+              <p>Add movies from film sagas (like John Wick, Avengers, or Dhoom) to your Watchlist or Watched to track your franchise completion automatically.</p>
+              <button type="button" class="discover-franchises-btn" (click)="goToDiscoverFranchises()">
+                <ion-icon name="search-outline"></ion-icon>
+                <span>Discover Franchises</span>
+              </button>
+            </div>
+          } @else {
+            <div
+              class="franchise-archive-grid"
+              [class.fade-phase-a]="fadePhase() === 'a'"
+              [class.fade-phase-b]="fadePhase() === 'b'">
+              @for (f of userFranchises(); track f.id; let idx = $index) {
+                <div
+                  class="franchise-archive-card"
+                  [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
+                  tabindex="0"
+                  role="button"
+                  (click)="onFranchiseClick(f)"
+                  (keyup.enter)="onFranchiseClick(f)">
+                  <div class="card-cover-wrapper">
+                    <img [src]="resolvePoster(f.poster_path)" [alt]="f.name" loading="lazy">
+                    <span class="type-badge" [class.is-universe]="f.isUniverse">
+                      {{ f.isUniverse ? 'UNIVERSE' : 'FRANCHISE' }}
+                    </span>
+                    @if (f.isUniverse) {
+                      <button
+                        type="button"
+                        class="delete-universe-btn"
+                        aria-label="Remove Universe"
+                        (click)="onRemoveUniverse($event, f)">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </button>
+                    }
+                  </div>
+                  <div class="card-body">
+                    <h4>{{ f.name }}</h4>
+                    <div class="progress-block">
+                      <div class="progress-track">
+                        <div class="progress-fill" [style.width.%]="f.completionPercentage"></div>
+                      </div>
+                      <div class="progress-meta">
+                        <span class="counts-label">{{ f.watchedCount }}/{{ f.totalParts }} watched</span>
+                        <span class="pct-label">{{ f.completionPercentage }}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               }
             </div>

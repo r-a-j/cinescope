@@ -1,7 +1,7 @@
 <!-- MOVIE COLLECTION BANNER -->
     @if (collection(); as col) {
       <section class="detail-section">
-        <div class="collection-banner">
+        <div class="collection-banner" tabindex="0" role="button" (click)="onCollectionClick(col)" (keyup.enter)="onCollectionClick(col)">
           @if (col.backdrop_path || col.poster_path) {
             <img
               [src]="resolveCollectionImage(col.backdrop_path || col.poster_path)"
