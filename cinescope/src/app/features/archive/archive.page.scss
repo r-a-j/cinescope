@@ -82,7 +82,7 @@
       text-align: center;
       color: rgba(255, 255, 255, 0.5);
     }
-    .empty-archive ion-icon {
+    .empty-archive > ion-icon {
       font-size: 64px;
       margin-bottom: 16px;
       color: rgba(255, 255, 255, 0.25);
@@ -290,25 +290,42 @@
     .discover-franchises-btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      margin-top: 16px;
-      padding: 10px 20px;
+      margin-top: 20px;
+      padding: 12px 24px;
       border-radius: 999px;
-      background: rgba(56, 189, 248, 0.16);
-      border: 1px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.45);
       color: #38bdf8;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 700;
+      letter-spacing: 0.2px;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
-      transition: all 0.2s ease;
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.2);
+      transition: transform 0.15s ease, background 0.15s ease;
 
       &:active {
         transform: scale(0.96);
+        background: rgba(56, 189, 248, 0.22);
       }
 
       ion-icon {
-        font-size: 16px;
+        font-size: 17px;
+        width: 17px;
+        height: 17px;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: inherit;
+        pointer-events: none;
+      }
+
+      span {
+        display: inline-block;
+        line-height: 1;
       }
     }
 

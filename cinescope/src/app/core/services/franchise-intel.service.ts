@@ -30,6 +30,64 @@ export interface FranchiseIntelAnalysisResult {
   data?: FranchiseIntelResponse | null | undefined;
 }
 
+const NUMBER_WORD_MAP: Record<string, string> = {
+  zero: '0',
+  one: '1',
+  two: '2',
+  three: '3',
+  four: '4',
+  five: '5',
+  six: '6',
+  seven: '7',
+  eight: '8',
+  nine: '9',
+  ten: '10',
+  eleven: '11',
+  twelve: '12',
+  thirteen: '13',
+  fourteen: '14',
+  fifteen: '15',
+  sixteen: '16',
+  seventeen: '17',
+  eighteen: '18',
+  nineteen: '19',
+  twenty: '20',
+  i: '1',
+  ii: '2',
+  iii: '3',
+  iv: '4',
+  v: '5',
+  vi: '6',
+  vii: '7',
+  viii: '8',
+  ix: '9',
+  x: '10',
+  xi: '11',
+  xii: '12',
+  xiii: '13'
+};
+
+const DIGIT_TO_WORDS: Record<string, string[]> = {
+  '0': ['zero'],
+  '1': ['one', 'i'],
+  '2': ['two', 'ii'],
+  '3': ['three', 'iii'],
+  '4': ['four', 'iv'],
+  '5': ['five', 'v'],
+  '6': ['six', 'vi'],
+  '7': ['seven', 'vii'],
+  '8': ['eight', 'viii'],
+  '9': ['nine', 'ix'],
+  '10': ['ten', 'x'],
+  '11': ['eleven', 'xi'],
+  '12': ['twelve', 'xii'],
+  '13': ['thirteen', 'xiii']
+};
+
+function normalizeNumbers(str: string): string {
+  return str.toLowerCase().replace(/\b[a-z0-9]+\b/g, (token) => NUMBER_WORD_MAP[token] || token);
+}
+
 function generateTitleVariations(title: string): string[] {
   const variations = new Set<string>();
   const trimmed = title.trim();
@@ -54,20 +112,34 @@ function generateTitleVariations(title: string): string[] {
     variations.add(trimmed.replace(/jiya/gi, 'jya'));
   }
 
-  // 4. Roman / Arabic number variants (e.g. "Stree 2" <-> "Stree II")
-  if (/\b2\b/.test(trimmed)) variations.add(trimmed.replace(/\b2\b/g, 'II'));
-  if (/\bII\b/.test(trimmed)) variations.add(trimmed.replace(/\bII\b/g, '2'));
+  // 4. Roman / Arabic number variants & digit-to-word expansion (e.g. "Ocean's 11" <-> "Ocean's Eleven", "Stree 2" <-> "Stree II")
+  for (const [digit, words] of Object.entries(DIGIT_TO_WORDS)) {
+    const digitRegex = new RegExp(`\\b${digit}\\b`, 'gi');
+    if (digitRegex.test(trimmed)) {
+      for (const w of words) {
+        variations.add(trimmed.replace(digitRegex, w.charAt(0).toUpperCase() + w.slice(1)));
+        variations.add(trimmed.replace(digitRegex, w));
+      }
+    }
+    for (const w of words) {
+      const wordRegex = new RegExp(`\\b${w}\\b`, 'gi');
+      if (wordRegex.test(trimmed)) {
+        variations.add(trimmed.replace(wordRegex, digit));
+      }
+    }
+  }
 
   variations.delete(trimmed);
   return Array.from(variations);
 }
 
 function cleanNorm(str: string): string {
-  return (str || '')
+  const norm = (str || '')
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  return normalizeNumbers(norm);
 }
 
 function levenshteinDistance(a: string, b: string): number {
@@ -1033,7 +1105,12 @@ export class FranchiseIntelService {
       // 1. HARD DISQUALIFIER: Franchise Inception Era Guard
       // If the franchise started in e.g. 2018 (Maddock Supernatural Universe) or 2014 (John Wick),
       // a candidate released before minYear - 2 (e.g. 1991) is an impossible match.
-      if (franchiseEra?.minYear && cYear && cYear < franchiseEra.minYear - 2) {
+      if (
+        franchiseEra?.minYear &&
+        cYear &&
+        (!hint.year || hint.year >= franchiseEra.minYear - 2) &&
+        cYear < franchiseEra.minYear - 2
+      ) {
         continue;
       }
 
