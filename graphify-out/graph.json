@@ -8341,7 +8341,7 @@
       "label": ".cycleSortMode()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L488",
+      "source_location": "L492",
       "id": "collection_collection_page_collectionpage_cyclesortmode",
       "community": 197,
       "norm_label": ".cyclesortmode()"
@@ -8350,7 +8350,7 @@
       "label": ".ngOnInit()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L495",
+      "source_location": "L499",
       "id": "collection_collection_page_collectionpage_ngoninit",
       "community": 182,
       "norm_label": ".ngoninit()"
@@ -8359,7 +8359,7 @@
       "label": ".ionViewWillEnter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L507",
+      "source_location": "L511",
       "id": "collection_collection_page_collectionpage_ionviewwillenter",
       "community": 182,
       "norm_label": ".ionviewwillenter()"
@@ -8368,7 +8368,7 @@
       "label": ".extractNavigationState()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L511",
+      "source_location": "L515",
       "id": "collection_collection_page_collectionpage_extractnavigationstate",
       "community": 182,
       "norm_label": ".extractnavigationstate()"
@@ -8377,7 +8377,7 @@
       "label": ".fetchInitialCollectionPage()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L732",
+      "source_location": "L736",
       "id": "collection_collection_page_collectionpage_fetchinitialcollectionpage",
       "community": 182,
       "norm_label": ".fetchinitialcollectionpage()"
@@ -8386,7 +8386,7 @@
       "label": ".ngAfterViewInit()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L767",
+      "source_location": "L771",
       "id": "collection_collection_page_collectionpage_ngafterviewinit",
       "community": 2,
       "norm_label": ".ngafterviewinit()"
@@ -8395,7 +8395,7 @@
       "label": ".goBack()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L773",
+      "source_location": "L777",
       "id": "collection_collection_page_collectionpage_goback",
       "community": 2,
       "norm_label": ".goback()"
@@ -8404,7 +8404,7 @@
       "label": ".goToHome()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L781",
+      "source_location": "L785",
       "id": "collection_collection_page_collectionpage_gotohome",
       "community": 2,
       "norm_label": ".gotohome()"
@@ -8413,7 +8413,7 @@
       "label": ".onScroll()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L785",
+      "source_location": "L789",
       "id": "collection_collection_page_collectionpage_onscroll",
       "community": 2,
       "norm_label": ".onscroll()"
@@ -8422,7 +8422,7 @@
       "label": ".checkAndPreloadNext()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L794",
+      "source_location": "L798",
       "id": "collection_collection_page_collectionpage_checkandpreloadnext",
       "community": 2,
       "norm_label": ".checkandpreloadnext()"
@@ -8431,7 +8431,7 @@
       "label": ".setMediaTypeFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L807",
+      "source_location": "L811",
       "id": "collection_collection_page_collectionpage_setmediatypefilter",
       "community": 2,
       "norm_label": ".setmediatypefilter()"
@@ -8440,7 +8440,7 @@
       "label": ".setLibraryFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L812",
+      "source_location": "L816",
       "id": "collection_collection_page_collectionpage_setlibraryfilter",
       "community": 2,
       "norm_label": ".setlibraryfilter()"
@@ -8449,7 +8449,7 @@
       "label": ".toggleRatingFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L817",
+      "source_location": "L821",
       "id": "collection_collection_page_collectionpage_toggleratingfilter",
       "community": 2,
       "norm_label": ".toggleratingfilter()"
@@ -8458,7 +8458,7 @@
       "label": ".toggleRecentFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L822",
+      "source_location": "L826",
       "id": "collection_collection_page_collectionpage_togglerecentfilter",
       "community": 2,
       "norm_label": ".togglerecentfilter()"
@@ -8467,7 +8467,7 @@
       "label": ".toggleHighVotesFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L826",
+      "source_location": "L830",
       "id": "collection_collection_page_collectionpage_togglehighvotesfilter",
       "community": 2,
       "norm_label": ".togglehighvotesfilter()"
@@ -8476,7 +8476,7 @@
       "label": ".toggleGenreFilter()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L830",
+      "source_location": "L834",
       "id": "collection_collection_page_collectionpage_togglegenrefilter",
       "community": 2,
       "norm_label": ".togglegenrefilter()"
@@ -8485,7 +8485,7 @@
       "label": ".resetFilters()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L838",
+      "source_location": "L842",
       "id": "collection_collection_page_collectionpage_resetfilters",
       "community": 2,
       "norm_label": ".resetfilters()"
@@ -8494,7 +8494,7 @@
       "label": ".updateFilters()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L852",
+      "source_location": "L856",
       "id": "collection_collection_page_collectionpage_updatefilters",
       "community": 2,
       "norm_label": ".updatefilters()"
@@ -8503,7 +8503,7 @@
       "label": ".setSortMode()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L892",
+      "source_location": "L896",
       "id": "collection_collection_page_collectionpage_setsortmode",
       "community": 197,
       "norm_label": ".setsortmode()"
@@ -8512,7 +8512,7 @@
       "label": ".loadMore()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L950",
+      "source_location": "L954",
       "id": "collection_collection_page_collectionpage_loadmore",
       "community": 2,
       "norm_label": ".loadmore()"
@@ -8521,7 +8521,7 @@
       "label": ".openActiveUniverseJob()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1010",
+      "source_location": "L1014",
       "id": "collection_collection_page_collectionpage_openactiveuniversejob",
       "community": 2,
       "norm_label": ".openactiveuniversejob()"
@@ -8530,7 +8530,7 @@
       "label": ".triggerDiscoverUniverse()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1022",
+      "source_location": "L1026",
       "id": "collection_collection_page_collectionpage_triggerdiscoveruniverse",
       "community": 2,
       "norm_label": ".triggerdiscoveruniverse()"
@@ -8539,7 +8539,7 @@
       "label": ".openExistingUniverse()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1077",
+      "source_location": "L1081",
       "id": "collection_collection_page_collectionpage_openexistinguniverse",
       "community": 2,
       "norm_label": ".openexistinguniverse()"
@@ -8548,7 +8548,7 @@
       "label": ".onSiblingFranchiseClick()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1091",
+      "source_location": "L1095",
       "id": "collection_collection_page_collectionpage_onsiblingfranchiseclick",
       "community": 2,
       "norm_label": ".onsiblingfranchiseclick()"
@@ -8557,7 +8557,7 @@
       "label": ".markUpNextAsWatched()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1124",
+      "source_location": "L1128",
       "id": "collection_collection_page_collectionpage_markupnextaswatched",
       "community": 53,
       "norm_label": ".markupnextaswatched()"
@@ -8566,7 +8566,7 @@
       "label": ".markAllReleasedAsWatched()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1157",
+      "source_location": "L1161",
       "id": "collection_collection_page_collectionpage_markallreleasedaswatched",
       "community": 2,
       "norm_label": ".markallreleasedaswatched()"
@@ -8575,7 +8575,7 @@
       "label": ".syncUniverseCanon()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1206",
+      "source_location": "L1210",
       "id": "collection_collection_page_collectionpage_syncuniversecanon",
       "community": 182,
       "norm_label": ".syncuniversecanon()"
@@ -8584,7 +8584,7 @@
       "label": ".confirmAscension()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1278",
+      "source_location": "L1282",
       "id": "collection_collection_page_collectionpage_confirmascension",
       "community": 2,
       "norm_label": ".confirmascension()"
@@ -8593,7 +8593,7 @@
       "label": ".getBookmarkState()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1329",
+      "source_location": "L1333",
       "id": "collection_collection_page_collectionpage_getbookmarkstate",
       "community": 53,
       "norm_label": ".getbookmarkstate()"
@@ -8602,7 +8602,7 @@
       "label": ".onCardClick()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1335",
+      "source_location": "L1339",
       "id": "collection_collection_page_collectionpage_oncardclick",
       "community": 53,
       "norm_label": ".oncardclick()"
@@ -8611,7 +8611,7 @@
       "label": ".onToggleBookmark()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1364",
+      "source_location": "L1368",
       "id": "collection_collection_page_collectionpage_ontogglebookmark",
       "community": 53,
       "norm_label": ".ontogglebookmark()"
@@ -8620,7 +8620,7 @@
       "label": ".toggleSaveCurrentFranchise()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1402",
+      "source_location": "L1406",
       "id": "collection_collection_page_collectionpage_togglesavecurrentfranchise",
       "community": 2,
       "norm_label": ".togglesavecurrentfranchise()"
@@ -8629,7 +8629,7 @@
       "label": ".toCardVm()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1466",
+      "source_location": "L1470",
       "id": "collection_collection_page_collectionpage_tocardvm",
       "community": 53,
       "norm_label": ".tocardvm()"
@@ -8638,7 +8638,7 @@
       "label": ".sanitizeUniverseParts()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
-      "source_location": "L1496",
+      "source_location": "L1500",
       "id": "collection_collection_page_collectionpage_sanitizeuniverseparts",
       "community": 182,
       "norm_label": ".sanitizeuniverseparts()"
@@ -30710,9 +30710,9 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1496",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "collection_collection_page_collectionpage_sanitizeuniverseparts",
-      "target": "models_franchise_model_franchisepart",
-      "confidence_score": 1.0
+      "target": "models_franchise_model_franchisepart"
     },
     {
       "relation": "imports",
@@ -39240,9 +39240,9 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1496",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "collection_collection_page_collectionpage",
-      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts",
-      "confidence_score": 1.0
+      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts"
     },
     {
       "relation": "method",
@@ -39425,9 +39425,9 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L585",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "collection_collection_page_collectionpage_extractnavigationstate",
-      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts",
-      "confidence_score": 1.0
+      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts"
     },
     {
       "relation": "calls",
@@ -39535,9 +39535,9 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1235",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "collection_collection_page_collectionpage_syncuniversecanon",
-      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts",
-      "confidence_score": 1.0
+      "target": "collection_collection_page_collectionpage_sanitizeuniverseparts"
     },
     {
       "relation": "references",
@@ -49963,5 +49963,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "14582590978383e228a8df727401059cac4bb5e8"
+  "built_at_commit": "cf80cbc8efe192389d9e9709107bc4810ce63f71"
 }

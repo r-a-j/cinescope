@@ -1,6 +1,6 @@
 import {
   Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject,
-  signal, computed, effect, ViewChild, ChangeDetectorRef, DestroyRef
+  signal, computed, effect, untracked, ViewChild, ChangeDetectorRef, DestroyRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -431,11 +431,14 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
     effect(() => {
       const job = this.currentUniverseJob();
-      if (job && job.resolvedParts && job.resolvedParts.length > 0) {
-        const parts = job.resolvedParts;
+      const parts = job?.resolvedParts;
+      if (!job || !parts || parts.length === 0) return;
+
+      untracked(() => {
         const currentCount = this.rawItems().length;
         if (parts.length > currentCount) {
-          const items: SwimlaneItem[] = parts.map((part) => ({
+          const cleanParts = this.sanitizeUniverseParts(parts);
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
             id: part.id,
             mediaType: part.mediaType || 'movie',
             title: part.title,
@@ -444,36 +447,37 @@ export class CollectionPage implements OnInit, AfterViewInit {
             payload: part as unknown as Record<string, unknown>
           }));
           this.rawItems.set(items);
-          this.cdr.detectChanges();
         }
-      }
+      });
     });
 
     effect(() => {
       const completed = this.franchiseIntel.lastCompletedUniverse();
       if (!completed) return;
-      const currentSummary = this.franchiseSummary();
-      const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
-      const completedKey = String(completed.universeId || completed.id).replace(/^(universe_)+/, '');
-      if (this.isUniverseCollection() && currentKey && currentKey === completedKey) {
-        const cleanParts = this.sanitizeUniverseParts(completed.parts || []);
-        const sanitizedCompleted: FranchiseCollectionSummary = {
-          ...completed,
-          parts: cleanParts,
-          totalParts: cleanParts.length
-        };
-        this.franchiseSummary.set(sanitizedCompleted);
-        const items: SwimlaneItem[] = cleanParts.map((part) => ({
-          id: part.id,
-          mediaType: part.mediaType || 'movie',
-          title: part.title,
-          posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
-          bookmarkState: 'none',
-          payload: part as unknown as Record<string, unknown>
-        }));
-        this.rawItems.set(items);
-        this.cdr.detectChanges();
-      }
+
+      untracked(() => {
+        const currentSummary = this.franchiseSummary();
+        const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
+        const completedKey = String(completed.universeId || completed.id).replace(/^(universe_)+/, '');
+        if (this.isUniverseCollection() && currentKey && currentKey === completedKey) {
+          const cleanParts = this.sanitizeUniverseParts(completed.parts || []);
+          const sanitizedCompleted: FranchiseCollectionSummary = {
+            ...completed,
+            parts: cleanParts,
+            totalParts: cleanParts.length
+          };
+          this.franchiseSummary.set(sanitizedCompleted);
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
+            id: part.id,
+            mediaType: part.mediaType || 'movie',
+            title: part.title,
+            posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+            bookmarkState: 'none',
+            payload: part as unknown as Record<string, unknown>
+          }));
+          this.rawItems.set(items);
+        }
+      });
     });
   }
 
