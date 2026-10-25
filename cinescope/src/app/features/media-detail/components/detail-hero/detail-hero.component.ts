@@ -34,6 +34,7 @@ export class DetailHeroComponent {
   public networks = input<TmdbTvNetworkDto[]>([]);
   public originCountry = input<OriginCountryVm | null>(null);
   public hasTrailer = input<boolean>(false);
+  public isScrolled = input<boolean>(false);
 
   public backClick = output();
   public homeClick = output();

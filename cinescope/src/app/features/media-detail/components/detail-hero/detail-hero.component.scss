@@ -1,6 +1,29 @@
 :host {
       display: block;
     }
+    .nav-scroll-scrim {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(env(safe-area-inset-top, 12px) + 58px);
+      z-index: 38;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(9, 9, 13, 0.94) 0%,
+        rgba(9, 9, 13, 0.72) 65%,
+        transparent 100%
+      );
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      opacity: 0;
+      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.is-visible {
+        opacity: 1;
+      }
+    }
     .floating-nav {
       position: fixed;
       top: calc(env(safe-area-inset-top, 12px) + 10px);
@@ -39,6 +62,12 @@
       &:active {
         transform: scale(0.92);
         background: rgba(24, 24, 32, 0.88);
+      }
+
+      .floating-nav.is-scrolled & {
+        background: rgba(18, 18, 24, 0.88);
+        border-color: rgba(255, 255, 255, 0.22);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.18);
       }
 
       ion-icon {

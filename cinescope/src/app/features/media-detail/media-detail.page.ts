@@ -216,6 +216,7 @@ export class MediaDetailPage implements OnInit {
   public isSeasonLoading = signal<boolean>(false);
 
   public overviewExpanded = signal<boolean>(false);
+  public isScrolled = signal<boolean>(false);
 
   // ==========================================
   // ⚡ COMPUTED VIEW MODELS
@@ -901,6 +902,7 @@ export class MediaDetailPage implements OnInit {
 
       // Reset in-page interaction state when navigating to another title
       this.overviewExpanded.set(false);
+      this.isScrolled.set(false);
       this.selectedSeasonNumber.set(1);
       this.selectedWatchRegion.set(null);
       this.preview.set(null);
@@ -1178,6 +1180,13 @@ export class MediaDetailPage implements OnInit {
 
   public toggleOverview(): void {
     this.overviewExpanded.update((v) => !v);
+  }
+
+  public onScroll(event: CustomEvent<{ scrollTop: number }>): void {
+    const scrolled = (event.detail?.scrollTop ?? 0) > 36;
+    if (this.isScrolled() !== scrolled) {
+      this.isScrolled.set(scrolled);
+    }
   }
 
   public goBack(): void {

@@ -1,7 +1,7 @@
-<ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll()" class="collection-content">
+<ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll($event)" class="collection-content">
   <div class="collection-shell">
     <!-- Top Navigation Header with Back and Home Buttons (Sticky at very top) -->
-    <header class="collection-topbar" [class.overlay-topbar]="!!collectionBackdrop()">
+    <header class="collection-topbar" [class.overlay-topbar]="!!collectionBackdrop()" [class.is-scrolled]="isScrolled()">
       <div class="topbar-actions">
         <button type="button" class="back-btn" aria-label="Go Back" (click)="goBack()">
           <ion-icon name="arrow-back-outline"></ion-icon>

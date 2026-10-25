@@ -1,5 +1,8 @@
 <!-- Floating Top Navigation Bar -->
-    <div class="floating-nav">
+    <!-- Top Nav Scrim for Scroll Contrast -->
+    <div class="nav-scroll-scrim" [class.is-visible]="isScrolled()"></div>
+
+    <div class="floating-nav" [class.is-scrolled]="isScrolled()">
       <div class="nav-left">
         <button type="button" class="nav-pill-btn" (click)="backClick.emit()" aria-label="Go Back">
           <ion-icon name="arrow-back-outline"></ion-icon>
