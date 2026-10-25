@@ -63,7 +63,16 @@
           }
 
           @if (numericCollectionId() && !isUniverseCollection()) {
-            @if (existingParentUniverse(); as parentUni) {
+            @if (franchiseIntel.activeJob(); as bgJob) {
+              <button
+                type="button"
+                class="discover-universe-btn"
+                title="Tap to cancel background build"
+                (click)="cancelBackgroundUniverseJob()">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Building ({{ bgJob.resolvedCount }}/{{ bgJob.totalCount }}) &times;</span>
+              </button>
+            } @else if (existingParentUniverse(); as parentUni) {
               <button
                 type="button"
                 class="discover-universe-btn"
@@ -75,11 +84,10 @@
               <button
                 type="button"
                 class="discover-universe-btn"
-                [disabled]="isAnalyzingUniverse()"
                 (click)="triggerDiscoverUniverse()">
                 @if (isAnalyzingUniverse()) {
                   <ion-spinner name="crescent"></ion-spinner>
-                  <span>Analyzing...</span>
+                  <span>Analyzing... &times;</span>
                 } @else {
                   <ion-icon name="sparkles"></ion-icon>
                   <span>AI Universe</span>

@@ -1,6 +1,18 @@
 <div class="modal-backdrop" (click)="onDismiss()" (keyup.enter)="onDismiss()" tabindex="0">
-  <div class="modal-sheet" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0">
-    <div class="drag-handle"></div>
+  <div
+    class="modal-sheet"
+    [class.is-dragging]="isDragging()"
+    [style.transform]="dragOffsetY() > 0 ? 'translateY(' + dragOffsetY() + 'px)' : null"
+    (click)="$event.stopPropagation()"
+    (keyup.enter)="$event.stopPropagation()"
+    (touchstart)="onTouchStart($event)"
+    (touchmove)="onTouchMove($event)"
+    (touchend)="onTouchEnd()"
+    (touchcancel)="onTouchEnd()"
+    tabindex="0">
+    <div class="drag-handle-zone">
+      <div class="drag-handle"></div>
+    </div>
 
     <header class="modal-header">
       <div class="header-badge">
@@ -45,20 +57,14 @@
       <button
         type="button"
         class="action-btn primary-btn"
-        [disabled]="isResolving"
         (click)="onConfirm()">
-        @if (isResolving) {
-          <ion-spinner name="crescent"></ion-spinner>
-          <span>Resolving Canon Titles...</span>
-        } @else {
-          <span>Explore Entire Universe</span>
-        }
+        <ion-icon name="sparkles"></ion-icon>
+        <span>Build &amp; Track Universe</span>
       </button>
 
       <button
         type="button"
         class="action-btn secondary-btn"
-        [disabled]="isResolving"
         (click)="onDismiss()">
         Keep Sub-Collection
       </button>

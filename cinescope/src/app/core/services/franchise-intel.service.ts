@@ -1,8 +1,12 @@
-import { Injectable, inject, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
+import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
+import { FranchiseAggregatorService } from './franchise-aggregator.service';
+import { ToastService } from './toast.service';
+import { resolveMediaImageUrl } from '../constants/api.constants';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from './tmdb-search.service';
 import { TmdbDiscoverService } from './tmdb-discover.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
@@ -20,6 +24,7 @@ interface CachedIntelRecord {
 
 export interface FranchiseIntelAnalysisResult {
   isCooldown: boolean;
+  isCancelled?: boolean | undefined;
   hoursRemaining?: number | undefined;
   message?: string | undefined;
   data?: FranchiseIntelResponse | null | undefined;
@@ -59,6 +64,38 @@ export class FranchiseIntelService {
   private readonly tmdbDiscover = inject(TmdbDiscoverService);
   private readonly tmdbCollections = inject(TmdbCollectionsService);
   private readonly bffUrl = `${environment.apiUrl}/franchise-intel`;
+  private readonly franchiseAggregator = inject(FranchiseAggregatorService);
+  private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
+
+  public readonly activeJob = signal<{
+    jobId: string;
+    seedCollectionId?: number | undefined;
+    universeId: string;
+    universeTitle: string;
+    phase: 'resolving' | 'expanding';
+    resolvedCount: number;
+    totalCount: number;
+  } | null>(null);
+  public readonly lastCompletedUniverse = signal<FranchiseCollectionSummary | null>(null);
+
+  private analysisAbort$ = new Subject<void>();
+  private jobAbortController: AbortController | null = null;
+
+  public cancelAnalysis(): void {
+    this.analysisAbort$.next();
+  }
+
+  public cancelActiveJob(): void {
+    if (this.jobAbortController) {
+      this.jobAbortController.abort();
+      this.jobAbortController = null;
+    }
+    if (this.activeJob()) {
+      this.activeJob.set(null);
+      void this.toastService.presentInfo('Universe background build cancelled', 1800);
+    }
+  }
 
   /**
    * Checks if a collection is on cooldown in production mode.
@@ -185,7 +222,7 @@ export class FranchiseIntelService {
       };
 
       const rawResponse = await firstValueFrom(
-        this.http.post<Record<string, unknown>>(this.bffUrl, payload)
+        this.http.post<Record<string, unknown>>(this.bffUrl, payload).pipe(takeUntil(this.analysisAbort$))
       );
 
       const response = this.normalizeResponse(rawResponse);
@@ -211,6 +248,9 @@ export class FranchiseIntelService {
         data: response
       };
     } catch (err) {
+      if ((err as Error)?.name === 'EmptyError') {
+        return { isCooldown: false, isCancelled: true, data: null };
+      }
       console.error('[FranchiseIntelService] AI Universe analysis failed:', err);
       return {
         isCooldown: false,
@@ -377,7 +417,9 @@ export class FranchiseIntelService {
       media_type?: 'movie' | 'tv' | undefined;
       importance?: 'essential' | 'recommended' | 'optional' | undefined;
     }[],
-    knownParts: FranchisePart[] = []
+    knownParts: FranchisePart[] = [],
+    onProgress?: (resolved: number, total: number) => void,
+    abortSignal?: AbortSignal
   ): Promise<FranchisePart[]> {
     const knownByNormTitle = new Map<string, FranchisePart>();
     for (const kp of knownParts) {
@@ -387,6 +429,7 @@ export class FranchiseIntelService {
     }
 
     const orderedSlots: (FranchisePart | null)[] = new Array(canonTitles.length).fill(null);
+    let completedCount = 0;
 
     const resolveSingle = async (
       canon: {
@@ -470,7 +513,17 @@ export class FranchiseIntelService {
     // Execute in concurrent batches of 5 to avoid sequential waterfall while respecting rate limits
     for (let i = 0; i < canonTitles.length; i += CANON_RESOLVE_BATCH_SIZE) {
       const batch = canonTitles.slice(i, i + CANON_RESOLVE_BATCH_SIZE);
-      await Promise.all(batch.map((item, batchIdx) => resolveSingle(item, i + batchIdx)));
+      if (abortSignal?.aborted) {
+        throw new DOMException('Universe build cancelled', 'AbortError');
+      }
+      await Promise.all(
+        batch.map(async (item, batchIdx) => {
+          if (abortSignal?.aborted) return;
+          await resolveSingle(item, i + batchIdx);
+          completedCount++;
+          onProgress?.(completedCount, canonTitles.length);
+        })
+      );
     }
 
     // Deduplicate by mediaType_id while preserving canonical order
@@ -755,5 +808,179 @@ export class FranchiseIntelService {
     }
 
     return bestCandidate;
+  }
+
+  /**
+   * Dispatches Universe canon resolution & live TMDB expansion to the background immediately
+   * after the user confirms the Universe Proposal modal, freeing the UI and notifying upon completion.
+   */
+  public startBackgroundUniverseBuild(options: {
+    proposal: FranchiseIntelResponse;
+    currentParts: FranchisePart[];
+    seedCollection?: { id: number; name: string } | undefined;
+    fallbackOverview?: string | null | undefined;
+    fallbackBackdropPath?: string | null | undefined;
+    fallbackPosterPath?: string | null | undefined;
+  }): void {
+    const {
+      proposal,
+      currentParts,
+      seedCollection,
+      fallbackOverview,
+      fallbackBackdropPath,
+      fallbackPosterPath
+    } = options;
+
+    if (this.jobAbortController) {
+      this.jobAbortController.abort();
+    }
+    const abortController = new AbortController();
+    this.jobAbortController = abortController;
+
+    const rawUniverseId = proposal.universeId || `universe_${Date.now()}`;
+    const cleanKey = String(rawUniverseId).replace(/^(universe_)+/, '');
+    const universeId = `universe_${cleanKey}`;
+    const universeTitle = proposal.universeTitle || 'Shared Universe';
+    const canonTitles = proposal.canonTitles || [];
+    const jobId = `${universeId}_${Date.now()}`;
+
+    this.activeJob.set({
+      jobId,
+      seedCollectionId: seedCollection?.id,
+      universeId,
+      universeTitle,
+      phase: 'resolving',
+      resolvedCount: 0,
+      totalCount: Math.max(1, canonTitles.length)
+    });
+
+    // Notify user immediately with a Cancel action
+    void this.toastService.presentActionToast(
+      `Building "${universeTitle}" in the background...`,
+      'CANCEL',
+      () => this.cancelActiveJob(),
+      'info',
+      4000
+    );
+
+    void (async (): Promise<void> => {
+      try {
+        // 1. Save an immediate optimistic seed universe so it's visible in Archive right away
+        const seedSummary: FranchiseCollectionSummary = {
+          id: universeId,
+          name: universeTitle,
+          overview: proposal.connectionInsight || fallbackOverview || undefined,
+          poster_path: fallbackPosterPath ?? currentParts.find((p) => p.poster_path)?.poster_path ?? null,
+          backdrop_path: fallbackBackdropPath ?? currentParts.find((p) => p.backdrop_path)?.backdrop_path ?? null,
+          totalParts: Math.max(currentParts.length, canonTitles.length),
+          collectedCount: 0,
+          watchedCount: 0,
+          watchlistCount: 0,
+          completionPercentage: 0,
+          isUniverse: true,
+          universeId,
+          parentUniverseTitle: proposal.universeTitle,
+          connectionInsight: proposal.connectionInsight,
+          parts: currentParts,
+          siblingFranchises: proposal.siblingFranchises || []
+        };
+        await this.franchiseAggregator.trackFranchise(universeId, seedSummary);
+
+        // 2. Resolve AI canon titles in parallel batches with live progress updates
+        const baseResolvedParts = await this.resolveCanonItems(
+          canonTitles,
+          currentParts,
+          (resolved, total) => {
+            if (abortController.signal.aborted) return;
+            this.activeJob.update((curr) =>
+              curr && curr.jobId === jobId ? { ...curr, resolvedCount: resolved, totalCount: total } : curr
+            );
+          },
+          abortController.signal
+        );
+
+        if (abortController.signal.aborted) return;
+
+        // 3. Verify sibling collections and expand with live TMDB 2024-2027+ releases
+        this.activeJob.update((curr) =>
+          curr && curr.jobId === jobId ? { ...curr, phase: 'expanding' } : curr
+        );
+
+        const rawSiblings = [...(proposal.siblingFranchises || [])];
+        const siblings = await this.resolveSiblingCollections(rawSiblings, seedCollection);
+
+        if (abortController.signal.aborted) return;
+
+        const resolvedParts = await this.expandUniverseWithLiveTmdb(
+          universeTitle,
+          universeId,
+          baseResolvedParts,
+          siblings
+        );
+
+        if (abortController.signal.aborted) return;
+
+        const rawBackdropPath =
+          fallbackBackdropPath || resolvedParts.find((p) => p.backdrop_path)?.backdrop_path || null;
+        const rawPosterPath =
+          resolvedParts.find((p) => p.poster_path)?.poster_path || fallbackPosterPath || null;
+
+        const completedSummary: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
+          id: universeId,
+          name: universeTitle,
+          overview: proposal.connectionInsight || fallbackOverview || undefined,
+          poster_path: rawPosterPath,
+          backdrop_path: rawBackdropPath,
+          totalParts: resolvedParts.length,
+          collectedCount: 0,
+          watchedCount: 0,
+          watchlistCount: 0,
+          completionPercentage: 0,
+          isUniverse: true,
+          universeId,
+          parentUniverseTitle: proposal.universeTitle,
+          connectionInsight: proposal.connectionInsight,
+          parts: resolvedParts,
+          siblingFranchises: siblings,
+          canonExpandedV2: true
+        };
+
+        await this.franchiseAggregator.trackFranchise(universeId, completedSummary);
+        this.lastCompletedUniverse.set(completedSummary);
+
+        // 4. Notify user that their franchise universe is ready with a direct VIEW action
+        await this.toastService.presentActionToast(
+          `✨ "${universeTitle}" is ready (${resolvedParts.length} titles)!`,
+          'VIEW',
+          () => {
+            void this.router.navigate(['/collection', universeId], {
+              state: {
+                title: universeTitle,
+                preview: {
+                  id: universeId,
+                  name: universeTitle,
+                  backdropUrl: rawBackdropPath ? resolveMediaImageUrl(rawBackdropPath, 'w1280') : undefined
+                }
+              }
+            });
+          },
+          'success',
+          6500
+        );
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError' || abortController.signal.aborted) {
+          return;
+        }
+        console.error('[FranchiseIntelService] Background universe build failed:', err);
+        await this.toastService.presentError(`Could not finish building "${universeTitle}".`, 3000);
+      } finally {
+        if (this.activeJob()?.jobId === jobId) {
+          this.activeJob.set(null);
+        }
+        if (this.jobAbortController === abortController) {
+          this.jobAbortController = null;
+        }
+      }
+    })();
   }
 }

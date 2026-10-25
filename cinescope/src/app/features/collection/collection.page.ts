@@ -1,6 +1,6 @@
 import {
   Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject,
-  signal, computed, ViewChild, ChangeDetectorRef, DestroyRef
+  signal, computed, effect, ViewChild, ChangeDetectorRef, DestroyRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -68,7 +68,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private navService = inject(NavigationService);
   private collectionLoader = inject(CollectionLoaderService);
   private franchiseAggregator = inject(FranchiseAggregatorService);
-  private franchiseIntel = inject(FranchiseIntelService);
+  public franchiseIntel = inject(FranchiseIntelService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
@@ -397,6 +397,27 @@ export class CollectionPage implements OnInit, AfterViewInit {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,
       tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
+    });
+
+    effect(() => {
+      const completed = this.franchiseIntel.lastCompletedUniverse();
+      if (!completed) return;
+      const currentSummary = this.franchiseSummary();
+      const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
+      const completedKey = String(completed.universeId || completed.id).replace(/^(universe_)+/, '');
+      if (this.isUniverseCollection() && currentKey && currentKey === completedKey) {
+        this.franchiseSummary.set(completed);
+        const items: SwimlaneItem[] = (completed.parts || []).map((part) => ({
+          id: part.id,
+          mediaType: part.mediaType || 'movie',
+          title: part.title,
+          posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+          bookmarkState: 'none',
+          payload: part as unknown as Record<string, unknown>
+        }));
+        this.rawItems.set(items);
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -895,9 +916,19 @@ export class CollectionPage implements OnInit, AfterViewInit {
   // AI UNIVERSE REASONING & ASCENSION
   // ==========================================
 
+  public cancelBackgroundUniverseJob(): void {
+    this.franchiseIntel.cancelActiveJob();
+  }
+
   public async triggerDiscoverUniverse(): Promise<void> {
+    if (this.isAnalyzingUniverse()) {
+      this.franchiseIntel.cancelAnalysis();
+      this.isAnalyzingUniverse.set(false);
+      await this.toastService.presentInfo('AI Universe analysis cancelled', 1600);
+      return;
+    }
     const colId = this.numericCollectionId();
-    if (!colId || this.isAnalyzingUniverse()) return;
+    if (!colId) return;
 
     const cooldown = this.franchiseIntel.getCooldownStatus(colId);
     if (cooldown.isCooldown) {
@@ -919,6 +950,9 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
       const res = await this.franchiseIntel.analyzeUniverse(colId, this.collectionTitle(), parts);
 
+      if (res.isCancelled) {
+        return;
+      }
       if (res.isCooldown) {
         await this.toastService.presentInfo(
           res.message || `Next scan available in ${res.hoursRemaining || 3} hrs`,
@@ -1144,104 +1178,40 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
   }
 
-  public async confirmAscension(): Promise<void> {
+  public confirmAscension(): void {
     const proposal = this.universeProposal();
-    if (!proposal || this.isResolvingCanon()) return;
+    if (!proposal) return;
 
-    this.isResolvingCanon.set(true);
+    // 1. Immediately close the modal so the user is never blocked or trapped
+    this.showUniverseModal.set(false);
+    this.isResolvingCanon.set(false);
 
-    try {
-      const canonTitles = proposal.canonTitles || [];
-      const currentParts: FranchisePart[] = this.rawItems().map((it) => {
-        const p = it.payload as Record<string, unknown> | undefined;
-        return {
-          id: Number(it.id),
-          title: it.title,
-          mediaType: it.mediaType === 'tv' ? 'tv' : 'movie',
-          overview: p?.['overview'] as string | undefined,
-          poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
-          backdrop_path: p?.['backdrop_path'] as string | undefined,
-          release_date: p?.['release_date'] as string | undefined,
-          first_air_date: p?.['first_air_date'] as string | undefined,
-          vote_average: p?.['vote_average'] as number | undefined,
-          vote_count: p?.['vote_count'] as number | undefined
-        };
-      });
-
-      const baseResolvedParts = await this.franchiseIntel.resolveCanonItems(canonTitles, currentParts);
-
-      const universeId = proposal.universeId || `universe_${Date.now()}`;
-      const universeTitle = proposal.universeTitle || 'Shared Universe';
-
-      // Ensure starting numeric collection is also included in siblingFranchises and all siblings are verified TMDB collections
-      const colId = this.numericCollectionId();
-      const rawSiblings = [...(proposal.siblingFranchises || [])];
-      const siblings = await this.franchiseIntel.resolveSiblingCollections(
-        rawSiblings,
-        colId ? { id: colId, name: this.collectionTitle() } : undefined
-      );
-
-      // Augment AI canon with live TMDB sibling collection parts + keyword/studio discovery (Movies + TV)
-      const resolvedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
-        universeTitle,
-        universeId,
-        baseResolvedParts,
-        siblings
-      );
-
-      const rawBackdropPath = this.franchiseSummary()?.backdrop_path
-        || resolvedParts.find((p) => p.backdrop_path)?.backdrop_path
-        || null;
-      const rawPosterPath = resolvedParts.find((p) => p.poster_path)?.poster_path
-        || this.franchiseSummary()?.poster_path
-        || null;
-
-      const universeSummary: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
-        id: universeId,
-        name: universeTitle,
-        overview: proposal.connectionInsight || this.collectionOverview() || undefined,
-        poster_path: rawPosterPath,
-        backdrop_path: rawBackdropPath,
-        totalParts: resolvedParts.length,
-        collectedCount: 0,
-        watchedCount: 0,
-        watchlistCount: 0,
-        completionPercentage: 0,
-        isUniverse: true,
-        universeId,
-        parentUniverseTitle: proposal.universeTitle,
-        connectionInsight: proposal.connectionInsight,
-        parts: resolvedParts,
-        siblingFranchises: siblings,
-        canonExpandedV2: true
+    const currentParts: FranchisePart[] = this.rawItems().map((it) => {
+      const p = it.payload as Record<string, unknown> | undefined;
+      return {
+        id: Number(it.id),
+        title: it.title,
+        mediaType: it.mediaType === 'tv' ? 'tv' : 'movie',
+        overview: p?.['overview'] as string | undefined,
+        poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
+        backdrop_path: p?.['backdrop_path'] as string | undefined,
+        release_date: p?.['release_date'] as string | undefined,
+        first_air_date: p?.['first_air_date'] as string | undefined,
+        vote_average: p?.['vote_average'] as number | undefined,
+        vote_count: p?.['vote_count'] as number | undefined
       };
+    });
 
-      await this.franchiseAggregator.trackFranchise(universeId, universeSummary);
-
-      this.showUniverseModal.set(false);
-      await this.toastService.presentSuccess(
-        `Ascended to "${universeSummary.name}"!`,
-        2200
-      );
-
-      // Navigate to the newly created universe collection
-      void this.router.navigate(['/collection', universeId], {
-        state: {
-          title: universeSummary.name,
-          preview: {
-            id: universeId,
-            name: universeSummary.name,
-            backdropUrl: rawBackdropPath ? resolveMediaImageUrl(rawBackdropPath, 'w1280') : (this.collectionBackdrop() || undefined)
-          }
-        }
-      });
-    } catch (err) {
-      console.error('Failed to ascend to universe:', err);
-      await this.toastService.presentError('Failed to ascend to universe.', 2000);
-    } finally {
-      this.isResolvingCanon.set(false);
-      this.cdr.detectChanges();
-    }
+    const colId = this.numericCollectionId();
+    this.franchiseIntel.startBackgroundUniverseBuild({
+      proposal,
+      currentParts,
+      seedCollection: colId ? { id: colId, name: this.collectionTitle() } : undefined,
+      fallbackOverview: this.collectionOverview(),
+      fallbackBackdropPath: this.franchiseSummary()?.backdrop_path,
+      fallbackPosterPath: this.franchiseSummary()?.poster_path
+    });
+    this.cdr.detectChanges();
   }
 
   public getBookmarkState(item: SwimlaneItem): BookmarkState {
