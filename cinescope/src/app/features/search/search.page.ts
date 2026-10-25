@@ -100,6 +100,20 @@ export class SearchPage implements OnInit {
     this.applyQueryParams();
   }
 
+  public ionViewDidEnter(): void {
+    // Wait for Android view transition animation to settle before focusing and opening native keyboard
+    setTimeout(async () => {
+      try {
+        if (this.searchbar) {
+          await this.searchbar.setFocus();
+        }
+        await Keyboard.show();
+      } catch (err) {
+        console.debug('[SearchPage] Native keyboard auto-open skipped:', err);
+      }
+    }, 200);
+  }
+
   private applyQueryParams(): void {
     const qParams = this.route.snapshot.queryParams;
     const filterParam = qParams['filter'] as SearchFilter | undefined;
