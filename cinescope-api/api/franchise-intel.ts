@@ -58,6 +58,13 @@ If the collection is part of a larger shared universe, identify:
 5. "siblingFranchises": ONLY official theatrical TMDB movie collections within the universe (e.g. "Iron Man Collection", "Captain America Collection", "Thor Collection", "The Avengers Collection", "Guardians of the Galaxy Collection", "Spider-Man (Avengers) Collection"). NEVER include TV show groupings (such as "Disney+ Canon Series") or conceptual umbrella labels that are not official TMDB movie collections.
 6. "recommendedWatchOrder": Array of titles in canonical release or story order.
 
+CRITICAL CANON & AUTHENTICITY GUARD:
+- Every title in "canonTitles" MUST be an official, studio-authorized production by the owning studio (e.g. Lionsgate for John Wick, Marvel Studios for MCU, Lucasfilm for Star Wars, Warner Bros / DC for DC Universe).
+- STRICTLY EXCLUDE:
+  * Fan films, amateur productions, YouTube shorts, student films, parodies, tributes, or bootlegs (e.g. "John Twink", "Physical Touch", "Guns and Strawberries", fan trailers).
+  * Documentaries, making-of specials, and retrospective interviews.
+  * Unrelated movies that merely share an actor or crowdsourced TMDB keyword.
+
 If the collection is strictly a standalone movie series or trilogy (e.g. Back to the Future, Before Trilogy, The Godfather), set "isSharedUniverse": false.
 
 Return ONLY a valid JSON object matching this schema. Do not wrap in markdown code blocks:

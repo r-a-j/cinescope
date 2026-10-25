@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792931992.0681994,
-    "ast_hash": "f68fc6f0ed45e2dd44070aa3880398cb",
+    "mtime": 1792933518.166062,
+    "ast_hash": "860a84a84bb8612cbf49a60e6984eee4",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -2840,8 +2840,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1792869075.538872,
-    "ast_hash": "30ad2458b070486ef6565fa106399ba1",
+    "mtime": 1792933394.5742126,
+    "ast_hash": "f1be5127960994c34a68876214270e8e",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
@@ -2855,8 +2855,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-intel.service.ts": {
-    "mtime": 1792932096.7983615,
-    "ast_hash": "50084632c628244801f34e093e1a1f4f",
+    "mtime": 1792933418.63062,
+    "ast_hash": "0cde638056ab2eb515ad2e8f1d2d82f1",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/components/universe-proposal-modal/universe-proposal-modal.component.ts": {

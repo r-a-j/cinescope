@@ -456,8 +456,14 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
       const completedKey = String(completed.universeId || completed.id).replace(/^(universe_)+/, '');
       if (this.isUniverseCollection() && currentKey && currentKey === completedKey) {
-        this.franchiseSummary.set(completed);
-        const items: SwimlaneItem[] = (completed.parts || []).map((part) => ({
+        const cleanParts = this.sanitizeUniverseParts(completed.parts || []);
+        const sanitizedCompleted: FranchiseCollectionSummary = {
+          ...completed,
+          parts: cleanParts,
+          totalParts: cleanParts.length
+        };
+        this.franchiseSummary.set(sanitizedCompleted);
+        const items: SwimlaneItem[] = cleanParts.map((part) => ({
           id: part.id,
           mediaType: part.mediaType || 'movie',
           title: part.title,
@@ -576,10 +582,17 @@ export class CollectionPage implements OnInit, AfterViewInit {
           const uni = found.payload as unknown as FranchiseCollectionSummary;
           const nonCollectionPattern = /disney\+|canon series|tv series|television|phase\s*\d|streaming|one-shots|specials/i;
           const initialSiblings = (uni.siblingFranchises || []).filter((s) => s?.name && !nonCollectionPattern.test(s.name));
+          const cleanParts = this.sanitizeUniverseParts(uni.parts || []);
           const displayUni: FranchiseCollectionSummary = {
             ...uni,
+            totalParts: cleanParts.length,
+            parts: cleanParts,
             siblingFranchises: initialSiblings
           };
+
+          if (cleanParts.length < (uni.parts?.length || 0)) {
+            void this.storageService.saveUniverse(cleanParamKey, displayUni);
+          }
 
           this.collectionTitle.set(displayUni.name);
           this.collectionOverview.set(displayUni.connectionInsight || displayUni.overview || null);
@@ -590,7 +603,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
           this.franchiseSummary.set(displayUni);
           this.numericCollectionId.set(null);
 
-          const items: SwimlaneItem[] = (displayUni.parts || []).map((part) => ({
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
             id: part.id,
             mediaType: part.mediaType || 'movie',
             title: part.title,
@@ -1213,12 +1226,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
         }
       }
 
-      const expandedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
+      const rawExpandedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
         uni.name,
         String(uni.universeId || uni.id),
         baseParts,
         verifiedSiblings
       );
+      const expandedParts = this.sanitizeUniverseParts(rawExpandedParts);
 
       const addedCount = Math.max(0, expandedParts.length - (uni.parts?.length || 0));
       const updatedUni: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
@@ -1477,5 +1491,31 @@ export class CollectionPage implements OnInit, AfterViewInit {
       yearValue: rawDate,
       isUpcoming
     };
+  }
+
+  private sanitizeUniverseParts(parts: FranchisePart[]): FranchisePart[] {
+    return (parts || []).filter((part) => {
+      const lower = (part.title || '').toLowerCase();
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries)\b/i.test(lower)) {
+        return false;
+      }
+      if (
+        part.id === 1649247 ||
+        part.id === 1649952 ||
+        part.id === 1500342 ||
+        part.id === 1500310 ||
+        part.title === '戦闘シーン'
+      ) {
+        return false;
+      }
+      const rawDate = String(part.release_date || part.first_air_date || '').trim();
+      const currentYear = new Date().getFullYear();
+      const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
+      const voteCount = Number(part.vote_count ?? 0);
+      if (releaseYear > 0 && releaseYear <= currentYear && voteCount === 0 && (lower.includes('touch') || lower.includes('short'))) {
+        return false;
+      }
+      return true;
+    });
   }
 }

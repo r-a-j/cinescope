@@ -574,16 +574,46 @@ export class FranchiseIntelService {
       mergedMap.set(`${mType}_${part.id}`, { ...part, mediaType: mType });
     }
 
-    const addCandidatePart = (part: FranchisePart, genreIds?: number[]): void => {
-      if (!part.id || !part.title) return;
-      if (NON_CANON_DOC_TITLE.test(part.title)) return;
-      // Exclude Documentaries (genre 99) and Talk Shows (10767) / News (10763)
+    const isAuthenticCandidate = (part: FranchisePart, genreIds?: number[]): boolean => {
+      if (!part.id || !part.title) return false;
+      if (NON_CANON_DOC_TITLE.test(part.title)) return false;
+
+      // Exclude Documentaries (genre 99), Talk Shows (10767), News (10763)
       if (Array.isArray(genreIds) && (genreIds.includes(99) || genreIds.includes(10767) || genreIds.includes(10763))) {
-        return;
+        return false;
       }
-      // Require poster or known upcoming release date so junk/fan stub entries on TMDB are skipped
-      const rawDate = part.release_date || part.first_air_date || '';
-      if (!part.poster_path && !rawDate) return;
+
+      // Check title for amateur / parody / bootleg markers
+      const lower = part.title.toLowerCase();
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries|fan film|short film)\b/i.test(lower)) {
+        return false;
+      }
+
+      // Require a poster path
+      if (!part.poster_path) {
+        return false;
+      }
+
+      // Strict Popularity & Vote Count Guard:
+      // Real studio releases have substantial vote count and popularity.
+      // Amateur/parody/fan films on TMDB have vote_count < 15 and negligible popularity.
+      const rawDate = String(part.release_date || part.first_air_date || '').trim();
+      const currentYear = new Date().getFullYear();
+      const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
+      const voteCount = Number(part.vote_count ?? 0);
+
+      // If already released, require at least 15 votes to exclude amateur/fake crowdsourced stubs
+      if (releaseYear > 0 && releaseYear <= currentYear) {
+        if (voteCount < 15) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    const addCandidatePart = (part: FranchisePart, genreIds?: number[]): void => {
+      if (!isAuthenticCandidate(part, genreIds)) return;
 
       const mType = part.mediaType || 'movie';
       const key = `${mType}_${part.id}`;
@@ -631,25 +661,9 @@ export class FranchiseIntelService {
         universeId.includes('marvel_cinematic_universe') ||
         /marvel cinematic universe|\bmcu\b/i.test(universeTitle);
 
-      let keywordId: number | null = null;
-      if (isMcu) {
-        keywordId = 180547; // Official TMDB Keyword ID for "marvel cinematic universe (mcu)"
-      } else {
-        const cleanUniQuery = universeTitle
-          .replace(/\(.*?\)/g, '')
-          .replace(/\buniverse\b/gi, '')
-          .trim();
-        const kwSearch = await firstValueFrom(
-          this.tmdbSearch.searchKeywords(isMcu ? 'marvel cinematic universe' : (cleanUniQuery || universeTitle), 1)
-        );
-        const kwResults = kwSearch?.results || [];
-        const bestKw = kwResults.find(
-          (k) => computeSimilarity(universeTitle, k.name) >= 0.5 || computeSimilarity(cleanUniQuery, k.name) >= 0.6
-        );
-        if (bestKw) {
-          keywordId = bestKw.id;
-        }
-      }
+      // Only run keyword-based live discovery for MCU where TMDB maintains an official curated keyword ID (180547).
+      // For all other universes, non-curated crowdsourced TMDB keywords return amateur shorts, parodies, and spam.
+      const keywordId: number | null = isMcu ? 180547 : null;
 
       const discoverPromises: Promise<void>[] = [];
 
