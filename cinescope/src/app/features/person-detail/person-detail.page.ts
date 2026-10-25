@@ -126,6 +126,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   public person = signal<TmdbPersonDetailDto | null>(null);
 
   public bioExpanded = signal<boolean>(false);
+  public isScrolled = signal<boolean>(false);
   public activeCreditTab = signal<'movies' | 'tv' | 'crew'>('movies');
   public sortBy = signal<'newest' | 'popular'>('newest');
   public visibleCreditsLimit = signal<number>(25);
@@ -622,6 +623,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       this.preview.set(null);
       this.closeLightbox();
       this.bioExpanded.set(false);
+      this.isScrolled.set(false);
       this.activeCreditTab.set('movies');
       this.sortBy.set('newest');
       this.visibleCreditsLimit.set(25);
@@ -756,6 +758,13 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       }
     } catch {
       // Dismissed share sheet
+    }
+  }
+
+  public onScroll(event: CustomEvent<{ scrollTop: number }>): void {
+    const scrolled = (event.detail?.scrollTop ?? 0) > 36;
+    if (this.isScrolled() !== scrolled) {
+      this.isScrolled.set(scrolled);
     }
   }
 

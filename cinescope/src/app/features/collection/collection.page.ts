@@ -107,6 +107,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   public currentPage = signal<number>(1);
   public hasMore = signal<boolean>(true);
   public isLoadingMore = signal<boolean>(false);
+  public isScrolled = signal<boolean>(false);
 
   private isFetchingMore = false;
   private scrollThrottleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -786,7 +787,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
     this.navService.navigateToHome();
   }
 
-  public onScroll(): void {
+  public onScroll(event?: CustomEvent<{ scrollTop: number }>): void {
+    if (event?.detail) {
+      const scrolled = (event.detail.scrollTop ?? 0) > 28;
+      if (this.isScrolled() !== scrolled) {
+        this.isScrolled.set(scrolled);
+      }
+    }
     if (this.isFetchingMore || !this.hasMore()) return;
     if (this.scrollThrottleTimer) return;
     this.scrollThrottleTimer = setTimeout(() => {

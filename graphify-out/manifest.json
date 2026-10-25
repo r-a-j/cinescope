@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792952403.5880008,
-    "ast_hash": "112fca55b63c06b276095a58f6142e7e",
+    "mtime": 1792963042.1392236,
+    "ast_hash": "dcddcec7ed50962e81f75788be566fea",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -770,8 +770,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts": {
-    "mtime": 1792763697.7151947,
-    "ast_hash": "12995bd1d8328653550f612eeac5e780",
+    "mtime": 1792962828.519256,
+    "ast_hash": "db7b50ef15657b93bda41d8d4d597afb",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.ts": {
-    "mtime": 1792869075.5688834,
-    "ast_hash": "dc1debc3afd891c320394852bed22dc4",
+    "mtime": 1792962928.6289313,
+    "ast_hash": "13c3fbd9fce1c0e7467f367d35b4391f",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.ts": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.ts": {
-    "mtime": 1792869075.5694041,
-    "ast_hash": "559114a5aea8013ecfb3ff2dd1904b4d",
+    "mtime": 1792963006.540427,
+    "ast_hash": "49f9fdab5a6f21699463d8849cf25be6",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.html": {
-    "mtime": 1792869075.5540407,
-    "ast_hash": "6c45b0e977010b0c84334e078316aa37",
+    "mtime": 1792962820.8340085,
+    "ast_hash": "a26acd25c6b97666488d78c6b7544042",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.html": {
-    "mtime": 1792699527.7584162,
-    "ast_hash": "d5ec3478999a9e1faa95d9166627db4c",
+    "mtime": 1792962945.3025858,
+    "ast_hash": "68a1e76e098294d61a70316bf5cde493",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {
@@ -2805,8 +2805,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.html": {
-    "mtime": 1792949170.245693,
-    "ast_hash": "1382a2c3de552853f4dbf32781edde23",
+    "mtime": 1792963020.924084,
+    "ast_hash": "4a3ad1311d0003885504330e4f1de2da",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.html": {
@@ -2815,8 +2815,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.html": {
-    "mtime": 1792763697.6959648,
-    "ast_hash": "6530bce7a31c3e7c857e929a9c2a9686",
+    "mtime": 1792962861.7469778,
+    "ast_hash": "c6234ef16e4572dfae8379ae7009d319",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.html": {
@@ -2840,8 +2840,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1792958324.713444,
-    "ast_hash": "ddbfdd98afcf936d3deab679b7be7ff9",
+    "mtime": 1792958532.3060524,
+    "ast_hash": "f2eeac4430752b0eb36e0f7e84593624",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
@@ -2855,8 +2855,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-intel.service.ts": {
-    "mtime": 1792958421.272701,
-    "ast_hash": "6705102f433e606527319ad7018da2e4",
+    "mtime": 1792958532.3076494,
+    "ast_hash": "cadb3e6d112a1367ad53e6b51ba37541",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/components/universe-proposal-modal/universe-proposal-modal.component.ts": {
