@@ -45,10 +45,11 @@ Examples of Shared Universes:
 - "John Wick Collection" -> Part of "John Wick Universe" (includes The Continental, Ballerina)
 - "Dhoom Collection" -> Direct movie series (isSharedUniverse: false)
 - "Harry Potter Collection" -> Part of "Wizarding World" (universeId: "wizarding_world", includes Fantastic Beasts)
+- "Stree Collection" -> Part of "Maddock Supernatural Universe" (universeId: "maddock_supernatural_universe", includes Stree, Stree 2, Bhediya, Munjya, Roohi, Thamma produced by Maddock Films)
 
 If the collection is part of a larger shared universe, identify:
-1. "universeTitle": Clean, authoritative name of the overarching universe (e.g. "Marvel Cinematic Universe (MCU)", "Wizarding World", "Star Wars Universe").
-2. "universeId": URL-safe identifier (e.g. "mcu", "wizarding_world", "star_wars").
+1. "universeTitle": Clean, authoritative name of the overarching universe (e.g. "Marvel Cinematic Universe (MCU)", "Wizarding World", "Star Wars Universe", "Maddock Supernatural Universe").
+2. "universeId": URL-safe identifier (e.g. "mcu", "wizarding_world", "star_wars", "maddock_supernatural_universe").
 3. "connectionInsight": 2-3 clear sentences explaining how the input collection links into the overarching master saga.
 4. "canonTitles": Return the COMPLETE, EXHAUSTIVE list of ABSOLUTELY ALL official canon Movies AND TV Series (live-action series, canon animated series, and specials) in the entire franchise/universe — from the very first entry up through 2024, 2025, 2026, and officially announced upcoming releases (e.g. for MCU, include every Phase 1–6 theatrical film and every Marvel Studios Disney+ / television series including WandaVision, Loki, What If...?, Hawkeye, Moon Knight, Ms. Marvel, She-Hulk, Secret Invasion, Echo, X-Men '97, Agatha All Along, Your Friendly Neighborhood Spider-Man, Daredevil: Born Again, Ironheart, Eyes of Wakanda, Marvel Zombies, Wonder Man, VisionQuest, Deadpool & Wolverine, Captain America: Brave New World, Thunderbolts*, The Fantastic Four: First Steps, Spider-Man: Brand New Day, Avengers: Doomsday, Avengers: Secret Wars, etc.). NEVER truncate or cap the list at 30 items! For each title provide:
    - "title": Clean official title (e.g. "Iron Man", "The Avengers", "Loki", "Agatha All Along", "VisionQuest")
@@ -59,11 +60,12 @@ If the collection is part of a larger shared universe, identify:
 6. "recommendedWatchOrder": Array of titles in canonical release or story order.
 
 CRITICAL CANON & AUTHENTICITY GUARD:
-- Every title in "canonTitles" MUST be an official, studio-authorized production by the owning studio (e.g. Lionsgate for John Wick, Marvel Studios for MCU, Lucasfilm for Star Wars, Warner Bros / DC for DC Universe).
+- Every title in "canonTitles" MUST be an official, studio-authorized production by the owning studio (e.g. Lionsgate for John Wick, Marvel Studios for MCU, Lucasfilm for Star Wars, Maddock Films for Maddock Supernatural Universe, Warner Bros / DC for DC Universe).
+- Strictly adhere to language and studio lineage: NEVER mix unrelated regional Indian films (such as Tamil or Telugu films from different directors/producers, e.g. "Thanga Thamaraigal") into a Hindi Maddock Films franchise, or unrelated foreign films into an American franchise.
 - STRICTLY EXCLUDE:
   * Fan films, amateur productions, YouTube shorts, student films, parodies, tributes, or bootlegs (e.g. "John Twink", "Physical Touch", "Guns and Strawberries", fan trailers).
   * Documentaries, making-of specials, and retrospective interviews.
-  * Unrelated movies that merely share an actor or crowdsourced TMDB keyword.
+  * Unrelated movies that merely share an actor, crew member, or crowdsourced TMDB keyword.
 
 If the collection is strictly a standalone movie series or trilogy (e.g. Back to the Future, Before Trilogy, The Godfather), set "isSharedUniverse": false.
 
@@ -183,6 +185,7 @@ Parts: ${titlesList}
 
             const rawText = result.response.text()?.trim();
             if (!rawText) continue;
+            console.log('[API franchise-intel] Gemini raw output for ' + finalCollectionName + ':', rawText);
 
             let cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
             const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);

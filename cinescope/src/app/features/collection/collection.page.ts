@@ -1212,21 +1212,39 @@ export class CollectionPage implements OnInit, AfterViewInit {
     if (!uni || !this.isUniverseCollection() || this.isSyncingUniverse()) return;
 
     this.isSyncingUniverse.set(true);
+    console.log('[SyncCanon] Starting canon sync for:', uni.name, 'silent:', silent);
     try {
       const verifiedSiblings = await this.franchiseIntel.resolveSiblingCollections(uni.siblingFranchises || []);
+      console.log('[SyncCanon] Verified siblings for universe:', verifiedSiblings);
 
-      // If user clicked manual Sync, also check if AI has newer canon titles for the first sibling collection
+      // If user clicked manual Sync, use cached AI canon or check if refresh is permitted without wasting Gemini quota
       let baseParts: FranchisePart[] = [...(uni.parts || [])];
       if (!silent && verifiedSiblings.length > 0 && verifiedSiblings[0]) {
         const seedSib = verifiedSiblings[0];
-        const aiRes = await this.franchiseIntel.analyzeUniverse(seedSib.id, seedSib.name, baseParts, true);
-        if (aiRes.data?.canonTitles?.length) {
-          const aiParts = await this.franchiseIntel.resolveCanonItems(aiRes.data.canonTitles, baseParts);
+        // 1. Quota Guard: First check local 30-day cache for pre-resolved canon titles (0 Gemini API calls)
+        const cachedIntel = this.franchiseIntel.getCachedIntel(seedSib.id);
+        const canonTitles = cachedIntel?.canonTitles;
+        if (canonTitles && canonTitles.length > 0) {
+          console.log('[SyncCanon] Resolving known canon titles from cached intelligence:', canonTitles);
+          const aiParts = await this.franchiseIntel.resolveCanonItems(canonTitles, baseParts);
           const mapByKey = new Map<string, FranchisePart>();
           for (const p of [...baseParts, ...aiParts]) {
             mapByKey.set(`${p.mediaType || 'movie'}_${p.id}`, p);
           }
           baseParts = Array.from(mapByKey.values());
+        } else {
+          // 2. Only call Gemini if no cached intelligence exists or cooldown elapsed
+          console.log('[SyncCanon] Requesting fresh universe scan from Gemini API...');
+          const aiRes = await this.franchiseIntel.analyzeUniverse(seedSib.id, seedSib.name, baseParts, false);
+          if (aiRes.data?.canonTitles?.length) {
+            console.log('[SyncCanon] Received fresh canon titles from Gemini:', aiRes.data.canonTitles);
+            const aiParts = await this.franchiseIntel.resolveCanonItems(aiRes.data.canonTitles, baseParts);
+            const mapByKey = new Map<string, FranchisePart>();
+            for (const p of [...baseParts, ...aiParts]) {
+              mapByKey.set(`${p.mediaType || 'movie'}_${p.id}`, p);
+            }
+            baseParts = Array.from(mapByKey.values());
+          }
         }
       }
 
@@ -1237,6 +1255,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
         verifiedSiblings
       );
       const expandedParts = this.sanitizeUniverseParts(rawExpandedParts);
+      console.log('[SyncCanon] Completed canon sync. Final titles:', expandedParts.map(p => `${p.title} (${p.release_date?.slice(0, 4) || 'N/A'})`));
 
       const addedCount = Math.max(0, expandedParts.length - (uni.parts?.length || 0));
       const updatedUni: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
@@ -1498,9 +1517,19 @@ export class CollectionPage implements OnInit, AfterViewInit {
   }
 
   private sanitizeUniverseParts(parts: FranchisePart[]): FranchisePart[] {
+    const validYears: number[] = [];
+    for (const p of parts || []) {
+      const d = String(p.release_date || p.first_air_date || '').trim();
+      const yr = d.length >= 4 ? parseInt(d.slice(0, 4), 10) : 0;
+      if (yr >= 1920) {
+        validYears.push(yr);
+      }
+    }
+    const minFranchiseYear = validYears.length >= 2 ? Math.min(...validYears) : 0;
+
     return (parts || []).filter((part) => {
       const lower = (part.title || '').toLowerCase();
-      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries)\b/i.test(lower)) {
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries|thamaraigal)\b/i.test(lower)) {
         return false;
       }
       if (
@@ -1516,6 +1545,12 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const currentYear = new Date().getFullYear();
       const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
       const voteCount = Number(part.vote_count ?? 0);
+
+      // Franchise inception era guard: reject any title released more than 3 years before the franchise began
+      if (minFranchiseYear > 0 && releaseYear > 0 && releaseYear < minFranchiseYear - 3) {
+        return false;
+      }
+
       if (releaseYear > 0 && releaseYear <= currentYear && voteCount === 0 && (lower.includes('touch') || lower.includes('short'))) {
         return false;
       }
