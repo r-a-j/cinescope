@@ -67,10 +67,10 @@
               <button
                 type="button"
                 class="discover-universe-btn"
-                title="Tap to cancel background build"
-                (click)="cancelBackgroundUniverseJob()">
+                title="View Universe build progress"
+                (click)="openActiveUniverseJob(bgJob)">
                 <ion-spinner name="crescent"></ion-spinner>
-                <span>Building ({{ bgJob.resolvedCount }}/{{ bgJob.totalCount }}) &times;</span>
+                <span>{{ bgJob.universeTitle }} ({{ bgJob.resolvedCount }}/{{ bgJob.totalCount }})</span>
               </button>
             } @else if (existingParentUniverse(); as parentUni) {
               <button
@@ -116,6 +116,21 @@
             </button>
           }
         </div>
+
+        @if (currentUniverseJob(); as job) {
+          <div class="universe-assembly-card">
+            <div class="assembly-header">
+              <div class="assembly-status">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Assembling {{ job.universeTitle }} canon...</span>
+              </div>
+              <span class="assembly-count">{{ job.resolvedCount }} of {{ job.totalCount }}</span>
+            </div>
+            <div class="assembly-track">
+              <div class="assembly-fill" [style.width.%]="job.totalCount > 0 ? (job.resolvedCount / job.totalCount) * 100 : 0"></div>
+            </div>
+          </div>
+        }
 
         <div class="franchise-progress-card">
           <div class="progress-info">

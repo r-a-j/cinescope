@@ -174,6 +174,15 @@ export class CollectionPage implements OnInit, AfterViewInit {
     return this.storageService.isCollectionMergedIntoUniverse(parentUni.id, colId);
   });
 
+  public currentUniverseJob = computed(() => {
+    const job = this.franchiseIntel.activeJob();
+    if (!job || !this.isUniverseCollection()) return null;
+    const currentSummary = this.franchiseSummary();
+    const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
+    const jobKey = String(job.universeId).replace(/^(universe_)+/, '');
+    return currentKey === jobKey ? job : null;
+  });
+
   public async toggleMergeWithParentUniverse(): Promise<void> {
     const colId = this.numericCollectionId();
     const parentUni = this.existingParentUniverse();
@@ -421,6 +430,26 @@ export class CollectionPage implements OnInit, AfterViewInit {
     });
 
     effect(() => {
+      const job = this.currentUniverseJob();
+      if (job && job.resolvedParts && job.resolvedParts.length > 0) {
+        const parts = job.resolvedParts;
+        const currentCount = this.rawItems().length;
+        if (parts.length > currentCount) {
+          const items: SwimlaneItem[] = parts.map((part) => ({
+            id: part.id,
+            mediaType: part.mediaType || 'movie',
+            title: part.title,
+            posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+            bookmarkState: 'none',
+            payload: part as unknown as Record<string, unknown>
+          }));
+          this.rawItems.set(items);
+          this.cdr.detectChanges();
+        }
+      }
+    });
+
+    effect(() => {
       const completed = this.franchiseIntel.lastCompletedUniverse();
       if (!completed) return;
       const currentSummary = this.franchiseSummary();
@@ -478,6 +507,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
       title?: string;
       items?: SwimlaneItem[];
       queryContext?: CollectionQueryContext;
+      seedUniverse?: FranchiseCollectionSummary;
       preview?: { id?: number | string; name?: string; posterUrl?: string; backdropUrl?: string };
     } | undefined;
 
@@ -488,6 +518,33 @@ export class CollectionPage implements OnInit, AfterViewInit {
     if (navState?.preview) {
       if (navState.preview.name) this.collectionTitle.set(navState.preview.name);
       if (navState.preview.backdropUrl) this.collectionBackdrop.set(navState.preview.backdropUrl);
+    }
+
+    // Fast-path: Instant Frame-0 hydration from active seed universe if freshly ascended
+    if (navState?.seedUniverse) {
+      const seedUni = navState.seedUniverse;
+      this.collectionTitle.set(seedUni.name);
+      this.collectionOverview.set(seedUni.connectionInsight || seedUni.overview || null);
+      if (seedUni.backdrop_path) {
+        this.collectionBackdrop.set(resolveMediaImageUrl(seedUni.backdrop_path, 'w1280'));
+      }
+      this.isFranchiseCollection.set(true);
+      this.isUniverseCollection.set(true);
+      this.franchiseSummary.set(seedUni);
+      this.numericCollectionId.set(null);
+
+      const items: SwimlaneItem[] = (seedUni.parts || []).map((part) => ({
+        id: part.id,
+        mediaType: part.mediaType || 'movie',
+        title: part.title,
+        posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+        bookmarkState: 'none',
+        payload: part as unknown as Record<string, unknown>
+      }));
+      this.rawItems.set(items);
+      this.hasMore.set(false);
+      this.cdr.detectChanges();
+      return;
     }
 
     // 1. Check if route has an ID parameter (TMDB Collection ID or Ascended Universe ID)
@@ -937,8 +994,16 @@ export class CollectionPage implements OnInit, AfterViewInit {
   // AI UNIVERSE REASONING & ASCENSION
   // ==========================================
 
-  public cancelBackgroundUniverseJob(): void {
-    this.franchiseIntel.cancelActiveJob();
+  public openActiveUniverseJob(job: { universeId: string; universeTitle: string }): void {
+    void this.router.navigate(['/collection', job.universeId], {
+      state: {
+        title: job.universeTitle,
+        preview: {
+          id: job.universeId,
+          name: job.universeTitle
+        }
+      }
+    });
   }
 
   public async triggerDiscoverUniverse(): Promise<void> {
@@ -1221,7 +1286,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     });
 
     const colId = this.numericCollectionId();
-    this.franchiseIntel.startBackgroundUniverseBuild({
+    const buildResult = this.franchiseIntel.startBackgroundUniverseBuild({
       proposal,
       currentParts,
       seedCollection: colId ? { id: colId, name: this.collectionTitle() } : undefined,
@@ -1229,6 +1294,20 @@ export class CollectionPage implements OnInit, AfterViewInit {
       fallbackBackdropPath: this.franchiseSummary()?.backdrop_path,
       fallbackPosterPath: this.franchiseSummary()?.poster_path,
       foldSubCollection: event?.foldSubCollection !== false
+    });
+
+    void this.router.navigate(['/collection', buildResult.universeId], {
+      state: {
+        title: buildResult.universeTitle,
+        seedUniverse: buildResult.seedSummary,
+        preview: {
+          id: buildResult.universeId,
+          name: buildResult.universeTitle,
+          backdropUrl: buildResult.seedSummary.backdrop_path
+            ? resolveMediaImageUrl(buildResult.seedSummary.backdrop_path, 'w1280')
+            : undefined
+        }
+      }
     });
     this.cdr.detectChanges();
   }

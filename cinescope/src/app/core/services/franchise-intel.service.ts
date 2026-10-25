@@ -6,7 +6,6 @@ import { environment } from '../../../environments/environment';
 import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
 import { FranchiseAggregatorService } from './franchise-aggregator.service';
 import { ToastService } from './toast.service';
-import { resolveMediaImageUrl } from '../constants/api.constants';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from './tmdb-search.service';
 import { TmdbDiscoverService } from './tmdb-discover.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
@@ -76,6 +75,7 @@ export class FranchiseIntelService {
     phase: 'resolving' | 'expanding';
     resolvedCount: number;
     totalCount: number;
+    resolvedParts?: FranchisePart[] | undefined;
   } | null>(null);
   public readonly lastCompletedUniverse = signal<FranchiseCollectionSummary | null>(null);
 
@@ -413,7 +413,7 @@ export class FranchiseIntelService {
       importance?: 'essential' | 'recommended' | 'optional' | undefined;
     }[],
     knownParts: FranchisePart[] = [],
-    onProgress?: (resolved: number, total: number) => void,
+    onProgress?: (resolved: number, total: number, currentParts?: FranchisePart[]) => void,
     abortSignal?: AbortSignal
   ): Promise<FranchisePart[]> {
     const knownByNormTitle = new Map<string, FranchisePart>();
@@ -505,6 +505,20 @@ export class FranchiseIntelService {
       }
     };
 
+    const buildCurrentDeduplicated = (): FranchisePart[] => {
+      const seen = new Set<string>();
+      const list: FranchisePart[] = [];
+      for (const p of orderedSlots) {
+        if (!p) continue;
+        const key = `${p.mediaType || 'movie'}_${p.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(p);
+        }
+      }
+      return list;
+    };
+
     // Execute in concurrent batches of 5 to avoid sequential waterfall while respecting rate limits
     for (let i = 0; i < canonTitles.length; i += CANON_RESOLVE_BATCH_SIZE) {
       const batch = canonTitles.slice(i, i + CANON_RESOLVE_BATCH_SIZE);
@@ -516,9 +530,12 @@ export class FranchiseIntelService {
           if (abortSignal?.aborted) return;
           await resolveSingle(item, i + batchIdx);
           completedCount++;
-          onProgress?.(completedCount, canonTitles.length);
         })
       );
+      if (abortSignal?.aborted) {
+        throw new DOMException('Universe build cancelled', 'AbortError');
+      }
+      onProgress?.(completedCount, canonTitles.length, buildCurrentDeduplicated());
     }
 
     // Deduplicate by mediaType_id while preserving canonical order
@@ -817,7 +834,7 @@ export class FranchiseIntelService {
     fallbackBackdropPath?: string | null | undefined;
     fallbackPosterPath?: string | null | undefined;
     foldSubCollection?: boolean | undefined;
-  }): void {
+  }): { universeId: string; universeTitle: string; seedSummary: FranchiseCollectionSummary } {
     const {
       proposal,
       currentParts,
@@ -841,6 +858,33 @@ export class FranchiseIntelService {
     const canonTitles = proposal.canonTitles || [];
     const jobId = `${universeId}_${Date.now()}`;
 
+    const initialMergedIds = foldSubCollection !== false && seedCollection?.id
+      ? [seedCollection.id]
+      : [];
+
+    const seedSummary: FranchiseCollectionSummary = {
+      id: universeId,
+      name: universeTitle,
+      overview: proposal.connectionInsight || fallbackOverview || undefined,
+      poster_path: fallbackPosterPath ?? currentParts.find((p) => p.poster_path)?.poster_path ?? null,
+      backdrop_path: fallbackBackdropPath ?? currentParts.find((p) => p.backdrop_path)?.backdrop_path ?? null,
+      totalParts: Math.max(currentParts.length, canonTitles.length),
+      collectedCount: 0,
+      watchedCount: 0,
+      watchlistCount: 0,
+      completionPercentage: 0,
+      isUniverse: true,
+      universeId,
+      parentUniverseTitle: proposal.universeTitle,
+      connectionInsight: proposal.connectionInsight,
+      parts: currentParts,
+      siblingFranchises: proposal.siblingFranchises || [],
+      mergedSubCollectionIds: initialMergedIds
+    };
+
+    // 1. Immediately track seed universe in RxDB and reactive state
+    void this.franchiseAggregator.trackFranchise(universeId, seedSummary);
+
     this.activeJob.set({
       jobId,
       seedCollectionId: seedCollection?.id,
@@ -848,54 +892,27 @@ export class FranchiseIntelService {
       universeTitle,
       phase: 'resolving',
       resolvedCount: 0,
-      totalCount: Math.max(1, canonTitles.length)
+      totalCount: Math.max(1, canonTitles.length),
+      resolvedParts: currentParts
     });
-
-    // Notify user immediately with a Cancel action
-    void this.toastService.presentActionToast(
-      `Building "${universeTitle}" in the background...`,
-      'CANCEL',
-      () => this.cancelActiveJob(),
-      'info',
-      4000
-    );
 
     void (async (): Promise<void> => {
       try {
-        const initialMergedIds = foldSubCollection !== false && seedCollection?.id
-          ? [seedCollection.id]
-          : [];
-
-        // 1. Save an immediate optimistic seed universe so it's visible in Archive right away
-        const seedSummary: FranchiseCollectionSummary = {
-          id: universeId,
-          name: universeTitle,
-          overview: proposal.connectionInsight || fallbackOverview || undefined,
-          poster_path: fallbackPosterPath ?? currentParts.find((p) => p.poster_path)?.poster_path ?? null,
-          backdrop_path: fallbackBackdropPath ?? currentParts.find((p) => p.backdrop_path)?.backdrop_path ?? null,
-          totalParts: Math.max(currentParts.length, canonTitles.length),
-          collectedCount: 0,
-          watchedCount: 0,
-          watchlistCount: 0,
-          completionPercentage: 0,
-          isUniverse: true,
-          universeId,
-          parentUniverseTitle: proposal.universeTitle,
-          connectionInsight: proposal.connectionInsight,
-          parts: currentParts,
-          siblingFranchises: proposal.siblingFranchises || [],
-          mergedSubCollectionIds: initialMergedIds
-        };
-        await this.franchiseAggregator.trackFranchise(universeId, seedSummary);
-
         // 2. Resolve AI canon titles in parallel batches with live progress updates
         const baseResolvedParts = await this.resolveCanonItems(
           canonTitles,
           currentParts,
-          (resolved, total) => {
+          (resolved, total, currentList) => {
             if (abortController.signal.aborted) return;
             this.activeJob.update((curr) =>
-              curr && curr.jobId === jobId ? { ...curr, resolvedCount: resolved, totalCount: total } : curr
+              curr && curr.jobId === jobId
+                ? {
+                    ...curr,
+                    resolvedCount: resolved,
+                    totalCount: total,
+                    resolvedParts: currentList && currentList.length > 0 ? currentList : curr.resolvedParts
+                  }
+                : curr
             );
           },
           abortController.signal
@@ -949,33 +966,20 @@ export class FranchiseIntelService {
         };
 
         await this.franchiseAggregator.trackFranchise(universeId, completedSummary);
+        this.activeJob.set(null);
         this.lastCompletedUniverse.set(completedSummary);
 
-        // 4. Notify user that their franchise universe is ready with a direct VIEW action
-        await this.toastService.presentActionToast(
+        // 4. Notify user that their franchise universe is ready
+        void this.toastService.presentSuccess(
           `"${universeTitle}" is ready (${resolvedParts.length} titles)!`,
-          'VIEW',
-          () => {
-            void this.router.navigate(['/collection', universeId], {
-              state: {
-                title: universeTitle,
-                preview: {
-                  id: universeId,
-                  name: universeTitle,
-                  backdropUrl: rawBackdropPath ? resolveMediaImageUrl(rawBackdropPath, 'w1280') : undefined
-                }
-              }
-            });
-          },
-          'success',
-          6500
+          3500
         );
       } catch (err) {
         if ((err as Error)?.name === 'AbortError' || abortController.signal.aborted) {
           return;
         }
         console.error('[FranchiseIntelService] Background universe build failed:', err);
-        await this.toastService.presentError(`Could not finish building "${universeTitle}".`, 3000);
+        void this.toastService.presentError(`Could not finish building "${universeTitle}".`, 3000);
       } finally {
         if (this.activeJob()?.jobId === jobId) {
           this.activeJob.set(null);
@@ -985,5 +989,7 @@ export class FranchiseIntelService {
         }
       }
     })();
+
+    return { universeId, universeTitle, seedSummary };
   }
 }

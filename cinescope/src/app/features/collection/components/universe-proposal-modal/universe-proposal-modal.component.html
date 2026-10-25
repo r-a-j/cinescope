@@ -5,12 +5,13 @@
     [style.transform]="dragOffsetY() > 0 ? 'translateY(' + dragOffsetY() + 'px)' : null"
     (click)="$event.stopPropagation()"
     (keyup.enter)="$event.stopPropagation()"
-    (touchstart)="onTouchStart($event)"
-    (touchmove)="onTouchMove($event)"
-    (touchend)="onTouchEnd()"
-    (touchcancel)="onTouchEnd()"
     tabindex="0">
-    <div class="drag-handle-zone">
+    <div
+      class="drag-handle-zone"
+      (touchstart)="onTouchStart($event)"
+      (touchmove)="onTouchMove($event)"
+      (touchend)="onTouchEnd()"
+      (touchcancel)="onTouchEnd()">
       <div class="drag-handle"></div>
     </div>
 
