@@ -33,8 +33,13 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- Smart Search AI Banner (Floating) -->
-  @if (store.query() && store.query().length >= 5) {
+  <!-- Smart Search AI Banner (Floating: Only shown when no results are found OR when smart search is active/ready) -->
+  @if (store.query() && store.query().length >= 4 && (
+    store.isSmartSearching() ||
+    store.showSmartUI() ||
+    store.smartResults().length > 0 ||
+    (!store.isLoading() && !store.isSearchingCollections() && store.results().length === 0 && store.collectionResults().length === 0 && matchingUserFranchises().length === 0 && matchingLibraryMedia().length === 0)
+  )) {
     <div class="smart-search-banner">
       <!-- Loading State: AI is actively executing -->
       @if (store.isSmartSearching()) {
@@ -243,8 +248,34 @@
       }
     }
 
+    <!-- In Your Library Shelf (Local-First RxDB items matching query) -->
+    @if (store.activeFilter() === 'all' && matchingLibraryMedia().length > 0 && !store.showSmartUI()) {
+      <div class="library-search-shelf">
+        <div class="shelf-header">
+          <ion-icon name="bookmark"></ion-icon>
+          <h4>IN YOUR LIBRARY ({{ matchingLibraryMedia().length }})</h4>
+        </div>
+        <div class="library-items-row">
+          @for (lm of matchingLibraryMedia(); track lm.id) {
+            <div class="library-item-card" tabindex="0" (click)="onLibraryMediaClick(lm.doc)" (keyup.enter)="onLibraryMediaClick(lm.doc)">
+              <div class="poster-box">
+                <img [src]="lm.posterUrl" [alt]="lm.title" loading="lazy">
+                <span class="status-chip" [class.is-watched]="lm.status === 'watched'">
+                  {{ lm.status === 'watched' ? 'WATCHED' : 'WATCHLIST' }}
+                </span>
+              </div>
+              <div class="meta-box">
+                <h5>{{ lm.title }}</h5>
+                <p>{{ lm.year || 'TBA' }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <!-- No Results Found -->
-    @if (store.query() && store.filteredResults().length === 0 && !store.isLoading() && !store.showSmartUI()) {
+    @if (store.query() && store.filteredResults().length === 0 && matchingLibraryMedia().length === 0 && !store.isLoading() && !store.showSmartUI()) {
       <div class="status-container empty-state">
         <ion-icon name="film-outline"></ion-icon>
         <h3>NO RESULTS FOUND</h3>

@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792869075.5540407,
-    "ast_hash": "c02771db1020ae09723ea3b8479cfe5c",
+    "mtime": 1792956427.4590342,
+    "ast_hash": "e3f76b222c14def063df8f61eb66bd54",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
-    "mtime": 1792955052.6820908,
-    "ast_hash": "41c9f52d2c4884c27202963ec22624af",
+    "mtime": 1792956333.9456415,
+    "ast_hash": "680ee7c81536c476d8e73c1650b2cf24",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
@@ -1320,8 +1320,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {
-    "mtime": 1792869075.570506,
-    "ast_hash": "f8b3c6461b783d40a481cde65fcddb36",
+    "mtime": 1792956368.7976313,
+    "ast_hash": "7f1aa7aac44021b4bfaf90a54bc6d73c",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.html": {

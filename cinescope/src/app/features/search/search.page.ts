@@ -23,6 +23,7 @@ import { FranchiseAggregatorService } from '../../core/services/franchise-aggreg
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
 import { TmdbCollectionListItemDto } from '../../core/dtos/collections/collection-list-item.dto';
+import { ContentDocType } from '../../core/database/schemas/content.schema';
 
 @Component({
   selector: 'app-search',
@@ -75,6 +76,81 @@ export class SearchPage implements OnInit {
       return false;
     });
   });
+
+  public readonly matchingLibraryMedia = computed(() => {
+    const rawQuery = this.store.query().trim().toLowerCase();
+    if (!rawQuery || rawQuery.length < 2) return [];
+
+    const watchlist = this.storageService.watchlistItems();
+    const watched = this.storageService.watchedItems();
+    const combined = [...watchlist, ...watched];
+
+    const seen = new Set<string>();
+    const matched: {
+      id: string;
+      doc: ContentDocType;
+      title: string;
+      posterUrl: string;
+      year: string;
+      status: 'watched' | 'watchlist';
+    }[] = [];
+
+    for (const doc of combined) {
+      if (doc.mediaType === 'person') continue;
+      const key = `${doc.mediaType}_${doc.tmdbId}`;
+      if (seen.has(key)) continue;
+
+      const payload = doc.payload as Record<string, unknown> | undefined;
+      const title = String(payload?.['title'] || payload?.['name'] || '').trim();
+      if (!title) continue;
+
+      if (title.toLowerCase().includes(rawQuery)) {
+        seen.add(key);
+        const rawPath = (payload?.['poster_path'] || payload?.['posterUrl']) as string | undefined;
+        const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
+        const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : '';
+        const status = doc.lists.includes('watched') ? 'watched' : 'watchlist';
+
+        matched.push({
+          id: doc.id,
+          doc,
+          title,
+          posterUrl: this.resolveImage(rawPath),
+          year,
+          status
+        });
+      }
+    }
+    return matched.slice(0, 8);
+  });
+
+  public onLibraryMediaClick(item: ContentDocType): void {
+    const query = this.store.query();
+    if (query.trim()) {
+      this.store.saveSearchToHistory(query);
+    }
+    const payload = item.payload as Record<string, unknown> | undefined;
+    const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+    const title = String(payload?.['title'] || payload?.['name'] || '');
+    const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
+    const rawPath = (payload?.['poster_path'] || payload?.['posterUrl']) as string | undefined;
+    const rating = Number(payload?.['vote_average'] || 0);
+
+    void this.router.navigate(['/media', mediaType, item.tmdbId], {
+      state: {
+        preview: {
+          id: item.tmdbId,
+          mediaType,
+          title,
+          overview: payload?.['overview'] as string | undefined,
+          posterUrl: this.resolveImage(rawPath),
+          backdropUrl: payload?.['backdrop_path'] ? resolveMediaImageUrl(payload['backdrop_path'] as string, 'w1280') : undefined,
+          releaseYear: rawDate.length >= 4 ? rawDate.slice(0, 4) : '',
+          rating: rating > 0 ? rating.toFixed(1) : undefined
+        }
+      }
+    });
+  }
 
   public trackById(index: number, item: { id: number | string }): number | string {
     return item.id;

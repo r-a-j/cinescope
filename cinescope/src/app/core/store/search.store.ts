@@ -13,6 +13,38 @@ import { SmartSearchService, SemanticIntentSection } from '../services/smart-sea
 import { DatabaseService } from '../database/database.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
 
+function generateSearchTitleVariations(query: string): string[] {
+    const variations = new Set<string>();
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+
+    // Double consonant: e.g. "thama" -> "thamma"
+    const doubledMatch = trimmed.match(/^(.*[aeiou])([bcdfghjklmnprstvwz])([aeiou]+)$/i);
+    if (doubledMatch && doubledMatch[1] && doubledMatch[2] && doubledMatch[3]) {
+        variations.add(`${doubledMatch[1]}${doubledMatch[2]}${doubledMatch[2]}${doubledMatch[3]}`);
+    }
+
+    // Single consonant: e.g. "thamma" -> "thama"
+    const singleMatch = trimmed.replace(/([bcdfghjklmnprstvwz])\1/gi, '$1');
+    if (singleMatch !== trimmed) {
+        variations.add(singleMatch);
+    }
+
+    // Indian vowel transliteration: "munjya" <-> "munjiya"
+    if (/jya/i.test(trimmed)) {
+        variations.add(trimmed.replace(/jya/gi, 'jiya'));
+    } else if (/jiya/i.test(trimmed)) {
+        variations.add(trimmed.replace(/jiya/gi, 'jya'));
+    }
+
+    // Common numerals: "part 2" <-> "part ii"
+    if (/\b2\b/.test(trimmed)) variations.add(trimmed.replace(/\b2\b/g, 'ii'));
+    if (/\bii\b/i.test(trimmed)) variations.add(trimmed.replace(/\bii\b/gi, '2'));
+
+    variations.delete(trimmed);
+    return Array.from(variations);
+}
+
 export type CategorizedSearchResult = TmdbMultiSearchResultDto & { smart_category?: string };
 export type SearchFilter = 'all' | 'movie' | 'tv' | 'collection' | 'person';
 
@@ -264,10 +296,12 @@ export const SearchStore = signalStore(
                             return of(null);
                         }
 
-                        // --- V4 NLP DETERMINISTIC INTERCEPTOR ---
+                        // --- V5 DETERMINISTIC QUERY INTENT COMPILER ---
                         let cleanQuery = query.toLowerCase();
                         let sortIntent: 'latest' | 'oldest' | 'rating' | null = null;
+                        let extractedYear: number | null = null;
 
+                        // 1. Extract Sorting Keywords
                         if (/\b(latest|newest|new)\b/i.test(cleanQuery)) {
                             sortIntent = 'latest';
                             cleanQuery = cleanQuery.replace(/\b(latest|newest|new)\b/ig, '').trim();
@@ -277,6 +311,16 @@ export const SearchStore = signalStore(
                         } else if (/\b(best|top rated)\b/i.test(cleanQuery)) {
                             sortIntent = 'rating';
                             cleanQuery = cleanQuery.replace(/\b(best|top rated)\b/ig, '').trim();
+                        }
+
+                        // 2. Extract 4-digit release year (e.g. "Batman 2022" -> query "Batman", boost 2022)
+                        const yearMatch = cleanQuery.match(/\b(19\d\d|20\d\d)\b/);
+                        if (yearMatch && yearMatch[1]) {
+                            extractedYear = parseInt(yearMatch[1], 10);
+                            const stripped = cleanQuery.replace(/\b(19\d\d|20\d\d)\b/g, '').trim();
+                            if (stripped.length >= 2) {
+                                cleanQuery = stripped;
+                            }
                         }
 
                         if (!cleanQuery) cleanQuery = query;
@@ -303,9 +347,34 @@ export const SearchStore = signalStore(
                         });
 
                         return searchService.searchMulti(cleanQuery, 1).pipe(
+                            switchMap((res) => {
+                                const items = res.results || [];
+                                // If 0 items returned from exact query, attempt phonetic transliteration variation
+                                if (items.length === 0 && cleanQuery.length >= 3) {
+                                    const variations = generateSearchTitleVariations(cleanQuery);
+                                    if (variations.length > 0 && variations[0]) {
+                                        return searchService.searchMulti(variations[0], 1).pipe(
+                                            catchError(() => of(res))
+                                        );
+                                    }
+                                }
+                                return of(res);
+                            }),
                             tap({
                                 next: (res) => {
                                     let finalResults = res.results || [];
+
+                                    // If user specified an explicit year, boost matching release year to the top
+                                    if (extractedYear && finalResults.length > 0) {
+                                        const yearStr = String(extractedYear);
+                                        finalResults = [...finalResults].sort((a, b) => {
+                                            const dateA = a.media_type === 'movie' ? a.release_date : (a.media_type === 'tv' ? a.first_air_date : '');
+                                            const dateB = b.media_type === 'movie' ? b.release_date : (b.media_type === 'tv' ? b.first_air_date : '');
+                                            const aMatch = dateA?.startsWith(yearStr) ? 1 : 0;
+                                            const bMatch = dateB?.startsWith(yearStr) ? 1 : 0;
+                                            return bMatch - aMatch;
+                                        });
+                                    }
 
                                     if (sortIntent && finalResults.length > 0) {
                                         finalResults = [...finalResults].sort((a, b) => {
