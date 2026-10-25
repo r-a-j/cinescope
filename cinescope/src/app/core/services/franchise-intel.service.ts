@@ -29,6 +29,38 @@ export interface FranchiseIntelAnalysisResult {
   data?: FranchiseIntelResponse | null | undefined;
 }
 
+function generateTitleVariations(title: string): string[] {
+  const variations = new Set<string>();
+  const trimmed = title.trim();
+  if (!trimmed) return [];
+
+  // 1. Double consonant variations (e.g. Thama -> Thamma)
+  const doubledMatch = trimmed.match(/^(.*[aeiou])([bcdfghjklmnprstvwz])([aeiou]+)$/i);
+  if (doubledMatch && doubledMatch[1] && doubledMatch[2] && doubledMatch[3]) {
+    variations.add(`${doubledMatch[1]}${doubledMatch[2]}${doubledMatch[2]}${doubledMatch[3]}`);
+  }
+
+  // 2. Single consonant variations (e.g. Thamma -> Thama)
+  const singleMatch = trimmed.replace(/([bcdfghjklmnprstvwz])\1/gi, '$1');
+  if (singleMatch !== trimmed) {
+    variations.add(singleMatch);
+  }
+
+  // 3. Indian / transliteration variations (e.g. Munjya <-> Munjiya)
+  if (/jya/i.test(trimmed)) {
+    variations.add(trimmed.replace(/jya/gi, 'jiya'));
+  } else if (/jiya/i.test(trimmed)) {
+    variations.add(trimmed.replace(/jiya/gi, 'jya'));
+  }
+
+  // 4. Roman / Arabic number variants (e.g. "Stree 2" <-> "Stree II")
+  if (/\b2\b/.test(trimmed)) variations.add(trimmed.replace(/\b2\b/g, 'II'));
+  if (/\bII\b/.test(trimmed)) variations.add(trimmed.replace(/\bII\b/g, '2'));
+
+  variations.delete(trimmed);
+  return Array.from(variations);
+}
+
 function cleanNorm(str: string): string {
   return (str || '')
     .toLowerCase()
@@ -37,21 +69,90 @@ function cleanNorm(str: string): string {
     .trim();
 }
 
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  const row = new Array<number>(n + 1).fill(0);
+  for (let j = 0; j <= n; j++) row[j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const valJ = row[j] ?? 0;
+      const valJMinus1 = row[j - 1] ?? 0;
+      const cur = Math.min(valJ + 1, valJMinus1 + 1, prev + cost);
+      prev = valJ;
+      row[j] = cur;
+    }
+  }
+  return row[n] ?? m;
+}
+
 function computeSimilarity(s1: string, s2: string): number {
   const norm1 = cleanNorm(s1);
   const norm2 = cleanNorm(s2);
-  if (norm1 === norm2) return 1;
   if (!norm1 || !norm2) return 0;
-  if (norm1.includes(norm2) || norm2.includes(norm1)) return 0.85;
+  if (norm1 === norm2) return 1.0;
 
-  const words1 = new Set(norm1.split(' '));
-  const words2 = new Set(norm2.split(' '));
-  let intersection = 0;
-  for (const w of words1) {
-    if (words2.has(w)) intersection++;
+  const w1 = norm1.split(' ').filter(Boolean);
+  const w2 = norm2.split(' ').filter(Boolean);
+
+  // Exact word boundary matching: if one title is a clean prefix of the other (e.g. "John Wick" and "John Wick Chapter 4")
+  const isPrefix = norm1.startsWith(norm2 + ' ') || norm2.startsWith(norm1 + ' ');
+
+  // Compute Word Set Jaccard
+  const set1 = new Set(w1);
+  const set2 = new Set(w2);
+  let matchingWords = 0;
+  for (const word of set1) {
+    if (set2.has(word)) matchingWords++;
   }
-  const union = new Set([...words1, ...words2]).size;
-  return union > 0 ? intersection / union : 0;
+  const maxWords = Math.max(w1.length, w2.length);
+  const wordJaccard = maxWords > 0 ? matchingWords / maxWords : 0;
+
+  // Compute Levenshtein distance on full string
+  const maxLen = Math.max(norm1.length, norm2.length);
+  const levDist = levenshteinDistance(norm1, norm2);
+  const levSimilarity = maxLen > 0 ? Math.max(0, 1 - levDist / maxLen) : 0;
+
+  // Single-word target handling (e.g. "Thama", "Stree", "Alien")
+  // Prevents substring matching of short words inside completely unrelated words (e.g. "thama" in "thamaraigal")
+  if (w1.length === 1 || w2.length === 1) {
+    const singleWord = (w1.length === 1 ? w1[0] : w2[0]) || '';
+    const multiWords = w1.length === 1 ? w2 : w1;
+
+    let bestSingleWordMatch = 0;
+    for (const mw of multiWords) {
+      if (mw === singleWord) {
+        bestSingleWordMatch = 1.0;
+        break;
+      }
+      const dist = levenshteinDistance(singleWord, mw);
+      const mwMax = Math.max(singleWord.length, mw.length);
+      const sim = mwMax > 0 ? 1 - dist / mwMax : 0;
+      if (sim > bestSingleWordMatch) {
+        bestSingleWordMatch = sim;
+      }
+    }
+
+    // If single-word does not match any word closely (Levenshtein distance > 1), strictly reject
+    if (bestSingleWordMatch < 0.8) {
+      return 0;
+    }
+
+    return Math.max(levSimilarity, bestSingleWordMatch * 0.7 + wordJaccard * 0.3);
+  }
+
+  if (isPrefix) {
+    return Math.max(0.8, wordJaccard * 0.6 + levSimilarity * 0.4);
+  }
+
+  return wordJaccard * 0.6 + levSimilarity * 0.4;
 }
 
 @Injectable({
@@ -178,6 +279,8 @@ export class FranchiseIntelService {
     if (!forceRefresh) {
       const cached = this.getCachedIntel(collectionId);
       if (cached) {
+        console.log('[FranchiseIntel] Serving from local cache for:', collectionName, cached);
+        console.log('[FranchiseIntel] Cached canon titles:', cached.canonTitles);
         if (cached.siblingFranchises?.length) {
           const verifiedSiblings = await this.resolveSiblingCollections(cached.siblingFranchises, {
             id: collectionId,
@@ -216,11 +319,16 @@ export class FranchiseIntelService {
         knownTitles: (parts || []).map((p) => p.title)
       };
 
+      console.log('[FranchiseIntel] Calling Gemini API for:', collectionName, payload);
       const rawResponse = await firstValueFrom(
         this.http.post<Record<string, unknown>>(this.bffUrl, payload)
       );
+      console.log('[FranchiseIntel] Raw Gemini response:', rawResponse);
 
       const response = this.normalizeResponse(rawResponse);
+      console.log('[FranchiseIntel] Normalized Gemini response:', response);
+      console.log('[FranchiseIntel] Canon titles from Gemini:', response.canonTitles);
+      console.log('[FranchiseIntel] Sibling franchises from Gemini:', response.siblingFranchises);
       if (response.siblingFranchises?.length) {
         response.siblingFranchises = await this.resolveSiblingCollections(response.siblingFranchises, {
           id: collectionId,
@@ -417,11 +525,25 @@ export class FranchiseIntelService {
     abortSignal?: AbortSignal
   ): Promise<FranchisePart[]> {
     const knownByNormTitle = new Map<string, FranchisePart>();
+    const knownYears: number[] = [];
     for (const kp of knownParts) {
       if (kp.title) {
         knownByNormTitle.set(cleanNorm(kp.title), kp);
       }
+      const rawD = String(kp.release_date || kp.first_air_date || '').trim();
+      const yr = rawD.length >= 4 ? parseInt(rawD.slice(0, 4), 10) : 0;
+      if (yr >= 1920) {
+        knownYears.push(yr);
+      }
     }
+
+    const franchiseEra =
+      knownYears.length > 0
+        ? {
+            minYear: Math.min(...knownYears),
+            maxYear: Math.max(...knownYears)
+          }
+        : undefined;
 
     const orderedSlots: (FranchisePart | null)[] = new Array(canonTitles.length).fill(null);
     let completedCount = 0;
@@ -476,15 +598,61 @@ export class FranchiseIntelService {
             r.media_type === 'movie' || r.media_type === 'tv'
         );
 
-        const bestMatch = this.pickBestCandidate(targetTitle, candidates, {
-          year: inferredYear,
-          media_type: inferredType
-        });
+        let bestMatch = this.pickBestCandidate(
+          targetTitle,
+          candidates,
+          {
+            year: inferredYear,
+            media_type: inferredType
+          },
+          franchiseEra
+        );
+
+        // Fallback: If no match found for targetTitle, try transliteration / spelling variations (e.g. "Thama" -> "Thamma", "Munjya" -> "Munjiya")
+        if (!bestMatch) {
+          const variations = generateTitleVariations(targetTitle);
+          for (const alt of variations) {
+            try {
+              const altRes = await firstValueFrom(this.tmdbSearch.searchMulti(alt, 1));
+              const altCandidates = (altRes?.results || []).filter(
+                (r): r is (TmdbMultiSearchResultDto & { media_type: 'movie' | 'tv' }) =>
+                  r.media_type === 'movie' || r.media_type === 'tv'
+              );
+              bestMatch = this.pickBestCandidate(
+                targetTitle,
+                altCandidates,
+                {
+                  year: inferredYear,
+                  media_type: inferredType
+                },
+                franchiseEra
+              );
+              if (bestMatch) {
+                const altTitleName = bestMatch.media_type === 'tv' ? bestMatch.name : bestMatch.title;
+                console.log(`[FranchiseIntel] Matched "${targetTitle}" via variation "${alt}":`, altTitleName);
+                break;
+              }
+            } catch {
+              // Ignore single variation failure
+            }
+          }
+        }
+
+        const matchTitle = bestMatch ? (bestMatch.media_type === 'tv' ? bestMatch.name : bestMatch.title) : 'NOT FOUND ON TMDB';
+        console.log(`[FranchiseIntel] Canon title "${targetTitle}" (${inferredYear || 'N/A'}) resolved to:`, bestMatch ? `${matchTitle} (ID: ${bestMatch.id})` : 'NOT FOUND ON TMDB');
 
         if (bestMatch) {
           const isTv = bestMatch.media_type === 'tv';
-          const officialTitle = (isTv ? bestMatch.name : bestMatch.title) || targetTitle;
-          const rawDate = isTv ? bestMatch.first_air_date : bestMatch.release_date;
+          let officialTitle = targetTitle;
+          let rawDate: string | undefined;
+
+          if (bestMatch.media_type === 'tv') {
+            officialTitle = bestMatch.name || targetTitle;
+            rawDate = bestMatch.first_air_date;
+          } else {
+            officialTitle = bestMatch.title || targetTitle;
+            rawDate = bestMatch.release_date;
+          }
 
           orderedSlots[index] = {
             id: bestMatch.id,
@@ -585,7 +753,7 @@ export class FranchiseIntelService {
 
       // Check title for amateur / parody / bootleg markers
       const lower = part.title.toLowerCase();
-      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries|fan film|short film)\b/i.test(lower)) {
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries|fan film|short film|thamaraigal)\b/i.test(lower)) {
         return false;
       }
 
@@ -601,6 +769,18 @@ export class FranchiseIntelService {
       const currentYear = new Date().getFullYear();
       const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
       const voteCount = Number(part.vote_count ?? 0);
+
+      // Era guard: exclude titles released more than 3 years before earliest known franchise title
+      const knownBaseYears = baseParts
+        .map((p) => {
+          const d = String(p.release_date || p.first_air_date || '').trim();
+          return d.length >= 4 ? parseInt(d.slice(0, 4), 10) : 0;
+        })
+        .filter((y) => y >= 1920);
+      const minBaseYear = knownBaseYears.length > 0 ? Math.min(...knownBaseYears) : 0;
+      if (minBaseYear > 0 && releaseYear > 0 && releaseYear < minBaseYear - 3) {
+        return false;
+      }
 
       // If already released, require at least 15 votes to exclude amateur/fake crowdsourced stubs
       if (releaseYear > 0 && releaseYear <= currentYear) {
@@ -794,40 +974,66 @@ export class FranchiseIntelService {
   private pickBestCandidate(
     targetTitle: string,
     candidates: (TmdbMultiSearchResultDto & { media_type: 'movie' | 'tv' })[],
-    hint: { year?: number | undefined; media_type?: 'movie' | 'tv' | undefined }
+    hint: { year?: number | undefined; media_type?: 'movie' | 'tv' | undefined },
+    franchiseEra?: { minYear?: number; maxYear?: number } | undefined
   ): (TmdbMultiSearchResultDto & { media_type: 'movie' | 'tv' }) | null {
     if (candidates.length === 0) return null;
 
     let bestCandidate: (TmdbMultiSearchResultDto & { media_type: 'movie' | 'tv' }) | null = null;
     let highestScore = 0;
+    const currentYear = new Date().getFullYear();
 
     for (const c of candidates) {
       const cTitle = (c.media_type === 'tv' ? c.name : c.title) || '';
       const similarity = computeSimilarity(targetTitle, cTitle);
 
-      // Require minimum 0.55 title similarity
-      if (similarity < 0.55) continue;
+      // Require minimum 0.65 title similarity
+      if (similarity < 0.65) continue;
+
+      const dateStr = c.media_type === 'tv' ? c.first_air_date : c.release_date;
+      const cYear = dateStr && dateStr.length >= 4 ? parseInt(dateStr.slice(0, 4), 10) : undefined;
+
+      // 1. HARD DISQUALIFIER: Franchise Inception Era Guard
+      // If the franchise started in e.g. 2018 (Maddock Supernatural Universe) or 2014 (John Wick),
+      // a candidate released before minYear - 2 (e.g. 1991) is an impossible match.
+      if (franchiseEra?.minYear && cYear && cYear < franchiseEra.minYear - 2) {
+        continue;
+      }
+
+      // 2. HARD DISQUALIFIER: Target Year Discrepancy Guard
+      if (hint.year && cYear) {
+        const diff = Math.abs(cYear - hint.year);
+        // Upcoming/future title guard: if target is upcoming (>= currentYear), candidate cannot be an old past movie
+        if (hint.year >= currentYear && cYear < currentYear - 1) {
+          continue;
+        }
+        // Strict year distance: if release year differs by 4 or more years, reject unless title is 100% exact match
+        if (diff >= 4 && similarity < 0.98) {
+          continue;
+        }
+        // If year differs by 7 or more years, reject unconditionally
+        if (diff >= 7) {
+          continue;
+        }
+      }
 
       let score = similarity;
 
       // Bonus for media type match
       if (hint.media_type && c.media_type === hint.media_type) {
-        score += 0.2;
+        score += 0.15;
       }
 
-      // Bonus for release year proximity
-      const dateStr = c.media_type === 'tv' ? c.first_air_date : c.release_date;
-      if (hint.year && dateStr && dateStr.length >= 4) {
-        const cYear = parseInt(dateStr.slice(0, 4), 10);
-        if (!isNaN(cYear)) {
-          const diff = Math.abs(cYear - hint.year);
-          if (diff === 0) score += 0.25;
-          else if (diff <= 1) score += 0.15;
-          else if (diff > 5) score -= 0.3; // Penalize large year discrepancy
-        }
+      // Bonus/Penalty for release year proximity
+      if (hint.year && cYear) {
+        const diff = Math.abs(cYear - hint.year);
+        if (diff === 0) score += 0.25;
+        else if (diff <= 1) score += 0.15;
+        else if (diff === 2) score += 0.05;
+        else if (diff >= 3) score -= 0.25;
       }
 
-      if (score > highestScore && score >= 0.65) {
+      if (score > highestScore && score >= 0.7) {
         highestScore = score;
         bestCandidate = c;
       }
