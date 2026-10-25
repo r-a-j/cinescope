@@ -958,7 +958,7 @@ export class FranchiseIntelService {
 
         // 4. Notify user that their franchise universe is ready with a direct VIEW action
         await this.toastService.presentActionToast(
-          `✨ "${universeTitle}" is ready (${resolvedParts.length} titles)!`,
+          `"${universeTitle}" is ready (${resolvedParts.length} titles)!`,
           'VIEW',
           () => {
             void this.router.navigate(['/collection', universeId], {
