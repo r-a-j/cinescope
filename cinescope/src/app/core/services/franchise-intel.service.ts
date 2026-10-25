@@ -9,6 +9,7 @@ import { ToastService } from './toast.service';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from './tmdb-search.service';
 import { TmdbDiscoverService } from './tmdb-discover.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
+import { TmdbTvService } from './tmdb-tv.service';
 
 const COOLDOWN_KEY_PREFIX = 'cinescope_universe_cooldown_v2_';
 const COOLDOWN_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -163,6 +164,7 @@ export class FranchiseIntelService {
   private readonly tmdbSearch = inject(TmdbSearchService);
   private readonly tmdbDiscover = inject(TmdbDiscoverService);
   private readonly tmdbCollections = inject(TmdbCollectionsService);
+  private readonly tmdbTv = inject(TmdbTvService);
   private readonly bffUrl = `${environment.apiUrl}/franchise-intel`;
   private readonly franchiseAggregator = inject(FranchiseAggregatorService);
   private readonly toastService = inject(ToastService);
@@ -782,8 +784,10 @@ export class FranchiseIntelService {
         return false;
       }
 
-      // If already released, require at least 15 votes to exclude amateur/fake crowdsourced stubs
-      if (releaseYear > 0 && releaseYear <= currentYear) {
+      // If already released in previous years, require at least 15 votes to exclude amateur/fake crowdsourced stubs
+      // Never reject unreleased or upcoming titles due to low initial vote count
+      const isFutureRelease = rawDate ? new Date(rawDate).getTime() > Date.now() : false;
+      if (!isFutureRelease && releaseYear > 0 && releaseYear < currentYear) {
         if (voteCount < 15) {
           return false;
         }
@@ -951,6 +955,39 @@ export class FranchiseIntelService {
               .catch(() => undefined)
           );
         }
+      }
+
+      // Guarantee upcoming HBO Harry Potter TV series (TMDB TV ID: 224377) is included for Wizarding World
+      const isWizardingWorld =
+        universeId === 'wizarding_world' ||
+        universeId.includes('wizarding_world') ||
+        /wizarding world|harry potter/i.test(universeTitle);
+
+      if (isWizardingWorld && !mergedMap.has('tv_224377')) {
+        discoverPromises.push(
+          firstValueFrom(this.tmdbTv.getTvShowDetails(224377))
+            .then((tv) => {
+              if (tv) {
+                addCandidatePart(
+                  {
+                    id: tv.id,
+                    title: tv.name,
+                    mediaType: 'tv',
+                    overview: tv.overview,
+                    poster_path: tv.poster_path,
+                    backdrop_path: tv.backdrop_path,
+                    first_air_date: tv.first_air_date,
+                    release_date: tv.first_air_date,
+                    vote_average: tv.vote_average,
+                    vote_count: tv.vote_count,
+                    importance: 'essential'
+                  },
+                  tv.genres?.map((g) => g.id)
+                );
+              }
+            })
+            .catch(() => undefined)
+        );
       }
 
       await Promise.all(discoverPromises);

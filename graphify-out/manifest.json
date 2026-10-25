@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792956427.4590342,
-    "ast_hash": "e3f76b222c14def063df8f61eb66bd54",
+    "mtime": 1792956540.5834196,
+    "ast_hash": "8c268d0be2af6a7f8adfccaeb97e6653",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
-    "mtime": 1792956333.9456415,
-    "ast_hash": "680ee7c81536c476d8e73c1650b2cf24",
+    "mtime": 1792956540.5861478,
+    "ast_hash": "37fc5bf0ff03c4d9852199c62b996e30",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
@@ -1320,8 +1320,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {
-    "mtime": 1792956368.7976313,
-    "ast_hash": "7f1aa7aac44021b4bfaf90a54bc6d73c",
+    "mtime": 1792956540.5839567,
+    "ast_hash": "c5c0f4608bd5858750c21145687ddc94",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.html": {
@@ -2840,8 +2840,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1792952420.6195436,
-    "ast_hash": "4af572ea324626108d9fb7015fbb42ad",
+    "mtime": 1792958324.713444,
+    "ast_hash": "ddbfdd98afcf936d3deab679b7be7ff9",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
@@ -2855,8 +2855,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-intel.service.ts": {
-    "mtime": 1792952501.1918952,
-    "ast_hash": "b08caf7ca7217660b6c5ee2eddf25a7f",
+    "mtime": 1792958421.272701,
+    "ast_hash": "6705102f433e606527319ad7018da2e4",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/components/universe-proposal-modal/universe-proposal-modal.component.ts": {
