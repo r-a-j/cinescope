@@ -1,16 +1,16 @@
 # Graph Report - cinescope  (2026-10-25)
 
 ## Corpus Check
-- 239 files · ~213,972 words
+- 239 files · ~213,951 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2026 nodes · 3031 edges · 276 communities (213 shown, 63 thin omitted)
+- 2026 nodes · 3031 edges · 275 communities (212 shown, 63 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3aff74f0`
+- Built from commit: `6924e4f8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -82,7 +82,6 @@
 - [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
 - [[_COMMUNITY_Community 178|Community 178]]
-- [[_COMMUNITY_Community 179|Community 179]]
 - [[_COMMUNITY_Community 180|Community 180]]
 - [[_COMMUNITY_Community 181|Community 181]]
 - [[_COMMUNITY_Community 183|Community 183]]
@@ -191,7 +190,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (276 total, 63 thin omitted)
+## Communities (275 total, 63 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.10
@@ -330,8 +329,8 @@ Cohesion: 0.57
 Nodes (5): TmdbTvEpisodeCreditsResponseDto, TmdbTvSeasonCreditsResponseDto, TmdbTvSeasonGuestStarDto, TmdbTvCastDto, TmdbTvCrewDto
 
 ### Community 153 - "Community 153"
-Cohesion: 0.07
-Nodes (17): TmdbCertificationItemDto, TmdbCertificationResponseDto, TmdbMovieAlternativeTitleDto, TmdbMovieAlternativeTitlesResponseDto, TmdbMovieChangeGroupDto, TmdbMovieChangeItemDto, TmdbMovieChangesResponseDto, TmdbMovieCastMemberDto (+9 more)
+Cohesion: 0.06
+Nodes (20): TmdbCertificationItemDto, TmdbCertificationResponseDto, TmdbKeywordDto, TmdbMovieAlternativeTitleDto, TmdbMovieAlternativeTitlesResponseDto, TmdbMovieChangeGroupDto, TmdbMovieChangeItemDto, TmdbMovieChangesResponseDto (+12 more)
 
 ### Community 161 - "Community 161"
 Cohesion: 0.05
@@ -376,10 +375,6 @@ Nodes (6): Downloading the APK, First Launch & Zero-Config Setup, Installation &
 ### Community 177 - "Community 177"
 Cohesion: 0.12
 Nodes (15): content, description, description, description, schema, application/json, properties, required (+7 more)
-
-### Community 179 - "Community 179"
-Cohesion: 0.33
-Nodes (3): TmdbKeywordDto, TmdbMovieKeywordsResponseDto, TmdbTvKeywordsResponseDto
 
 ### Community 180 - "Community 180"
 Cohesion: 0.20
@@ -542,11 +537,11 @@ Nodes (4): CineScope User Guide, Core Capabilities, Guide Directory, Key Highlig
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `BaseMediaService` connect `Community 82` to `Community 1`, `Community 153`, `Community 3`, `Community 5`, `Community 41`, `Community 9`, `Community 172`, `Community 140`, `Community 14`, `Community 178`, `Community 18`, `Community 21`, `Community 279`, `Community 25`, `Community 252`, `Community 285`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **Why does `resolveMediaImageUrl()` connect `Community 0` to `Community 33`, `Community 2`, `Community 161`, `Community 249`, `Community 168`, `Community 234`, `Community 267`, `Community 111`, `Community 16`, `Community 53`, `Community 373`, `Community 21`, `Community 24`, `Community 25`, `Community 22`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **Why does `StorageService` connect `Community 161` to `Community 167`, `Community 111`, `Community 16`, `Community 24`, `Community 249`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `buildParams()` (e.g. with `.discoverMovies()` and `.discoverTv()`) actually correct?**
   _`buildParams()` has 45 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser` to the rest of the system?**

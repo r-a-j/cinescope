@@ -943,9 +943,6 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
   public async triggerDiscoverUniverse(): Promise<void> {
     if (this.isAnalyzingUniverse()) {
-      this.franchiseIntel.cancelAnalysis();
-      this.isAnalyzingUniverse.set(false);
-      await this.toastService.presentInfo('AI Universe analysis cancelled', 1600);
       return;
     }
     const colId = this.numericCollectionId();

@@ -93,10 +93,11 @@
               <button
                 type="button"
                 class="discover-universe-btn"
+                [disabled]="isAnalyzingUniverse()"
                 (click)="triggerDiscoverUniverse()">
                 @if (isAnalyzingUniverse()) {
                   <ion-spinner name="crescent"></ion-spinner>
-                  <span>Analyzing... &times;</span>
+                  <span>Analyzing Universe...</span>
                 } @else {
                   <ion-icon name="sparkles"></ion-icon>
                   <span>AI Universe</span>

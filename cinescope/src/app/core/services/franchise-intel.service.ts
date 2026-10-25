@@ -1,6 +1,6 @@
 import { Injectable, inject, isDevMode, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
@@ -79,12 +79,7 @@ export class FranchiseIntelService {
   } | null>(null);
   public readonly lastCompletedUniverse = signal<FranchiseCollectionSummary | null>(null);
 
-  private analysisAbort$ = new Subject<void>();
   private jobAbortController: AbortController | null = null;
-
-  public cancelAnalysis(): void {
-    this.analysisAbort$.next();
-  }
 
   public cancelActiveJob(): void {
     if (this.jobAbortController) {
@@ -222,7 +217,7 @@ export class FranchiseIntelService {
       };
 
       const rawResponse = await firstValueFrom(
-        this.http.post<Record<string, unknown>>(this.bffUrl, payload).pipe(takeUntil(this.analysisAbort$))
+        this.http.post<Record<string, unknown>>(this.bffUrl, payload)
       );
 
       const response = this.normalizeResponse(rawResponse);
