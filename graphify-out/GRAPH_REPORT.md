@@ -1,16 +1,16 @@
 # Graph Report - cinescope  (2026-10-25)
 
 ## Corpus Check
-- 239 files · ~216,579 words
+- 239 files · ~216,694 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2033 nodes · 3048 edges · 284 communities (214 shown, 70 thin omitted)
+- 2033 nodes · 3050 edges · 286 communities (215 shown, 71 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ea92a986`
+- Built from commit: `e43a032a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -101,6 +101,8 @@
 - [[_COMMUNITY_Community 197|Community 197]]
 - [[_COMMUNITY_Community 198|Community 198]]
 - [[_COMMUNITY_Community 199|Community 199]]
+- [[_COMMUNITY_Community 200|Community 200]]
+- [[_COMMUNITY_Community 201|Community 201]]
 - [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 216|Community 216]]
 - [[_COMMUNITY_Community 224|Community 224]]
@@ -179,26 +181,26 @@
 5. `BaseMediaService` - 40 edges
 6. `CollectionPage` - 38 edges
 7. `TmdbPaginatedResponseDto` - 35 edges
-8. `TmdbTvService` - 30 edges
+8. `TmdbTvService` - 31 edges
 9. `PersonDetailPage` - 29 edges
 10. `TmdbMoviesService` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `ArchiveCardVm` --references--> `ContentDocType`  [EXTRACTED]
   cinescope/src/app/features/archive/archive.page.ts → cinescope/src/app/core/database/schemas/content.schema.ts
+- `InboxCardVm` --references--> `ContentDocType`  [EXTRACTED]
+  cinescope/src/app/features/inbox/inbox.page.ts → cinescope/src/app/core/database/schemas/content.schema.ts
 - `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
   cinescope-api/api/extract.ts → cinescope-api/lib/rate-limiter.ts
 - `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
   cinescope-api/api/feed.ts → cinescope-api/lib/rate-limiter.ts
 - `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
   cinescope-api/api/tmdb.ts → cinescope-api/lib/rate-limiter.ts
-- `mapMoviesToSwimlane()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
-  cinescope/src/app/core/services/collection-loader.service.ts → cinescope/src/app/core/constants/api.constants.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (284 total, 70 thin omitted)
+## Communities (286 total, 71 thin omitted)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.13
@@ -220,6 +222,10 @@ Nodes (4): CastVideoGalleryComponent, TmdbVideoDto, CastMemberVm, TmdbMovieVideo
 Cohesion: 0.33
 Nodes (7): TmdbGenreDto, TmdbMovieDetailDto, TmdbProductionCompanyDto, TmdbProductionCountryDto, TmdbSpokenLanguageDto, TmdbTvCreatorDto, TmdbTvDetailDto
 
+### Community 13 - "Community 13"
+Cohesion: 0.11
+Nodes (3): SearchPage, TmdbMultiSearchResultDto, SearchFilter
+
 ### Community 14 - "Community 14"
 Cohesion: 0.06
 Nodes (18): TmdbTvService, TmdbTvAggregateCreditsResponseDto, TmdbTvAlternativeTitleDto, TmdbTvAlternativeTitlesResponseDto, TmdbTvChangesResponseDto, TmdbTvContentRatingsResponseDto, TmdbTvCreditsResponseDto, TmdbTvEpisodeGroupsResponseDto (+10 more)
@@ -237,8 +243,8 @@ Cohesion: 0.22
 Nodes (14): TmdbCompanyListItemDto, TmdbFindResultsDto, TmdbPersonListItemDto, TmdbTvEpisodeResultDto, TmdbTvSeasonResultDto, TmdbMovieListItemDto, TmdbNowPlayingDatesDto, TmdbNowPlayingResponseDto (+6 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.16
-Nodes (10): InboxCardVm, SampleInboxSeed, SelectedImageItem, SelectedImageState, ContentDocType, contentMigrationStrategies, contentSchemaLiteral, contentSchemaTyped (+2 more)
+Cohesion: 0.25
+Nodes (8): environment, InboxCardVm, SampleInboxSeed, SelectedImageItem, SelectedImageState, ExtractedTitleItem, IngestionResult, TmdbPayload
 
 ### Community 19 - "Community 19"
 Cohesion: 0.24
@@ -257,8 +263,8 @@ Cohesion: 0.15
 Nodes (11): CrewSpotlightVm, CULTURAL_FORMAT_MAP, MediaPreviewState, OriginCountryVm, PREFERRED_REGIONS, ProductionStatusVm, TvCreatorVm, TmdbReleaseDateGroupDto (+3 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.11
-Nodes (21): CinescopeCollections, CinescopeDatabase, DatabaseService, contentSchema, SearchHistoryDocType, searchHistoryMigrationStrategies, searchHistorySchema, searchHistorySchemaLiteral (+13 more)
+Cohesion: 0.10
+Nodes (25): CinescopeCollections, CinescopeDatabase, DatabaseService, ContentDocType, contentMigrationStrategies, contentSchema, contentSchemaLiteral, contentSchemaTyped (+17 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.16
@@ -269,8 +275,8 @@ Cohesion: 0.20
 Nodes (9): Archive Organization, High-Density 4-Column Poster Grid, Key Advantages of the Grid Layout, Offline-First Reliability (RxDB Architecture), Optimistic UI Feedback, State Controls: Watchlist, Watched & Favorites, State Types, Watched History Archive (+1 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.11
-Nodes (9): resolveMediaImageUrl(), ExternalLinkVm, FranchiseCollectionSummary, TmdbBelongsToCollectionDto, ProductionReviewsPanelComponent, mapMoviesToSwimlane(), mapPeopleToSwimlane(), mapToHeroItems() (+1 more)
+Cohesion: 0.20
+Nodes (3): ExternalLinkVm, TmdbBelongsToCollectionDto, ProductionReviewsPanelComponent
 
 ### Community 36 - "Community 36"
 Cohesion: 0.11
@@ -285,7 +291,7 @@ Cohesion: 0.29
 Nodes (4): TmdbKeywordDto, TmdbMovieKeywordsResponseDto, TmdbKeywordsService, TmdbTvKeywordsResponseDto
 
 ### Community 53 - "Community 53"
-Cohesion: 0.16
+Cohesion: 0.18
 Nodes (4): CollectionCardVm, SwimlaneItem, CollectionPageResult, SwimlaneComponent
 
 ### Community 82 - "Community 82"
@@ -309,12 +315,12 @@ Cohesion: 0.25
 Nodes (8): scripts, build, lint, test, docs:generate, ng, start, watch
 
 ### Community 148 - "Community 148"
-Cohesion: 0.25
-Nodes (6): TmdbCollectionListItemDto, TmdbMultiSearchResultDto, CategorizedSearchResult, initialState, SearchState, SearchStore
+Cohesion: 0.17
+Nodes (9): TmdbCollectionListItemDto, SemanticIntentParameters, SemanticIntentSection, SmartSearchResponseDto, SmartSearchService, CategorizedSearchResult, initialState, SearchState (+1 more)
 
 ### Community 151 - "Community 151"
-Cohesion: 0.24
-Nodes (6): environment, IngestionResult, SemanticIntentParameters, SemanticIntentSection, SmartSearchResponseDto, SmartSearchService
+Cohesion: 0.33
+Nodes (3): FeedItem, FeedResponseDto, FeedService
 
 ### Community 164 - "Community 164"
 Cohesion: 0.25
@@ -333,8 +339,8 @@ Cohesion: 0.09
 Nodes (7): AppComponent, routes, authInterceptor(), ApiCacheService, CACHE_TTL, CacheEntry, PosterCacheService
 
 ### Community 168 - "Community 168"
-Cohesion: 0.11
-Nodes (9): ArchiveCardVm, FavoritePersonCardVm, HeaderComponent, PosterCardComponent, BookmarkState, PosterCardComponent, CollectionQueryContext, GENRE_MAP (+1 more)
+Cohesion: 0.12
+Nodes (13): ArchiveCardVm, FavoritePersonCardVm, resolveMediaImageUrl(), PosterCardComponent, BookmarkState, PosterCardComponent, CollectionQueryContext, GENRE_MAP (+5 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.25
@@ -389,8 +395,8 @@ Cohesion: 0.25
 Nodes (7): cli, packageManager, schematicCollections, newProjectRoot, projects, $schema, version
 
 ### Community 185 - "Community 185"
-Cohesion: 0.09
-Nodes (7): DiscoverPage, FeedItem, FeedResponseDto, HeaderComponent, FeedService, NavigationService, TrendingStore
+Cohesion: 0.22
+Nodes (3): HeaderComponent, NavigationService, TrendingStore
 
 ### Community 187 - "Community 187"
 Cohesion: 0.48
@@ -543,22 +549,22 @@ Nodes (4): CineScope User Guide, Core Capabilities, Guide Directory, Key Highlig
 ## Knowledge Gaps
 - **521 isolated node(s):** `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser`, `DEFAULT_SOURCES`, `ALLOWED_GEMINI_MODELS` (+516 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **71 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `BaseMediaService` connect `Community 82` to `Community 1`, `Community 5`, `Community 9`, `Community 172`, `Community 14`, `Community 111`, `Community 16`, `Community 17`, `Community 52`, `Community 21`, `Community 279`, `Community 25`, `Community 252`, `Community 285`, `Community 191`?**
   _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `StorageService` connect `Community 161` to `Community 65`, `Community 35`, `Community 167`, `Community 168`, `Community 140`, `Community 16`, `Community 18`, `Community 22`, `Community 151`, `Community 24`?**
+- **Why does `StorageService` connect `Community 161` to `Community 65`, `Community 35`, `Community 167`, `Community 168`, `Community 140`, `Community 16`, `Community 18`, `Community 22`, `Community 24`?**
   _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `resolveMediaImageUrl()` connect `Community 33` to `Community 0`, `Community 2`, `Community 3`, `Community 36`, `Community 249`, `Community 168`, `Community 41`, `Community 234`, `Community 267`, `Community 140`, `Community 17`, `Community 18`, `Community 53`, `Community 373`, `Community 22`, `Community 24`, `Community 153`, `Community 25`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `resolveMediaImageUrl()` connect `Community 168` to `Community 0`, `Community 2`, `Community 3`, `Community 267`, `Community 140`, `Community 13`, `Community 17`, `Community 18`, `Community 148`, `Community 22`, `Community 24`, `Community 153`, `Community 25`, `Community 33`, `Community 36`, `Community 41`, `Community 53`, `Community 65`, `Community 234`, `Community 373`, `Community 249`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `buildParams()` (e.g. with `.discoverMovies()` and `.discoverTv()`) actually correct?**
   _`buildParams()` has 45 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser` to the rest of the system?**
   _521 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.14035087719298245 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.12554112554112554 - nodes in this community are weakly interconnected._

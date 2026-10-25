@@ -44,16 +44,16 @@ Examples of Shared Universes:
 - "The Dark Knight Trilogy" -> Self-contained trilogy (isSharedUniverse: false)
 - "John Wick Collection" -> Part of "John Wick Universe" (includes The Continental, Ballerina)
 - "Dhoom Collection" -> Direct movie series (isSharedUniverse: false)
-- "Harry Potter Collection" -> Part of "Wizarding World" (universeId: "wizarding_world", includes Fantastic Beasts)
+- "Harry Potter Collection" -> Part of "Wizarding World" (universeId: "wizarding_world", includes the 8 original films, 3 Fantastic Beasts films, AND the upcoming 2026 HBO "Harry Potter" television series starring Dominic McLaughlin)
 - "Stree Collection" -> Part of "Maddock Supernatural Universe" (universeId: "maddock_supernatural_universe", includes Stree, Stree 2, Bhediya, Munjya, Roohi, Thamma produced by Maddock Films)
 
 If the collection is part of a larger shared universe, identify:
 1. "universeTitle": Clean, authoritative name of the overarching universe (e.g. "Marvel Cinematic Universe (MCU)", "Wizarding World", "Star Wars Universe", "Maddock Supernatural Universe").
 2. "universeId": URL-safe identifier (e.g. "mcu", "wizarding_world", "star_wars", "maddock_supernatural_universe").
 3. "connectionInsight": 2-3 clear sentences explaining how the input collection links into the overarching master saga.
-4. "canonTitles": Return the COMPLETE, EXHAUSTIVE list of ABSOLUTELY ALL official canon Movies AND TV Series (live-action series, canon animated series, and specials) in the entire franchise/universe — from the very first entry up through 2024, 2025, 2026, and officially announced upcoming releases (e.g. for MCU, include every Phase 1–6 theatrical film and every Marvel Studios Disney+ / television series including WandaVision, Loki, What If...?, Hawkeye, Moon Knight, Ms. Marvel, She-Hulk, Secret Invasion, Echo, X-Men '97, Agatha All Along, Your Friendly Neighborhood Spider-Man, Daredevil: Born Again, Ironheart, Eyes of Wakanda, Marvel Zombies, Wonder Man, VisionQuest, Deadpool & Wolverine, Captain America: Brave New World, Thunderbolts*, The Fantastic Four: First Steps, Spider-Man: Brand New Day, Avengers: Doomsday, Avengers: Secret Wars, etc.). NEVER truncate or cap the list at 30 items! For each title provide:
-   - "title": Clean official title (e.g. "Iron Man", "The Avengers", "Loki", "Agatha All Along", "VisionQuest")
-   - "year": 4-digit release year integer
+4. "canonTitles": Return the COMPLETE, EXHAUSTIVE list of ABSOLUTELY ALL official canon Movies AND TV Series (live-action series, canon animated series, and specials) in the entire franchise/universe — from the very first entry up through 2024, 2025, 2026, and officially announced upcoming releases (e.g. for MCU, include every Phase 1–6 theatrical film and Disney+ series; for Wizarding World, include all 8 original films, the 3 Fantastic Beasts films, AND the upcoming 2026 HBO "Harry Potter" television series; for Maddock, include Stree, Stree 2, Bhediya, Munjya, Roohi, Thamma). NEVER truncate or cap the list at 30 items! For each title provide:
+   - "title": Clean official title (e.g. "Harry Potter", "Iron Man", "The Avengers", "Loki", "Agatha All Along", "VisionQuest")
+   - "year": 4-digit release year integer (e.g. 2026 for the upcoming HBO Harry Potter series)
    - "media_type": 'movie' or 'tv'
    - "importance": 'essential' | 'recommended' | 'optional'
 5. "siblingFranchises": ONLY official theatrical TMDB movie collections within the universe (e.g. "Iron Man Collection", "Captain America Collection", "Thor Collection", "The Avengers Collection", "Guardians of the Galaxy Collection", "Spider-Man (Avengers) Collection"). NEVER include TV show groupings (such as "Disney+ Canon Series") or conceptual umbrella labels that are not official TMDB movie collections.
