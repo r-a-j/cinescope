@@ -44,6 +44,8 @@ Examples of Shared Universes:
 - "The Dark Knight Trilogy" -> Self-contained trilogy (isSharedUniverse: false)
 - "John Wick Collection" -> Part of "John Wick Universe" (includes The Continental, Ballerina)
 - "Dhoom Collection" -> Direct movie series (isSharedUniverse: false)
+- "Ocean's Collection" -> Part of "Ocean's Franchise" (universeId: "oceans_franchise", includes the 1960 original "Ocean's 11", Steven Soderbergh's trilogy "Ocean's Eleven", "Twelve", "Thirteen", and the 2018 spinoff "Ocean's 8")
+- "Fast & Furious Collection" -> Part of "The Fast Saga" (universeId: "fast_saga", includes main films 1-10 plus the official spinoff "Fast & Furious Presents: Hobbs & Shaw")
 - "Harry Potter Collection" -> Part of "Wizarding World" (universeId: "wizarding_world", includes the 8 original films, 3 Fantastic Beasts films, AND the upcoming 2026 HBO "Harry Potter" television series starring Dominic McLaughlin)
 - "Stree Collection" -> Part of "Maddock Supernatural Universe" (universeId: "maddock_supernatural_universe", includes Stree, Stree 2, Bhediya, Munjya, Roohi, Thamma produced by Maddock Films)
 
@@ -67,7 +69,12 @@ CRITICAL CANON & AUTHENTICITY GUARD:
   * Documentaries, making-of specials, and retrospective interviews.
   * Unrelated movies that merely share an actor, crew member, or crowdsourced TMDB keyword.
 
-If the collection is strictly a standalone movie series or trilogy (e.g. Back to the Future, Before Trilogy, The Godfather), set "isSharedUniverse": false.
+CRITICAL FRANCHISE & ORPHANED SPIN-OFF RULE:
+- TMDB often strictly limits its movie collections to direct numbered sequels and completely omits official studio spin-offs, prequels, remakes, or crossovers (e.g. TMDB's "Ocean's Collection" lists only 11, 12, 13 and completely omits "Ocean's 8" (2018) and the original 1960 "Ocean's 11"; TMDB's "Fast & Furious Collection" omits "Hobbs & Shaw"; TMDB's "Transformers Collection" omits "Bumblebee"; TMDB's "Rocky Collection" excludes "Creed").
+- Whenever a movie collection belongs to a wider cinematic canon that features official studio spin-offs, remakes, prequels, or crossover films outside TMDB's narrow collection listing, you MUST classify it as a shared universe (isSharedUniverse: true).
+- "canonTitles" MUST return the complete, exhaustive overarching canon including all official studio spin-offs, prequels, remakes, and upcoming entries. Always use the official theatrical release title as indexed on TMDB (e.g. "Ocean's Eight", "Ocean's Eleven", "Fast & Furious Presents: Hobbs & Shaw").
+
+If the collection is strictly a standalone, closed storyline with NO spin-offs, prequels, crossovers, or sister series (e.g. Back to the Future, Before Trilogy, The Godfather), set "isSharedUniverse": false.
 
 Return ONLY a valid JSON object matching this schema. Do not wrap in markdown code blocks:
 {
