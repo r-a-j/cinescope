@@ -35,7 +35,7 @@
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
-    "mtime": 1792869021.5484674,
+    "mtime": 1792869075.538872,
     "ast_hash": "d530f683626f5b9cabaeb2ca1939abe0",
     "semantic_hash": ""
   },
@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "cinescope/angular.json": {
-    "mtime": 1792841375.0121412,
-    "ast_hash": "05967938574227b236aae891b226e7cd",
+    "mtime": 1792869075.538872,
+    "ast_hash": "a102f7b648bbbe98338c30de34bdc033",
     "semantic_hash": ""
   },
   "cinescope/capacitor.config.ts": {
@@ -90,7 +90,7 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792869019.1966214,
+    "mtime": 1792869075.5528862,
     "ast_hash": "7ab2ec54285022031d338cee8db806c1",
     "semantic_hash": ""
   },
@@ -605,8 +605,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/collection-loader.service.ts": {
-    "mtime": 1792842036.1670532,
-    "ast_hash": "b49db26f6fda5b7b794037c8b3a33a55",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "52d2d92f313513dfdfa3f7aad9c5cb3c",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/feed.service.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1792869007.2591486,
-    "ast_hash": "87cfc337dee498af75da613373fa4a90",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "b5353772dc393fdb0714e92e882639fc",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -730,13 +730,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/toast.service.ts": {
-    "mtime": 1792705082.7938752,
-    "ast_hash": "43683616d7b41986dab490d7ece811d2",
+    "mtime": 1792871404.4238408,
+    "ast_hash": "0610c21099f0b2934baf9e6a92b00c30",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792860249.2686932,
-    "ast_hash": "d3052e32c31c3a8da742385c18845fce",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "c02771db1020ae09723ea3b8479cfe5c",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -745,13 +745,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/archive/archive.page.ts": {
-    "mtime": 1792858947.8805313,
-    "ast_hash": "b81ca4f98f656259350344ff64454dba",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "dcc2c01f5a2da2f98f0d51a56b152ceb",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.ts": {
-    "mtime": 1792860652.8484495,
-    "ast_hash": "9a8905d4560969d7cd3b35939779db9f",
+    "mtime": 1792871884.6680243,
+    "ast_hash": "be951496e71075b110ab378cc23e976e",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.ts": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/inbox/inbox.page.ts": {
-    "mtime": 1792858992.606445,
-    "ast_hash": "36e944e71885ef91754aec4badb35aa0",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "cb310f06369660119bfab5a9b271f5f6",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts": {
@@ -775,8 +775,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.ts": {
-    "mtime": 1792853535.447376,
-    "ast_hash": "6c080ee5adc415e3a3870f361f8690a4",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "2fbaf55f8feaea96dad521335a04d8d3",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.ts": {
-    "mtime": 1792858858.2770765,
-    "ast_hash": "13aa550740aac65eb1828fc252e01da0",
+    "mtime": 1792869075.5688834,
+    "ast_hash": "dc1debc3afd891c320394852bed22dc4",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.ts": {
@@ -800,22 +800,22 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.ts": {
-    "mtime": 1792859045.3308618,
-    "ast_hash": "1ae98e71c91367acf715c012a9618f6f",
+    "mtime": 1792869075.5694041,
+    "ast_hash": "559114a5aea8013ecfb3ff2dd1904b4d",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
-    "mtime": 1774015719.3649719,
-    "ast_hash": "0e3322ba8f449c07441f8a2d76cff6b5",
+    "mtime": 1792928981.2411892,
+    "ast_hash": "81cf69adb2466852172b0f1c067dae0d",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
-    "mtime": 1792860252.1912994,
-    "ast_hash": "c0e1a17c7b4b32f48c9ca1d161b5bef6",
+    "mtime": 1792869075.5715668,
+    "ast_hash": "70396196536d1dcf3ee44f8dad66948b",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
-    "mtime": 1792869028.6546795,
+    "mtime": 1792869075.5730143,
     "ast_hash": "bfccf57d377fce3e3762e1bf35eaa6fc",
     "semantic_hash": ""
   },
@@ -860,8 +860,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/shared/components/swimlane/swimlane.component.ts": {
-    "mtime": 1792858991.0301938,
-    "ast_hash": "37261403474ee3f26151f0e710bcefac",
+    "mtime": 1792869075.5740702,
+    "ast_hash": "123a27543fe19e9e4e120e2ad85199e0",
     "semantic_hash": ""
   },
   "cinescope/src/app/shared/models/hero-banner-item.interface.ts": {
@@ -875,13 +875,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/environments/environment.prod.ts": {
-    "mtime": 1792852978.9991674,
-    "ast_hash": "36a6cece79a273994dd403c275052e6f",
+    "mtime": 1792869075.5746102,
+    "ast_hash": "7bcfc7bf2c104c5a1e30db07d2f38ca0",
     "semantic_hash": ""
   },
   "cinescope/src/environments/environment.ts": {
-    "mtime": 1792852977.377875,
-    "ast_hash": "dae0a2670274a32cdf9c1f43ec9c7403",
+    "mtime": 1792869075.5751457,
+    "ast_hash": "535a7dcff742c2ec1da6ba17bc5cab32",
     "semantic_hash": ""
   },
   "cinescope/src/main.ts": {
@@ -970,7 +970,7 @@
     "semantic_hash": ""
   },
   "docs/package.json": {
-    "mtime": 1792869023.2335403,
+    "mtime": 1792869075.5756955,
     "ast_hash": "f29bbd6d5979813a1e5dbecc8262b48c",
     "semantic_hash": ""
   },
@@ -1290,8 +1290,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/archive/archive.page.html": {
-    "mtime": 1792859896.758179,
-    "ast_hash": "9c72dba509f7a94fdfb1bd9c3f6e3902",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "2f710633d2e7192d804d8b327c4d49ce",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/discover/discover.page.html": {
@@ -1305,8 +1305,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/media-detail.page.html": {
-    "mtime": 1792853506.5752292,
-    "ast_hash": "a4216f3e99f3df6755a49255bf4e4797",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "6c45b0e977010b0c84334e078316aa37",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
@@ -1320,12 +1320,12 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.html": {
-    "mtime": 1792841898.1401165,
-    "ast_hash": "57a544b95b918ef1d8b533f0723748e2",
+    "mtime": 1792869075.570506,
+    "ast_hash": "f8b3c6461b783d40a481cde65fcddb36",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.html": {
-    "mtime": 1792869030.361624,
+    "mtime": 1792869075.5720992,
     "ast_hash": "a5f7e5408c06ae88b926e4d09e0c58fc",
     "semantic_hash": ""
   },
@@ -2805,8 +2805,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/collection.page.html": {
-    "mtime": 1792857539.8979955,
-    "ast_hash": "fe0bb457f8c34b328dd406f231439577",
+    "mtime": 1792871880.713684,
+    "ast_hash": "bbad69ddd0511c741d460d30cd3285e2",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.html": {
@@ -2820,8 +2820,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/production-reviews-panel/production-reviews-panel.component.html": {
-    "mtime": 1792853558.9700043,
-    "ast_hash": "0e441b468a381be9bd6daaa3c6597811",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "5106278100a4ec0bf90cb77b14e705a6",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.html": {
@@ -2840,38 +2840,38 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1792857227.4263499,
-    "ast_hash": "306dff109ffdbb8705064f90ccdc05d9",
+    "mtime": 1792869075.538872,
+    "ast_hash": "30ad2458b070486ef6565fa106399ba1",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
-    "mtime": 1792852994.295025,
-    "ast_hash": "8e6c9a7b91e2219527f82ab669444d9d",
+    "mtime": 1792869075.5528862,
+    "ast_hash": "c11dcd9ed95b69a3deef547903a3417d",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-aggregator.service.ts": {
-    "mtime": 1792860651.327464,
-    "ast_hash": "9c9f1e16f765ab54ce74b4e5da0dc685",
+    "mtime": 1792869075.5540407,
+    "ast_hash": "10eeb05e7ee1baf1f9ef5fcc6c138be0",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/franchise-intel.service.ts": {
-    "mtime": 1792857371.4467592,
-    "ast_hash": "3bd6939cbec72ba751dfb61d353dc179",
+    "mtime": 1792871637.2977698,
+    "ast_hash": "5e23fc3d243e36d1948a1228e44127e9",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/components/universe-proposal-modal/universe-proposal-modal.component.ts": {
-    "mtime": 1792842317.2414777,
-    "ast_hash": "298c240779451034c5af0b5598777aea",
+    "mtime": 1792871987.5552888,
+    "ast_hash": "1931aff3aa2464408e697319df08f03d",
     "semantic_hash": ""
   },
   ".agents/skills/grill-me/SKILL.md": {
-    "mtime": 1792841358.1260645,
+    "mtime": 1792869075.538872,
     "ast_hash": "1494511e9c9b0cd427cd5a03400240b4",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/collection/components/universe-proposal-modal/universe-proposal-modal.component.html": {
-    "mtime": 1792842324.5367677,
-    "ast_hash": "9413988f0528509de461d5ae0d8e4e56",
+    "mtime": 1792871435.8861873,
+    "ast_hash": "2b45ddfba24fedade7d2442669180ed4",
     "semantic_hash": ""
   }
 }
