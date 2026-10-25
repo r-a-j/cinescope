@@ -51,6 +51,24 @@
           </div>
         </div>
       }
+
+      <div
+        class="merge-option-row"
+        (click)="toggleFold()"
+        (keyup.enter)="toggleFold()"
+        tabindex="0"
+        role="checkbox"
+        [attr.aria-checked]="foldSubCollection()">
+        <div class="checkbox-indicator" [class.checked]="foldSubCollection()">
+          @if (foldSubCollection()) {
+            <ion-icon name="checkmark-sharp"></ion-icon>
+          }
+        </div>
+        <div class="merge-option-label">
+          <span class="merge-title">Fold into Universe (Recommended)</span>
+          <span class="merge-subtitle">Nest this sub-collection under {{ universeTitle }} in Archive</span>
+        </div>
+      </div>
     </div>
 
     <footer class="modal-footer">

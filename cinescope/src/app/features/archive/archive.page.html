@@ -260,6 +260,37 @@
                         </div>
                       }
                     </div>
+
+                    @if (f.isUniverse && f.mergedSubCollections && f.mergedSubCollections.length > 0) {
+                      <div class="nested-sagas-section">
+                        <button
+                          type="button"
+                          class="nested-sagas-toggle"
+                          (click)="toggleExpandUniverseSagas($event, f.id)">
+                          <span class="nested-sagas-title">
+                            <ion-icon name="albums-outline"></ion-icon>
+                            Includes {{ f.mergedSubCollections.length }} folded {{ f.mergedSubCollections.length === 1 ? 'collection' : 'collections' }}
+                          </span>
+                          <ion-icon [name]="isUniverseExpanded(f.id) ? 'chevron-up-outline' : 'chevron-down-outline'" class="chevron-icon"></ion-icon>
+                        </button>
+
+                        @if (isUniverseExpanded(f.id)) {
+                          <div class="nested-sagas-list">
+                            @for (sub of f.mergedSubCollections; track sub.id) {
+                              <div
+                                class="nested-saga-row"
+                                tabindex="0"
+                                role="button"
+                                (click)="openSubFranchise($event, sub)"
+                                (keyup.enter)="openSubFranchise($event, sub)">
+                                <span class="nested-saga-name">{{ sub.name }}</span>
+                                <span class="nested-saga-progress">{{ sub.watchedCount }}/{{ sub.totalParts }} ({{ sub.completionPercentage }}%)</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
               }

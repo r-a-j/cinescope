@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, signal
 import { CommonModule } from '@angular/common';
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { sparkles, closeOutline, checkmarkCircle, albumsOutline } from 'ionicons/icons';
+import { sparkles, closeOutline, checkmarkCircle, albumsOutline, checkmarkSharp } from 'ionicons/icons';
 
 @Component({
   selector: 'app-universe-proposal-modal',
@@ -19,20 +19,25 @@ export class UniverseProposalModalComponent {
   @Input() siblingFranchises?: { id: number; name: string }[] | undefined;
   @Input() isResolving = false;
 
-  @Output() confirmAscend = new EventEmitter<void>();
+  @Output() confirmAscend = new EventEmitter<{ foldSubCollection: boolean }>();
   @Output() dismiss = new EventEmitter<void>();
 
+  public foldSubCollection = signal<boolean>(true);
   public dragOffsetY = signal<number>(0);
   public isDragging = signal<boolean>(false);
   private touchStartY = 0;
   private touchStartTime = 0;
 
   constructor() {
-    addIcons({ sparkles, closeOutline, checkmarkCircle, albumsOutline });
+    addIcons({ sparkles, closeOutline, checkmarkCircle, albumsOutline, checkmarkSharp });
+  }
+
+  public toggleFold(): void {
+    this.foldSubCollection.update((v) => !v);
   }
 
   public onConfirm(): void {
-    this.confirmAscend.emit();
+    this.confirmAscend.emit({ foldSubCollection: this.foldSubCollection() });
   }
 
   public onDismiss(): void {

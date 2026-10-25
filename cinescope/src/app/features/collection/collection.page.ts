@@ -11,7 +11,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline, homeOutline, star, albumsOutline, filmOutline,
-  tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
+  tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline, gitMergeOutline, gitBranchOutline
 } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
@@ -166,6 +166,27 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
     return null;
   });
+
+  public isMergedIntoParentUniverse = computed<boolean>(() => {
+    const colId = this.numericCollectionId();
+    const parentUni = this.existingParentUniverse();
+    if (!colId || !parentUni) return false;
+    return this.storageService.isCollectionMergedIntoUniverse(parentUni.id, colId);
+  });
+
+  public async toggleMergeWithParentUniverse(): Promise<void> {
+    const colId = this.numericCollectionId();
+    const parentUni = this.existingParentUniverse();
+    if (!colId || !parentUni) return;
+
+    if (this.isMergedIntoParentUniverse()) {
+      await this.storageService.unmergeCollectionFromUniverse(parentUni.id, colId);
+      await this.toastService.presentInfo(`Showing "${this.collectionTitle()}" as standalone saga in Archive`, 2000);
+    } else {
+      await this.storageService.mergeCollectionIntoUniverse(parentUni.id, colId);
+      await this.toastService.presentSuccess(`Folded "${this.collectionTitle()}" into "${parentUni.name}"`, 2000);
+    }
+  }
 
   public completionMetrics = computed(() => {
     if (!this.isFranchiseCollection()) return null;
@@ -396,7 +417,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   constructor() {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,
-      tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
+      tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline, gitMergeOutline, gitBranchOutline
     });
 
     effect(() => {
@@ -1178,7 +1199,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
   }
 
-  public confirmAscension(): void {
+  public confirmAscension(event?: { foldSubCollection: boolean }): void {
     const proposal = this.universeProposal();
     if (!proposal) return;
 
@@ -1209,7 +1230,8 @@ export class CollectionPage implements OnInit, AfterViewInit {
       seedCollection: colId ? { id: colId, name: this.collectionTitle() } : undefined,
       fallbackOverview: this.collectionOverview(),
       fallbackBackdropPath: this.franchiseSummary()?.backdrop_path,
-      fallbackPosterPath: this.franchiseSummary()?.poster_path
+      fallbackPosterPath: this.franchiseSummary()?.poster_path,
+      foldSubCollection: event?.foldSubCollection !== false
     });
     this.cdr.detectChanges();
   }

@@ -821,6 +821,7 @@ export class FranchiseIntelService {
     fallbackOverview?: string | null | undefined;
     fallbackBackdropPath?: string | null | undefined;
     fallbackPosterPath?: string | null | undefined;
+    foldSubCollection?: boolean | undefined;
   }): void {
     const {
       proposal,
@@ -828,7 +829,8 @@ export class FranchiseIntelService {
       seedCollection,
       fallbackOverview,
       fallbackBackdropPath,
-      fallbackPosterPath
+      fallbackPosterPath,
+      foldSubCollection
     } = options;
 
     if (this.jobAbortController) {
@@ -865,6 +867,10 @@ export class FranchiseIntelService {
 
     void (async (): Promise<void> => {
       try {
+        const initialMergedIds = foldSubCollection !== false && seedCollection?.id
+          ? [seedCollection.id]
+          : [];
+
         // 1. Save an immediate optimistic seed universe so it's visible in Archive right away
         const seedSummary: FranchiseCollectionSummary = {
           id: universeId,
@@ -882,7 +888,8 @@ export class FranchiseIntelService {
           parentUniverseTitle: proposal.universeTitle,
           connectionInsight: proposal.connectionInsight,
           parts: currentParts,
-          siblingFranchises: proposal.siblingFranchises || []
+          siblingFranchises: proposal.siblingFranchises || [],
+          mergedSubCollectionIds: initialMergedIds
         };
         await this.franchiseAggregator.trackFranchise(universeId, seedSummary);
 
@@ -942,6 +949,7 @@ export class FranchiseIntelService {
           connectionInsight: proposal.connectionInsight,
           parts: resolvedParts,
           siblingFranchises: siblings,
+          mergedSubCollectionIds: initialMergedIds,
           canonExpandedV2: true
         };
 

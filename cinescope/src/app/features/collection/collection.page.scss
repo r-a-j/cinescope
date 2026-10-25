@@ -590,7 +590,8 @@
 
     .discover-universe-btn,
     .save-franchise-btn,
-    .mark-all-watched-btn {
+    .mark-all-watched-btn,
+    .merge-toggle-btn {
       flex: 1 1 auto;
       height: 36px;
       padding: 0 13px;
@@ -637,6 +638,18 @@
       color: #f1f5f9;
 
       &.saved {
+        border-color: rgba(56, 189, 248, 0.45);
+        background: rgba(56, 189, 248, 0.14);
+        color: #38bdf8;
+      }
+    }
+
+    .merge-toggle-btn {
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: rgba(168, 85, 247, 0.1);
+      color: #c084fc;
+
+      &.is-merged {
         border-color: rgba(56, 189, 248, 0.45);
         background: rgba(56, 189, 248, 0.14);
         color: #38bdf8;

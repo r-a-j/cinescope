@@ -250,6 +250,18 @@ export class FranchiseAggregatorService {
   }
 
   /**
+   * Finds the parent Universe tracked in user library for a given TMDB collection ID.
+   */
+  public findParentUniverseForCollection(collectionId: number): FranchiseCollectionSummary | null {
+    const universes = this.activeUserFranchises().filter((f) => f.isUniverse);
+    for (const u of universes) {
+      if (u.mergedSubCollectionIds?.includes(collectionId)) return u;
+      if (u.siblingFranchises?.some((s) => s.id === collectionId)) return u;
+    }
+    return null;
+  }
+
+  /**
    * Reactive computed list of all franchises and universes derived from user library.
    */
   public readonly activeUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
@@ -407,6 +419,9 @@ export class FranchiseAggregatorService {
 
       const fallbackPoster = uniPayload.poster_path || canonParts.find((p) => p.poster_path)?.poster_path || null;
       const fallbackBackdrop = uniPayload.backdrop_path || canonParts.find((p) => p.backdrop_path)?.backdrop_path || null;
+      const mergedIds = Array.isArray(uniPayload.mergedSubCollectionIds)
+        ? [...uniPayload.mergedSubCollectionIds]
+        : [];
 
       const summaryObj: FranchiseCollectionSummary = {
         id: universeId,
@@ -427,7 +442,9 @@ export class FranchiseAggregatorService {
         parentUniverseTitle: uniPayload.parentUniverseTitle,
         connectionInsight: uniPayload.connectionInsight,
         parts: canonParts,
-        siblingFranchises: uniPayload.siblingFranchises
+        siblingFranchises: uniPayload.siblingFranchises,
+        mergedSubCollectionIds: mergedIds,
+        mergedSubCollections: []
       };
 
       const existingIdx = seenUniverseKeys.get(cleanUniKey);
@@ -442,6 +459,25 @@ export class FranchiseAggregatorService {
       }
     }
 
+    // Index active universes by merged and sibling collection IDs
+    const universeByMergedSubId = new Map<number, FranchiseCollectionSummary>();
+    const universeBySiblingSubId = new Map<number, FranchiseCollectionSummary>();
+    for (const u of summaries) {
+      if (!u.isUniverse) continue;
+      if (Array.isArray(u.mergedSubCollectionIds)) {
+        for (const cId of u.mergedSubCollectionIds) {
+          universeByMergedSubId.set(cId, u);
+        }
+      }
+      if (Array.isArray(u.siblingFranchises)) {
+        for (const sib of u.siblingFranchises) {
+          if (sib && typeof sib.id === 'number') {
+            universeBySiblingSubId.set(sib.id, u);
+          }
+        }
+      }
+    }
+
     // 2. Process Movie Collections
     for (const [collectionId, group] of collectionMap.entries()) {
       // Respect user dismissal if they explicitly untracked this auto-detected collection
@@ -449,8 +485,11 @@ export class FranchiseAggregatorService {
         continue;
       }
 
+      // Check if this collection is explicitly merged into a parent universe
+      const isExplicitlyMerged = universeByMergedSubId.has(collectionId);
+
       // If this sub-collection wasn't explicitly bookmarked as a standalone franchise AND is already subsumed by an Ascended Universe, skip duplicate card
-      if (!group.isDirectlySaved) {
+      if (!group.isDirectlySaved && !isExplicitlyMerged) {
         if (subsumedCollectionIds.has(collectionId)) {
           continue;
         }
@@ -509,7 +548,7 @@ export class FranchiseAggregatorService {
         ?? effectiveParts?.find((p) => p.backdrop_path)?.backdrop_path
         ?? null;
 
-      summaries.push({
+      const colSummary: FranchiseCollectionSummary = {
         id: collectionId,
         name: cached?.name || group.name,
         overview: cached?.overview || group.overview,
@@ -525,7 +564,29 @@ export class FranchiseAggregatorService {
         upNextPart,
         isUniverse: false,
         parts: effectiveParts
-      });
+      };
+
+      // Check if merged into an active universe
+      const parentUniverse = universeByMergedSubId.get(collectionId);
+      if (parentUniverse) {
+        colSummary.isMergedIntoUniverse = true;
+        colSummary.parentUniverseId = String(parentUniverse.id);
+        colSummary.parentUniverseTitle = parentUniverse.name;
+        parentUniverse.mergedSubCollections = parentUniverse.mergedSubCollections || [];
+        parentUniverse.mergedSubCollections.push(colSummary);
+        // Folded into parent universe: do not push to top-level list
+        continue;
+      }
+
+      // Check if a recognized sibling of an active universe
+      const siblingUniverse = universeBySiblingSubId.get(collectionId);
+      if (siblingUniverse) {
+        colSummary.parentUniverseId = String(siblingUniverse.id);
+        colSummary.parentUniverseTitle = siblingUniverse.name;
+        colSummary.isMergedIntoUniverse = false;
+      }
+
+      summaries.push(colSummary);
     }
 
     // Sort: Universes first, then highest completion percentage, then alphabetical

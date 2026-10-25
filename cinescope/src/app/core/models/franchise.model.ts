@@ -46,6 +46,10 @@ export interface FranchiseCollectionSummary {
   connectionInsight?: string | undefined;
   parts?: FranchisePart[] | undefined;
   siblingFranchises?: { id: number; name: string }[] | undefined;
+  mergedSubCollectionIds?: number[] | undefined;
+  mergedSubCollections?: FranchiseCollectionSummary[] | undefined;
+  isMergedIntoUniverse?: boolean | undefined;
+  parentUniverseId?: string | undefined;
 }
 
 export interface FranchiseIntelResponse {

@@ -80,6 +80,15 @@
                 <ion-icon name="sparkles"></ion-icon>
                 <span>{{ parentUni.name }}</span>
               </button>
+
+              <button
+                type="button"
+                class="merge-toggle-btn"
+                [class.is-merged]="isMergedIntoParentUniverse()"
+                (click)="toggleMergeWithParentUniverse()">
+                <ion-icon [name]="isMergedIntoParentUniverse() ? 'git-merge-outline' : 'git-branch-outline'"></ion-icon>
+                <span>{{ isMergedIntoParentUniverse() ? 'Merged in ' + parentUni.name : 'Merge into ' + parentUni.name }}</span>
+              </button>
             } @else {
               <button
                 type="button"
@@ -460,7 +469,7 @@
       [canonCount]="universeProposal()!.canonTitles?.length || 0"
       [siblingFranchises]="universeProposal()!.siblingFranchises"
       [isResolving]="isResolvingCanon()"
-      (confirmAscend)="confirmAscension()"
+      (confirmAscend)="confirmAscension($event)"
       (dismiss)="showUniverseModal.set(false)">
     </app-universe-proposal-modal>
   }
