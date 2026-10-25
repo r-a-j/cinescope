@@ -63,13 +63,31 @@
           }
 
           @if (numericCollectionId() && !isUniverseCollection()) {
-            @if (existingParentUniverse(); as parentUni) {
+            @if (franchiseIntel.activeJob(); as bgJob) {
+              <button
+                type="button"
+                class="discover-universe-btn"
+                title="View Universe build progress"
+                (click)="openActiveUniverseJob(bgJob)">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>{{ bgJob.universeTitle }} ({{ bgJob.resolvedCount }}/{{ bgJob.totalCount }})</span>
+              </button>
+            } @else if (existingParentUniverse(); as parentUni) {
               <button
                 type="button"
                 class="discover-universe-btn"
                 (click)="openExistingUniverse(parentUni)">
                 <ion-icon name="sparkles"></ion-icon>
                 <span>{{ parentUni.name }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="merge-toggle-btn"
+                [class.is-merged]="isMergedIntoParentUniverse()"
+                (click)="toggleMergeWithParentUniverse()">
+                <ion-icon [name]="isMergedIntoParentUniverse() ? 'git-merge-outline' : 'git-branch-outline'"></ion-icon>
+                <span>{{ isMergedIntoParentUniverse() ? 'Merged in ' + parentUni.name : 'Merge into ' + parentUni.name }}</span>
               </button>
             } @else {
               <button
@@ -79,7 +97,7 @@
                 (click)="triggerDiscoverUniverse()">
                 @if (isAnalyzingUniverse()) {
                   <ion-spinner name="crescent"></ion-spinner>
-                  <span>Analyzing...</span>
+                  <span>Analyzing Universe...</span>
                 } @else {
                   <ion-icon name="sparkles"></ion-icon>
                   <span>AI Universe</span>
@@ -98,6 +116,21 @@
             </button>
           }
         </div>
+
+        @if (currentUniverseJob(); as job) {
+          <div class="universe-assembly-card">
+            <div class="assembly-header">
+              <div class="assembly-status">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Assembling {{ job.universeTitle }} canon...</span>
+              </div>
+              <span class="assembly-count">{{ job.resolvedCount }} of {{ job.totalCount }}</span>
+            </div>
+            <div class="assembly-track">
+              <div class="assembly-fill" [style.width.%]="job.totalCount > 0 ? (job.resolvedCount / job.totalCount) * 100 : 0"></div>
+            </div>
+          </div>
+        }
 
         <div class="franchise-progress-card">
           <div class="progress-info">
@@ -452,7 +485,7 @@
       [canonCount]="universeProposal()!.canonTitles?.length || 0"
       [siblingFranchises]="universeProposal()!.siblingFranchises"
       [isResolving]="isResolvingCanon()"
-      (confirmAscend)="confirmAscension()"
+      (confirmAscend)="confirmAscension($event)"
       (dismiss)="showUniverseModal.set(false)">
     </app-universe-proposal-modal>
   }

@@ -12,7 +12,7 @@ import {
   IonInfiniteScrollContent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline, albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline } from 'ionicons/icons';
+import { bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline, albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { StorageService } from '../../core/services/storage.service';
@@ -196,10 +196,34 @@ export class ArchivePage implements AfterViewInit {
       : this.visibleWatched().length < this.filteredWatched().length;
   });
 
+  public expandedUniverseIds = signal<Set<string | number>>(new Set());
+
+  public isUniverseExpanded(id: string | number): boolean {
+    return this.expandedUniverseIds().has(id);
+  }
+
+  public toggleExpandUniverseSagas(event: Event, id: string | number): void {
+    event.stopPropagation();
+    this.expandedUniverseIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  public openSubFranchise(event: Event, sub: FranchiseCollectionSummary): void {
+    event.stopPropagation();
+    this.onFranchiseClick(sub);
+  }
+
   constructor() {
     addIcons({
       bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline,
-      albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline
+      albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline, chevronDownOutline, chevronUpOutline
     });
   }
 

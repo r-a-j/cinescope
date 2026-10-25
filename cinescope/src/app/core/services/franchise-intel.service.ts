@@ -1,8 +1,11 @@
-import { Injectable, inject, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
+import { FranchiseCollectionSummary, FranchiseIntelResponse, FranchisePart } from '../models/franchise.model';
+import { FranchiseAggregatorService } from './franchise-aggregator.service';
+import { ToastService } from './toast.service';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from './tmdb-search.service';
 import { TmdbDiscoverService } from './tmdb-discover.service';
 import { TmdbCollectionsService } from './tmdb-collections.service';
@@ -20,6 +23,7 @@ interface CachedIntelRecord {
 
 export interface FranchiseIntelAnalysisResult {
   isCooldown: boolean;
+  isCancelled?: boolean | undefined;
   hoursRemaining?: number | undefined;
   message?: string | undefined;
   data?: FranchiseIntelResponse | null | undefined;
@@ -59,6 +63,34 @@ export class FranchiseIntelService {
   private readonly tmdbDiscover = inject(TmdbDiscoverService);
   private readonly tmdbCollections = inject(TmdbCollectionsService);
   private readonly bffUrl = `${environment.apiUrl}/franchise-intel`;
+  private readonly franchiseAggregator = inject(FranchiseAggregatorService);
+  private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
+
+  public readonly activeJob = signal<{
+    jobId: string;
+    seedCollectionId?: number | undefined;
+    universeId: string;
+    universeTitle: string;
+    phase: 'resolving' | 'expanding';
+    resolvedCount: number;
+    totalCount: number;
+    resolvedParts?: FranchisePart[] | undefined;
+  } | null>(null);
+  public readonly lastCompletedUniverse = signal<FranchiseCollectionSummary | null>(null);
+
+  private jobAbortController: AbortController | null = null;
+
+  public cancelActiveJob(): void {
+    if (this.jobAbortController) {
+      this.jobAbortController.abort();
+      this.jobAbortController = null;
+    }
+    if (this.activeJob()) {
+      this.activeJob.set(null);
+      void this.toastService.presentInfo('Universe background build cancelled', 1800);
+    }
+  }
 
   /**
    * Checks if a collection is on cooldown in production mode.
@@ -211,6 +243,9 @@ export class FranchiseIntelService {
         data: response
       };
     } catch (err) {
+      if ((err as Error)?.name === 'EmptyError') {
+        return { isCooldown: false, isCancelled: true, data: null };
+      }
       console.error('[FranchiseIntelService] AI Universe analysis failed:', err);
       return {
         isCooldown: false,
@@ -377,7 +412,9 @@ export class FranchiseIntelService {
       media_type?: 'movie' | 'tv' | undefined;
       importance?: 'essential' | 'recommended' | 'optional' | undefined;
     }[],
-    knownParts: FranchisePart[] = []
+    knownParts: FranchisePart[] = [],
+    onProgress?: (resolved: number, total: number, currentParts?: FranchisePart[]) => void,
+    abortSignal?: AbortSignal
   ): Promise<FranchisePart[]> {
     const knownByNormTitle = new Map<string, FranchisePart>();
     for (const kp of knownParts) {
@@ -387,6 +424,7 @@ export class FranchiseIntelService {
     }
 
     const orderedSlots: (FranchisePart | null)[] = new Array(canonTitles.length).fill(null);
+    let completedCount = 0;
 
     const resolveSingle = async (
       canon: {
@@ -467,10 +505,37 @@ export class FranchiseIntelService {
       }
     };
 
+    const buildCurrentDeduplicated = (): FranchisePart[] => {
+      const seen = new Set<string>();
+      const list: FranchisePart[] = [];
+      for (const p of orderedSlots) {
+        if (!p) continue;
+        const key = `${p.mediaType || 'movie'}_${p.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(p);
+        }
+      }
+      return list;
+    };
+
     // Execute in concurrent batches of 5 to avoid sequential waterfall while respecting rate limits
     for (let i = 0; i < canonTitles.length; i += CANON_RESOLVE_BATCH_SIZE) {
       const batch = canonTitles.slice(i, i + CANON_RESOLVE_BATCH_SIZE);
-      await Promise.all(batch.map((item, batchIdx) => resolveSingle(item, i + batchIdx)));
+      if (abortSignal?.aborted) {
+        throw new DOMException('Universe build cancelled', 'AbortError');
+      }
+      await Promise.all(
+        batch.map(async (item, batchIdx) => {
+          if (abortSignal?.aborted) return;
+          await resolveSingle(item, i + batchIdx);
+          completedCount++;
+        })
+      );
+      if (abortSignal?.aborted) {
+        throw new DOMException('Universe build cancelled', 'AbortError');
+      }
+      onProgress?.(completedCount, canonTitles.length, buildCurrentDeduplicated());
     }
 
     // Deduplicate by mediaType_id while preserving canonical order
@@ -509,16 +574,46 @@ export class FranchiseIntelService {
       mergedMap.set(`${mType}_${part.id}`, { ...part, mediaType: mType });
     }
 
-    const addCandidatePart = (part: FranchisePart, genreIds?: number[]): void => {
-      if (!part.id || !part.title) return;
-      if (NON_CANON_DOC_TITLE.test(part.title)) return;
-      // Exclude Documentaries (genre 99) and Talk Shows (10767) / News (10763)
+    const isAuthenticCandidate = (part: FranchisePart, genreIds?: number[]): boolean => {
+      if (!part.id || !part.title) return false;
+      if (NON_CANON_DOC_TITLE.test(part.title)) return false;
+
+      // Exclude Documentaries (genre 99), Talk Shows (10767), News (10763)
       if (Array.isArray(genreIds) && (genreIds.includes(99) || genreIds.includes(10767) || genreIds.includes(10763))) {
-        return;
+        return false;
       }
-      // Require poster or known upcoming release date so junk/fan stub entries on TMDB are skipped
-      const rawDate = part.release_date || part.first_air_date || '';
-      if (!part.poster_path && !rawDate) return;
+
+      // Check title for amateur / parody / bootleg markers
+      const lower = part.title.toLowerCase();
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries|fan film|short film)\b/i.test(lower)) {
+        return false;
+      }
+
+      // Require a poster path
+      if (!part.poster_path) {
+        return false;
+      }
+
+      // Strict Popularity & Vote Count Guard:
+      // Real studio releases have substantial vote count and popularity.
+      // Amateur/parody/fan films on TMDB have vote_count < 15 and negligible popularity.
+      const rawDate = String(part.release_date || part.first_air_date || '').trim();
+      const currentYear = new Date().getFullYear();
+      const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
+      const voteCount = Number(part.vote_count ?? 0);
+
+      // If already released, require at least 15 votes to exclude amateur/fake crowdsourced stubs
+      if (releaseYear > 0 && releaseYear <= currentYear) {
+        if (voteCount < 15) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
+    const addCandidatePart = (part: FranchisePart, genreIds?: number[]): void => {
+      if (!isAuthenticCandidate(part, genreIds)) return;
 
       const mType = part.mediaType || 'movie';
       const key = `${mType}_${part.id}`;
@@ -566,25 +661,9 @@ export class FranchiseIntelService {
         universeId.includes('marvel_cinematic_universe') ||
         /marvel cinematic universe|\bmcu\b/i.test(universeTitle);
 
-      let keywordId: number | null = null;
-      if (isMcu) {
-        keywordId = 180547; // Official TMDB Keyword ID for "marvel cinematic universe (mcu)"
-      } else {
-        const cleanUniQuery = universeTitle
-          .replace(/\(.*?\)/g, '')
-          .replace(/\buniverse\b/gi, '')
-          .trim();
-        const kwSearch = await firstValueFrom(
-          this.tmdbSearch.searchKeywords(isMcu ? 'marvel cinematic universe' : (cleanUniQuery || universeTitle), 1)
-        );
-        const kwResults = kwSearch?.results || [];
-        const bestKw = kwResults.find(
-          (k) => computeSimilarity(universeTitle, k.name) >= 0.5 || computeSimilarity(cleanUniQuery, k.name) >= 0.6
-        );
-        if (bestKw) {
-          keywordId = bestKw.id;
-        }
-      }
+      // Only run keyword-based live discovery for MCU where TMDB maintains an official curated keyword ID (180547).
+      // For all other universes, non-curated crowdsourced TMDB keywords return amateur shorts, parodies, and spam.
+      const keywordId: number | null = isMcu ? 180547 : null;
 
       const discoverPromises: Promise<void>[] = [];
 
@@ -755,5 +834,176 @@ export class FranchiseIntelService {
     }
 
     return bestCandidate;
+  }
+
+  /**
+   * Dispatches Universe canon resolution & live TMDB expansion to the background immediately
+   * after the user confirms the Universe Proposal modal, freeing the UI and notifying upon completion.
+   */
+  public startBackgroundUniverseBuild(options: {
+    proposal: FranchiseIntelResponse;
+    currentParts: FranchisePart[];
+    seedCollection?: { id: number; name: string } | undefined;
+    fallbackOverview?: string | null | undefined;
+    fallbackBackdropPath?: string | null | undefined;
+    fallbackPosterPath?: string | null | undefined;
+    foldSubCollection?: boolean | undefined;
+  }): { universeId: string; universeTitle: string; seedSummary: FranchiseCollectionSummary } {
+    const {
+      proposal,
+      currentParts,
+      seedCollection,
+      fallbackOverview,
+      fallbackBackdropPath,
+      fallbackPosterPath,
+      foldSubCollection
+    } = options;
+
+    if (this.jobAbortController) {
+      this.jobAbortController.abort();
+    }
+    const abortController = new AbortController();
+    this.jobAbortController = abortController;
+
+    const rawUniverseId = proposal.universeId || `universe_${Date.now()}`;
+    const cleanKey = String(rawUniverseId).replace(/^(universe_)+/, '');
+    const universeId = `universe_${cleanKey}`;
+    const universeTitle = proposal.universeTitle || 'Shared Universe';
+    const canonTitles = proposal.canonTitles || [];
+    const jobId = `${universeId}_${Date.now()}`;
+
+    const initialMergedIds = foldSubCollection !== false && seedCollection?.id
+      ? [seedCollection.id]
+      : [];
+
+    const seedSummary: FranchiseCollectionSummary = {
+      id: universeId,
+      name: universeTitle,
+      overview: proposal.connectionInsight || fallbackOverview || undefined,
+      poster_path: fallbackPosterPath ?? currentParts.find((p) => p.poster_path)?.poster_path ?? null,
+      backdrop_path: fallbackBackdropPath ?? currentParts.find((p) => p.backdrop_path)?.backdrop_path ?? null,
+      totalParts: Math.max(currentParts.length, canonTitles.length),
+      collectedCount: 0,
+      watchedCount: 0,
+      watchlistCount: 0,
+      completionPercentage: 0,
+      isUniverse: true,
+      universeId,
+      parentUniverseTitle: proposal.universeTitle,
+      connectionInsight: proposal.connectionInsight,
+      parts: currentParts,
+      siblingFranchises: proposal.siblingFranchises || [],
+      mergedSubCollectionIds: initialMergedIds
+    };
+
+    // 1. Immediately track seed universe in RxDB and reactive state
+    void this.franchiseAggregator.trackFranchise(universeId, seedSummary);
+
+    this.activeJob.set({
+      jobId,
+      seedCollectionId: seedCollection?.id,
+      universeId,
+      universeTitle,
+      phase: 'resolving',
+      resolvedCount: 0,
+      totalCount: Math.max(1, canonTitles.length),
+      resolvedParts: currentParts
+    });
+
+    void (async (): Promise<void> => {
+      try {
+        // 2. Resolve AI canon titles in parallel batches with live progress updates
+        const baseResolvedParts = await this.resolveCanonItems(
+          canonTitles,
+          currentParts,
+          (resolved, total, currentList) => {
+            if (abortController.signal.aborted) return;
+            this.activeJob.update((curr) =>
+              curr && curr.jobId === jobId
+                ? {
+                    ...curr,
+                    resolvedCount: resolved,
+                    totalCount: total,
+                    resolvedParts: currentList && currentList.length > 0 ? currentList : curr.resolvedParts
+                  }
+                : curr
+            );
+          },
+          abortController.signal
+        );
+
+        if (abortController.signal.aborted) return;
+
+        // 3. Verify sibling collections and expand with live TMDB 2024-2027+ releases
+        this.activeJob.update((curr) =>
+          curr && curr.jobId === jobId ? { ...curr, phase: 'expanding' } : curr
+        );
+
+        const rawSiblings = [...(proposal.siblingFranchises || [])];
+        const siblings = await this.resolveSiblingCollections(rawSiblings, seedCollection);
+
+        if (abortController.signal.aborted) return;
+
+        const resolvedParts = await this.expandUniverseWithLiveTmdb(
+          universeTitle,
+          universeId,
+          baseResolvedParts,
+          siblings
+        );
+
+        if (abortController.signal.aborted) return;
+
+        const rawBackdropPath =
+          fallbackBackdropPath || resolvedParts.find((p) => p.backdrop_path)?.backdrop_path || null;
+        const rawPosterPath =
+          resolvedParts.find((p) => p.poster_path)?.poster_path || fallbackPosterPath || null;
+
+        const completedSummary: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
+          id: universeId,
+          name: universeTitle,
+          overview: proposal.connectionInsight || fallbackOverview || undefined,
+          poster_path: rawPosterPath,
+          backdrop_path: rawBackdropPath,
+          totalParts: resolvedParts.length,
+          collectedCount: 0,
+          watchedCount: 0,
+          watchlistCount: 0,
+          completionPercentage: 0,
+          isUniverse: true,
+          universeId,
+          parentUniverseTitle: proposal.universeTitle,
+          connectionInsight: proposal.connectionInsight,
+          parts: resolvedParts,
+          siblingFranchises: siblings,
+          mergedSubCollectionIds: initialMergedIds,
+          canonExpandedV2: true
+        };
+
+        await this.franchiseAggregator.trackFranchise(universeId, completedSummary);
+        this.activeJob.set(null);
+        this.lastCompletedUniverse.set(completedSummary);
+
+        // 4. Notify user that their franchise universe is ready
+        void this.toastService.presentSuccess(
+          `"${universeTitle}" is ready (${resolvedParts.length} titles)!`,
+          3500
+        );
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError' || abortController.signal.aborted) {
+          return;
+        }
+        console.error('[FranchiseIntelService] Background universe build failed:', err);
+        void this.toastService.presentError(`Could not finish building "${universeTitle}".`, 3000);
+      } finally {
+        if (this.activeJob()?.jobId === jobId) {
+          this.activeJob.set(null);
+        }
+        if (this.jobAbortController === abortController) {
+          this.jobAbortController = null;
+        }
+      }
+    })();
+
+    return { universeId, universeTitle, seedSummary };
   }
 }

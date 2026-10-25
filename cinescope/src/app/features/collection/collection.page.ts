@@ -1,6 +1,6 @@
 import {
   Component, ChangeDetectionStrategy, OnInit, AfterViewInit, inject,
-  signal, computed, ViewChild, ChangeDetectorRef, DestroyRef
+  signal, computed, effect, untracked, ViewChild, ChangeDetectorRef, DestroyRef
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import {
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline, homeOutline, star, albumsOutline, filmOutline,
-  tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
+  tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline, gitMergeOutline, gitBranchOutline
 } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
@@ -68,7 +68,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
   private navService = inject(NavigationService);
   private collectionLoader = inject(CollectionLoaderService);
   private franchiseAggregator = inject(FranchiseAggregatorService);
-  private franchiseIntel = inject(FranchiseIntelService);
+  public franchiseIntel = inject(FranchiseIntelService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
@@ -166,6 +166,36 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
     return null;
   });
+
+  public isMergedIntoParentUniverse = computed<boolean>(() => {
+    const colId = this.numericCollectionId();
+    const parentUni = this.existingParentUniverse();
+    if (!colId || !parentUni) return false;
+    return this.storageService.isCollectionMergedIntoUniverse(parentUni.id, colId);
+  });
+
+  public currentUniverseJob = computed(() => {
+    const job = this.franchiseIntel.activeJob();
+    if (!job || !this.isUniverseCollection()) return null;
+    const currentSummary = this.franchiseSummary();
+    const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
+    const jobKey = String(job.universeId).replace(/^(universe_)+/, '');
+    return currentKey === jobKey ? job : null;
+  });
+
+  public async toggleMergeWithParentUniverse(): Promise<void> {
+    const colId = this.numericCollectionId();
+    const parentUni = this.existingParentUniverse();
+    if (!colId || !parentUni) return;
+
+    if (this.isMergedIntoParentUniverse()) {
+      await this.storageService.unmergeCollectionFromUniverse(parentUni.id, colId);
+      await this.toastService.presentInfo(`Showing "${this.collectionTitle()}" as standalone saga in Archive`, 2000);
+    } else {
+      await this.storageService.mergeCollectionIntoUniverse(parentUni.id, colId);
+      await this.toastService.presentSuccess(`Folded "${this.collectionTitle()}" into "${parentUni.name}"`, 2000);
+    }
+  }
 
   public completionMetrics = computed(() => {
     if (!this.isFranchiseCollection()) return null;
@@ -396,7 +426,58 @@ export class CollectionPage implements OnInit, AfterViewInit {
   constructor() {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,
-      tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline
+      tvOutline, checkmarkCircle, checkmarkDoneOutline, checkmarkSharp, addCircleOutline, playForwardOutline, bookmarkOutline, bookmark, sparkles, sparklesOutline, timeOutline, swapVerticalOutline, syncOutline, gitMergeOutline, gitBranchOutline
+    });
+
+    effect(() => {
+      const job = this.currentUniverseJob();
+      const parts = job?.resolvedParts;
+      if (!job || !parts || parts.length === 0) return;
+
+      untracked(() => {
+        const currentCount = this.rawItems().length;
+        if (parts.length > currentCount) {
+          const cleanParts = this.sanitizeUniverseParts(parts);
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
+            id: part.id,
+            mediaType: part.mediaType || 'movie',
+            title: part.title,
+            posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+            bookmarkState: 'none',
+            payload: part as unknown as Record<string, unknown>
+          }));
+          this.rawItems.set(items);
+        }
+      });
+    });
+
+    effect(() => {
+      const completed = this.franchiseIntel.lastCompletedUniverse();
+      if (!completed) return;
+
+      untracked(() => {
+        const currentSummary = this.franchiseSummary();
+        const currentKey = String(currentSummary?.universeId || currentSummary?.id || '').replace(/^(universe_)+/, '');
+        const completedKey = String(completed.universeId || completed.id).replace(/^(universe_)+/, '');
+        if (this.isUniverseCollection() && currentKey && currentKey === completedKey) {
+          const cleanParts = this.sanitizeUniverseParts(completed.parts || []);
+          const sanitizedCompleted: FranchiseCollectionSummary = {
+            ...completed,
+            parts: cleanParts,
+            totalParts: cleanParts.length
+          };
+          this.franchiseSummary.set(sanitizedCompleted);
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
+            id: part.id,
+            mediaType: part.mediaType || 'movie',
+            title: part.title,
+            posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+            bookmarkState: 'none',
+            payload: part as unknown as Record<string, unknown>
+          }));
+          this.rawItems.set(items);
+        }
+      });
     });
   }
 
@@ -436,6 +517,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
       title?: string;
       items?: SwimlaneItem[];
       queryContext?: CollectionQueryContext;
+      seedUniverse?: FranchiseCollectionSummary;
       preview?: { id?: number | string; name?: string; posterUrl?: string; backdropUrl?: string };
     } | undefined;
 
@@ -446,6 +528,33 @@ export class CollectionPage implements OnInit, AfterViewInit {
     if (navState?.preview) {
       if (navState.preview.name) this.collectionTitle.set(navState.preview.name);
       if (navState.preview.backdropUrl) this.collectionBackdrop.set(navState.preview.backdropUrl);
+    }
+
+    // Fast-path: Instant Frame-0 hydration from active seed universe if freshly ascended
+    if (navState?.seedUniverse) {
+      const seedUni = navState.seedUniverse;
+      this.collectionTitle.set(seedUni.name);
+      this.collectionOverview.set(seedUni.connectionInsight || seedUni.overview || null);
+      if (seedUni.backdrop_path) {
+        this.collectionBackdrop.set(resolveMediaImageUrl(seedUni.backdrop_path, 'w1280'));
+      }
+      this.isFranchiseCollection.set(true);
+      this.isUniverseCollection.set(true);
+      this.franchiseSummary.set(seedUni);
+      this.numericCollectionId.set(null);
+
+      const items: SwimlaneItem[] = (seedUni.parts || []).map((part) => ({
+        id: part.id,
+        mediaType: part.mediaType || 'movie',
+        title: part.title,
+        posterUrl: resolveMediaImageUrl(part.poster_path, 'w500'),
+        bookmarkState: 'none',
+        payload: part as unknown as Record<string, unknown>
+      }));
+      this.rawItems.set(items);
+      this.hasMore.set(false);
+      this.cdr.detectChanges();
+      return;
     }
 
     // 1. Check if route has an ID parameter (TMDB Collection ID or Ascended Universe ID)
@@ -477,10 +586,17 @@ export class CollectionPage implements OnInit, AfterViewInit {
           const uni = found.payload as unknown as FranchiseCollectionSummary;
           const nonCollectionPattern = /disney\+|canon series|tv series|television|phase\s*\d|streaming|one-shots|specials/i;
           const initialSiblings = (uni.siblingFranchises || []).filter((s) => s?.name && !nonCollectionPattern.test(s.name));
+          const cleanParts = this.sanitizeUniverseParts(uni.parts || []);
           const displayUni: FranchiseCollectionSummary = {
             ...uni,
+            totalParts: cleanParts.length,
+            parts: cleanParts,
             siblingFranchises: initialSiblings
           };
+
+          if (cleanParts.length < (uni.parts?.length || 0)) {
+            void this.storageService.saveUniverse(cleanParamKey, displayUni);
+          }
 
           this.collectionTitle.set(displayUni.name);
           this.collectionOverview.set(displayUni.connectionInsight || displayUni.overview || null);
@@ -491,7 +607,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
           this.franchiseSummary.set(displayUni);
           this.numericCollectionId.set(null);
 
-          const items: SwimlaneItem[] = (displayUni.parts || []).map((part) => ({
+          const items: SwimlaneItem[] = cleanParts.map((part) => ({
             id: part.id,
             mediaType: part.mediaType || 'movie',
             title: part.title,
@@ -895,9 +1011,24 @@ export class CollectionPage implements OnInit, AfterViewInit {
   // AI UNIVERSE REASONING & ASCENSION
   // ==========================================
 
+  public openActiveUniverseJob(job: { universeId: string; universeTitle: string }): void {
+    void this.router.navigate(['/collection', job.universeId], {
+      state: {
+        title: job.universeTitle,
+        preview: {
+          id: job.universeId,
+          name: job.universeTitle
+        }
+      }
+    });
+  }
+
   public async triggerDiscoverUniverse(): Promise<void> {
+    if (this.isAnalyzingUniverse()) {
+      return;
+    }
     const colId = this.numericCollectionId();
-    if (!colId || this.isAnalyzingUniverse()) return;
+    if (!colId) return;
 
     const cooldown = this.franchiseIntel.getCooldownStatus(colId);
     if (cooldown.isCooldown) {
@@ -919,6 +1050,9 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
       const res = await this.franchiseIntel.analyzeUniverse(colId, this.collectionTitle(), parts);
 
+      if (res.isCancelled) {
+        return;
+      }
       if (res.isCooldown) {
         await this.toastService.presentInfo(
           res.message || `Next scan available in ${res.hoursRemaining || 3} hrs`,
@@ -1096,12 +1230,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
         }
       }
 
-      const expandedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
+      const rawExpandedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
         uni.name,
         String(uni.universeId || uni.id),
         baseParts,
         verifiedSiblings
       );
+      const expandedParts = this.sanitizeUniverseParts(rawExpandedParts);
 
       const addedCount = Math.max(0, expandedParts.length - (uni.parts?.length || 0));
       const updatedUni: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
@@ -1144,104 +1279,55 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
   }
 
-  public async confirmAscension(): Promise<void> {
+  public confirmAscension(event?: { foldSubCollection: boolean }): void {
     const proposal = this.universeProposal();
-    if (!proposal || this.isResolvingCanon()) return;
+    if (!proposal) return;
 
-    this.isResolvingCanon.set(true);
+    // 1. Immediately close the modal so the user is never blocked or trapped
+    this.showUniverseModal.set(false);
+    this.isResolvingCanon.set(false);
 
-    try {
-      const canonTitles = proposal.canonTitles || [];
-      const currentParts: FranchisePart[] = this.rawItems().map((it) => {
-        const p = it.payload as Record<string, unknown> | undefined;
-        return {
-          id: Number(it.id),
-          title: it.title,
-          mediaType: it.mediaType === 'tv' ? 'tv' : 'movie',
-          overview: p?.['overview'] as string | undefined,
-          poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
-          backdrop_path: p?.['backdrop_path'] as string | undefined,
-          release_date: p?.['release_date'] as string | undefined,
-          first_air_date: p?.['first_air_date'] as string | undefined,
-          vote_average: p?.['vote_average'] as number | undefined,
-          vote_count: p?.['vote_count'] as number | undefined
-        };
-      });
-
-      const baseResolvedParts = await this.franchiseIntel.resolveCanonItems(canonTitles, currentParts);
-
-      const universeId = proposal.universeId || `universe_${Date.now()}`;
-      const universeTitle = proposal.universeTitle || 'Shared Universe';
-
-      // Ensure starting numeric collection is also included in siblingFranchises and all siblings are verified TMDB collections
-      const colId = this.numericCollectionId();
-      const rawSiblings = [...(proposal.siblingFranchises || [])];
-      const siblings = await this.franchiseIntel.resolveSiblingCollections(
-        rawSiblings,
-        colId ? { id: colId, name: this.collectionTitle() } : undefined
-      );
-
-      // Augment AI canon with live TMDB sibling collection parts + keyword/studio discovery (Movies + TV)
-      const resolvedParts = await this.franchiseIntel.expandUniverseWithLiveTmdb(
-        universeTitle,
-        universeId,
-        baseResolvedParts,
-        siblings
-      );
-
-      const rawBackdropPath = this.franchiseSummary()?.backdrop_path
-        || resolvedParts.find((p) => p.backdrop_path)?.backdrop_path
-        || null;
-      const rawPosterPath = resolvedParts.find((p) => p.poster_path)?.poster_path
-        || this.franchiseSummary()?.poster_path
-        || null;
-
-      const universeSummary: FranchiseCollectionSummary & { canonExpandedV2?: boolean } = {
-        id: universeId,
-        name: universeTitle,
-        overview: proposal.connectionInsight || this.collectionOverview() || undefined,
-        poster_path: rawPosterPath,
-        backdrop_path: rawBackdropPath,
-        totalParts: resolvedParts.length,
-        collectedCount: 0,
-        watchedCount: 0,
-        watchlistCount: 0,
-        completionPercentage: 0,
-        isUniverse: true,
-        universeId,
-        parentUniverseTitle: proposal.universeTitle,
-        connectionInsight: proposal.connectionInsight,
-        parts: resolvedParts,
-        siblingFranchises: siblings,
-        canonExpandedV2: true
+    const currentParts: FranchisePart[] = this.rawItems().map((it) => {
+      const p = it.payload as Record<string, unknown> | undefined;
+      return {
+        id: Number(it.id),
+        title: it.title,
+        mediaType: it.mediaType === 'tv' ? 'tv' : 'movie',
+        overview: p?.['overview'] as string | undefined,
+        poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
+        backdrop_path: p?.['backdrop_path'] as string | undefined,
+        release_date: p?.['release_date'] as string | undefined,
+        first_air_date: p?.['first_air_date'] as string | undefined,
+        vote_average: p?.['vote_average'] as number | undefined,
+        vote_count: p?.['vote_count'] as number | undefined
       };
+    });
 
-      await this.franchiseAggregator.trackFranchise(universeId, universeSummary);
+    const colId = this.numericCollectionId();
+    const buildResult = this.franchiseIntel.startBackgroundUniverseBuild({
+      proposal,
+      currentParts,
+      seedCollection: colId ? { id: colId, name: this.collectionTitle() } : undefined,
+      fallbackOverview: this.collectionOverview(),
+      fallbackBackdropPath: this.franchiseSummary()?.backdrop_path,
+      fallbackPosterPath: this.franchiseSummary()?.poster_path,
+      foldSubCollection: event?.foldSubCollection !== false
+    });
 
-      this.showUniverseModal.set(false);
-      await this.toastService.presentSuccess(
-        `Ascended to "${universeSummary.name}"!`,
-        2200
-      );
-
-      // Navigate to the newly created universe collection
-      void this.router.navigate(['/collection', universeId], {
-        state: {
-          title: universeSummary.name,
-          preview: {
-            id: universeId,
-            name: universeSummary.name,
-            backdropUrl: rawBackdropPath ? resolveMediaImageUrl(rawBackdropPath, 'w1280') : (this.collectionBackdrop() || undefined)
-          }
+    void this.router.navigate(['/collection', buildResult.universeId], {
+      state: {
+        title: buildResult.universeTitle,
+        seedUniverse: buildResult.seedSummary,
+        preview: {
+          id: buildResult.universeId,
+          name: buildResult.universeTitle,
+          backdropUrl: buildResult.seedSummary.backdrop_path
+            ? resolveMediaImageUrl(buildResult.seedSummary.backdrop_path, 'w1280')
+            : undefined
         }
-      });
-    } catch (err) {
-      console.error('Failed to ascend to universe:', err);
-      await this.toastService.presentError('Failed to ascend to universe.', 2000);
-    } finally {
-      this.isResolvingCanon.set(false);
-      this.cdr.detectChanges();
-    }
+      }
+    });
+    this.cdr.detectChanges();
   }
 
   public getBookmarkState(item: SwimlaneItem): BookmarkState {
@@ -1409,5 +1495,31 @@ export class CollectionPage implements OnInit, AfterViewInit {
       yearValue: rawDate,
       isUpcoming
     };
+  }
+
+  private sanitizeUniverseParts(parts: FranchisePart[]): FranchisePart[] {
+    return (parts || []).filter((part) => {
+      const lower = (part.title || '').toLowerCase();
+      if (/\b(twink|parody|spoof|tribute|strawberry|strawberries)\b/i.test(lower)) {
+        return false;
+      }
+      if (
+        part.id === 1649247 ||
+        part.id === 1649952 ||
+        part.id === 1500342 ||
+        part.id === 1500310 ||
+        part.title === '戦闘シーン'
+      ) {
+        return false;
+      }
+      const rawDate = String(part.release_date || part.first_air_date || '').trim();
+      const currentYear = new Date().getFullYear();
+      const releaseYear = rawDate.length >= 4 ? parseInt(rawDate.slice(0, 4), 10) : 0;
+      const voteCount = Number(part.vote_count ?? 0);
+      if (releaseYear > 0 && releaseYear <= currentYear && voteCount === 0 && (lower.includes('touch') || lower.includes('short'))) {
+        return false;
+      }
+      return true;
+    });
   }
 }

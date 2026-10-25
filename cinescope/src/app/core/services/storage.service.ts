@@ -775,6 +775,63 @@ export class StorageService {
     }
 
     /**
+     * Folds/merges a sub-collection ID into a parent Universe document in RxDB.
+     */
+    public async mergeCollectionIntoUniverse(universeId: string | number, collectionId: number): Promise<void> {
+        this.initReactiveStreams();
+        const cleanUniKey = String(universeId).replace(/^(universe_)+/, '');
+        const docId = `universe_${cleanUniKey}`;
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                const payload = ((docData.payload as Record<string, unknown>) || {});
+                const currentMerged = Array.isArray(payload['mergedSubCollectionIds'])
+                    ? (payload['mergedSubCollectionIds'] as number[])
+                    : [];
+                if (!currentMerged.includes(collectionId)) {
+                    payload['mergedSubCollectionIds'] = [...currentMerged, collectionId];
+                }
+                docData.payload = payload as unknown as TmdbPayload;
+                return docData;
+            });
+        }
+    }
+
+    /**
+     * Unmerges/unfolds a sub-collection ID from a parent Universe document in RxDB so it shows as a standalone card.
+     */
+    public async unmergeCollectionFromUniverse(universeId: string | number, collectionId: number): Promise<void> {
+        this.initReactiveStreams();
+        const cleanUniKey = String(universeId).replace(/^(universe_)+/, '');
+        const docId = `universe_${cleanUniKey}`;
+        const doc = await this.dbService.db.content.findOne(docId).exec();
+        if (doc) {
+            await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                const payload = ((docData.payload as Record<string, unknown>) || {});
+                const currentMerged = Array.isArray(payload['mergedSubCollectionIds'])
+                    ? (payload['mergedSubCollectionIds'] as number[])
+                    : [];
+                payload['mergedSubCollectionIds'] = currentMerged.filter((id) => id !== collectionId);
+                docData.payload = payload as unknown as TmdbPayload;
+                return docData;
+            });
+        }
+    }
+
+    /**
+     * Checks if a sub-collection is merged into an active Universe.
+     */
+    public isCollectionMergedIntoUniverse(universeId: string | number, collectionId: number): boolean {
+        const cleanUniKey = String(universeId).replace(/^(universe_)+/, '');
+        const docId = `universe_${cleanUniKey}`;
+        const match = this.savedUniverses().find((d) => d.id === docId || String(d.tmdbId) === cleanUniKey);
+        if (!match) return false;
+        const payload = match.payload as Record<string, unknown> | undefined;
+        const merged = payload?.['mergedSubCollectionIds'] as number[] | undefined;
+        return Array.isArray(merged) ? merged.includes(collectionId) : false;
+    }
+
+    /**
      * Bulk moves multiple inbox items into Watchlist or Watched.
      * Unreleased items cannot be moved to Watched and are routed to Watchlist instead.
      */

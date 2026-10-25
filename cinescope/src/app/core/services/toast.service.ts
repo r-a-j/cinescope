@@ -30,6 +30,45 @@ export class ToastService {
     await this.presentToast(message, 'info', duration);
   }
 
+  public async presentActionToast(
+    message: string,
+    actionText: string,
+    onAction: () => void,
+    type: ToastType = 'success',
+    duration = 5500
+  ): Promise<void> {
+    if (this.currentToast) {
+      await this.currentToast.dismiss();
+    }
+
+    const colorClass = this.getColorClass(type);
+    this.currentToast = await this.toastController.create({
+      message,
+      duration,
+      position: 'bottom',
+      mode: 'ios',
+      cssClass: ['cinescope-toast', colorClass],
+      buttons: [
+        {
+          text: actionText,
+          handler: (): void => {
+            onAction();
+          }
+        },
+        {
+          text: 'OK',
+          role: 'cancel'
+        }
+      ]
+    });
+
+    this.currentToast.onDidDismiss().then(() => {
+      this.currentToast = null;
+    });
+
+    await this.currentToast.present();
+  }
+
   public async presentActionWithUndo(
     message: string,
     onUndo: () => void,
