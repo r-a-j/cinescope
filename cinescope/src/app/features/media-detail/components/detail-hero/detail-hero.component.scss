@@ -6,19 +6,22 @@
       top: 0;
       left: 0;
       right: 0;
-      height: calc(env(safe-area-inset-top, 12px) + 58px);
+      height: calc(env(safe-area-inset-top, 12px) + 80px);
       z-index: 38;
       pointer-events: none;
       background: linear-gradient(
         180deg,
-        rgba(9, 9, 13, 0.94) 0%,
-        rgba(9, 9, 13, 0.72) 65%,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.92) 18%,
+        rgba(0, 0, 0, 0.76) 36%,
+        rgba(0, 0, 0, 0.52) 54%,
+        rgba(0, 0, 0, 0.28) 72%,
+        rgba(0, 0, 0, 0.10) 86%,
+        rgba(0, 0, 0, 0.02) 95%,
         transparent 100%
       );
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
       opacity: 0;
-      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 
       &.is-visible {
         opacity: 1;
@@ -134,9 +137,9 @@
       inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(8, 8, 10, 0.25) 0%,
-        rgba(8, 8, 10, 0.68) 52%,
-        rgba(8, 8, 10, 0.96) 85%,
+        rgba(8, 8, 10, 0.15) 0%,
+        rgba(8, 8, 10, 0.60) 52%,
+        rgba(8, 8, 10, 0.95) 85%,
         #08080a 100%
       );
     }
