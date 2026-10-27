@@ -137,11 +137,12 @@ export const SearchStore = signalStore(
         const saveRecentSearch = async (query: string): Promise<void> => {
             if (!query.trim()) return;
             try {
-                await dbService.db.searchHistory.upsert({
+                const db = await dbService.getDatabase();
+                await db.searchHistory.upsert({
                     query: query.trim(),
                     timestamp: Date.now()
                 });
-                const docs = await dbService.db.searchHistory.find({
+                const docs = await db.searchHistory.find({
                     sort: [{ timestamp: 'desc' }],
                     limit: 10
                 }).exec();
@@ -219,7 +220,8 @@ export const SearchStore = signalStore(
 
             async loadRecentSearches(): Promise<void> {
                 try {
-                    const docs = await dbService.db.searchHistory.find({
+                    const db = await dbService.getDatabase();
+                    const docs = await db.searchHistory.find({
                         sort: [{ timestamp: 'desc' }],
                         limit: 10
                     }).exec();
@@ -232,7 +234,8 @@ export const SearchStore = signalStore(
 
             async clearRecentSearches(): Promise<void> {
                 try {
-                    const docs = await dbService.db.searchHistory.find().exec();
+                    const db = await dbService.getDatabase();
+                    const docs = await db.searchHistory.find().exec();
                     if (docs.length > 0) {
                         for (const doc of docs) {
                             await doc.remove();
@@ -246,11 +249,12 @@ export const SearchStore = signalStore(
 
             async removeRecentSearch(query: string): Promise<void> {
                 try {
-                    const doc = await dbService.db.searchHistory.findOne(query).exec();
+                    const db = await dbService.getDatabase();
+                    const doc = await db.searchHistory.findOne(query).exec();
                     if (doc) {
                         await doc.remove();
                     }
-                    const docs = await dbService.db.searchHistory.find({
+                    const docs = await db.searchHistory.find({
                         sort: [{ timestamp: 'desc' }],
                         limit: 10
                     }).exec();

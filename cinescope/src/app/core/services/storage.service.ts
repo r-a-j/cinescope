@@ -240,6 +240,16 @@ export class StorageService {
 
     public initReactiveStreams(): void {
         if (this.streamsInitialized) return;
+        if (!this.dbService.isInitialized()) {
+            this.dbService.getDatabase().then(() => {
+                if (!this.streamsInitialized) {
+                    this.initReactiveStreams();
+                }
+            }).catch(err => {
+                console.error('Failed to initialize reactive streams from RxDB:', err);
+            });
+            return;
+        }
         try {
             const db = this.dbService.db;
             if (!db?.content || !db?.settings) {

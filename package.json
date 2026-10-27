@@ -30,5 +30,17 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "wait-on": "^9.0.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs": "^7.5.5",
+      "shell-quote": "^1.8.4",
+      "websocket-driver": "^0.7.5",
+      "tar": "^7.5.19",
+      "piscina": "^5.3.2",
+      "proxy-addr": "^2.0.8",
+      "tinypool": "^2.1.2",
+      "handlebars": "^4.7.10"
+    }
   }
 }

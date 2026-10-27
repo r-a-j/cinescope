@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
-    "mtime": 1792967042.2839415,
-    "ast_hash": "88b525eb228b286759c086ff43c573f6",
+    "mtime": 1793135090.6144888,
+    "ast_hash": "aedabd102d49e0042d6f0c144c2f20fa",
     "semantic_hash": ""
   },
   "cinescope-api/tsconfig.json": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "cinescope/karma.conf.js": {
-    "mtime": 1774015719.3128314,
-    "ast_hash": "5af7fd8ef48feaecf25f7c9222ff9aa8",
+    "mtime": 1793135065.6206746,
+    "ast_hash": "73f5b3954d7c2d171290a56bae392962",
     "semantic_hash": ""
   },
   "cinescope/models.json": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1792967042.2855144,
-    "ast_hash": "dee3c1ab35c0f6c87586bc3ab949edd2",
+    "mtime": 1793135110.9237611,
+    "ast_hash": "6fb39a2d8b3c233aa1105fd37deaa01e",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/database/database.service.ts": {
-    "mtime": 1792792410.7149253,
-    "ast_hash": "b1561511fd2b4f44c136f8b1075a2db9",
+    "mtime": 1793135229.3567283,
+    "ast_hash": "509b5b4ebd7d6a213da524ee6447b18c",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/database/schemas/content.schema.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1792949170.245693,
-    "ast_hash": "11d681b8c1ba182be4eb3cdf1bce4789",
+    "mtime": 1793134973.3721302,
+    "ast_hash": "4ed9b51d3a85a38bc072b8257c45ad7b",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1792956540.5834196,
-    "ast_hash": "8c268d0be2af6a7f8adfccaeb97e6653",
+    "mtime": 1793134935.1502898,
+    "ast_hash": "eeb1c5c80e62bfe6c26acf0e6b79936c",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
-    "mtime": 1792928981.2411892,
-    "ast_hash": "81cf69adb2466852172b0f1c067dae0d",
+    "mtime": 1793134980.9663115,
+    "ast_hash": "670f970ae036c4f08e47b9a3e2174b5b",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
@@ -970,8 +970,8 @@
     "semantic_hash": ""
   },
   "docs/package.json": {
-    "mtime": 1792967042.2881844,
-    "ast_hash": "f1785e23048d9996244538ade22bc4d6",
+    "mtime": 1793135103.1103816,
+    "ast_hash": "0569ef96be5d4315d96c288e4a677d28",
     "semantic_hash": ""
   },
   "docs/sidebarsDev.ts": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1792669208.7177377,
-    "ast_hash": "c10a754ae83b794867e94c808dd1ad3a",
+    "mtime": 1793135174.1372235,
+    "ast_hash": "0dc75f9c181bbecf442f2908ee9eaebb",
     "semantic_hash": ""
   },
   ".agent/rules/graphify.md": {
@@ -2840,8 +2840,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1792967042.2834077,
-    "ast_hash": "a6f40a22b7488a5dfc574f1c257a3cae",
+    "mtime": 1793135144.7397664,
+    "ast_hash": "357dc7abdc735da4a617bcf23166c6b9",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
@@ -2875,122 +2875,122 @@
     "semantic_hash": ""
   },
   ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh": {
-    "mtime": 1793131778.1023307,
+    "mtime": 1793132064.3266337,
     "ast_hash": "798a4f0d6a526f8dda2494b6f6d39d79",
     "semantic_hash": ""
   },
   ".agents/skills/codebase-design/DEEPENING.md": {
-    "mtime": 1793131778.100214,
+    "mtime": 1793132064.3236365,
     "ast_hash": "4f46559b59cded1dfa3a95fd413d5b06",
     "semantic_hash": ""
   },
   ".agents/skills/codebase-design/DESIGN-IT-TWICE.md": {
-    "mtime": 1793131778.100214,
+    "mtime": 1793132064.3236365,
     "ast_hash": "f2a13925433e79b556a8c677c70e279b",
     "semantic_hash": ""
   },
   ".agents/skills/codebase-design/SKILL.md": {
-    "mtime": 1793131778.100214,
+    "mtime": 1793132064.3236365,
     "ast_hash": "027234c0400e7dee63d0e28a8da5b932",
     "semantic_hash": ""
   },
   ".agents/skills/codebase-design/agents/openai.yaml": {
-    "mtime": 1793131778.1012135,
+    "mtime": 1793132064.3246431,
     "ast_hash": "e3ef79463bafe87b6c5d93099f6ec8dc",
     "semantic_hash": ""
   },
   ".agents/skills/diagnosing-bugs/SKILL.md": {
-    "mtime": 1793131778.1012135,
+    "mtime": 1793132064.3256412,
     "ast_hash": "bd46d273f39ae9ddd1ae91bd5ddf062f",
     "semantic_hash": ""
   },
   ".agents/skills/diagnosing-bugs/agents/openai.yaml": {
-    "mtime": 1793131778.1023307,
+    "mtime": 1793132064.3256412,
     "ast_hash": "381dc5d9e4529e13f1a8fb0fb6e462e0",
     "semantic_hash": ""
   },
   ".agents/skills/domain-modeling/ADR-FORMAT.md": {
-    "mtime": 1793131778.1023307,
+    "mtime": 1793132064.3276558,
     "ast_hash": "523569129da3daab7bc280eb3b359816",
     "semantic_hash": ""
   },
   ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md": {
-    "mtime": 1793131778.1023307,
+    "mtime": 1793132064.3276558,
     "ast_hash": "2880e175b4d6cd4b83118c5aaae348e2",
     "semantic_hash": ""
   },
   ".agents/skills/domain-modeling/SKILL.md": {
-    "mtime": 1793131778.103329,
+    "mtime": 1793132064.3276558,
     "ast_hash": "457419334f50f6a58bcf572bfa39c8ca",
     "semantic_hash": ""
   },
   ".agents/skills/domain-modeling/agents/openai.yaml": {
-    "mtime": 1793131778.103329,
+    "mtime": 1793132064.3286402,
     "ast_hash": "2854fbe73ae3d34431029391c8319949",
     "semantic_hash": ""
   },
   ".agents/skills/improve-codebase-architecture/HTML-REPORT.md": {
-    "mtime": 1793131778.1063285,
+    "mtime": 1793132064.3296354,
     "ast_hash": "862f2941cb90452588b8719fa0bd3021",
     "semantic_hash": ""
   },
   ".agents/skills/improve-codebase-architecture/SKILL.md": {
-    "mtime": 1793131778.1063285,
+    "mtime": 1793132064.3296354,
     "ast_hash": "d5aeaf193fab6cb480fdc65ec56e8e13",
     "semantic_hash": ""
   },
   ".agents/skills/improve-codebase-architecture/agents/openai.yaml": {
-    "mtime": 1793131778.1073205,
+    "mtime": 1793132064.3306515,
     "ast_hash": "e4832089249a15fe8d08d2512cce775f",
     "semantic_hash": ""
   },
   ".agents/skills/tdd/SKILL.md": {
-    "mtime": 1793131778.114447,
+    "mtime": 1793132064.3306515,
     "ast_hash": "df7e0fc3458cecca6251986aefdd90ec",
     "semantic_hash": ""
   },
   ".agents/skills/tdd/agents/openai.yaml": {
-    "mtime": 1793131778.114447,
+    "mtime": 1793132064.3316407,
     "ast_hash": "59675eba19fbb5a677a621278f5ef618",
     "semantic_hash": ""
   },
   ".agents/skills/tdd/mocking.md": {
-    "mtime": 1793131778.114447,
+    "mtime": 1793132064.3316407,
     "ast_hash": "d5bba1ea1f387c4809b7dc7c4e75c862",
     "semantic_hash": ""
   },
   ".agents/skills/tdd/tests.md": {
-    "mtime": 1793131778.115446,
+    "mtime": 1793132064.3326411,
     "ast_hash": "89c7c4b26e8ebfc0b7699dbe96b433e5",
     "semantic_hash": ""
   },
   ".agents/skills/to-questionnaire/SKILL.md": {
-    "mtime": 1793131778.1335936,
+    "mtime": 1793132064.3326411,
     "ast_hash": "d7dc306e1137ed9526d30104c3294a83",
     "semantic_hash": ""
   },
   ".agents/skills/to-questionnaire/agents/openai.yaml": {
-    "mtime": 1793131778.1335936,
+    "mtime": 1793132064.3336337,
     "ast_hash": "d8270f1f6755b9a6623273cdfb2d6fb1",
     "semantic_hash": ""
   },
   ".agents/skills/to-spec/SKILL.md": {
-    "mtime": 1793131778.115446,
+    "mtime": 1793132064.33464,
     "ast_hash": "7417bb03e7d8f7f68dbcb442db8bb6c9",
     "semantic_hash": ""
   },
   ".agents/skills/to-spec/agents/openai.yaml": {
-    "mtime": 1793131778.115446,
+    "mtime": 1793132064.33464,
     "ast_hash": "303abe92d1e7c947d1d36affacf18406",
     "semantic_hash": ""
   },
   ".agents/skills/to-tickets/SKILL.md": {
-    "mtime": 1793131778.1164448,
+    "mtime": 1793132064.33564,
     "ast_hash": "c5bdca374ed85549c659e7e354a813f5",
     "semantic_hash": ""
   },
   ".agents/skills/to-tickets/agents/openai.yaml": {
-    "mtime": 1793131778.1164448,
+    "mtime": 1793132064.33564,
     "ast_hash": "7c9fd2d5d1572711319d6aa0c7ca2903",
     "semantic_hash": ""
   }
