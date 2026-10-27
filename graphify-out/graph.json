@@ -4,6 +4,58 @@
   "graph": {},
   "nodes": [
     {
+      "label": "hitl-loop.template.sh",
+      "file_type": "code",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "id": "scripts_hitl_loop_template",
+      "community": 202,
+      "norm_label": "hitl-loop.template.sh"
+    },
+    {
+      "label": "hitl-loop.template.sh script",
+      "file_type": "code",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "id": "d_work_testbench_cinescope_agents_skills_diagnosing_bugs_scripts_hitl_loop_template_sh__entry",
+      "community": 202,
+      "norm_label": "hitl-loop.template.sh script"
+    },
+    {
+      "label": "step()",
+      "file_type": "code",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L20",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "id": "scripts_hitl_loop_template_step",
+      "community": 202,
+      "norm_label": "step()"
+    },
+    {
+      "label": "capture()",
+      "file_type": "code",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L25",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "id": "scripts_hitl_loop_template_capture",
+      "community": 202,
+      "norm_label": "capture()"
+    },
+    {
       "label": "extract.ts",
       "file_type": "code",
       "source_file": "cinescope-api/api/extract.ts",
@@ -2277,7 +2329,7 @@
       "source_file": "cinescope/src/app/core/constants/api.constants.ts",
       "source_location": "L14",
       "id": "constants_api_constants_resolvemediaimageurl",
-      "community": 36,
+      "community": 33,
       "norm_label": "resolvemediaimageurl()"
     },
     {
@@ -2610,7 +2662,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/paginated-response.dto.ts",
       "source_location": "L1",
       "id": "common_paginated_response_dto",
-      "community": 5,
+      "community": 25,
       "norm_label": "paginated-response.dto.ts"
     },
     {
@@ -3060,7 +3112,7 @@
       "source_file": "cinescope/src/app/core/dtos/genres/genre.dto.ts",
       "source_location": "L12",
       "id": "genres_genre_dto_tmdbgenrelistdto",
-      "community": 82,
+      "community": 12,
       "norm_label": "tmdbgenrelistdto"
     },
     {
@@ -3231,7 +3283,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L28",
       "id": "movies_movie_detail_dto_tmdbmoviedetaildto",
-      "community": 12,
+      "community": 21,
       "norm_label": "tmdbmoviedetaildto"
     },
     {
@@ -3924,7 +3976,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episode-groups/tv-episode-group-detail.dto.ts",
       "source_location": "L33",
       "id": "tv_episode_groups_tv_episode_group_detail_dto_tmdbtvepisodegroupdetaildto",
-      "community": 82,
+      "community": 36,
       "norm_label": "tmdbtvepisodegroupdetaildto"
     },
     {
@@ -3933,7 +3985,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-changes.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_changes_dto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tv-episode-changes.dto.ts"
     },
     {
@@ -3942,7 +3994,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-changes.dto.ts",
       "source_location": "L4",
       "id": "tv_episodes_tv_episode_changes_dto_tmdbtvepisodechangesresponsedto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tmdbtvepisodechangesresponsedto"
     },
     {
@@ -3951,7 +4003,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_credits_dto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tv-episode-credits.dto.ts"
     },
     {
@@ -3960,7 +4012,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-credits.dto.ts",
       "source_location": "L5",
       "id": "tv_episodes_tv_episode_credits_dto_tmdbtvepisodecreditsresponsedto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tmdbtvepisodecreditsresponsedto"
     },
     {
@@ -3969,7 +4021,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-detail.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_detail_dto",
-      "community": 1,
+      "community": 36,
       "norm_label": "tv-episode-detail.dto.ts"
     },
     {
@@ -3978,7 +4030,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-detail.dto.ts",
       "source_location": "L8",
       "id": "tv_episodes_tv_episode_detail_dto_tmdbtvepisodedetaildto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodedetaildto"
     },
     {
@@ -3987,7 +4039,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-external-ids.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_external_ids_dto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tv-episode-external-ids.dto.ts"
     },
     {
@@ -3996,7 +4048,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-external-ids.dto.ts",
       "source_location": "L2",
       "id": "tv_episodes_tv_episode_external_ids_dto_tmdbtvepisodeexternalidsdto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodeexternalidsdto"
     },
     {
@@ -4005,7 +4057,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-images.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_images_dto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tv-episode-images.dto.ts"
     },
     {
@@ -4014,7 +4066,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-images.dto.ts",
       "source_location": "L4",
       "id": "tv_episodes_tv_episode_images_dto_tmdbtvepisodeimagesresponsedto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tmdbtvepisodeimagesresponsedto"
     },
     {
@@ -4023,7 +4075,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-translations.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_translations_dto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tv-episode-translations.dto.ts"
     },
     {
@@ -4032,7 +4084,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-translations.dto.ts",
       "source_location": "L2",
       "id": "tv_episodes_tv_episode_translations_dto_tmdbtvepisodetranslationdatadto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodetranslationdatadto"
     },
     {
@@ -4041,7 +4093,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-translations.dto.ts",
       "source_location": "L7",
       "id": "tv_episodes_tv_episode_translations_dto_tmdbtvepisodetranslationitemdto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodetranslationitemdto"
     },
     {
@@ -4050,7 +4102,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-translations.dto.ts",
       "source_location": "L15",
       "id": "tv_episodes_tv_episode_translations_dto_tmdbtvepisodetranslationsresponsedto",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodetranslationsresponsedto"
     },
     {
@@ -4059,7 +4111,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-videos.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_videos_dto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tv-episode-videos.dto.ts"
     },
     {
@@ -4068,7 +4120,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-videos.dto.ts",
       "source_location": "L4",
       "id": "tv_episodes_tv_episode_videos_dto_tmdbtvepisodevideosresponsedto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tmdbtvepisodevideosresponsedto"
     },
     {
@@ -4077,7 +4129,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-aggregate-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_aggregate_credits_dto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tv-season-aggregate-credits.dto.ts"
     },
     {
@@ -4086,7 +4138,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-aggregate-credits.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_aggregate_credits_dto_tmdbtvseasonaggregatecreditsresponsedto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tmdbtvseasonaggregatecreditsresponsedto"
     },
     {
@@ -4095,7 +4147,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-changes.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_changes_dto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tv-season-changes.dto.ts"
     },
     {
@@ -4104,7 +4156,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-changes.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_changes_dto_tmdbtvseasonchangesresponsedto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tmdbtvseasonchangesresponsedto"
     },
     {
@@ -4113,7 +4165,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_credits_dto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tv-season-credits.dto.ts"
     },
     {
@@ -4122,7 +4174,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-credits.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_credits_dto_tmdbtvseasoncreditsresponsedto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tmdbtvseasoncreditsresponsedto"
     },
     {
@@ -4149,7 +4201,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L17",
       "id": "tv_seasons_tv_season_detail_dto_tmdbtvseasongueststardto",
-      "community": 1,
+      "community": 36,
       "norm_label": "tmdbtvseasongueststardto"
     },
     {
@@ -4167,7 +4219,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L61",
       "id": "tv_seasons_tv_season_detail_dto_tmdbtvseasondetaildto",
-      "community": 36,
+      "community": 1,
       "norm_label": "tmdbtvseasondetaildto"
     },
     {
@@ -4194,7 +4246,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-images.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_images_dto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tv-season-images.dto.ts"
     },
     {
@@ -4203,7 +4255,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-images.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_images_dto_tmdbtvseasonimagesresponsedto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tmdbtvseasonimagesresponsedto"
     },
     {
@@ -4248,7 +4300,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-videos.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_videos_dto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tv-season-videos.dto.ts"
     },
     {
@@ -4257,7 +4309,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-videos.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_videos_dto_tmdbtvseasonvideosresponsedto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tmdbtvseasonvideosresponsedto"
     },
     {
@@ -4284,7 +4336,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-aggregate-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_aggregate_credits_dto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tv-aggregate-credits.dto.ts"
     },
     {
@@ -4293,7 +4345,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-aggregate-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_aggregate_credits_dto_tmdbtvaggregateroledto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tmdbtvaggregateroledto"
     },
     {
@@ -4302,7 +4354,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-aggregate-credits.dto.ts",
       "source_location": "L10",
       "id": "tv_tv_aggregate_credits_dto_tmdbtvaggregatejobdto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tmdbtvaggregatejobdto"
     },
     {
@@ -4311,7 +4363,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-aggregate-credits.dto.ts",
       "source_location": "L19",
       "id": "tv_tv_aggregate_credits_dto_tmdbtvaggregatecastdto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tmdbtvaggregatecastdto"
     },
     {
@@ -4320,7 +4372,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-aggregate-credits.dto.ts",
       "source_location": "L36",
       "id": "tv_tv_aggregate_credits_dto_tmdbtvaggregatecrewdto",
-      "community": 1,
+      "community": 185,
       "norm_label": "tmdbtvaggregatecrewdto"
     },
     {
@@ -4365,7 +4417,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-changes.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_changes_dto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tv-changes.dto.ts"
     },
     {
@@ -4374,7 +4426,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-changes.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_changes_dto_tmdbtvchangeitemdto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tmdbtvchangeitemdto"
     },
     {
@@ -4383,7 +4435,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-changes.dto.ts",
       "source_location": "L18",
       "id": "tv_tv_changes_dto_tmdbtvchangegroupdto",
-      "community": 1,
+      "community": 176,
       "norm_label": "tmdbtvchangegroupdto"
     },
     {
@@ -4428,7 +4480,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_credits_dto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tv-credits.dto.ts"
     },
     {
@@ -4437,7 +4489,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_credits_dto_tmdbtvcastdto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tmdbtvcastdto"
     },
     {
@@ -4446,7 +4498,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L16",
       "id": "tv_tv_credits_dto_tmdbtvcrewdto",
-      "community": 1,
+      "community": 187,
       "norm_label": "tmdbtvcrewdto"
     },
     {
@@ -4500,7 +4552,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L37",
       "id": "tv_tv_detail_dto_tmdbtvseasonbasedto",
-      "community": 36,
+      "community": 12,
       "norm_label": "tmdbtvseasonbasedto"
     },
     {
@@ -4518,7 +4570,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-episode-groups.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_episode_groups_dto",
-      "community": 14,
+      "community": 36,
       "norm_label": "tv-episode-groups.dto.ts"
     },
     {
@@ -4527,7 +4579,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-episode-groups.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_episode_groups_dto_tmdbtvepisodegroupnetworkdto",
-      "community": 82,
+      "community": 36,
       "norm_label": "tmdbtvepisodegroupnetworkdto"
     },
     {
@@ -4536,7 +4588,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-episode-groups.dto.ts",
       "source_location": "L12",
       "id": "tv_tv_episode_groups_dto_tmdbtvepisodegroupdto",
-      "community": 14,
+      "community": 36,
       "norm_label": "tmdbtvepisodegroupdto"
     },
     {
@@ -4572,7 +4624,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-images.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_images_dto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tv-images.dto.ts"
     },
     {
@@ -4581,7 +4633,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-images.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_images_dto_tmdbimageitemdto",
-      "community": 1,
+      "community": 180,
       "norm_label": "tmdbimageitemdto"
     },
     {
@@ -4716,7 +4768,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-videos.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_videos_dto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tv-videos.dto.ts"
     },
     {
@@ -4725,7 +4777,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-videos.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_videos_dto_tmdbvideodto",
-      "community": 1,
+      "community": 182,
       "norm_label": "tmdbvideodto"
     },
     {
@@ -4887,7 +4939,7 @@
       "source_file": "cinescope/src/app/core/models/franchise.model.ts",
       "source_location": "L29",
       "id": "models_franchise_model_franchisecollectionsummary",
-      "community": 175,
+      "community": 0,
       "norm_label": "franchisecollectionsummary"
     },
     {
@@ -5067,7 +5119,7 @@
       "source_file": "cinescope/src/app/core/services/collection-loader.service.ts",
       "source_location": "L26",
       "id": "services_collection_loader_service_genre_map",
-      "community": 25,
+      "community": 168,
       "norm_label": "genre_map"
     },
     {
@@ -5436,7 +5488,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L229",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_findfranchiseformedia",
-      "community": 175,
+      "community": 0,
       "norm_label": ".findfranchiseformedia()"
     },
     {
@@ -5445,7 +5497,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L255",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_findparentuniverseforcollection",
-      "community": 175,
+      "community": 0,
       "norm_label": ".findparentuniverseforcollection()"
     },
     {
@@ -5679,7 +5731,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-intel.service.ts",
       "source_location": "L805",
       "id": "services_franchise_intel_service_franchiseintelservice_expanduniversewithlivetmdb",
-      "community": 168,
+      "community": 249,
       "norm_label": ".expanduniversewithlivetmdb()"
     },
     {
@@ -5706,7 +5758,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L1",
       "id": "services_navigation_service",
-      "community": 168,
+      "community": 22,
       "norm_label": "navigation.service.ts"
     },
     {
@@ -5715,7 +5767,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L7",
       "id": "services_navigation_service_navigationservice",
-      "community": 168,
+      "community": 22,
       "norm_label": "navigationservice"
     },
     {
@@ -5724,7 +5776,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L13",
       "id": "services_navigation_service_navigationservice_navigatetohome",
-      "community": 168,
+      "community": 22,
       "norm_label": ".navigatetohome()"
     },
     {
@@ -6786,7 +6838,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_genres_service",
-      "community": 82,
+      "community": 12,
       "norm_label": "tmdb-genres.service.ts"
     },
     {
@@ -6795,7 +6847,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L8",
       "id": "services_tmdb_genres_service_tmdbgenresservice",
-      "community": 82,
+      "community": 12,
       "norm_label": "tmdbgenresservice"
     },
     {
@@ -6804,7 +6856,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L14",
       "id": "services_tmdb_genres_service_tmdbgenresservice_getmoviegenres",
-      "community": 82,
+      "community": 12,
       "norm_label": ".getmoviegenres()"
     },
     {
@@ -6813,7 +6865,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L32",
       "id": "services_tmdb_genres_service_tmdbgenresservice_gettvgenres",
-      "community": 82,
+      "community": 12,
       "norm_label": ".gettvgenres()"
     },
     {
@@ -6912,7 +6964,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L154",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmoviedetails",
-      "community": 12,
+      "community": 21,
       "norm_label": ".getmoviedetails()"
     },
     {
@@ -6975,7 +7027,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L353",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getlatestmovie",
-      "community": 12,
+      "community": 21,
       "norm_label": ".getlatestmovie()"
     },
     {
@@ -7389,7 +7441,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episode-groups.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_tv_episode_groups_service",
-      "community": 82,
+      "community": 36,
       "norm_label": "tmdb-tv-episode-groups.service.ts"
     },
     {
@@ -7398,7 +7450,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episode-groups.service.ts",
       "source_location": "L7",
       "id": "services_tmdb_tv_episode_groups_service_tmdbtvepisodegroupsservice",
-      "community": 82,
+      "community": 36,
       "norm_label": "tmdbtvepisodegroupsservice"
     },
     {
@@ -7407,7 +7459,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episode-groups.service.ts",
       "source_location": "L24",
       "id": "services_tmdb_tv_episode_groups_service_tmdbtvepisodegroupsservice_gettvepisodegroupdetails",
-      "community": 82,
+      "community": 36,
       "norm_label": ".gettvepisodegroupdetails()"
     },
     {
@@ -7416,7 +7468,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_tv_episodes_service",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdb-tv-episodes.service.ts"
     },
     {
@@ -7425,7 +7477,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L13",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice",
-      "community": 1,
+      "community": 86,
       "norm_label": "tmdbtvepisodesservice"
     },
     {
@@ -7434,7 +7486,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L39",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodedetails",
-      "community": 1,
+      "community": 86,
       "norm_label": ".gettvepisodedetails()"
     },
     {
@@ -7443,7 +7495,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L65",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodecredits",
-      "community": 1,
+      "community": 86,
       "norm_label": ".gettvepisodecredits()"
     },
     {
@@ -7452,7 +7504,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L77",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodeexternalids",
-      "community": 1,
+      "community": 86,
       "norm_label": ".gettvepisodeexternalids()"
     },
     {
@@ -7461,7 +7513,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L88",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodeimages",
-      "community": 1,
+      "community": 180,
       "norm_label": ".gettvepisodeimages()"
     },
     {
@@ -7470,7 +7522,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L99",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodetranslations",
-      "community": 1,
+      "community": 86,
       "norm_label": ".gettvepisodetranslations()"
     },
     {
@@ -7479,7 +7531,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L110",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodevideos",
-      "community": 1,
+      "community": 182,
       "norm_label": ".gettvepisodevideos()"
     },
     {
@@ -7488,7 +7540,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L123",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodechanges",
-      "community": 1,
+      "community": 176,
       "norm_label": ".gettvepisodechanges()"
     },
     {
@@ -7524,7 +7576,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L66",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonaggregatecredits",
-      "community": 1,
+      "community": 185,
       "norm_label": ".gettvseasonaggregatecredits()"
     },
     {
@@ -7533,7 +7585,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L89",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasoncredits",
-      "community": 1,
+      "community": 187,
       "norm_label": ".gettvseasoncredits()"
     },
     {
@@ -7542,7 +7594,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L114",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonchanges",
-      "community": 1,
+      "community": 176,
       "norm_label": ".gettvseasonchanges()"
     },
     {
@@ -7560,7 +7612,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L151",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonimages",
-      "community": 1,
+      "community": 180,
       "norm_label": ".gettvseasonimages()"
     },
     {
@@ -7578,7 +7630,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L182",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonvideos",
-      "community": 1,
+      "community": 182,
       "norm_label": ".gettvseasonvideos()"
     },
     {
@@ -7659,7 +7711,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L148",
       "id": "services_tmdb_tv_service_tmdbtvservice_gettvshowdetails",
-      "community": 12,
+      "community": 5,
       "norm_label": ".gettvshowdetails()"
     },
     {
@@ -7749,7 +7801,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L380",
       "id": "services_tmdb_tv_service_tmdbtvservice_getlatesttvshow",
-      "community": 12,
+      "community": 5,
       "norm_label": ".getlatesttvshow()"
     },
     {
@@ -8064,7 +8116,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L79",
       "id": "store_trending_store_maptoheroitems",
-      "community": 17,
+      "community": 33,
       "norm_label": "maptoheroitems()"
     },
     {
@@ -8073,7 +8125,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L104",
       "id": "store_trending_store_mapmoviestoswimlane",
-      "community": 17,
+      "community": 33,
       "norm_label": "mapmoviestoswimlane()"
     },
     {
@@ -8082,7 +8134,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L117",
       "id": "store_trending_store_maptvtoswimlane",
-      "community": 17,
+      "community": 33,
       "norm_label": "maptvtoswimlane()"
     },
     {
@@ -8091,7 +8143,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L130",
       "id": "store_trending_store_mappeopletoswimlane",
-      "community": 17,
+      "community": 33,
       "norm_label": "mappeopletoswimlane()"
     },
     {
@@ -8280,7 +8332,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L385",
       "id": "archive_archive_page_archivepage_resolveposter",
-      "community": 0,
+      "community": 33,
       "norm_label": ".resolveposter()"
     },
     {
@@ -8289,7 +8341,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L389",
       "id": "archive_archive_page_archivepage_onfranchiseclick",
-      "community": 0,
+      "community": 33,
       "norm_label": ".onfranchiseclick()"
     },
     {
@@ -8307,7 +8359,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L415",
       "id": "archive_archive_page_archivepage_onopenupnextpart",
-      "community": 0,
+      "community": 33,
       "norm_label": ".onopenupnextpart()"
     },
     {
@@ -8595,7 +8647,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1088",
       "id": "collection_collection_page_collectionpage_openexistinguniverse",
-      "community": 175,
+      "community": 2,
       "norm_label": ".openexistinguniverse()"
     },
     {
@@ -8649,7 +8701,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1359",
       "id": "collection_collection_page_collectionpage_getbookmarkstate",
-      "community": 2,
+      "community": 53,
       "norm_label": ".getbookmarkstate()"
     },
     {
@@ -8667,7 +8719,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1394",
       "id": "collection_collection_page_collectionpage_ontogglebookmark",
-      "community": 2,
+      "community": 53,
       "norm_label": ".ontogglebookmark()"
     },
     {
@@ -9405,7 +9457,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L22",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent",
-      "community": 36,
+      "community": 33,
       "norm_label": "tvseasonshubcomponent"
     },
     {
@@ -9423,7 +9475,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L70",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_toggleepisodeexpand",
-      "community": 36,
+      "community": 33,
       "norm_label": ".toggleepisodeexpand()"
     },
     {
@@ -9432,7 +9484,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L77",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_openperson",
-      "community": 36,
+      "community": 33,
       "norm_label": ".openperson()"
     },
     {
@@ -9459,7 +9511,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L126",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolveguestavatar",
-      "community": 36,
+      "community": 33,
       "norm_label": ".resolveguestavatar()"
     },
     {
@@ -9468,7 +9520,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L130",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_getinitials",
-      "community": 36,
+      "community": 33,
       "norm_label": ".getinitials()"
     },
     {
@@ -9477,7 +9529,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L137",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolvestill",
-      "community": 36,
+      "community": 33,
       "norm_label": ".resolvestill()"
     },
     {
@@ -9486,7 +9538,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L141",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolveposter",
-      "community": 36,
+      "community": 33,
       "norm_label": ".resolveposter()"
     },
     {
@@ -10251,7 +10303,7 @@
       "source_file": "cinescope/src/app/features/search/search.page.ts",
       "source_location": "L209",
       "id": "search_search_page_searchpage_oncollectionclick",
-      "community": 175,
+      "community": 13,
       "norm_label": ".oncollectionclick()"
     },
     {
@@ -13513,6 +13565,555 @@
       "norm_label": "graphify"
     },
     {
+      "label": "DEEPENING.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L1",
+      "id": "codebase_design_deepening",
+      "community": 151,
+      "norm_label": "deepening.md"
+    },
+    {
+      "label": "Deepening",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L1",
+      "id": "codebase_design_deepening_deepening",
+      "community": 151,
+      "norm_label": "deepening"
+    },
+    {
+      "label": "Dependency categories",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L5",
+      "id": "codebase_design_deepening_dependency_categories",
+      "community": 151,
+      "norm_label": "dependency categories"
+    },
+    {
+      "label": "1. In-process",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L9",
+      "id": "codebase_design_deepening_1_in_process",
+      "community": 151,
+      "norm_label": "1. in-process"
+    },
+    {
+      "label": "2. Local-substitutable",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L13",
+      "id": "codebase_design_deepening_2_local_substitutable",
+      "community": 151,
+      "norm_label": "2. local-substitutable"
+    },
+    {
+      "label": "3. Remote but owned (Ports & Adapters)",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L17",
+      "id": "codebase_design_deepening_3_remote_but_owned_ports_adapters",
+      "community": 151,
+      "norm_label": "3. remote but owned (ports & adapters)"
+    },
+    {
+      "label": "4. True external (Mock)",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L23",
+      "id": "codebase_design_deepening_4_true_external_mock",
+      "community": 151,
+      "norm_label": "4. true external (mock)"
+    },
+    {
+      "label": "Seam discipline",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L27",
+      "id": "codebase_design_deepening_seam_discipline",
+      "community": 151,
+      "norm_label": "seam discipline"
+    },
+    {
+      "label": "Testing strategy: replace, don't layer",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L32",
+      "id": "codebase_design_deepening_testing_strategy_replace_don_t_layer",
+      "community": 151,
+      "norm_label": "testing strategy: replace, don't layer"
+    },
+    {
+      "label": "DESIGN-IT-TWICE.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L1",
+      "id": "codebase_design_design_it_twice",
+      "community": 191,
+      "norm_label": "design-it-twice.md"
+    },
+    {
+      "label": "Design It Twice",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L1",
+      "id": "codebase_design_design_it_twice_design_it_twice",
+      "community": 191,
+      "norm_label": "design it twice"
+    },
+    {
+      "label": "Process",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L7",
+      "id": "codebase_design_design_it_twice_process",
+      "community": 191,
+      "norm_label": "process"
+    },
+    {
+      "label": "1. Frame the problem space",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L9",
+      "id": "codebase_design_design_it_twice_1_frame_the_problem_space",
+      "community": 191,
+      "norm_label": "1. frame the problem space"
+    },
+    {
+      "label": "2. Spawn sub-agents",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L19",
+      "id": "codebase_design_design_it_twice_2_spawn_sub_agents",
+      "community": 191,
+      "norm_label": "2. spawn sub-agents"
+    },
+    {
+      "label": "3. Present and compare",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L40",
+      "id": "codebase_design_design_it_twice_3_present_and_compare",
+      "community": 191,
+      "norm_label": "3. present and compare"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L1",
+      "id": "codebase_design_skill",
+      "community": 153,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Codebase Design",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L6",
+      "id": "codebase_design_skill_codebase_design",
+      "community": 153,
+      "norm_label": "codebase design"
+    },
+    {
+      "label": "Glossary",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L10",
+      "id": "codebase_design_skill_glossary",
+      "community": 153,
+      "norm_label": "glossary"
+    },
+    {
+      "label": "Deep vs shallow",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L30",
+      "id": "codebase_design_skill_deep_vs_shallow",
+      "community": 153,
+      "norm_label": "deep vs shallow"
+    },
+    {
+      "label": "Principles",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L60",
+      "id": "codebase_design_skill_principles",
+      "community": 153,
+      "norm_label": "principles"
+    },
+    {
+      "label": "Designing for testability",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L67",
+      "id": "codebase_design_skill_designing_for_testability",
+      "community": 153,
+      "norm_label": "designing for testability"
+    },
+    {
+      "label": "Relationships",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L97",
+      "id": "codebase_design_skill_relationships",
+      "community": 153,
+      "norm_label": "relationships"
+    },
+    {
+      "label": "Rejected framings",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L105",
+      "id": "codebase_design_skill_rejected_framings",
+      "community": 153,
+      "norm_label": "rejected framings"
+    },
+    {
+      "label": "Going deeper",
+      "file_type": "document",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L111",
+      "id": "codebase_design_skill_going_deeper",
+      "community": 153,
+      "norm_label": "going deeper"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L1",
+      "id": "diagnosing_bugs_skill",
+      "community": 31,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Diagnosing Bugs",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L6",
+      "id": "diagnosing_bugs_skill_diagnosing_bugs",
+      "community": 31,
+      "norm_label": "diagnosing bugs"
+    },
+    {
+      "label": "Redact",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L12",
+      "id": "diagnosing_bugs_skill_redact",
+      "community": 31,
+      "norm_label": "redact"
+    },
+    {
+      "label": "Phase 1: Build a feedback loop",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L18",
+      "id": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "community": 31,
+      "norm_label": "phase 1: build a feedback loop"
+    },
+    {
+      "label": "Ways to construct one, in roughly this order",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L24",
+      "id": "diagnosing_bugs_skill_ways_to_construct_one_in_roughly_this_order",
+      "community": 31,
+      "norm_label": "ways to construct one, in roughly this order"
+    },
+    {
+      "label": "Tighten the loop",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L39",
+      "id": "diagnosing_bugs_skill_tighten_the_loop",
+      "community": 31,
+      "norm_label": "tighten the loop"
+    },
+    {
+      "label": "Non-deterministic bugs",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L49",
+      "id": "diagnosing_bugs_skill_non_deterministic_bugs",
+      "community": 31,
+      "norm_label": "non-deterministic bugs"
+    },
+    {
+      "label": "When you genuinely cannot build a loop",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L53",
+      "id": "diagnosing_bugs_skill_when_you_genuinely_cannot_build_a_loop",
+      "community": 31,
+      "norm_label": "when you genuinely cannot build a loop"
+    },
+    {
+      "label": "Completion criterion: a tight loop that goes red",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L57",
+      "id": "diagnosing_bugs_skill_completion_criterion_a_tight_loop_that_goes_red",
+      "community": 31,
+      "norm_label": "completion criterion: a tight loop that goes red"
+    },
+    {
+      "label": "Phase 2: Reproduce + minimise",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L68",
+      "id": "diagnosing_bugs_skill_phase_2_reproduce_minimise",
+      "community": 31,
+      "norm_label": "phase 2: reproduce + minimise"
+    },
+    {
+      "label": "Minimise",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L78",
+      "id": "diagnosing_bugs_skill_minimise",
+      "community": 31,
+      "norm_label": "minimise"
+    },
+    {
+      "label": "Phase 3: Hypothesise",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L88",
+      "id": "diagnosing_bugs_skill_phase_3_hypothesise",
+      "community": 31,
+      "norm_label": "phase 3: hypothesise"
+    },
+    {
+      "label": "Phase 4: Instrument",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L100",
+      "id": "diagnosing_bugs_skill_phase_4_instrument",
+      "community": 31,
+      "norm_label": "phase 4: instrument"
+    },
+    {
+      "label": "Phase 5: Fix + regression test",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L114",
+      "id": "diagnosing_bugs_skill_phase_5_fix_regression_test",
+      "community": 31,
+      "norm_label": "phase 5: fix + regression test"
+    },
+    {
+      "label": "Phase 6: Cleanup",
+      "file_type": "document",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L130",
+      "id": "diagnosing_bugs_skill_phase_6_cleanup",
+      "community": 31,
+      "norm_label": "phase 6: cleanup"
+    },
+    {
+      "label": "ADR-FORMAT.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L1",
+      "id": "domain_modeling_adr_format",
+      "community": 190,
+      "norm_label": "adr-format.md"
+    },
+    {
+      "label": "ADR Format",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L1",
+      "id": "domain_modeling_adr_format_adr_format",
+      "community": 190,
+      "norm_label": "adr format"
+    },
+    {
+      "label": "Template",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L7",
+      "id": "domain_modeling_adr_format_template",
+      "community": 190,
+      "norm_label": "template"
+    },
+    {
+      "label": "Optional sections",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L17",
+      "id": "domain_modeling_adr_format_optional_sections",
+      "community": 190,
+      "norm_label": "optional sections"
+    },
+    {
+      "label": "Numbering",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L25",
+      "id": "domain_modeling_adr_format_numbering",
+      "community": 190,
+      "norm_label": "numbering"
+    },
+    {
+      "label": "When to offer an ADR",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L29",
+      "id": "domain_modeling_adr_format_when_to_offer_an_adr",
+      "community": 190,
+      "norm_label": "when to offer an adr"
+    },
+    {
+      "label": "What qualifies",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L39",
+      "id": "domain_modeling_adr_format_what_qualifies",
+      "community": 190,
+      "norm_label": "what qualifies"
+    },
+    {
+      "label": "GLOSSARY-FORMAT.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L1",
+      "id": "domain_modeling_glossary_format",
+      "community": 200,
+      "norm_label": "glossary-format.md"
+    },
+    {
+      "label": "GLOSSARY.md Format",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L1",
+      "id": "domain_modeling_glossary_format_glossary_md_format",
+      "community": 200,
+      "norm_label": "glossary.md format"
+    },
+    {
+      "label": "Structure",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L3",
+      "id": "domain_modeling_glossary_format_structure",
+      "community": 200,
+      "norm_label": "structure"
+    },
+    {
+      "label": "Rules",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L25",
+      "id": "domain_modeling_glossary_format_rules",
+      "community": 200,
+      "norm_label": "rules"
+    },
+    {
+      "label": "Single vs multi-context repos",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L32",
+      "id": "domain_modeling_glossary_format_single_vs_multi_context_repos",
+      "community": 200,
+      "norm_label": "single vs multi-context repos"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L1",
+      "id": "domain_modeling_skill",
+      "community": 148,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Domain Modeling",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L6",
+      "id": "domain_modeling_skill_domain_modeling",
+      "community": 148,
+      "norm_label": "domain modeling"
+    },
+    {
+      "label": "File structure",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L10",
+      "id": "domain_modeling_skill_file_structure",
+      "community": 148,
+      "norm_label": "file structure"
+    },
+    {
+      "label": "During the session",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L42",
+      "id": "domain_modeling_skill_during_the_session",
+      "community": 148,
+      "norm_label": "during the session"
+    },
+    {
+      "label": "Challenge against the glossary",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L44",
+      "id": "domain_modeling_skill_challenge_against_the_glossary",
+      "community": 148,
+      "norm_label": "challenge against the glossary"
+    },
+    {
+      "label": "Sharpen fuzzy language",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L48",
+      "id": "domain_modeling_skill_sharpen_fuzzy_language",
+      "community": 148,
+      "norm_label": "sharpen fuzzy language"
+    },
+    {
+      "label": "Discuss concrete scenarios",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L52",
+      "id": "domain_modeling_skill_discuss_concrete_scenarios",
+      "community": 148,
+      "norm_label": "discuss concrete scenarios"
+    },
+    {
+      "label": "Cross-reference with code",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L56",
+      "id": "domain_modeling_skill_cross_reference_with_code",
+      "community": 148,
+      "norm_label": "cross-reference with code"
+    },
+    {
+      "label": "Update GLOSSARY.md inline",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L60",
+      "id": "domain_modeling_skill_update_glossary_md_inline",
+      "community": 148,
+      "norm_label": "update glossary.md inline"
+    },
+    {
+      "label": "Offer ADRs sparingly",
+      "file_type": "document",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L66",
+      "id": "domain_modeling_skill_offer_adrs_sparingly",
+      "community": 148,
+      "norm_label": "offer adrs sparingly"
+    },
+    {
       "label": "SKILL.md",
       "file_type": "document",
       "source_file": ".agents/skills/grill-me/SKILL.md",
@@ -13583,6 +14184,573 @@
       "id": "grill_me_skill_5_completion_criteria",
       "community": 164,
       "norm_label": "5. completion criteria"
+    },
+    {
+      "label": "HTML-REPORT.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L1",
+      "id": "improve_codebase_architecture_html_report",
+      "community": 65,
+      "norm_label": "html-report.md"
+    },
+    {
+      "label": "HTML Report Format",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L1",
+      "id": "improve_codebase_architecture_html_report_html_report_format",
+      "community": 65,
+      "norm_label": "html report format"
+    },
+    {
+      "label": "Scaffold",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L5",
+      "id": "improve_codebase_architecture_html_report_scaffold",
+      "community": 65,
+      "norm_label": "scaffold"
+    },
+    {
+      "label": "Header",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L36",
+      "id": "improve_codebase_architecture_html_report_header",
+      "community": 65,
+      "norm_label": "header"
+    },
+    {
+      "label": "Candidate card",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L40",
+      "id": "improve_codebase_architecture_html_report_candidate_card",
+      "community": 65,
+      "norm_label": "candidate card"
+    },
+    {
+      "label": "Diagram patterns",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L57",
+      "id": "improve_codebase_architecture_html_report_diagram_patterns",
+      "community": 65,
+      "norm_label": "diagram patterns"
+    },
+    {
+      "label": "Mermaid graph (the workhorse for dependencies / call flow)",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L61",
+      "id": "improve_codebase_architecture_html_report_mermaid_graph_the_workhorse_for_dependencies_call_flow",
+      "community": 65,
+      "norm_label": "mermaid graph (the workhorse for dependencies / call flow)"
+    },
+    {
+      "label": "Hand-built boxes-and-arrows (when Mermaid's layout fights you)",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L78",
+      "id": "improve_codebase_architecture_html_report_hand_built_boxes_and_arrows_when_mermaid_s_layout_fights_you",
+      "community": 65,
+      "norm_label": "hand-built boxes-and-arrows (when mermaid's layout fights you)"
+    },
+    {
+      "label": "Cross-section (good for layered shallowness)",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L82",
+      "id": "improve_codebase_architecture_html_report_cross_section_good_for_layered_shallowness",
+      "community": 65,
+      "norm_label": "cross-section (good for layered shallowness)"
+    },
+    {
+      "label": "Mass diagram (good for \"interface as wide as implementation\")",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L86",
+      "id": "improve_codebase_architecture_html_report_mass_diagram_good_for_interface_as_wide_as_implementation",
+      "community": 65,
+      "norm_label": "mass diagram (good for \"interface as wide as implementation\")"
+    },
+    {
+      "label": "Call-graph collapse",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L90",
+      "id": "improve_codebase_architecture_html_report_call_graph_collapse",
+      "community": 65,
+      "norm_label": "call-graph collapse"
+    },
+    {
+      "label": "Style guidance",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L94",
+      "id": "improve_codebase_architecture_html_report_style_guidance",
+      "community": 65,
+      "norm_label": "style guidance"
+    },
+    {
+      "label": "Top recommendation section",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L102",
+      "id": "improve_codebase_architecture_html_report_top_recommendation_section",
+      "community": 65,
+      "norm_label": "top recommendation section"
+    },
+    {
+      "label": "Tone",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L106",
+      "id": "improve_codebase_architecture_html_report_tone",
+      "community": 65,
+      "norm_label": "tone"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L1",
+      "id": "improve_codebase_architecture_skill",
+      "community": 197,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Improve Codebase Architecture",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L7",
+      "id": "improve_codebase_architecture_skill_improve_codebase_architecture",
+      "community": 197,
+      "norm_label": "improve codebase architecture"
+    },
+    {
+      "label": "Process",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L16",
+      "id": "improve_codebase_architecture_skill_process",
+      "community": 197,
+      "norm_label": "process"
+    },
+    {
+      "label": "1. Explore",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L18",
+      "id": "improve_codebase_architecture_skill_1_explore",
+      "community": 197,
+      "norm_label": "1. explore"
+    },
+    {
+      "label": "2. Present candidates as an HTML report",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L37",
+      "id": "improve_codebase_architecture_skill_2_present_candidates_as_an_html_report",
+      "community": 197,
+      "norm_label": "2. present candidates as an html report"
+    },
+    {
+      "label": "3. Grilling loop",
+      "file_type": "document",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L62",
+      "id": "improve_codebase_architecture_skill_3_grilling_loop",
+      "community": 197,
+      "norm_label": "3. grilling loop"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L1",
+      "id": "tdd_skill",
+      "community": 198,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Test-Driven Development",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L6",
+      "id": "tdd_skill_test_driven_development",
+      "community": 198,
+      "norm_label": "test-driven development"
+    },
+    {
+      "label": "What a good test is",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L12",
+      "id": "tdd_skill_what_a_good_test_is",
+      "community": 198,
+      "norm_label": "what a good test is"
+    },
+    {
+      "label": "Seams: where tests go",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L18",
+      "id": "tdd_skill_seams_where_tests_go",
+      "community": 198,
+      "norm_label": "seams: where tests go"
+    },
+    {
+      "label": "Anti-patterns",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L28",
+      "id": "tdd_skill_anti_patterns",
+      "community": 198,
+      "norm_label": "anti-patterns"
+    },
+    {
+      "label": "Rules of the loop",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L34",
+      "id": "tdd_skill_rules_of_the_loop",
+      "community": 198,
+      "norm_label": "rules of the loop"
+    },
+    {
+      "label": "mocking.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/mocking.md",
+      "source_location": "L1",
+      "id": "tdd_mocking",
+      "community": 204,
+      "norm_label": "mocking.md"
+    },
+    {
+      "label": "When to Mock",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/mocking.md",
+      "source_location": "L1",
+      "id": "tdd_mocking_when_to_mock",
+      "community": 204,
+      "norm_label": "when to mock"
+    },
+    {
+      "label": "Designing for Mockability",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/mocking.md",
+      "source_location": "L16",
+      "id": "tdd_mocking_designing_for_mockability",
+      "community": 204,
+      "norm_label": "designing for mockability"
+    },
+    {
+      "label": "tests.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L1",
+      "id": "tdd_tests",
+      "community": 203,
+      "norm_label": "tests.md"
+    },
+    {
+      "label": "Good and Bad Tests",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L1",
+      "id": "tdd_tests_good_and_bad_tests",
+      "community": 203,
+      "norm_label": "good and bad tests"
+    },
+    {
+      "label": "Good Tests",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L3",
+      "id": "tdd_tests_good_tests",
+      "community": 203,
+      "norm_label": "good tests"
+    },
+    {
+      "label": "Bad Tests",
+      "file_type": "document",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L25",
+      "id": "tdd_tests_bad_tests",
+      "community": 203,
+      "norm_label": "bad tests"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L1",
+      "id": "to_questionnaire_skill",
+      "community": 188,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Document structure",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L18",
+      "id": "to_questionnaire_skill_document_structure",
+      "community": 188,
+      "norm_label": "document structure"
+    },
+    {
+      "label": "<Questionnaire title>",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L24",
+      "id": "to_questionnaire_skill_questionnaire_title",
+      "community": 188,
+      "norm_label": "<questionnaire title>"
+    },
+    {
+      "label": "Context",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L30",
+      "id": "to_questionnaire_skill_context",
+      "community": 188,
+      "norm_label": "context"
+    },
+    {
+      "label": "How to answer",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L34",
+      "id": "to_questionnaire_skill_how_to_answer",
+      "community": 188,
+      "norm_label": "how to answer"
+    },
+    {
+      "label": "<Theme heading>",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L38",
+      "id": "to_questionnaire_skill_theme_heading",
+      "community": 188,
+      "norm_label": "<theme heading>"
+    },
+    {
+      "label": "What load is the system expected to handle at launch?",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L43",
+      "id": "to_questionnaire_skill_what_load_is_the_system_expected_to_handle_at_launch",
+      "community": 188,
+      "norm_label": "what load is the system expected to handle at launch?"
+    },
+    {
+      "label": "Anything else?",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L50",
+      "id": "to_questionnaire_skill_anything_else",
+      "community": 188,
+      "norm_label": "anything else?"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L1",
+      "id": "to_spec_skill",
+      "community": 179,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "Process",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L11",
+      "id": "to_spec_skill_process",
+      "community": 179,
+      "norm_label": "process"
+    },
+    {
+      "label": "Problem Statement",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L23",
+      "id": "to_spec_skill_problem_statement",
+      "community": 179,
+      "norm_label": "problem statement"
+    },
+    {
+      "label": "Solution",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L27",
+      "id": "to_spec_skill_solution",
+      "community": 179,
+      "norm_label": "solution"
+    },
+    {
+      "label": "User Stories",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L31",
+      "id": "to_spec_skill_user_stories",
+      "community": 179,
+      "norm_label": "user stories"
+    },
+    {
+      "label": "Implementation Decisions",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L43",
+      "id": "to_spec_skill_implementation_decisions",
+      "community": 179,
+      "norm_label": "implementation decisions"
+    },
+    {
+      "label": "Testing Decisions",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L59",
+      "id": "to_spec_skill_testing_decisions",
+      "community": 179,
+      "norm_label": "testing decisions"
+    },
+    {
+      "label": "Out of Scope",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L67",
+      "id": "to_spec_skill_out_of_scope",
+      "community": 179,
+      "norm_label": "out of scope"
+    },
+    {
+      "label": "Further Notes",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L71",
+      "id": "to_spec_skill_further_notes",
+      "community": 179,
+      "norm_label": "further notes"
+    },
+    {
+      "label": "SKILL.md",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L1",
+      "id": "to_tickets_skill",
+      "community": 111,
+      "norm_label": "skill.md"
+    },
+    {
+      "label": "To Tickets",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L7",
+      "id": "to_tickets_skill_to_tickets",
+      "community": 111,
+      "norm_label": "to tickets"
+    },
+    {
+      "label": "Process",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L13",
+      "id": "to_tickets_skill_process",
+      "community": 111,
+      "norm_label": "process"
+    },
+    {
+      "label": "1. Gather context",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L15",
+      "id": "to_tickets_skill_1_gather_context",
+      "community": 111,
+      "norm_label": "1. gather context"
+    },
+    {
+      "label": "2. Explore the codebase (optional)",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L19",
+      "id": "to_tickets_skill_2_explore_the_codebase_optional",
+      "community": 111,
+      "norm_label": "2. explore the codebase (optional)"
+    },
+    {
+      "label": "3. Draft vertical slices",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L25",
+      "id": "to_tickets_skill_3_draft_vertical_slices",
+      "community": 111,
+      "norm_label": "3. draft vertical slices"
+    },
+    {
+      "label": "4. Quiz the user",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L42",
+      "id": "to_tickets_skill_4_quiz_the_user",
+      "community": 111,
+      "norm_label": "4. quiz the user"
+    },
+    {
+      "label": "5. Publish the tickets to the configured tracker",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L58",
+      "id": "to_tickets_skill_5_publish_the_tickets_to_the_configured_tracker",
+      "community": 111,
+      "norm_label": "5. publish the tickets to the configured tracker"
+    },
+    {
+      "label": "<NN>: <Ticket title>",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L71",
+      "id": "to_tickets_skill_nn_ticket_title",
+      "community": 111,
+      "norm_label": "<nn>: <ticket title>"
+    },
+    {
+      "label": "Parent",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L86",
+      "id": "to_tickets_skill_parent",
+      "community": 111,
+      "norm_label": "parent"
+    },
+    {
+      "label": "What to build",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L90",
+      "id": "to_tickets_skill_what_to_build",
+      "community": 111,
+      "norm_label": "what to build"
+    },
+    {
+      "label": "Acceptance criteria",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L94",
+      "id": "to_tickets_skill_acceptance_criteria",
+      "community": 111,
+      "norm_label": "acceptance criteria"
+    },
+    {
+      "label": "Blocked by",
+      "file_type": "document",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L99",
+      "id": "to_tickets_skill_blocked_by",
+      "community": 111,
+      "norm_label": "blocked by"
     },
     {
       "label": "graphify.md",
@@ -16217,7 +17385,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L1",
-      "community": 31,
+      "community": 249,
       "norm_label": "tmdb-collections.service.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_services_tmdb_collections_service_ts"
     },
@@ -16226,7 +17394,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L11",
-      "community": 31,
+      "community": 249,
       "norm_label": "tmdbcollectionsservice",
       "id": "tmdb_collections_service_tmdbcollectionsservice"
     },
@@ -16235,7 +17403,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L17",
-      "community": 31,
+      "community": 249,
       "norm_label": ".getcollectiondetails()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectiondetails"
     },
@@ -16244,7 +17412,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L28",
-      "community": 31,
+      "community": 249,
       "norm_label": ".getcollectionimages()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectionimages"
     },
@@ -16253,7 +17421,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L44",
-      "community": 31,
+      "community": 249,
       "norm_label": ".getcollectiontranslations()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectiontranslations"
     },
@@ -18347,6 +19515,58 @@
     }
   ],
   "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_hitl_loop_template",
+      "target": "d_work_testbench_cinescope_agents_skills_diagnosing_bugs_scripts_hitl_loop_template_sh__entry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "scripts_hitl_loop_template",
+      "target": "scripts_hitl_loop_template_capture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "scripts_hitl_loop_template",
+      "target": "scripts_hitl_loop_template_step",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L36",
+      "weight": 1.0,
+      "context": "call",
+      "source": "d_work_testbench_cinescope_agents_skills_diagnosing_bugs_scripts_hitl_loop_template_sh__entry",
+      "target": "scripts_hitl_loop_template_capture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh",
+      "source_location": "L34",
+      "weight": 1.0,
+      "context": "call",
+      "source": "d_work_testbench_cinescope_agents_skills_diagnosing_bugs_scripts_hitl_loop_template_sh__entry",
+      "target": "scripts_hitl_loop_template_step",
+      "confidence_score": 1.0
+    },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
@@ -33628,9 +34848,9 @@
       "source_file": "cinescope/src/app/core/services/franchise-intel.service.ts",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_franchise_intel_service",
-      "target": "services_franchise_intel_service_digit_to_words",
-      "confidence_score": 1.0
+      "target": "services_franchise_intel_service_digit_to_words"
     },
     {
       "relation": "contains",
@@ -33678,9 +34898,9 @@
       "source_file": "cinescope/src/app/core/services/franchise-intel.service.ts",
       "source_location": "L87",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_franchise_intel_service",
-      "target": "services_franchise_intel_service_normalizenumbers",
-      "confidence_score": 1.0
+      "target": "services_franchise_intel_service_normalizenumbers"
     },
     {
       "relation": "contains",
@@ -33688,9 +34908,9 @@
       "source_file": "cinescope/src/app/core/services/franchise-intel.service.ts",
       "source_location": "L33",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_franchise_intel_service",
-      "target": "services_franchise_intel_service_number_word_map",
-      "confidence_score": 1.0
+      "target": "services_franchise_intel_service_number_word_map"
     },
     {
       "relation": "imports_from",
@@ -33820,9 +35040,9 @@
       "source_file": "cinescope/src/app/core/services/franchise-intel.service.ts",
       "source_location": "L142",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_franchise_intel_service_cleannorm",
-      "target": "services_franchise_intel_service_normalizenumbers",
-      "confidence_score": 1.0
+      "target": "services_franchise_intel_service_normalizenumbers"
     },
     {
       "relation": "calls",
@@ -46252,6 +47472,546 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "codebase_design_deepening",
+      "target": "codebase_design_deepening_deepening",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_deepening",
+      "target": "codebase_design_deepening_dependency_categories",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_deepening",
+      "target": "codebase_design_deepening_seam_discipline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_deepening",
+      "target": "codebase_design_deepening_testing_strategy_replace_don_t_layer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_dependency_categories",
+      "target": "codebase_design_deepening_1_in_process",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_dependency_categories",
+      "target": "codebase_design_deepening_2_local_substitutable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_dependency_categories",
+      "target": "codebase_design_deepening_3_remote_but_owned_ports_adapters",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DEEPENING.md",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "codebase_design_deepening_dependency_categories",
+      "target": "codebase_design_deepening_4_true_external_mock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "codebase_design_design_it_twice",
+      "target": "codebase_design_design_it_twice_design_it_twice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "codebase_design_design_it_twice_design_it_twice",
+      "target": "codebase_design_design_it_twice_process",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "codebase_design_design_it_twice_process",
+      "target": "codebase_design_design_it_twice_1_frame_the_problem_space",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "codebase_design_design_it_twice_process",
+      "target": "codebase_design_design_it_twice_2_spawn_sub_agents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/DESIGN-IT-TWICE.md",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "codebase_design_design_it_twice_process",
+      "target": "codebase_design_design_it_twice_3_present_and_compare",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "codebase_design_skill",
+      "target": "codebase_design_skill_codebase_design",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_deep_vs_shallow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_designing_for_testability",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_glossary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_going_deeper",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_principles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_rejected_framings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/codebase-design/SKILL.md",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "codebase_design_skill_codebase_design",
+      "target": "codebase_design_skill_relationships",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill",
+      "target": "diagnosing_bugs_skill_diagnosing_bugs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_2_reproduce_minimise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_3_hypothesise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L100",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_4_instrument",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_5_fix_regression_test",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_phase_6_cleanup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_diagnosing_bugs",
+      "target": "diagnosing_bugs_skill_redact",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "target": "diagnosing_bugs_skill_completion_criterion_a_tight_loop_that_goes_red",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "target": "diagnosing_bugs_skill_non_deterministic_bugs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "target": "diagnosing_bugs_skill_tighten_the_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "target": "diagnosing_bugs_skill_ways_to_construct_one_in_roughly_this_order",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_1_build_a_feedback_loop",
+      "target": "diagnosing_bugs_skill_when_you_genuinely_cannot_build_a_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/diagnosing-bugs/SKILL.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "diagnosing_bugs_skill_phase_2_reproduce_minimise",
+      "target": "diagnosing_bugs_skill_minimise",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format",
+      "target": "domain_modeling_adr_format_adr_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format_adr_format",
+      "target": "domain_modeling_adr_format_numbering",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format_adr_format",
+      "target": "domain_modeling_adr_format_optional_sections",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format_adr_format",
+      "target": "domain_modeling_adr_format_template",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format_adr_format",
+      "target": "domain_modeling_adr_format_when_to_offer_an_adr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/ADR-FORMAT.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "domain_modeling_adr_format_when_to_offer_an_adr",
+      "target": "domain_modeling_adr_format_what_qualifies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "domain_modeling_glossary_format",
+      "target": "domain_modeling_glossary_format_glossary_md_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "domain_modeling_glossary_format_glossary_md_format",
+      "target": "domain_modeling_glossary_format_rules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "domain_modeling_glossary_format_glossary_md_format",
+      "target": "domain_modeling_glossary_format_single_vs_multi_context_repos",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/GLOSSARY-FORMAT.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "domain_modeling_glossary_format_glossary_md_format",
+      "target": "domain_modeling_glossary_format_structure",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "domain_modeling_skill",
+      "target": "domain_modeling_skill_domain_modeling",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_domain_modeling",
+      "target": "domain_modeling_skill_during_the_session",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_domain_modeling",
+      "target": "domain_modeling_skill_file_structure",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_challenge_against_the_glossary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_cross_reference_with_code",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_discuss_concrete_scenarios",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_offer_adrs_sparingly",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_sharpen_fuzzy_language",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/domain-modeling/SKILL.md",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "domain_modeling_skill_during_the_session",
+      "target": "domain_modeling_skill_update_glossary_md_inline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": ".agents/skills/grill-me/SKILL.md",
       "source_location": "L10",
       "weight": 1.0,
@@ -46318,6 +48078,556 @@
       "confidence_score": 1.0,
       "source": "grill_me_skill_the_core_process",
       "target": "grill_me_skill_5_completion_criteria"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report",
+      "target": "improve_codebase_architecture_html_report_html_report_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_candidate_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_diagram_patterns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_header",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_scaffold",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_style_guidance",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_tone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L102",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_html_report_format",
+      "target": "improve_codebase_architecture_html_report_top_recommendation_section",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_diagram_patterns",
+      "target": "improve_codebase_architecture_html_report_call_graph_collapse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_diagram_patterns",
+      "target": "improve_codebase_architecture_html_report_cross_section_good_for_layered_shallowness",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_diagram_patterns",
+      "target": "improve_codebase_architecture_html_report_hand_built_boxes_and_arrows_when_mermaid_s_layout_fights_you",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_diagram_patterns",
+      "target": "improve_codebase_architecture_html_report_mass_diagram_good_for_interface_as_wide_as_implementation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/HTML-REPORT.md",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_html_report_diagram_patterns",
+      "target": "improve_codebase_architecture_html_report_mermaid_graph_the_workhorse_for_dependencies_call_flow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_skill",
+      "target": "improve_codebase_architecture_skill_improve_codebase_architecture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_skill_improve_codebase_architecture",
+      "target": "improve_codebase_architecture_skill_process",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_skill_process",
+      "target": "improve_codebase_architecture_skill_1_explore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_skill_process",
+      "target": "improve_codebase_architecture_skill_2_present_candidates_as_an_html_report",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "improve_codebase_architecture_skill_process",
+      "target": "improve_codebase_architecture_skill_3_grilling_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "tdd_skill",
+      "target": "tdd_skill_test_driven_development",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "tdd_skill_test_driven_development",
+      "target": "tdd_skill_anti_patterns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "tdd_skill_test_driven_development",
+      "target": "tdd_skill_rules_of_the_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "tdd_skill_test_driven_development",
+      "target": "tdd_skill_seams_where_tests_go",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/SKILL.md",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "tdd_skill_test_driven_development",
+      "target": "tdd_skill_what_a_good_test_is",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/mocking.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tdd_mocking",
+      "target": "tdd_mocking_when_to_mock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/mocking.md",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "tdd_mocking_when_to_mock",
+      "target": "tdd_mocking_designing_for_mockability",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tdd_tests",
+      "target": "tdd_tests_good_and_bad_tests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "tdd_tests_good_and_bad_tests",
+      "target": "tdd_tests_bad_tests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/tdd/tests.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "tdd_tests_good_and_bad_tests",
+      "target": "tdd_tests_good_tests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill",
+      "target": "to_questionnaire_skill_document_structure",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill",
+      "target": "to_questionnaire_skill_questionnaire_title",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill_questionnaire_title",
+      "target": "to_questionnaire_skill_anything_else",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill_questionnaire_title",
+      "target": "to_questionnaire_skill_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill_questionnaire_title",
+      "target": "to_questionnaire_skill_how_to_answer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill_questionnaire_title",
+      "target": "to_questionnaire_skill_theme_heading",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-questionnaire/SKILL.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "to_questionnaire_skill_theme_heading",
+      "target": "to_questionnaire_skill_what_load_is_the_system_expected_to_handle_at_launch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_further_notes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_implementation_decisions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_out_of_scope",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_problem_statement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_process",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_solution",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_testing_decisions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-spec/SKILL.md",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "to_spec_skill",
+      "target": "to_spec_skill_user_stories",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "to_tickets_skill",
+      "target": "to_tickets_skill_nn_ticket_title",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "to_tickets_skill",
+      "target": "to_tickets_skill_to_tickets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "to_tickets_skill_to_tickets",
+      "target": "to_tickets_skill_process",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "to_tickets_skill_process",
+      "target": "to_tickets_skill_1_gather_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "to_tickets_skill_process",
+      "target": "to_tickets_skill_2_explore_the_codebase_optional",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "to_tickets_skill_process",
+      "target": "to_tickets_skill_3_draft_vertical_slices",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "to_tickets_skill_process",
+      "target": "to_tickets_skill_4_quiz_the_user",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "to_tickets_skill_process",
+      "target": "to_tickets_skill_5_publish_the_tickets_to_the_configured_tracker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "to_tickets_skill_nn_ticket_title",
+      "target": "to_tickets_skill_acceptance_criteria",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "to_tickets_skill_nn_ticket_title",
+      "target": "to_tickets_skill_blocked_by",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "to_tickets_skill_nn_ticket_title",
+      "target": "to_tickets_skill_parent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/skills/to-tickets/SKILL.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "to_tickets_skill_nn_ticket_title",
+      "target": "to_tickets_skill_what_to_build",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -50252,5 +52562,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "7f3dcba1c435004863ab8a36bed701bef65f325d"
+  "built_at_commit": "64ee7182a4d387193c13275096888d9322a46987"
 }
