@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/package.json": {
-    "mtime": 1793135090.6144888,
-    "ast_hash": "aedabd102d49e0042d6f0c144c2f20fa",
+    "mtime": 1793135379.9853697,
+    "ast_hash": "d2262d887b561908cedd2bc31ee96534",
     "semantic_hash": ""
   },
   "cinescope-api/tsconfig.json": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "cinescope/karma.conf.js": {
-    "mtime": 1793135065.6206746,
-    "ast_hash": "73f5b3954d7c2d171290a56bae392962",
+    "mtime": 1793135379.9913697,
+    "ast_hash": "01a0f473fea4a4f0907bcb40c9aeb94f",
     "semantic_hash": ""
   },
   "cinescope/models.json": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "cinescope/package.json": {
-    "mtime": 1793135110.9237611,
-    "ast_hash": "6fb39a2d8b3c233aa1105fd37deaa01e",
+    "mtime": 1793135379.9934807,
+    "ast_hash": "b1e62d8f12f2b1044e1011cd6a7dbcdc",
     "semantic_hash": ""
   },
   "cinescope/src/app/app.component.spec.ts": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/database/database.service.ts": {
-    "mtime": 1793135229.3567283,
-    "ast_hash": "509b5b4ebd7d6a213da524ee6447b18c",
+    "mtime": 1793135379.994481,
+    "ast_hash": "fe92684a11912edd199bbc85d6952772",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/database/schemas/content.schema.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/storage.service.ts": {
-    "mtime": 1793134973.3721302,
-    "ast_hash": "4ed9b51d3a85a38bc072b8257c45ad7b",
+    "mtime": 1793135379.9974792,
+    "ast_hash": "ae89b539f51a0a8ca17e137d1529a495",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/services/tmdb-collections.service.ts": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/search.store.ts": {
-    "mtime": 1793134935.1502898,
-    "ast_hash": "eeb1c5c80e62bfe6c26acf0e6b79936c",
+    "mtime": 1793135379.9984787,
+    "ast_hash": "08d1c874ad986d365d3f4909c001605e",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/store/trending.store.ts": {
@@ -795,8 +795,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.ts": {
-    "mtime": 1792763697.720266,
-    "ast_hash": "9bdf2db98695e3a37a09b485e8365ded",
+    "mtime": 1793138639.4285052,
+    "ast_hash": "61ccdd8c500796f1b517fef7342cf4e6",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.ts": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.spec.ts": {
-    "mtime": 1793134980.9663115,
-    "ast_hash": "670f970ae036c4f08e47b9a3e2174b5b",
+    "mtime": 1793135380.0004802,
+    "ast_hash": "92ba4992ac6f3bf543e63c4a582fe48a",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/search/search.page.ts": {
@@ -815,8 +815,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.ts": {
-    "mtime": 1792869075.5730143,
-    "ast_hash": "bfccf57d377fce3e3762e1bf35eaa6fc",
+    "mtime": 1793138595.8793614,
+    "ast_hash": "65a998330d9eb97ab7e2c670dc23b520",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.ts": {
@@ -970,8 +970,8 @@
     "semantic_hash": ""
   },
   "docs/package.json": {
-    "mtime": 1793135103.1103816,
-    "ast_hash": "0569ef96be5d4315d96c288e4a677d28",
+    "mtime": 1793135380.0014791,
+    "ast_hash": "4d6cbde62dc7cc4c0defb9a92cbc0bf4",
     "semantic_hash": ""
   },
   "docs/sidebarsDev.ts": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1793135174.1372235,
-    "ast_hash": "0dc75f9c181bbecf442f2908ee9eaebb",
+    "mtime": 1793135380.0902905,
+    "ast_hash": "fc49372dd1c0afd2be96c03679349c3a",
     "semantic_hash": ""
   },
   ".agent/rules/graphify.md": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.html": {
-    "mtime": 1792763697.720266,
-    "ast_hash": "4776530012bd93823cde6dbe02541397",
+    "mtime": 1793138646.4307404,
+    "ast_hash": "26f2aa7509f9d9499fd988d9785b3edd",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/person-detail/person-detail.page.html": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/settings/settings.page.html": {
-    "mtime": 1792869075.5720992,
-    "ast_hash": "a5f7e5408c06ae88b926e4d09e0c58fc",
+    "mtime": 1793138620.5887642,
+    "ast_hash": "05c73905f487ea1723089dc05f57276b",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/tv/tv.page.html": {
@@ -2840,8 +2840,8 @@
     "semantic_hash": ""
   },
   "cinescope-api/api/franchise-intel.ts": {
-    "mtime": 1793135144.7397664,
-    "ast_hash": "357dc7abdc735da4a617bcf23166c6b9",
+    "mtime": 1793135379.984369,
+    "ast_hash": "f8a59ca9c2ce5945c315f3ab12c44c0a",
     "semantic_hash": ""
   },
   "cinescope/src/app/core/models/franchise.model.ts": {
@@ -2992,6 +2992,86 @@
   ".agents/skills/to-tickets/agents/openai.yaml": {
     "mtime": 1793132064.33564,
     "ast_hash": "7c9fd2d5d1572711319d6aa0c7ca2903",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/movies.page.spec.ts": {
+    "mtime": 1793138680.3667827,
+    "ast_hash": "0fe33fa0615d07d02cf91c26add6bf11",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.spec.ts": {
+    "mtime": 1793137573.2705634,
+    "ast_hash": "ebc548fa45e889bceedfd6069471edc8",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts": {
+    "mtime": 1793137424.9798093,
+    "ast_hash": "2989ec4693c6488fab9ff7c954ab3b6d",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts": {
+    "mtime": 1793137568.0111117,
+    "ast_hash": "219515d2b3907edb1394aae250157cb9",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts": {
+    "mtime": 1793137592.3650334,
+    "ast_hash": "42522079f529dced25e502ddc5b0e126",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/franchise-tracker/franchise-tracker.component.ts": {
+    "mtime": 1793137402.4143467,
+    "ast_hash": "507a6faf84ff017556cb9c3b79949893",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/movies-swimlanes/movies-swimlanes.component.ts": {
+    "mtime": 1793137683.563591,
+    "ast_hash": "521d64ad0094a72c3ae1b87adf2a53c2",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts": {
+    "mtime": 1793137455.280185,
+    "ast_hash": "6183d21428c611e6ed3ed392e4d2e7a3",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/movies.models.ts": {
+    "mtime": 1793137350.362719,
+    "ast_hash": "422afccb366043d2a48cbce427768d31",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.html": {
+    "mtime": 1793137433.2818642,
+    "ast_hash": "f16af58803c2ac4fbd87a17760e36e16",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.html": {
+    "mtime": 1793137375.7687109,
+    "ast_hash": "7acf2751faa38313dcde6ee4d9886c82",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/franchise-tracker/franchise-tracker.component.html": {
+    "mtime": 1793137407.039812,
+    "ast_hash": "4fcfa41634c49b78f0dd72ce81a2794e",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/movies-swimlanes/movies-swimlanes.component.html": {
+    "mtime": 1793137687.6009285,
+    "ast_hash": "513d44c7adbd511700fab743ef26c8ec",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.html": {
+    "mtime": 1793137461.4485765,
+    "ast_hash": "663bb730ea7fa487e224980507c7b6ff",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/core/services/movies-preferences.service.spec.ts": {
+    "mtime": 1793138686.595172,
+    "ast_hash": "c36e28cd3e71343bbf041b3dd7fd244a",
+    "semantic_hash": ""
+  },
+  "cinescope/src/app/core/services/movies-preferences.service.ts": {
+    "mtime": 1793138545.8008986,
+    "ast_hash": "554301895cd6a091cdf56fb6e9a644b3",
     "semantic_hash": ""
   }
 }

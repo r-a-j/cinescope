@@ -1,0 +1,135 @@
+.franchise-tracker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .lane-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .title-icon {
+      color: #e50914;
+      font-size: 1rem;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+    }
+  }
+
+  .lane-badge {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+  }
+}
+
+.franchise-cards-scroller {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .franchise-progress-card {
+    min-width: 260px;
+    max-width: 300px;
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+
+    &:active {
+      transform: scale(0.97);
+      border-color: #e50914;
+    }
+
+    .franchise-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+
+      .franchise-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .franchise-percent {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: #f5c518;
+        flex-shrink: 0;
+      }
+    }
+
+    .franchise-bar {
+      --progress-background: rgba(255, 255, 255, 0.12);
+      --buffer-background: transparent;
+      --progress-color: #e50914;
+      height: 5px;
+      border-radius: 4px;
+    }
+
+    .franchise-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+
+      .parts-stat {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .view-saga-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        color: #e50914;
+        font-weight: 700;
+
+        ion-icon {
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .franchise-tracker-section {
+    max-width: 780px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}

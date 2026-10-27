@@ -1,0 +1,41 @@
+@if (activeFranchises().length > 0) {
+  <section class="franchise-tracker-section">
+    <div class="lane-header">
+      <div class="lane-title-group">
+        <ion-icon name="albums-outline" class="title-icon"></ion-icon>
+        <h3>FRANCHISES IN PROGRESS</h3>
+      </div>
+      <span class="lane-badge">{{ activeFranchises().length }} Sagas Active</span>
+    </div>
+
+    <div class="franchise-cards-scroller">
+      @for (f of activeFranchises(); track f.id) {
+        <button
+          type="button"
+          class="franchise-progress-card"
+          (click)="onSelectCollection(f.id, f.name)"
+        >
+          <div class="franchise-top">
+            <span class="franchise-name">{{ f.name }}</span>
+            <span class="franchise-percent">{{ f.completionPercentage }}%</span>
+          </div>
+
+          <ion-progress-bar
+            [value]="f.completionPercentage / 100"
+            class="franchise-bar"
+          ></ion-progress-bar>
+
+          <div class="franchise-bottom">
+            <span class="parts-stat">
+              {{ f.watchedCount }} of {{ f.totalParts }} Watched
+            </span>
+            <span class="view-saga-link">
+              <span>View Saga</span>
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </span>
+          </div>
+        </button>
+      }
+    </div>
+  </section>
+}

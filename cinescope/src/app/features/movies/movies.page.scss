@@ -1,13 +1,115 @@
-.tab-placeholder {
+.movies-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-bottom: 50px;
+  background-color: var(--ion-background-color, #000000);
+}
+
+.all-hidden-empty-card {
+  margin: 40px 16px;
+  padding: 40px 20px;
+  background: #111111;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+
+  .empty-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(229, 9, 20, 0.12);
+    border: 1px solid rgba(229, 9, 20, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon {
+      font-size: 1.6rem;
+      color: #ff4757;
+    }
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.65);
+    max-width: 320px;
+    line-height: 1.4;
+  }
+
+  .btn-primary {
+    margin-top: 8px;
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: #e50914;
+    border: none;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.35);
+
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+}
+
+.movies-footer-hint {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-top: 50px;
+  padding: 8px 16px 20px 16px;
 
-  h1 {
-    color: #ffffff;
-    font-family: var(--font-display, sans-serif);
-    letter-spacing: 1px;
-    font-size: 1.5rem;
+  .settings-hint-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #e50914;
+      outline-offset: 2px;
+    }
+
+    ion-icon {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .all-hidden-empty-card,
+  .movies-footer-hint {
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
   }
 }

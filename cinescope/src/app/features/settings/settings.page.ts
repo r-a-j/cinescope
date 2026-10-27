@@ -6,7 +6,7 @@ import { NavController } from '@ionic/angular';
 import {
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle,
     IonContent, IonList, IonListHeader, IonLabel, IonItem, IonNote,
-    AlertController, ActionSheetController, IonModal, IonSpinner
+    AlertController, ActionSheetController, IonModal, IonSpinner, IonToggle
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -15,7 +15,8 @@ import {
     logoGithub, mailOutline, informationCircleOutline,
     downloadOutline, shareSocialOutline, closeOutline,
     folderOutline, chevronForwardOutline, globeOutline,
-    locateOutline, searchOutline, closeCircle, checkmarkCircle
+    locateOutline, searchOutline, closeCircle, checkmarkCircle,
+    sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { RegionService } from 'src/app/core/services/region.service';
@@ -26,6 +27,7 @@ import { TmdbWatchRegionDto } from 'src/app/core/dtos/watch-providers/watch-prov
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
+import { MoviesPreferencesService } from 'src/app/core/services/movies-preferences.service';
 
 interface NativeBackupPlugin {
     saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
@@ -40,7 +42,7 @@ const NativeBackup = registerPlugin<NativeBackupPlugin>('NativeBackup');
     imports: [
         CommonModule, IonHeader, IonToolbar, IonButtons, IonButton, IonIcon,
         IonTitle, IonContent, IonList, IonListHeader, IonLabel, IonItem, IonNote,
-        IonModal, IonSpinner
+        IonModal, IonSpinner, IonToggle
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './settings.page.html',
@@ -49,6 +51,7 @@ const NativeBackup = registerPlugin<NativeBackupPlugin>('NativeBackup');
 export class SettingsPage implements OnInit {
     private navCtrl = inject(NavController);
     public storage = inject(StorageService);
+    public moviesPrefs = inject(MoviesPreferencesService);
     private apiCache = inject(ApiCacheService);
     private posterCache = inject(PosterCacheService);
     private toast = inject(ToastService);
@@ -99,7 +102,8 @@ export class SettingsPage implements OnInit {
             logoGithub, mailOutline, informationCircleOutline,
             downloadOutline, shareSocialOutline, closeOutline,
             folderOutline, chevronForwardOutline, globeOutline,
-    locateOutline, searchOutline, closeCircle, checkmarkCircle
+    locateOutline, searchOutline, closeCircle, checkmarkCircle,
+            sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
         });
     }
 

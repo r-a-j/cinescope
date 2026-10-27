@@ -1,0 +1,125 @@
+@if (blindTicketMovie(); as ticketMovie) {
+  <section class="blind-ticket-section">
+    <div class="ticket-header-group">
+      <div class="headline-badge">
+        <ion-icon name="ticket-outline"></ion-icon>
+        <span>Anti-Poster Bias</span>
+      </div>
+      <h3>THE BLIND TICKET</h3>
+      <p class="headline-sub">No posters. No title bias. Pure story and vibe hook.</p>
+    </div>
+
+    <div class="blind-ticket-card" [class.revealed]="isBlindTicketRevealed()">
+      <!-- Stub Notches -->
+      <div class="stub-notch notch-left"></div>
+      <div class="stub-notch notch-right"></div>
+
+      <div class="ticket-inner">
+        <div class="ticket-top-brand">
+          <span class="ticket-icon">🎟️</span>
+          <span class="ticket-series">CINESCOPE ADMIT ONE</span>
+          <span class="ticket-code">NO. {{ ticketMovie.tmdbId }}</span>
+        </div>
+
+        <!-- Content Area: Hidden vs Revealed -->
+        <div class="ticket-content-grid">
+          <div class="ticket-visual">
+            @if (isBlindTicketRevealed()) {
+              <button
+                type="button"
+                class="poster-btn"
+                (click)="openDetail.emit(ticketMovie.tmdbId)"
+                [attr.aria-label]="getTitle(ticketMovie)"
+              >
+                <img
+                  [src]="getPoster(ticketMovie)"
+                  [alt]="getTitle(ticketMovie)"
+                  class="ticket-poster-img revealed-img"
+                />
+              </button>
+            } @else {
+              <div class="ticket-mystery-placeholder">
+                <ion-icon name="eye-outline"></ion-icon>
+                <span>SEALED</span>
+              </div>
+            }
+          </div>
+
+          <div class="ticket-details">
+            <div class="ticket-title-wrap">
+              @if (isBlindTicketRevealed()) {
+                <button
+                  type="button"
+                  class="title-btn"
+                  (click)="openDetail.emit(ticketMovie.tmdbId)"
+                >
+                  <h4 class="revealed-title">
+                    {{ getTitle(ticketMovie) }}
+                  </h4>
+                </button>
+              } @else {
+                <div class="redacted-title-bar">
+                  <span class="redacted-block">████████████████</span>
+                </div>
+              }
+            </div>
+
+            <!-- Sensory Tags -->
+            <div class="sensory-tags-row">
+              @if (getRating(ticketMovie); as rating) {
+                <span class="sensory-tag sensory-gold">★ {{ rating }}</span>
+              }
+              @if (getRuntime(ticketMovie); as rt) {
+                <span class="sensory-tag">⏱️ {{ rt }}</span>
+              }
+              @if (getYear(ticketMovie); as yr) {
+                <span class="sensory-tag">{{ yr }}</span>
+              }
+              @for (g of getGenres(ticketMovie); track g) {
+                <span class="sensory-tag">{{ g }}</span>
+              }
+            </div>
+
+            <!-- Sensory Hook / Logline -->
+            @if (getOverview(ticketMovie); as logline) {
+              <p class="ticket-hook-logline">
+                "{{ logline }}"
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- Ticket Action Button -->
+        <div class="ticket-actions-bar">
+          @if (!isBlindTicketRevealed()) {
+            <button
+              type="button"
+              class="btn-ticket btn-tear"
+              (click)="tearBlindTicket()"
+            >
+              <span>✂️ Hold or Tap to Tear & Reveal</span>
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-ticket btn-watch-tonight"
+              (click)="watchTonight.emit(ticketMovie)"
+            >
+              <ion-icon name="play-outline"></ion-icon>
+              <span>Watch Tonight</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-ticket btn-draw-next"
+              (click)="pickNextMysteryTicket()"
+            >
+              <ion-icon name="refresh-outline"></ion-icon>
+              <span>Draw Another</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+}
