@@ -32,7 +32,7 @@
   </div>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content color="background">
   <!-- Smart Search AI Banner (Floating: Only shown when no results are found OR when smart search is active/ready) -->
   @if (store.query() && store.query().length >= 4 && (
     store.isSmartSearching() ||

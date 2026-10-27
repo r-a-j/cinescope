@@ -3,8 +3,34 @@
 }
 
 .search-header {
+  position: relative;
+  background: var(--ion-background-color, #000000);
+  border-bottom: none;
+
   ion-toolbar {
-    --background: var(--ion-background-color, #0f0f13);
+    --background: var(--ion-background-color, #000000);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 44px;
+    background: linear-gradient(
+      180deg,
+      #000000 0%,
+      rgba(0, 0, 0, 0.92) 18%,
+      rgba(0, 0, 0, 0.76) 36%,
+      rgba(0, 0, 0, 0.52) 54%,
+      rgba(0, 0, 0, 0.28) 72%,
+      rgba(0, 0, 0, 0.10) 86%,
+      rgba(0, 0, 0, 0.02) 95%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 10;
   }
 }
 
@@ -265,6 +291,7 @@
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  background: var(--ion-background-color, #000000);
 
   &::-webkit-scrollbar {
     display: none;
@@ -304,9 +331,9 @@
 
 // ==== Franchise Spotlight Card (In 'All' Tab) ====
 .franchise-spotlight {
-  margin: 12px 16px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 15, 19, 0.8) 100%);
+  margin: 16px 16px 14px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 15, 19, 0.85) 100%);
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 14px;
   cursor: pointer;
@@ -341,12 +368,13 @@
   }
 
   .spotlight-cover {
-    width: 48px;
-    height: 72px;
+    width: 52px;
+    height: 78px;
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 
     img {
       width: 100%;
@@ -361,8 +389,9 @@
 
     h4 {
       margin: 0 0 4px 0;
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 700;
+      letter-spacing: 0.03em;
       color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
@@ -562,7 +591,7 @@
 
 // Local Library Search Shelf (Instant Keystroke Shelf)
 .library-search-shelf {
-  margin: 12px 16px 18px;
+  margin: 14px 16px 20px;
   padding: 14px;
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
   border: 1px solid rgba(56, 189, 248, 0.3);
