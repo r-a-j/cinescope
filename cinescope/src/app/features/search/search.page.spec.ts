@@ -15,7 +15,9 @@ describe('SearchPage', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create and initialize store without database race errors', async () => {
     expect(component).toBeTruthy();
+    await fixture.whenStable();
+    expect(component.store.recentSearches()).toBeDefined();
   });
 });

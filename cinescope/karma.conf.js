@@ -1,5 +1,7 @@
 // Karma configuration file, see link for more information
 // https://karma-runner.github.io/1.0/config/configuration-file.html
+const fs = require('fs');
+const path = require('path');
 
 module.exports = function (config) {
   config.set({
@@ -10,8 +12,25 @@ module.exports = function (config) {
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
       require('karma-coverage'),
-      
+      {
+        'middleware:serve-font': ['factory', function () {
+          return function (req, res, next) {
+            if (req.url && req.url.includes('Inter-Variable-Font-opsz-wght.ttf')) {
+              const fontPath = path.join(__dirname, 'src/assets/fonts/Inter-Variable-Font-opsz-wght.ttf');
+              if (fs.existsSync(fontPath)) {
+                res.writeHead(200, {
+                  'Content-Type': 'font/ttf',
+                  'Access-Control-Allow-Origin': '*'
+                });
+                return fs.createReadStream(fontPath).pipe(res);
+              }
+            }
+            return next();
+          };
+        }]
+      }
     ],
+    middleware: ['serve-font'],
     client: {
       jasmine: {
         // you can add configuration options for Jasmine here

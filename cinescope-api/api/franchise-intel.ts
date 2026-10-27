@@ -224,8 +224,21 @@ Parts: ${titlesList}
         }
     }
 
+    const errStr = String(lastError?.message || '');
+    if (errStr.includes('429') || (lastError as any)?.status === 429) {
+        return res.status(429).json({
+            error: 'AI Quota Exceeded. Please slow down.'
+        });
+    }
+
+    if (errStr.includes('503') || (lastError as any)?.status === 503) {
+        return res.status(503).json({
+            error: 'AI service is currently experiencing high demand. Please try again shortly.'
+        });
+    }
+
+    console.error('[API franchise-intel Error] All models failed:', lastError);
     return res.status(500).json({
-        error: 'Failed to reason franchise universe intelligence.',
-        details: lastError?.message || 'Unknown error'
+        error: 'Failed to reason franchise universe intelligence.'
     });
 }

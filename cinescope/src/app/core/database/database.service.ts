@@ -111,6 +111,21 @@ export class DatabaseService {
         return this.initPromise;
     }
 
+    public isInitialized(): boolean {
+        return this.dbInstance !== null;
+    }
+
+    public async getDatabase(): Promise<CinescopeDatabase> {
+        if (this.dbInstance) {
+            return this.dbInstance;
+        }
+        await this.initDatabase();
+        if (!this.dbInstance) {
+            throw new Error('Database initialization failed unexpectedly.');
+        }
+        return this.dbInstance;
+    }
+
     public get db(): CinescopeDatabase {
         if (!this.dbInstance) {
             throw new Error('Database accessed before initialization completed. Check APP_INITIALIZER.');
