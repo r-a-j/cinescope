@@ -1,16 +1,16 @@
-# Graph Report - cinescope  (2026-10-25)
+# Graph Report - cinescope  (2026-10-27)
 
 ## Corpus Check
-- 239 files · ~217,221 words
+- 255 files · ~226,598 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2038 nodes · 3056 edges · 268 communities (208 shown, 60 thin omitted)
+- 2166 nodes · 3170 edges · 289 communities (229 shown, 60 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7f3dcba1`
+- Built from commit: `64ee7182`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -56,10 +56,16 @@
 - [[_COMMUNITY_Community 42|Community 42]]
 - [[_COMMUNITY_Community 52|Community 52]]
 - [[_COMMUNITY_Community 53|Community 53]]
+- [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 82|Community 82]]
+- [[_COMMUNITY_Community 86|Community 86]]
+- [[_COMMUNITY_Community 111|Community 111]]
 - [[_COMMUNITY_Community 118|Community 118]]
 - [[_COMMUNITY_Community 140|Community 140]]
 - [[_COMMUNITY_Community 146|Community 146]]
+- [[_COMMUNITY_Community 148|Community 148]]
+- [[_COMMUNITY_Community 151|Community 151]]
+- [[_COMMUNITY_Community 153|Community 153]]
 - [[_COMMUNITY_Community 161|Community 161]]
 - [[_COMMUNITY_Community 162|Community 162]]
 - [[_COMMUNITY_Community 163|Community 163]]
@@ -73,19 +79,34 @@
 - [[_COMMUNITY_Community 173|Community 173]]
 - [[_COMMUNITY_Community 174|Community 174]]
 - [[_COMMUNITY_Community 175|Community 175]]
+- [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
 - [[_COMMUNITY_Community 178|Community 178]]
+- [[_COMMUNITY_Community 179|Community 179]]
+- [[_COMMUNITY_Community 180|Community 180]]
 - [[_COMMUNITY_Community 181|Community 181]]
+- [[_COMMUNITY_Community 182|Community 182]]
 - [[_COMMUNITY_Community 183|Community 183]]
 - [[_COMMUNITY_Community 184|Community 184]]
+- [[_COMMUNITY_Community 185|Community 185]]
 - [[_COMMUNITY_Community 186|Community 186]]
+- [[_COMMUNITY_Community 187|Community 187]]
+- [[_COMMUNITY_Community 188|Community 188]]
 - [[_COMMUNITY_Community 189|Community 189]]
+- [[_COMMUNITY_Community 190|Community 190]]
+- [[_COMMUNITY_Community 191|Community 191]]
 - [[_COMMUNITY_Community 192|Community 192]]
 - [[_COMMUNITY_Community 193|Community 193]]
 - [[_COMMUNITY_Community 194|Community 194]]
 - [[_COMMUNITY_Community 195|Community 195]]
+- [[_COMMUNITY_Community 197|Community 197]]
+- [[_COMMUNITY_Community 198|Community 198]]
 - [[_COMMUNITY_Community 199|Community 199]]
+- [[_COMMUNITY_Community 200|Community 200]]
 - [[_COMMUNITY_Community 201|Community 201]]
+- [[_COMMUNITY_Community 202|Community 202]]
+- [[_COMMUNITY_Community 203|Community 203]]
+- [[_COMMUNITY_Community 204|Community 204]]
 - [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 216|Community 216]]
 - [[_COMMUNITY_Community 224|Community 224]]
@@ -169,25 +190,25 @@
 10. `TmdbMoviesService` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `mapMoviesToSwimlane()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
-  cinescope/src/app/core/store/trending.store.ts → cinescope/src/app/core/constants/api.constants.ts
-- `mapPeopleToSwimlane()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
-  cinescope/src/app/core/store/trending.store.ts → cinescope/src/app/core/constants/api.constants.ts
-- `mapToHeroItems()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
-  cinescope/src/app/core/store/trending.store.ts → cinescope/src/app/core/constants/api.constants.ts
-- `mapTvToSwimlane()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
-  cinescope/src/app/core/store/trending.store.ts → cinescope/src/app/core/constants/api.constants.ts
 - `InboxCardVm` --references--> `ContentDocType`  [EXTRACTED]
   cinescope/src/app/features/inbox/inbox.page.ts → cinescope/src/app/core/database/schemas/content.schema.ts
+- `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
+  cinescope-api/api/extract.ts → cinescope-api/lib/rate-limiter.ts
+- `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
+  cinescope-api/api/feed.ts → cinescope-api/lib/rate-limiter.ts
+- `handler()` --calls--> `checkRateLimit()`  [EXTRACTED]
+  cinescope-api/api/tmdb.ts → cinescope-api/lib/rate-limiter.ts
+- `mapMoviesToSwimlane()` --calls--> `resolveMediaImageUrl()`  [EXTRACTED]
+  cinescope/src/app/core/services/collection-loader.service.ts → cinescope/src/app/core/constants/api.constants.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (268 total, 60 thin omitted)
+## Communities (289 total, 60 thin omitted)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.05
-Nodes (34): TmdbTvEpisodesService, TmdbTvSeasonsService, TmdbTvEpisodeChangesResponseDto, TmdbTvEpisodeCreditsResponseDto, TmdbTvEpisodeDetailDto, TmdbTvEpisodeExternalIdsDto, TmdbTvEpisodeImagesResponseDto, TmdbTvEpisodeTranslationDataDto (+26 more)
+Cohesion: 0.17
+Nodes (9): TmdbTvSeasonsService, TmdbTvSeasonDetailDto, TmdbTvSeasonExternalIdsDto, TmdbTvSeasonTranslationDataDto, TmdbTvSeasonTranslationItemDto, TmdbTvSeasonTranslationsResponseDto, TmdbTvSeasonWatchProvidersResponseDto, TmdbWatchProviderCountryDto (+1 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.08
@@ -211,15 +232,15 @@ Nodes (4): CastVideoGalleryComponent, TmdbVideoDto, CastMemberVm, TmdbMovieVideo
 
 ### Community 12 - "Community 12"
 Cohesion: 0.26
-Nodes (7): TmdbGenreDto, TmdbMovieDetailDto, TmdbProductionCompanyDto, TmdbProductionCountryDto, TmdbSpokenLanguageDto, TmdbTvCreatorDto, TmdbTvDetailDto
+Nodes (9): TmdbGenreDto, TmdbGenreListDto, TmdbProductionCompanyDto, TmdbProductionCountryDto, TmdbSpokenLanguageDto, TmdbGenresService, TmdbTvCreatorDto, TmdbTvDetailDto (+1 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.06
 Nodes (4): SearchPage, SearchPage, TmdbMultiSearchResultDto, SearchFilter
 
 ### Community 14 - "Community 14"
-Cohesion: 0.06
-Nodes (18): TmdbTvAggregateCreditsResponseDto, TmdbTvAlternativeTitleDto, TmdbTvAlternativeTitlesResponseDto, TmdbTvChangesResponseDto, TmdbTvContentRatingsResponseDto, TmdbTvCreditsResponseDto, TmdbTvEpisodeGroupDto, TmdbTvEpisodeGroupsResponseDto (+10 more)
+Cohesion: 0.07
+Nodes (17): TmdbTvAggregateCreditsResponseDto, TmdbTvAlternativeTitleDto, TmdbTvAlternativeTitlesResponseDto, TmdbTvChangesResponseDto, TmdbTvContentRatingsResponseDto, TmdbTvCreditsResponseDto, TmdbTvEpisodeGroupsResponseDto, TmdbTvExternalIdsDto (+9 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.13
@@ -230,8 +251,8 @@ Cohesion: 0.29
 Nodes (4): TmdbKeywordDto, TmdbMovieKeywordsResponseDto, TmdbKeywordsService, TmdbTvKeywordsResponseDto
 
 ### Community 17 - "Community 17"
-Cohesion: 0.15
-Nodes (16): TmdbFindResultsDto, TmdbTvEpisodeResultDto, TmdbTvSeasonResultDto, TmdbMovieListItemDto, TmdbNowPlayingDatesDto, TmdbNowPlayingResponseDto, TmdbUpcomingDatesDto, TmdbUpcomingResponseDto (+8 more)
+Cohesion: 0.20
+Nodes (12): TmdbFindResultsDto, TmdbTvEpisodeResultDto, TmdbTvSeasonResultDto, TmdbMovieListItemDto, TmdbNowPlayingDatesDto, TmdbNowPlayingResponseDto, TmdbUpcomingDatesDto, TmdbUpcomingResponseDto (+4 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.06
@@ -247,11 +268,11 @@ Nodes (9): 1. Crew & Composer Searches, 2. Plot Tropes & Complex Scenarios, 3. V
 
 ### Community 21 - "Community 21"
 Cohesion: 0.07
-Nodes (17): TmdbCertificationItemDto, TmdbCertificationResponseDto, TmdbMovieAlternativeTitleDto, TmdbMovieAlternativeTitlesResponseDto, TmdbMovieChangeGroupDto, TmdbMovieChangeItemDto, TmdbMovieChangesResponseDto, TmdbMovieCastMemberDto (+9 more)
+Nodes (18): TmdbCertificationItemDto, TmdbCertificationResponseDto, TmdbMovieAlternativeTitleDto, TmdbMovieAlternativeTitlesResponseDto, TmdbMovieChangeGroupDto, TmdbMovieChangeItemDto, TmdbMovieChangesResponseDto, TmdbMovieCastMemberDto (+10 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.10
-Nodes (13): DetailHeroComponent, CrewSpotlightVm, CULTURAL_FORMAT_MAP, MediaPreviewState, OriginCountryVm, PREFERRED_REGIONS, ProductionStatusVm, TvCreatorVm (+5 more)
+Cohesion: 0.09
+Nodes (14): DetailHeroComponent, CrewSpotlightVm, CULTURAL_FORMAT_MAP, MediaPreviewState, OriginCountryVm, PREFERRED_REGIONS, ProductionStatusVm, TvCreatorVm (+6 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.47
@@ -259,23 +280,27 @@ Nodes (3): TmdbPersonCastCreditDto, TmdbPersonCreditBaseDto, TmdbPersonCrewCredi
 
 ### Community 25 - "Community 25"
 Cohesion: 0.17
-Nodes (14): TmdbDiscoverMovieParamsDto, TmdbDiscoverTvParamsDto, applyFiltersToMovieParams(), applyFiltersToTvParams(), CollectionLoaderService, GENRE_MAP, getDiscoverSortBy(), getDiscoverTvSortBy() (+6 more)
+Nodes (13): TmdbDiscoverMovieParamsDto, TmdbDiscoverTvParamsDto, applyFiltersToMovieParams(), applyFiltersToTvParams(), CollectionLoaderService, getDiscoverSortBy(), getDiscoverTvSortBy(), mapMoviesToSwimlane() (+5 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.20
 Nodes (9): Archive Organization, High-Density 4-Column Poster Grid, Key Advantages of the Grid Layout, Offline-First Reliability (RxDB Architecture), Optimistic UI Feedback, State Controls: Watchlist, Watched & Favorites, State Types, Watched History Archive (+1 more)
 
+### Community 31 - "Community 31"
+Cohesion: 0.13
+Nodes (14): Completion criterion: a tight loop that goes red, Diagnosing Bugs, Minimise, Non-deterministic bugs, Phase 1: Build a feedback loop, Phase 2: Reproduce + minimise, Phase 3: Hypothesise, Phase 4: Instrument (+6 more)
+
 ### Community 33 - "Community 33"
-Cohesion: 0.20
-Nodes (3): ExternalLinkVm, TmdbBelongsToCollectionDto, ProductionReviewsPanelComponent
+Cohesion: 0.10
+Nodes (9): resolveMediaImageUrl(), ExternalLinkVm, TmdbBelongsToCollectionDto, ProductionReviewsPanelComponent, mapMoviesToSwimlane(), mapPeopleToSwimlane(), mapToHeroItems(), mapTvToSwimlane() (+1 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.40
 Nodes (3): TmdbPersonMovieCastDto, TmdbPersonMovieCreditsResponseDto, TmdbPersonMovieCrewDto
 
 ### Community 36 - "Community 36"
-Cohesion: 0.14
-Nodes (10): resolveMediaImageUrl(), TmdbTvEpisodeGroupBucketDto, TmdbTvEpisodeGroupEpisodeDto, TmdbTvEpisodeGroupType, TvSeasonsHubComponent, TmdbTvSeasonCrewDto, TmdbTvSeasonDetailDto, TmdbTvSeasonEpisodeDto (+2 more)
+Cohesion: 0.15
+Nodes (11): TmdbTvEpisodeGroupsService, TmdbTvEpisodeGroupBucketDto, TmdbTvEpisodeGroupDetailDto, TmdbTvEpisodeGroupEpisodeDto, TmdbTvEpisodeGroupType, TmdbTvSeasonCrewDto, TmdbTvSeasonEpisodeDto, TmdbTvSeasonGuestStarDto (+3 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.40
@@ -290,12 +315,24 @@ Cohesion: 0.40
 Nodes (3): TmdbPersonTvCastDto, TmdbPersonTvCreditsResponseDto, TmdbPersonTvCrewDto
 
 ### Community 53 - "Community 53"
-Cohesion: 0.20
+Cohesion: 0.18
 Nodes (4): CollectionCardVm, SwimlaneItem, CollectionPageResult, SwimlaneComponent
 
+### Community 65 - "Community 65"
+Cohesion: 0.14
+Nodes (13): Call-graph collapse, Candidate card, Cross-section (good for layered shallowness), Diagram patterns, Hand-built boxes-and-arrows (when Mermaid's layout fights you), Header, HTML Report Format, Mass diagram (good for "interface as wide as implementation") (+5 more)
+
 ### Community 82 - "Community 82"
-Cohesion: 0.09
-Nodes (17): TmdbCreditDetailDto, TmdbCreditMediaDto, TmdbCreditMediaSeasonDto, TmdbCreditPersonDto, TmdbExternalSource, TmdbGenreListDto, TmdbReviewDetailDto, TmdbAuthorDetailsDto (+9 more)
+Cohesion: 0.13
+Nodes (12): TmdbCreditDetailDto, TmdbCreditMediaDto, TmdbCreditMediaSeasonDto, TmdbCreditPersonDto, TmdbExternalSource, TmdbReviewDetailDto, TmdbAuthorDetailsDto, TmdbReviewDto (+4 more)
+
+### Community 86 - "Community 86"
+Cohesion: 0.22
+Nodes (6): TmdbTvEpisodesService, TmdbTvEpisodeDetailDto, TmdbTvEpisodeExternalIdsDto, TmdbTvEpisodeTranslationDataDto, TmdbTvEpisodeTranslationItemDto, TmdbTvEpisodeTranslationsResponseDto
+
+### Community 111 - "Community 111"
+Cohesion: 0.15
+Nodes (12): 1. Gather context, 2. Explore the codebase (optional), 3. Draft vertical slices, 4. Quiz the user, 5. Publish the tickets to the configured tracker, Acceptance criteria, Blocked by, <NN>: <Ticket title> (+4 more)
 
 ### Community 118 - "Community 118"
 Cohesion: 0.20
@@ -308,6 +345,18 @@ Nodes (8): TmdbPersonCombinedCreditsResponseDto, TmdbPersonDetailDto, TmdbPerson
 ### Community 146 - "Community 146"
 Cohesion: 0.25
 Nodes (8): scripts, build, lint, test, docs:generate, ng, start, watch
+
+### Community 148 - "Community 148"
+Cohesion: 0.20
+Nodes (9): Challenge against the glossary, Cross-reference with code, Discuss concrete scenarios, Domain Modeling, During the session, File structure, Offer ADRs sparingly, Sharpen fuzzy language (+1 more)
+
+### Community 151 - "Community 151"
+Cohesion: 0.22
+Nodes (8): 1. In-process, 2. Local-substitutable, 3. Remote but owned (Ports & Adapters), 4. True external (Mock), Deepening, Dependency categories, Seam discipline, Testing strategy: replace, don't layer
+
+### Community 153 - "Community 153"
+Cohesion: 0.22
+Nodes (8): Codebase Design, Deep vs shallow, Designing for testability, Glossary, Going deeper, Principles, Rejected framings, Relationships
 
 ### Community 161 - "Community 161"
 Cohesion: 0.05
@@ -330,8 +379,8 @@ Cohesion: 0.08
 Nodes (8): AppComponent, routes, DatabaseService, authInterceptor(), ApiCacheService, CACHE_TTL, CacheEntry, PosterCacheService
 
 ### Community 168 - "Community 168"
-Cohesion: 0.10
-Nodes (18): FavoritePersonCardVm, FranchisePart, FranchiseUniverseCanonItem, PosterCardComponent, BookmarkState, PosterCardComponent, CollectionQueryContext, CachedCollectionMeta (+10 more)
+Cohesion: 0.11
+Nodes (18): FavoritePersonCardVm, FranchisePart, FranchiseUniverseCanonItem, PosterCardComponent, BookmarkState, PosterCardComponent, CollectionQueryContext, GENRE_MAP (+10 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.25
@@ -349,6 +398,10 @@ Nodes (6): Catalog Swimlanes, Curated Regional Sections, Discover Hub & Curated 
 Cohesion: 0.29
 Nodes (6): Downloading the APK, First Launch & Zero-Config Setup, Installation & Setup, Installing on Your Android Device, Step-by-Step Instructions, System Requirements
 
+### Community 176 - "Community 176"
+Cohesion: 0.33
+Nodes (4): TmdbTvEpisodeChangesResponseDto, TmdbTvSeasonChangesResponseDto, TmdbTvChangeGroupDto, TmdbTvChangeItemDto
+
 ### Community 177 - "Community 177"
 Cohesion: 0.12
 Nodes (15): content, description, description, description, schema, application/json, properties, required (+7 more)
@@ -357,9 +410,21 @@ Nodes (15): content, description, description, description, schema, application/
 Cohesion: 0.48
 Nodes (3): TmdbImageDto, TmdbMovieImagesResponseDto, TmdbPersonImagesResponseDto
 
+### Community 179 - "Community 179"
+Cohesion: 0.22
+Nodes (8): Further Notes, Implementation Decisions, Out of Scope, Problem Statement, Process, Solution, Testing Decisions, User Stories
+
+### Community 180 - "Community 180"
+Cohesion: 0.39
+Nodes (3): TmdbTvEpisodeImagesResponseDto, TmdbTvSeasonImagesResponseDto, TmdbImageItemDto
+
 ### Community 181 - "Community 181"
 Cohesion: 0.20
 Nodes (10): build, builder, configurations, defaultConfiguration, development, buildTarget, extractLicenses, namedChunks (+2 more)
+
+### Community 182 - "Community 182"
+Cohesion: 0.39
+Nodes (3): TmdbTvEpisodeVideosResponseDto, TmdbTvSeasonVideosResponseDto, TmdbVideoDto
 
 ### Community 183 - "Community 183"
 Cohesion: 0.22
@@ -369,9 +434,29 @@ Nodes (9): serve, production, budgets, buildTarget, fileReplacements, outputHash
 Cohesion: 0.25
 Nodes (7): cli, packageManager, schematicCollections, newProjectRoot, projects, $schema, version
 
+### Community 185 - "Community 185"
+Cohesion: 0.39
+Nodes (5): TmdbTvSeasonAggregateCreditsResponseDto, TmdbTvAggregateCastDto, TmdbTvAggregateCrewDto, TmdbTvAggregateJobDto, TmdbTvAggregateRoleDto
+
+### Community 187 - "Community 187"
+Cohesion: 0.54
+Nodes (4): TmdbTvEpisodeCreditsResponseDto, TmdbTvSeasonCreditsResponseDto, TmdbTvCastDto, TmdbTvCrewDto
+
+### Community 188 - "Community 188"
+Cohesion: 0.25
+Nodes (7): Anything else?, Context, Document structure, How to answer, <Questionnaire title>, <Theme heading>, What load is the system expected to handle at launch?
+
 ### Community 189 - "Community 189"
 Cohesion: 0.33
 Nodes (6): test, progress, watch, ci, builder, configurations
+
+### Community 190 - "Community 190"
+Cohesion: 0.29
+Nodes (6): ADR Format, Numbering, Optional sections, Template, What qualifies, When to offer an ADR
+
+### Community 191 - "Community 191"
+Cohesion: 0.33
+Nodes (5): 1. Frame the problem space, 2. Spawn sub-agents, 3. Present and compare, Design It Twice, Process
 
 ### Community 193 - "Community 193"
 Cohesion: 0.67
@@ -381,9 +466,29 @@ Nodes (3): outputPath, base, browser
 Cohesion: 0.05
 Nodes (41): browserslist, development, production, dependencies, clsx, @docusaurus/core, docusaurus-plugin-openapi-docs, docusaurus-plugin-sass (+33 more)
 
+### Community 197 - "Community 197"
+Cohesion: 0.33
+Nodes (5): 1. Explore, 2. Present candidates as an HTML report, 3. Grilling loop, Improve Codebase Architecture, Process
+
+### Community 198 - "Community 198"
+Cohesion: 0.33
+Nodes (5): Anti-patterns, Rules of the loop, Seams: where tests go, Test-Driven Development, What a good test is
+
 ### Community 199 - "Community 199"
 Cohesion: 0.06
 Nodes (37): content, description, description, description, description, post, post, schema (+29 more)
+
+### Community 200 - "Community 200"
+Cohesion: 0.40
+Nodes (4): GLOSSARY.md Format, Rules, Single vs multi-context repos, Structure
+
+### Community 202 - "Community 202"
+Cohesion: 0.83
+Nodes (3): hitl-loop.template.sh script, capture(), step()
+
+### Community 203 - "Community 203"
+Cohesion: 0.50
+Nodes (3): Bad Tests, Good and Bad Tests, Good Tests
 
 ### Community 206 - "Community 206"
 Cohesion: 0.06
@@ -406,8 +511,8 @@ Cohesion: 0.10
 Nodes (20): author, dependencies, @asteasolutions/zod-to-openapi, @google/generative-ai, rss-parser, zod, description, devDependencies (+12 more)
 
 ### Community 249 - "Community 249"
-Cohesion: 0.15
-Nodes (10): FranchiseIntelResponse, CachedIntelRecord, cleanNorm(), computeSimilarity(), DIGIT_TO_WORDS, FranchiseIntelAnalysisResult, FranchiseIntelService, levenshteinDistance() (+2 more)
+Cohesion: 0.11
+Nodes (11): FranchiseIntelResponse, CachedIntelRecord, cleanNorm(), computeSimilarity(), DIGIT_TO_WORDS, FranchiseIntelAnalysisResult, FranchiseIntelService, levenshteinDistance() (+3 more)
 
 ### Community 252 - "Community 252"
 Cohesion: 0.16
@@ -506,24 +611,24 @@ Cohesion: 0.40
 Nodes (4): CineScope User Guide, Core Capabilities, Guide Directory, Key Highlights for Users
 
 ## Knowledge Gaps
-- **523 isolated node(s):** `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser`, `DEFAULT_SOURCES`, `ALLOWED_GEMINI_MODELS` (+518 more)
+- **607 isolated node(s):** `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser`, `DEFAULT_SOURCES`, `ALLOWED_GEMINI_MODELS` (+602 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BaseMediaService` connect `Community 82` to `Community 1`, `Community 3`, `Community 5`, `Community 9`, `Community 140`, `Community 14`, `Community 16`, `Community 17`, `Community 21`, `Community 279`, `Community 25`, `Community 252`, `Community 285`?**
+- **Why does `resolveMediaImageUrl()` connect `Community 33` to `Community 0`, `Community 161`, `Community 2`, `Community 36`, `Community 249`, `Community 168`, `Community 234`, `Community 267`, `Community 140`, `Community 13`, `Community 17`, `Community 18`, `Community 53`, `Community 22`, `Community 373`, `Community 24`, `Community 25`?**
   _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `resolveMediaImageUrl()` connect `Community 36` to `Community 0`, `Community 33`, `Community 2`, `Community 161`, `Community 249`, `Community 168`, `Community 234`, `Community 267`, `Community 140`, `Community 13`, `Community 175`, `Community 17`, `Community 18`, `Community 53`, `Community 22`, `Community 373`, `Community 24`, `Community 25`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
-- **Why does `StorageService` connect `Community 161` to `Community 167`, `Community 168`, `Community 140`, `Community 18`, `Community 22`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `buildParams()` connect `Community 6` to `Community 192`, `Community 292`, `Community 7`, `Community 40`, `Community 304`, `Community 340`, `Community 349`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `BaseMediaService` connect `Community 82` to `Community 1`, `Community 3`, `Community 36`, `Community 5`, `Community 9`, `Community 12`, `Community 140`, `Community 14`, `Community 16`, `Community 17`, `Community 21`, `Community 86`, `Community 279`, `Community 25`, `Community 252`, `Community 285`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
 - **Are the 45 inferred relationships involving `buildParams()` (e.g. with `.discoverMovies()` and `.discoverTv()`) actually correct?**
   _`buildParams()` has 45 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ALLOWED_MIME_TYPES`, `ExtractedTitleItem`, `parser` to the rest of the system?**
-  _523 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _607 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.11956521739130435 - nodes in this community are weakly interconnected._
-- **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.0502283105022831 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11594202898550725 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.08067226890756303 - nodes in this community are weakly interconnected._
