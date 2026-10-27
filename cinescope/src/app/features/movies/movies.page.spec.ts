@@ -6,6 +6,8 @@ import { StorageService } from '../../core/services/storage.service';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MoviesPreferencesService } from '../../core/services/movies-preferences.service';
+import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
+import { of } from 'rxjs';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 
 describe('MoviesPage', () => {
@@ -61,6 +63,7 @@ describe('MoviesPage', () => {
 
   const mockStorageService = {
     watchlistItems: mockWatchlistItems,
+    userRegion: signal('US'),
     getBookmarkState: jasmine.createSpy('getBookmarkState').and.returnValue('watchlist'),
     cycleBookmark: jasmine.createSpy('cycleBookmark').and.returnValue(Promise.resolve('watchlist')),
     removeMedia: jasmine.createSpy('removeMedia').and.returnValue(Promise.resolve()),
@@ -114,6 +117,13 @@ describe('MoviesPage', () => {
     })
   };
 
+  const mockTmdbMoviesService = {
+    getMovieWatchProviders: jasmine.createSpy('getMovieWatchProviders').and.returnValue(of({
+      id: 101,
+      results: {}
+    }))
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MoviesPage],
@@ -122,7 +132,8 @@ describe('MoviesPage', () => {
         { provide: StorageService, useValue: mockStorageService },
         { provide: FranchiseAggregatorService, useValue: mockFranchiseAggregatorService },
         { provide: ToastService, useValue: mockToastService },
-        { provide: MoviesPreferencesService, useValue: mockMoviesPreferencesService }
+        { provide: MoviesPreferencesService, useValue: mockMoviesPreferencesService },
+        { provide: TmdbMoviesService, useValue: mockTmdbMoviesService }
       ]
     }).compileComponents();
 

@@ -2995,8 +2995,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.page.spec.ts": {
-    "mtime": 1793138680.3667827,
-    "ast_hash": "0fe33fa0615d07d02cf91c26add6bf11",
+    "mtime": 1793140618.7342522,
+    "ast_hash": "b8b0cba2fdd1e22873f187712191c2a4",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.spec.ts": {
@@ -3010,13 +3010,13 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts": {
-    "mtime": 1793137568.0111117,
-    "ast_hash": "219515d2b3907edb1394aae250157cb9",
+    "mtime": 1793140819.8750038,
+    "ast_hash": "36c92daf61cbcc64ad0ff198d9cb2a85",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts": {
-    "mtime": 1793137592.3650334,
-    "ast_hash": "42522079f529dced25e502ddc5b0e126",
+    "mtime": 1793140803.1632705,
+    "ast_hash": "dac58a1c9eb7558fb79ca6099ae84900",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/franchise-tracker/franchise-tracker.component.ts": {
@@ -3035,8 +3035,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/movies.models.ts": {
-    "mtime": 1793137350.362719,
-    "ast_hash": "422afccb366043d2a48cbce427768d31",
+    "mtime": 1793140414.8431163,
+    "ast_hash": "da94711acaeb1f36a2ca1f95f4d82c44",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.html": {
@@ -3045,8 +3045,8 @@
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.html": {
-    "mtime": 1793137375.7687109,
-    "ast_hash": "7acf2751faa38313dcde6ee4d9886c82",
+    "mtime": 1793140809.957405,
+    "ast_hash": "780fc717c49344d569ed64192caa21fb",
     "semantic_hash": ""
   },
   "cinescope/src/app/features/movies/components/franchise-tracker/franchise-tracker.component.html": {

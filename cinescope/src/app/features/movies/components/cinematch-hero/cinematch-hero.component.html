@@ -1,24 +1,27 @@
 <section class="cinematch-section">
-  <!-- Headline & Decision Mode -->
+  <!-- Dynamic Time-of-Day Headline & Decision Mode -->
   <div class="section-headline">
     <div class="headline-badge">
-      <ion-icon name="sparkles"></ion-icon>
-      <span>Decision Engine</span>
+      <ion-icon [name]="greeting().badgeIcon"></ion-icon>
+      <span>{{ greeting().badge }}</span>
     </div>
-    <h2>WHAT SHOULD I WATCH TONIGHT?</h2>
-    <p class="headline-sub">Instant curated pick tailored to your mood from your Watchlist</p>
+    <h2>{{ greeting().headline }}</h2>
+    <p class="headline-sub">{{ greeting().subtitle }}</p>
   </div>
 
-  <!-- Mood & Runtime Filter Selector -->
+  <!-- Mood & Runtime Filter Selector with Live Counts -->
   <div class="mood-selector-wrap" role="tablist">
-    @for (mood of moodOptions; track mood.id) {
+    @for (mood of sortedMoodOptions(); track mood.id) {
       <button
         type="button"
         class="mood-chip"
         [class.active]="activeMood() === mood.id"
+        [class.disabled-chip]="moodCounts()[mood.id] === 0"
+        [class]="'mood-' + mood.id"
         (click)="setMood(mood.id)"
         role="tab"
         [attr.aria-selected]="activeMood() === mood.id"
+        [disabled]="moodCounts()[mood.id] === 0"
       >
         <ion-icon [name]="mood.icon"></ion-icon>
         <span>{{ mood.label }}</span>
@@ -26,122 +29,203 @@
     }
   </div>
 
-  <!-- Featured Pick Card -->
+  <!-- Hero Featured Pick: Cardless OLED presentation with Smooth Fade -->
   @if (selectedMovie(); as movie) {
-    <div class="cinematch-card" [class.shuffling]="isShuffling()">
-      @if (getBackdrop(movie); as bg) {
-        <div
-          class="card-backdrop"
-          [style.background-image]="'url(' + bg + ')'"
+    <div
+      class="cinematch-showcase"
+      [class.fading]="isShuffling()"
+    >
+      <!-- Top Tag (Time of Day & Added Time) -->
+      <div class="showcase-top-tag">
+        <span class="pulse-dot"></span>
+        <span class="tag-text">{{ greeting().cardTag }}</span>
+        <span class="tag-spacer">•</span>
+        <span class="time-ago">{{ getTimeAgo(movie.addedAt) }}</span>
+      </div>
+
+      <!-- "Why This Pick?" Contextual Hook Banner -->
+      <div class="why-this-pick-banner">
+        <span class="hook-emoji">{{ currentWhyThisPick().emoji }}</span>
+        <div class="hook-text-wrap">
+          <span class="hook-badge">{{ currentWhyThisPick().badge }}</span>
+          <span class="hook-desc">{{ currentWhyThisPick().text }}</span>
+        </div>
+      </div>
+
+      <!-- Movie Poster & Details -->
+      <div class="showcase-body">
+        <button
+          type="button"
+          class="poster-btn"
+          (click)="openDetail.emit(movie.tmdbId)"
+          [attr.aria-label]="getTitle(movie)"
         >
-          <div class="backdrop-gradient"></div>
-        </div>
-      }
+          <img
+            [src]="getPoster(movie)"
+            [alt]="getTitle(movie)"
+            class="movie-poster"
+          />
+        </button>
 
-      <div class="card-content">
-        <div class="card-top-tag">
-          <span class="pulse-dot"></span>
-          <span class="tag-text">TONIGHT'S FEATURED PICK</span>
-          <span class="tag-spacer">•</span>
-          <span class="time-ago">{{ getTimeAgo(movie.addedAt) }}</span>
-        </div>
-
-        <div class="card-body">
+        <div class="movie-info">
           <button
             type="button"
-            class="poster-btn"
+            class="title-btn"
             (click)="openDetail.emit(movie.tmdbId)"
-            [attr.aria-label]="getTitle(movie)"
           >
-            <img
-              [src]="getPoster(movie)"
-              [alt]="getTitle(movie)"
-              class="card-poster"
-            />
+            <h3 class="movie-title">
+              {{ getTitle(movie) }}
+            </h3>
           </button>
 
-          <div class="card-info">
-            <button
-              type="button"
-              class="title-btn"
-              (click)="openDetail.emit(movie.tmdbId)"
-            >
-              <h3 class="movie-title">
-                {{ getTitle(movie) }}
-              </h3>
-            </button>
+          <div class="movie-meta-row">
+            @if (getYear(movie); as yr) {
+              <span class="meta-item">{{ yr }}</span>
+            }
+            @if (getRuntime(movie); as rt) {
+              <span class="meta-dot">•</span>
+              <span class="meta-item meta-runtime">
+                <ion-icon name="time-outline"></ion-icon>
+                {{ rt }}
+              </span>
+            }
+            @if (getRating(movie); as rating) {
+              <span class="meta-dot">•</span>
+              <span class="meta-item meta-rating">
+                <ion-icon name="star"></ion-icon>
+                {{ rating }}
+              </span>
+            }
+          </div>
 
-            <div class="movie-meta-row">
-              @if (getYear(movie); as yr) {
-                <span class="meta-item">{{ yr }}</span>
-              }
-              @if (getRuntime(movie); as rt) {
-                <span class="meta-dot">•</span>
-                <span class="meta-item meta-runtime">
-                  <ion-icon name="time-outline"></ion-icon>
-                  {{ rt }}
-                </span>
-              }
-              @if (getRating(movie); as rating) {
-                <span class="meta-dot">•</span>
-                <span class="meta-item meta-rating">
-                  <ion-icon name="star"></ion-icon>
-                  {{ rating }}
-                </span>
+          <!-- Genre Badges -->
+          @if (getGenres(movie); as genres) {
+            <div class="genre-pills">
+              @for (g of genres; track g) {
+                <span class="genre-pill">{{ g }}</span>
               }
             </div>
+          }
 
-            <!-- Genre Badges -->
-            @if (getGenres(movie); as genres) {
-              <div class="genre-pills">
-                @for (g of genres; track g) {
-                  <span class="genre-pill">{{ g }}</span>
+          <!-- OTT Streaming Availability with Region Awareness -->
+          <div class="streaming-details-row">
+            @if (streamingDetails().type === 'flatrate') {
+              <div class="stream-block stream-available">
+                <div class="stream-badge-row">
+                  <span class="stream-status-dot green-dot"></span>
+                  <span class="stream-label">{{ streamingDetails().label }}</span>
+                </div>
+                <div class="providers-list">
+                  @for (prov of streamingDetails().providers; track prov.provider_id) {
+                    <div class="provider-pill" [title]="prov.provider_name">
+                      <img
+                        [src]="getProviderLogo(prov.logo_path)"
+                        [alt]="prov.provider_name"
+                        class="provider-logo"
+                      />
+                      <span class="provider-name">{{ prov.provider_name }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else if (streamingDetails().type === 'rent_buy') {
+              <div class="stream-block stream-rent">
+                <div class="stream-badge-row">
+                  <span class="stream-status-dot yellow-dot"></span>
+                  <span class="stream-label">{{ streamingDetails().label }}</span>
+                </div>
+                <div class="providers-list">
+                  @for (prov of streamingDetails().providers; track prov.provider_id) {
+                    <div class="provider-pill rent-pill" [title]="prov.provider_name">
+                      <img
+                        [src]="getProviderLogo(prov.logo_path)"
+                        [alt]="prov.provider_name"
+                        class="provider-logo"
+                      />
+                      <span class="provider-name">{{ prov.provider_name }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else if (streamingDetails().type === 'other_regions') {
+              <div class="stream-block stream-other-regions">
+                <div class="stream-badge-row">
+                  <span class="stream-status-dot dim-dot"></span>
+                  <span class="stream-label">{{ streamingDetails().label }}</span>
+                </div>
+                @if (streamingDetails().subtext) {
+                  <p class="stream-subtext">{{ streamingDetails().subtext }}</p>
+                }
+                @if (streamingDetails().providers.length > 0) {
+                  <div class="providers-list other-providers">
+                    @for (prov of streamingDetails().providers; track prov.provider_id) {
+                      <div class="provider-pill other-pill" [title]="prov.provider_name">
+                        <img
+                          [src]="getProviderLogo(prov.logo_path)"
+                          [alt]="prov.provider_name"
+                          class="provider-logo"
+                        />
+                        <span class="provider-name">{{ prov.provider_name }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="stream-block stream-none">
+                <div class="stream-badge-row">
+                  <span class="stream-status-dot dim-dot"></span>
+                  <span class="stream-label">{{ streamingDetails().label }}</span>
+                </div>
+                @if (streamingDetails().subtext) {
+                  <p class="stream-subtext">{{ streamingDetails().subtext }}</p>
                 }
               </div>
             }
-
-            <!-- Logline/Overview -->
-            @if (getOverview(movie); as overview) {
-              <p class="movie-logline">{{ overview }}</p>
-            }
           </div>
+
+          <!-- Logline / Overview -->
+          @if (getOverview(movie); as overview) {
+            <p class="movie-logline">{{ overview }}</p>
+          }
         </div>
+      </div>
 
-        <!-- Action Row -->
-        <div class="card-actions-row">
-          <button
-            type="button"
-            class="btn-action btn-primary"
-            (click)="openDetail.emit(movie.tmdbId)"
-          >
-            <ion-icon name="play-outline"></ion-icon>
-            <span>Watch Details</span>
-          </button>
+      <!-- Action Buttons Row -->
+      <div class="showcase-actions-row">
+        <button
+          type="button"
+          class="btn-action btn-primary"
+          (click)="openDetail.emit(movie.tmdbId)"
+        >
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <span>Details</span>
+        </button>
 
-          <button
-            type="button"
-            class="btn-action btn-secondary"
-            (click)="rollTheDice()"
-          >
-            <ion-icon name="dice-outline"></ion-icon>
-            <span>Roll the Dice</span>
-          </button>
+        <button
+          type="button"
+          class="btn-action btn-secondary"
+          (click)="rollTheDice()"
+          title="Shuffle to another pick"
+        >
+          <ion-icon name="dice-outline" class="dice-spin-icon" [class.spinning]="isShuffling()"></ion-icon>
+          <span>Shuffle</span>
+        </button>
 
-          <button
-            type="button"
-            class="btn-action btn-ghost"
-            (click)="markWatched.emit(movie)"
-            title="Mark as Watched"
-            aria-label="Mark as Watched"
-          >
-            <ion-icon name="checkmark-circle"></ion-icon>
-          </button>
-        </div>
+        <button
+          type="button"
+          class="btn-action btn-ghost"
+          (click)="markWatched.emit(movie)"
+          title="Mark as Watched"
+          aria-label="Mark as Watched"
+        >
+          <ion-icon name="checkmark-circle"></ion-icon>
+        </button>
       </div>
     </div>
   } @else {
-    <!-- Empty State for Mood or Empty Watchlist -->
-    <div class="cinematch-card empty-card">
+    <!-- Empty State without Boxed Card -->
+    <div class="cinematch-empty">
       <div class="empty-icon-wrap">
         <ion-icon name="film-outline"></ion-icon>
       </div>

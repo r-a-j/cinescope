@@ -1,5 +1,7 @@
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+import { TmdbWatchProviderDto } from '../../core/dtos/watch-providers/watch-provider.dto';
+import { TmdbMovieWatchProvidersResponseDto } from '../../core/dtos/movies/movie-watch-providers.dto';
 
 export type CineMatchMood =
   | 'all'
@@ -53,6 +55,133 @@ export const TMDB_GENRE_NAMES: Record<number, string> = {
   10752: 'War',
   37: 'Western'
 };
+
+export interface TimeOfDayGreeting {
+  badge: string;
+  badgeIcon: string;
+  headline: string;
+  subtitle: string;
+  cardTag: string;
+}
+
+export function getTimeOfDayGreeting(now: Date = new Date()): TimeOfDayGreeting {
+  const hour = now.getHours();
+
+  if (hour >= 5 && hour < 12) {
+    return {
+      badge: 'Morning Cinema',
+      badgeIcon: 'sunny-outline',
+      headline: 'WHAT SHOULD I WATCH THIS MORNING?',
+      subtitle: 'Start your day with an inspiring pick from your Watchlist',
+      cardTag: "THIS MORNING'S FEATURED PICK"
+    };
+  }
+
+  if (hour >= 12 && hour < 17) {
+    return {
+      badge: 'Afternoon Matinee',
+      badgeIcon: 'film-outline',
+      headline: 'WHAT SHOULD I WATCH THIS AFTERNOON?',
+      subtitle: 'A curated matinee feature from your Watchlist',
+      cardTag: 'AFTERNOON MATINEE PICK'
+    };
+  }
+
+  if (hour >= 17 && hour < 22) {
+    return {
+      badge: 'Prime Time Cinema',
+      badgeIcon: 'sparkles',
+      headline: 'WHAT SHOULD I WATCH TONIGHT?',
+      subtitle: 'Instant curated pick tailored to your mood from your Watchlist',
+      cardTag: "TONIGHT'S FEATURED PICK"
+    };
+  }
+
+  return {
+    badge: 'Late-Night Screening',
+    badgeIcon: 'moon-outline',
+    headline: 'WHAT SHOULD I WATCH LATE NIGHT?',
+    subtitle: 'Quiet nocturnal cinema & midnight gems from your Watchlist',
+    cardTag: 'MIDNIGHT SCREENING PICK'
+  };
+}
+
+export interface ContextualHook {
+  emoji: string;
+  badge: string;
+  text: string;
+}
+
+export function getContextualHook(doc: ContentDocType | null): ContextualHook {
+  if (!doc?.payload) {
+    return {
+      emoji: '🍿',
+      badge: 'Featured Pick',
+      text: 'Handpicked from your Watchlist'
+    };
+  }
+
+  const p = doc.payload as Record<string, unknown>;
+  const rating = Number(p['vote_average'] || 0);
+  const runtime = Number(p['runtime'] || 0);
+  const addedAt = doc.addedAt ? new Date(doc.addedAt).getTime() : Date.now();
+  const daysAgo = Math.floor((Date.now() - addedAt) / (1000 * 60 * 60 * 24));
+
+  let genreIds: number[] = [];
+  if (Array.isArray(p['genre_ids'])) {
+    genreIds = p['genre_ids'].map(Number);
+  } else if (Array.isArray(p['genres'])) {
+    genreIds = (p['genres'] as (Record<string, unknown> | number)[]).map(g =>
+      typeof g === 'object' && g !== null ? Number(g['id'] || 0) : Number(g)
+    );
+  }
+
+  if (rating >= 8.3) {
+    return {
+      emoji: '🏆',
+      badge: 'Critically Acclaimed',
+      text: `★ ${rating.toFixed(1)} rating • Top rated cinema in your library`
+    };
+  }
+
+  if (runtime > 0 && runtime <= 90) {
+    return {
+      emoji: '⏱️',
+      badge: 'Zero Commitment',
+      text: `${runtime}m runtime • Easy, low-commitment watch`
+    };
+  }
+
+  if (daysAgo >= 60) {
+    return {
+      emoji: '⏳',
+      badge: 'Forgotten Bookmark',
+      text: `Added ${daysAgo} days ago • Time to give this another look!`
+    };
+  }
+
+  if (genreIds.some(id => [9648, 878].includes(id))) {
+    return {
+      emoji: '🤯',
+      badge: 'Mind-Bender',
+      text: 'Twisting plot & conceptual depth to keep you hooked'
+    };
+  }
+
+  if (genreIds.some(id => [28, 53].includes(id))) {
+    return {
+      emoji: '⚡',
+      badge: 'High Adrenaline',
+      text: 'Fast-paced tension with non-stop momentum'
+    };
+  }
+
+  return {
+    emoji: '🍿',
+    badge: 'Curated For You',
+    text: 'Tailored recommendation from your Watchlist'
+  };
+}
 
 export function getMovieTitle(doc: ContentDocType | null): string {
   if (!doc?.payload) return 'Unknown Title';
@@ -128,4 +257,114 @@ export function getMovieGenres(doc: ContentDocType | null): string[] {
     return (p['genre_ids'] as number[]).map((id: number) => TMDB_GENRE_NAMES[id]).filter(Boolean).slice(0, 3);
   }
   return [];
+}
+
+export interface StreamingAvailability {
+  region: string;
+  type: 'flatrate' | 'rent_buy' | 'other_regions' | 'none';
+  providers: TmdbWatchProviderDto[];
+  label: string;
+  subtext?: string;
+}
+
+export function resolveStreamingDetails(
+  resp: TmdbMovieWatchProvidersResponseDto | null | undefined,
+  userRegion: string
+): StreamingAvailability {
+  const reg = (userRegion || 'US').trim().toUpperCase();
+  if (!resp || !resp.results) {
+    return {
+      region: reg,
+      type: 'none',
+      providers: [],
+      label: `NOT STREAMING IN ${reg}`,
+      subtext: 'No streaming data available'
+    };
+  }
+
+  const regionData = resp.results[reg];
+
+  // 1. Subscription, free, or ad-supported streaming in user's region
+  const streamProviders = [
+    ...(regionData?.flatrate || []),
+    ...(regionData?.free || []),
+    ...(regionData?.ads || [])
+  ];
+  if (streamProviders.length > 0) {
+    const unique = streamProviders.filter((prov, idx, self) =>
+      idx === self.findIndex(p => p.provider_id === prov.provider_id)
+    );
+    unique.sort((a, b) => a.display_priority - b.display_priority);
+    return {
+      region: reg,
+      type: 'flatrate',
+      providers: unique.slice(0, 4),
+      label: `STREAMING IN ${reg}`
+    };
+  }
+
+  // 2. Rent or buy options in user's region
+  const rentBuyProviders = [
+    ...(regionData?.rent || []),
+    ...(regionData?.buy || [])
+  ];
+  if (rentBuyProviders.length > 0) {
+    const unique = rentBuyProviders.filter((prov, idx, self) =>
+      idx === self.findIndex(p => p.provider_id === prov.provider_id)
+    );
+    unique.sort((a, b) => a.display_priority - b.display_priority);
+    return {
+      region: reg,
+      type: 'rent_buy',
+      providers: unique.slice(0, 4),
+      label: `RENT / BUY IN ${reg}`
+    };
+  }
+
+  // 3. Not in user's region: check if streaming in other regions
+  const allRegions = Object.keys(resp.results);
+  const otherRegions: { code: string; providers: TmdbWatchProviderDto[] }[] = [];
+
+  for (const code of allRegions) {
+    if (code === reg) continue;
+    const r = resp.results[code];
+    const fp = [...(r?.flatrate || []), ...(r?.free || [])];
+    if (fp.length > 0) {
+      otherRegions.push({ code, providers: fp });
+    }
+  }
+
+  if (otherRegions.length > 0) {
+    const topRegions = otherRegions.slice(0, 3).map(r => r.code).join(', ');
+    const topProvider = otherRegions[0].providers[0]?.provider_name;
+    const subtext = topProvider
+      ? `Available on ${topProvider} in ${topRegions}`
+      : `Streaming in ${topRegions}`;
+
+    const gatheredProviders: TmdbWatchProviderDto[] = [];
+    for (const item of otherRegions) {
+      for (const p of item.providers) {
+        if (!gatheredProviders.some(existing => existing.provider_id === p.provider_id)) {
+          gatheredProviders.push(p);
+        }
+      }
+    }
+
+    return {
+      region: reg,
+      type: 'other_regions',
+      providers: gatheredProviders.slice(0, 3),
+      label: `NOT STREAMING IN ${reg}`,
+      subtext
+    };
+  }
+
+  // 4. Not available anywhere
+  return {
+    region: reg,
+    type: 'none',
+    providers: [],
+    label: `NOT STREAMING IN ${reg}`,
+    subtext: 'Theatrical release or not yet on OTT'
+  };
 }

@@ -2356,7 +2356,7 @@
       "source_file": "cinescope/src/app/core/constants/api.constants.ts",
       "source_location": "L14",
       "id": "constants_api_constants_resolvemediaimageurl",
-      "community": 18,
+      "community": 3,
       "norm_label": "resolvemediaimageurl()"
     },
     {
@@ -2365,7 +2365,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L1",
       "id": "database_database_service",
-      "community": 21,
+      "community": 167,
       "norm_label": "database.service.ts"
     },
     {
@@ -2374,7 +2374,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L25",
       "id": "database_database_service_cinescopecollections",
-      "community": 21,
+      "community": 167,
       "norm_label": "cinescopecollections"
     },
     {
@@ -2383,7 +2383,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L31",
       "id": "database_database_service_cinescopedatabase",
-      "community": 21,
+      "community": 167,
       "norm_label": "cinescopedatabase"
     },
     {
@@ -2392,7 +2392,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L36",
       "id": "database_database_service_databaseservice",
-      "community": 21,
+      "community": 167,
       "norm_label": "databaseservice"
     },
     {
@@ -2401,7 +2401,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L40",
       "id": "database_database_service_databaseservice_initdatabase",
-      "community": 21,
+      "community": 167,
       "norm_label": ".initdatabase()"
     },
     {
@@ -2410,7 +2410,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L114",
       "id": "database_database_service_databaseservice_isinitialized",
-      "community": 21,
+      "community": 167,
       "norm_label": ".isinitialized()"
     },
     {
@@ -2419,7 +2419,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L118",
       "id": "database_database_service_databaseservice_getdatabase",
-      "community": 21,
+      "community": 167,
       "norm_label": ".getdatabase()"
     },
     {
@@ -2428,7 +2428,7 @@
       "source_file": "cinescope/src/app/core/database/database.service.ts",
       "source_location": "L129",
       "id": "database_database_service_databaseservice_db",
-      "community": 21,
+      "community": 167,
       "norm_label": ".db()"
     },
     {
@@ -2437,7 +2437,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L1",
       "id": "schemas_content_schema",
-      "community": 52,
+      "community": 21,
       "norm_label": "content.schema.ts"
     },
     {
@@ -2446,7 +2446,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L3",
       "id": "schemas_content_schema_contentschemaliteral",
-      "community": 52,
+      "community": 21,
       "norm_label": "contentschemaliteral"
     },
     {
@@ -2455,7 +2455,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L46",
       "id": "schemas_content_schema_contentschematyped",
-      "community": 52,
+      "community": 21,
       "norm_label": "contentschematyped"
     },
     {
@@ -2473,7 +2473,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L50",
       "id": "schemas_content_schema_contentmigrationstrategies",
-      "community": 21,
+      "community": 167,
       "norm_label": "contentmigrationstrategies"
     },
     {
@@ -2482,7 +2482,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L1",
       "id": "schemas_search_history_schema",
-      "community": 21,
+      "community": 167,
       "norm_label": "search-history.schema.ts"
     },
     {
@@ -2491,7 +2491,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L3",
       "id": "schemas_search_history_schema_searchhistoryschemaliteral",
-      "community": 21,
+      "community": 167,
       "norm_label": "searchhistoryschemaliteral"
     },
     {
@@ -2500,7 +2500,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L26",
       "id": "schemas_search_history_schema_searchhistoryschematyped",
-      "community": 21,
+      "community": 167,
       "norm_label": "searchhistoryschematyped"
     },
     {
@@ -2509,7 +2509,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L27",
       "id": "schemas_search_history_schema_searchhistorydoctype",
-      "community": 21,
+      "community": 167,
       "norm_label": "searchhistorydoctype"
     },
     {
@@ -2518,7 +2518,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L30",
       "id": "schemas_search_history_schema_searchhistorymigrationstrategies",
-      "community": 21,
+      "community": 167,
       "norm_label": "searchhistorymigrationstrategies"
     },
     {
@@ -2527,7 +2527,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L1",
       "id": "schemas_settings_schema",
-      "community": 21,
+      "community": 167,
       "norm_label": "settings.schema.ts"
     },
     {
@@ -2536,7 +2536,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L3",
       "id": "schemas_settings_schema_settingsschemaliteral",
-      "community": 21,
+      "community": 167,
       "norm_label": "settingsschemaliteral"
     },
     {
@@ -2545,7 +2545,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L36",
       "id": "schemas_settings_schema_settingsschematyped",
-      "community": 21,
+      "community": 167,
       "norm_label": "settingsschematyped"
     },
     {
@@ -2554,7 +2554,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L37",
       "id": "schemas_settings_schema_settingsdoctype",
-      "community": 21,
+      "community": 167,
       "norm_label": "settingsdoctype"
     },
     {
@@ -2563,7 +2563,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L39",
       "id": "schemas_settings_schema_settingsmigrationstrategies",
-      "community": 21,
+      "community": 167,
       "norm_label": "settingsmigrationstrategies"
     },
     {
@@ -2572,7 +2572,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-detail.dto.ts",
       "source_location": "L1",
       "id": "collections_collection_detail_dto",
-      "community": 3,
+      "community": 249,
       "norm_label": "collection-detail.dto.ts"
     },
     {
@@ -2581,7 +2581,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-detail.dto.ts",
       "source_location": "L4",
       "id": "collections_collection_detail_dto_tmdbcollectiondetaildto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbcollectiondetaildto"
     },
     {
@@ -2590,7 +2590,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-images.dto.ts",
       "source_location": "L1",
       "id": "collections_collection_images_dto",
-      "community": 3,
+      "community": 249,
       "norm_label": "collection-images.dto.ts"
     },
     {
@@ -2599,7 +2599,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-images.dto.ts",
       "source_location": "L3",
       "id": "collections_collection_images_dto_tmdbcollectionimagesdto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbcollectionimagesdto"
     },
     {
@@ -2626,7 +2626,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-translations.dto.ts",
       "source_location": "L1",
       "id": "collections_collection_translations_dto",
-      "community": 3,
+      "community": 249,
       "norm_label": "collection-translations.dto.ts"
     },
     {
@@ -2635,7 +2635,7 @@
       "source_file": "cinescope/src/app/core/dtos/collections/collection-translations.dto.ts",
       "source_location": "L3",
       "id": "collections_collection_translations_dto_tmdbcollectiontranslationsdto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbcollectiontranslationsdto"
     },
     {
@@ -2644,7 +2644,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/certification.dto.ts",
       "source_location": "L1",
       "id": "common_certification_dto",
-      "community": 14,
+      "community": 17,
       "norm_label": "certification.dto.ts"
     },
     {
@@ -2653,7 +2653,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/certification.dto.ts",
       "source_location": "L1",
       "id": "common_certification_dto_tmdbcertificationitemdto",
-      "community": 14,
+      "community": 17,
       "norm_label": "tmdbcertificationitemdto"
     },
     {
@@ -2662,7 +2662,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/certification.dto.ts",
       "source_location": "L7",
       "id": "common_certification_dto_tmdbcertificationresponsedto",
-      "community": 14,
+      "community": 17,
       "norm_label": "tmdbcertificationresponsedto"
     },
     {
@@ -2671,7 +2671,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/image-item.dto.ts",
       "source_location": "L1",
       "id": "common_image_item_dto",
-      "community": 3,
+      "community": 249,
       "norm_label": "image-item.dto.ts"
     },
     {
@@ -2680,7 +2680,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/image-item.dto.ts",
       "source_location": "L1",
       "id": "common_image_item_dto_tmdbimageitemdto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbimageitemdto"
     },
     {
@@ -2707,7 +2707,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/paginated-response.dto.ts",
       "source_location": "L1",
       "id": "common_paginated_response_dto",
-      "community": 25,
+      "community": 5,
       "norm_label": "paginated-response.dto.ts"
     },
     {
@@ -2725,7 +2725,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/translation.dto.ts",
       "source_location": "L1",
       "id": "common_translation_dto",
-      "community": 3,
+      "community": 249,
       "norm_label": "translation.dto.ts"
     },
     {
@@ -2734,7 +2734,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/translation.dto.ts",
       "source_location": "L1",
       "id": "common_translation_dto_tmdbtranslationdatadto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbtranslationdatadto"
     },
     {
@@ -2743,7 +2743,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/translation.dto.ts",
       "source_location": "L9",
       "id": "common_translation_dto_tmdbtranslationitemdto",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbtranslationitemdto"
     },
     {
@@ -2752,7 +2752,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/video.dto.ts",
       "source_location": "L1",
       "id": "common_video_dto",
-      "community": 11,
+      "community": 22,
       "norm_label": "video.dto.ts"
     },
     {
@@ -2761,7 +2761,7 @@
       "source_file": "cinescope/src/app/core/dtos/common/video.dto.ts",
       "source_location": "L1",
       "id": "common_video_dto_tmdbvideodto",
-      "community": 11,
+      "community": 22,
       "norm_label": "tmdbvideodto"
     },
     {
@@ -2770,7 +2770,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-alternative-names.dto.ts",
       "source_location": "L1",
       "id": "companies_company_alternative_names_dto",
-      "community": 82,
+      "community": 24,
       "norm_label": "company-alternative-names.dto.ts"
     },
     {
@@ -2779,7 +2779,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-alternative-names.dto.ts",
       "source_location": "L1",
       "id": "companies_company_alternative_names_dto_tmdbcompanyalternativenameitemdto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompanyalternativenameitemdto"
     },
     {
@@ -2788,7 +2788,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-alternative-names.dto.ts",
       "source_location": "L6",
       "id": "companies_company_alternative_names_dto_tmdbcompanyalternativenamesdto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompanyalternativenamesdto"
     },
     {
@@ -2797,7 +2797,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-detail.dto.ts",
       "source_location": "L1",
       "id": "companies_company_detail_dto",
-      "community": 82,
+      "community": 24,
       "norm_label": "company-detail.dto.ts"
     },
     {
@@ -2806,7 +2806,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-detail.dto.ts",
       "source_location": "L1",
       "id": "companies_company_detail_dto_tmdbparentcompanydto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbparentcompanydto"
     },
     {
@@ -2815,7 +2815,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-detail.dto.ts",
       "source_location": "L7",
       "id": "companies_company_detail_dto_tmdbcompanydetaildto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompanydetaildto"
     },
     {
@@ -2824,7 +2824,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-images.dto.ts",
       "source_location": "L1",
       "id": "companies_company_images_dto",
-      "community": 82,
+      "community": 24,
       "norm_label": "company-images.dto.ts"
     },
     {
@@ -2833,7 +2833,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-images.dto.ts",
       "source_location": "L1",
       "id": "companies_company_images_dto_tmdbcompanylogodto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompanylogodto"
     },
     {
@@ -2842,7 +2842,7 @@
       "source_file": "cinescope/src/app/core/dtos/companies/company-images.dto.ts",
       "source_location": "L12",
       "id": "companies_company_images_dto_tmdbcompanyimagesdto",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompanyimagesdto"
     },
     {
@@ -2968,7 +2968,7 @@
       "source_file": "cinescope/src/app/core/dtos/credits/credit-detail.dto.ts",
       "source_location": "L1",
       "id": "credits_credit_detail_dto",
-      "community": 16,
+      "community": 82,
       "norm_label": "credit-detail.dto.ts"
     },
     {
@@ -2977,7 +2977,7 @@
       "source_file": "cinescope/src/app/core/dtos/credits/credit-detail.dto.ts",
       "source_location": "L1",
       "id": "credits_credit_detail_dto_tmdbcreditmediaseasondto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbcreditmediaseasondto"
     },
     {
@@ -2986,7 +2986,7 @@
       "source_file": "cinescope/src/app/core/dtos/credits/credit-detail.dto.ts",
       "source_location": "L12",
       "id": "credits_credit_detail_dto_tmdbcreditmediadto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbcreditmediadto"
     },
     {
@@ -2995,7 +2995,7 @@
       "source_file": "cinescope/src/app/core/dtos/credits/credit-detail.dto.ts",
       "source_location": "L44",
       "id": "credits_credit_detail_dto_tmdbcreditpersondto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbcreditpersondto"
     },
     {
@@ -3004,7 +3004,7 @@
       "source_file": "cinescope/src/app/core/dtos/credits/credit-detail.dto.ts",
       "source_location": "L56",
       "id": "credits_credit_detail_dto_tmdbcreditdetaildto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbcreditdetaildto"
     },
     {
@@ -3049,7 +3049,7 @@
       "source_file": "cinescope/src/app/core/dtos/feed/feed.dto.ts",
       "source_location": "L1",
       "id": "feed_feed_dto",
-      "community": 167,
+      "community": 41,
       "norm_label": "feed.dto.ts"
     },
     {
@@ -3058,7 +3058,7 @@
       "source_file": "cinescope/src/app/core/dtos/feed/feed.dto.ts",
       "source_location": "L1",
       "id": "feed_feed_dto_feeditem",
-      "community": 167,
+      "community": 41,
       "norm_label": "feeditem"
     },
     {
@@ -3067,7 +3067,7 @@
       "source_file": "cinescope/src/app/core/dtos/feed/feed.dto.ts",
       "source_location": "L12",
       "id": "feed_feed_dto_feedresponsedto",
-      "community": 167,
+      "community": 41,
       "norm_label": "feedresponsedto"
     },
     {
@@ -3076,7 +3076,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/external-source.type.ts",
       "source_location": "L1",
       "id": "find_external_source_type",
-      "community": 16,
+      "community": 82,
       "norm_label": "external-source.type.ts"
     },
     {
@@ -3085,7 +3085,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/external-source.type.ts",
       "source_location": "L4",
       "id": "find_external_source_type_tmdbexternalsource",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbexternalsource"
     },
     {
@@ -3094,7 +3094,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/find-results.dto.ts",
       "source_location": "L1",
       "id": "find_find_results_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "find-results.dto.ts"
     },
     {
@@ -3103,7 +3103,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/find-results.dto.ts",
       "source_location": "L4",
       "id": "find_find_results_dto_tmdbpersonlistitemdto",
-      "community": 5,
+      "community": 11,
       "norm_label": "tmdbpersonlistitemdto"
     },
     {
@@ -3112,7 +3112,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/find-results.dto.ts",
       "source_location": "L17",
       "id": "find_find_results_dto_tmdbtvepisoderesultdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbtvepisoderesultdto"
     },
     {
@@ -3121,7 +3121,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/find-results.dto.ts",
       "source_location": "L33",
       "id": "find_find_results_dto_tmdbtvseasonresultdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbtvseasonresultdto"
     },
     {
@@ -3130,7 +3130,7 @@
       "source_file": "cinescope/src/app/core/dtos/find/find-results.dto.ts",
       "source_location": "L44",
       "id": "find_find_results_dto_tmdbfindresultsdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbfindresultsdto"
     },
     {
@@ -3139,7 +3139,7 @@
       "source_file": "cinescope/src/app/core/dtos/genres/genre.dto.ts",
       "source_location": "L1",
       "id": "genres_genre_dto",
-      "community": 12,
+      "community": 16,
       "norm_label": "genre.dto.ts"
     },
     {
@@ -3148,7 +3148,7 @@
       "source_file": "cinescope/src/app/core/dtos/genres/genre.dto.ts",
       "source_location": "L1",
       "id": "genres_genre_dto_tmdbgenredto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbgenredto"
     },
     {
@@ -3157,7 +3157,7 @@
       "source_file": "cinescope/src/app/core/dtos/genres/genre.dto.ts",
       "source_location": "L12",
       "id": "genres_genre_dto_tmdbgenrelistdto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbgenrelistdto"
     },
     {
@@ -3166,7 +3166,7 @@
       "source_file": "cinescope/src/app/core/dtos/keywords/keyword.dto.ts",
       "source_location": "L1",
       "id": "keywords_keyword_dto",
-      "community": 24,
+      "community": 178,
       "norm_label": "keyword.dto.ts"
     },
     {
@@ -3175,7 +3175,7 @@
       "source_file": "cinescope/src/app/core/dtos/keywords/keyword.dto.ts",
       "source_location": "L1",
       "id": "keywords_keyword_dto_tmdbkeyworddto",
-      "community": 24,
+      "community": 178,
       "norm_label": "tmdbkeyworddto"
     },
     {
@@ -3283,7 +3283,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_detail_dto",
-      "community": 12,
+      "community": 16,
       "norm_label": "movie-detail.dto.ts"
     },
     {
@@ -3301,7 +3301,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L10",
       "id": "movies_movie_detail_dto_tmdbproductioncompanydto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbproductioncompanydto"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L17",
       "id": "movies_movie_detail_dto_tmdbproductioncountrydto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbproductioncountrydto"
     },
     {
@@ -3319,7 +3319,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L22",
       "id": "movies_movie_detail_dto_tmdbspokenlanguagedto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbspokenlanguagedto"
     },
     {
@@ -3328,7 +3328,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-detail.dto.ts",
       "source_location": "L28",
       "id": "movies_movie_detail_dto_tmdbmoviedetaildto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbmoviedetaildto"
     },
     {
@@ -3373,7 +3373,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-keywords.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_keywords_dto",
-      "community": 24,
+      "community": 178,
       "norm_label": "movie-keywords.dto.ts"
     },
     {
@@ -3382,7 +3382,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-keywords.dto.ts",
       "source_location": "L3",
       "id": "movies_movie_keywords_dto_tmdbmoviekeywordsresponsedto",
-      "community": 24,
+      "community": 178,
       "norm_label": "tmdbmoviekeywordsresponsedto"
     },
     {
@@ -3391,7 +3391,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-list-item.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_list_item_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "movie-list-item.dto.ts"
     },
     {
@@ -3400,7 +3400,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-list-item.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_list_item_dto_tmdbmovielistitemdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbmovielistitemdto"
     },
     {
@@ -3427,7 +3427,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-release-dates.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_release_dates_dto",
-      "community": 22,
+      "community": 12,
       "norm_label": "movie-release-dates.dto.ts"
     },
     {
@@ -3436,7 +3436,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-release-dates.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_release_dates_dto_tmdbreleasedateitemdto",
-      "community": 22,
+      "community": 12,
       "norm_label": "tmdbreleasedateitemdto"
     },
     {
@@ -3445,7 +3445,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-release-dates.dto.ts",
       "source_location": "L29",
       "id": "movies_movie_release_dates_dto_tmdbreleasedategroupdto",
-      "community": 22,
+      "community": 12,
       "norm_label": "tmdbreleasedategroupdto"
     },
     {
@@ -3499,7 +3499,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-videos.dto.ts",
       "source_location": "L1",
       "id": "movies_movie_videos_dto",
-      "community": 11,
+      "community": 22,
       "norm_label": "movie-videos.dto.ts"
     },
     {
@@ -3508,7 +3508,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/movie-videos.dto.ts",
       "source_location": "L3",
       "id": "movies_movie_videos_dto_tmdbmovievideosresponsedto",
-      "community": 11,
+      "community": 22,
       "norm_label": "tmdbmovievideosresponsedto"
     },
     {
@@ -3535,7 +3535,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/now-playing.dto.ts",
       "source_location": "L1",
       "id": "movies_now_playing_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "now-playing.dto.ts"
     },
     {
@@ -3544,7 +3544,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/now-playing.dto.ts",
       "source_location": "L3",
       "id": "movies_now_playing_dto_tmdbnowplayingdatesdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbnowplayingdatesdto"
     },
     {
@@ -3553,7 +3553,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/now-playing.dto.ts",
       "source_location": "L14",
       "id": "movies_now_playing_dto_tmdbnowplayingresponsedto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbnowplayingresponsedto"
     },
     {
@@ -3562,7 +3562,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/upcoming.dto.ts",
       "source_location": "L1",
       "id": "movies_upcoming_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "upcoming.dto.ts"
     },
     {
@@ -3571,7 +3571,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/upcoming.dto.ts",
       "source_location": "L3",
       "id": "movies_upcoming_dto_tmdbupcomingdatesdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbupcomingdatesdto"
     },
     {
@@ -3580,7 +3580,7 @@
       "source_file": "cinescope/src/app/core/dtos/movies/upcoming.dto.ts",
       "source_location": "L14",
       "id": "movies_upcoming_dto_tmdbupcomingresponsedto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbupcomingresponsedto"
     },
     {
@@ -3697,7 +3697,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-combined-credits.dto.ts",
       "source_location": "L1",
       "id": "people_person_combined_credits_dto",
-      "community": 234,
+      "community": 86,
       "norm_label": "person-combined-credits.dto.ts"
     },
     {
@@ -3706,7 +3706,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-combined-credits.dto.ts",
       "source_location": "L1",
       "id": "people_person_combined_credits_dto_tmdbpersoncreditbasedto",
-      "community": 234,
+      "community": 86,
       "norm_label": "tmdbpersoncreditbasedto"
     },
     {
@@ -3715,7 +3715,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-combined-credits.dto.ts",
       "source_location": "L32",
       "id": "people_person_combined_credits_dto_tmdbpersoncastcreditdto",
-      "community": 234,
+      "community": 86,
       "norm_label": "tmdbpersoncastcreditdto"
     },
     {
@@ -3724,7 +3724,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-combined-credits.dto.ts",
       "source_location": "L43",
       "id": "people_person_combined_credits_dto_tmdbpersoncrewcreditdto",
-      "community": 234,
+      "community": 86,
       "norm_label": "tmdbpersoncrewcreditdto"
     },
     {
@@ -3733,7 +3733,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-combined-credits.dto.ts",
       "source_location": "L54",
       "id": "people_person_combined_credits_dto_tmdbpersoncombinedcreditsresponsedto",
-      "community": 140,
+      "community": 86,
       "norm_label": "tmdbpersoncombinedcreditsresponsedto"
     },
     {
@@ -3796,7 +3796,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-list-item.dto.ts",
       "source_location": "L1",
       "id": "people_person_list_item_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "person-list-item.dto.ts"
     },
     {
@@ -3805,7 +3805,7 @@
       "source_file": "cinescope/src/app/core/dtos/people/person-list-item.dto.ts",
       "source_location": "L4",
       "id": "people_person_list_item_dto_tmdbpersonlistitemdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbpersonlistitemdto"
     },
     {
@@ -3922,7 +3922,7 @@
       "source_file": "cinescope/src/app/core/dtos/reviews/review-detail.dto.ts",
       "source_location": "L1",
       "id": "reviews_review_detail_dto",
-      "community": 16,
+      "community": 82,
       "norm_label": "review-detail.dto.ts"
     },
     {
@@ -3931,7 +3931,7 @@
       "source_file": "cinescope/src/app/core/dtos/reviews/review-detail.dto.ts",
       "source_location": "L3",
       "id": "reviews_review_detail_dto_tmdbreviewdetaildto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbreviewdetaildto"
     },
     {
@@ -3940,7 +3940,7 @@
       "source_file": "cinescope/src/app/core/dtos/reviews/review.dto.ts",
       "source_location": "L1",
       "id": "reviews_review_dto",
-      "community": 16,
+      "community": 82,
       "norm_label": "review.dto.ts"
     },
     {
@@ -3949,7 +3949,7 @@
       "source_file": "cinescope/src/app/core/dtos/reviews/review.dto.ts",
       "source_location": "L1",
       "id": "reviews_review_dto_tmdbauthordetailsdto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbauthordetailsdto"
     },
     {
@@ -3958,7 +3958,7 @@
       "source_file": "cinescope/src/app/core/dtos/reviews/review.dto.ts",
       "source_location": "L20",
       "id": "reviews_review_dto_tmdbreviewdto",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbreviewdto"
     },
     {
@@ -3967,7 +3967,7 @@
       "source_file": "cinescope/src/app/core/dtos/trending/trending-mixed-item.dto.ts",
       "source_location": "L1",
       "id": "trending_trending_mixed_item_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "trending-mixed-item.dto.ts"
     },
     {
@@ -3976,7 +3976,7 @@
       "source_file": "cinescope/src/app/core/dtos/trending/trending-mixed-item.dto.ts",
       "source_location": "L9",
       "id": "trending_trending_mixed_item_dto_tmdbtrendingmixeditemdto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbtrendingmixeditemdto"
     },
     {
@@ -4048,7 +4048,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_credits_dto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tv-episode-credits.dto.ts"
     },
     {
@@ -4057,7 +4057,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-credits.dto.ts",
       "source_location": "L5",
       "id": "tv_episodes_tv_episode_credits_dto_tmdbtvepisodecreditsresponsedto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tmdbtvepisodecreditsresponsedto"
     },
     {
@@ -4066,7 +4066,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-detail.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_detail_dto",
-      "community": 36,
+      "community": 176,
       "norm_label": "tv-episode-detail.dto.ts"
     },
     {
@@ -4102,7 +4102,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-images.dto.ts",
       "source_location": "L1",
       "id": "tv_episodes_tv_episode_images_dto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tv-episode-images.dto.ts"
     },
     {
@@ -4111,7 +4111,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-episodes/tv-episode-images.dto.ts",
       "source_location": "L4",
       "id": "tv_episodes_tv_episode_images_dto_tmdbtvepisodeimagesresponsedto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tmdbtvepisodeimagesresponsedto"
     },
     {
@@ -4210,7 +4210,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_credits_dto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tv-season-credits.dto.ts"
     },
     {
@@ -4219,7 +4219,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-credits.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_credits_dto_tmdbtvseasoncreditsresponsedto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tmdbtvseasoncreditsresponsedto"
     },
     {
@@ -4237,7 +4237,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_detail_dto_tmdbtvseasoncrewdto",
-      "community": 36,
+      "community": 3,
       "norm_label": "tmdbtvseasoncrewdto"
     },
     {
@@ -4246,7 +4246,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L17",
       "id": "tv_seasons_tv_season_detail_dto_tmdbtvseasongueststardto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tmdbtvseasongueststardto"
     },
     {
@@ -4264,7 +4264,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L61",
       "id": "tv_seasons_tv_season_detail_dto_tmdbtvseasondetaildto",
-      "community": 36,
+      "community": 1,
       "norm_label": "tmdbtvseasondetaildto"
     },
     {
@@ -4291,7 +4291,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-images.dto.ts",
       "source_location": "L1",
       "id": "tv_seasons_tv_season_images_dto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tv-season-images.dto.ts"
     },
     {
@@ -4300,7 +4300,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-images.dto.ts",
       "source_location": "L4",
       "id": "tv_seasons_tv_season_images_dto_tmdbtvseasonimagesresponsedto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tmdbtvseasonimagesresponsedto"
     },
     {
@@ -4498,7 +4498,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-content-ratings.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_content_ratings_dto",
-      "community": 22,
+      "community": 12,
       "norm_label": "tv-content-ratings.dto.ts"
     },
     {
@@ -4507,7 +4507,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-content-ratings.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_content_ratings_dto_tmdbtvcontentratingdto",
-      "community": 22,
+      "community": 12,
       "norm_label": "tmdbtvcontentratingdto"
     },
     {
@@ -4525,7 +4525,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_credits_dto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tv-credits.dto.ts"
     },
     {
@@ -4534,7 +4534,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_credits_dto_tmdbtvcastdto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tmdbtvcastdto"
     },
     {
@@ -4543,7 +4543,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-credits.dto.ts",
       "source_location": "L16",
       "id": "tv_tv_credits_dto_tmdbtvcrewdto",
-      "community": 209,
+      "community": 172,
       "norm_label": "tmdbtvcrewdto"
     },
     {
@@ -4561,7 +4561,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_detail_dto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tv-detail.dto.ts"
     },
     {
@@ -4570,7 +4570,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L6",
       "id": "tv_tv_detail_dto_tmdbtvcreatordto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbtvcreatordto"
     },
     {
@@ -4579,7 +4579,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L14",
       "id": "tv_tv_detail_dto_tmdbtvepisodebasedto",
-      "community": 36,
+      "community": 3,
       "norm_label": "tmdbtvepisodebasedto"
     },
     {
@@ -4588,7 +4588,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L30",
       "id": "tv_tv_detail_dto_tmdbtvnetworkdto",
-      "community": 22,
+      "community": 12,
       "norm_label": "tmdbtvnetworkdto"
     },
     {
@@ -4597,7 +4597,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L37",
       "id": "tv_tv_detail_dto_tmdbtvseasonbasedto",
-      "community": 36,
+      "community": 12,
       "norm_label": "tmdbtvseasonbasedto"
     },
     {
@@ -4606,7 +4606,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L48",
       "id": "tv_tv_detail_dto_tmdbtvdetaildto",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbtvdetaildto"
     },
     {
@@ -4669,7 +4669,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-images.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_images_dto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tv-images.dto.ts"
     },
     {
@@ -4678,7 +4678,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-images.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_images_dto_tmdbimageitemdto",
-      "community": 176,
+      "community": 201,
       "norm_label": "tmdbimageitemdto"
     },
     {
@@ -4696,7 +4696,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-keywords.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_keywords_dto",
-      "community": 24,
+      "community": 178,
       "norm_label": "tv-keywords.dto.ts"
     },
     {
@@ -4705,7 +4705,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-keywords.dto.ts",
       "source_location": "L3",
       "id": "tv_tv_keywords_dto_tmdbtvkeywordsresponsedto",
-      "community": 24,
+      "community": 178,
       "norm_label": "tmdbtvkeywordsresponsedto"
     },
     {
@@ -4714,7 +4714,7 @@
       "source_file": "cinescope/src/app/core/dtos/tv/tv-list-item.dto.ts",
       "source_location": "L1",
       "id": "tv_tv_list_item_dto",
-      "community": 17,
+      "community": 11,
       "norm_label": "tv-list-item.dto.ts"
     },
     {
@@ -4885,7 +4885,7 @@
       "source_file": "cinescope/src/app/core/dtos/watch-providers/watch-provider.dto.ts",
       "source_location": "L1",
       "id": "watch_providers_watch_provider_dto_tmdbwatchproviderdto",
-      "community": 9,
+      "community": 21,
       "norm_label": "tmdbwatchproviderdto"
     },
     {
@@ -4939,7 +4939,7 @@
       "source_file": "cinescope/src/app/core/interceptors/auth.interceptor.ts",
       "source_location": "L1",
       "id": "interceptors_auth_interceptor",
-      "community": 167,
+      "community": 41,
       "norm_label": "auth.interceptor.ts"
     },
     {
@@ -4957,7 +4957,7 @@
       "source_file": "cinescope/src/app/core/models/franchise.model.ts",
       "source_location": "L1",
       "id": "models_franchise_model",
-      "community": 249,
+      "community": 18,
       "norm_label": "franchise.model.ts"
     },
     {
@@ -4975,7 +4975,7 @@
       "source_file": "cinescope/src/app/core/models/franchise.model.ts",
       "source_location": "L15",
       "id": "models_franchise_model_franchiseuniversecanonitem",
-      "community": 249,
+      "community": 18,
       "norm_label": "franchiseuniversecanonitem"
     },
     {
@@ -4984,7 +4984,7 @@
       "source_file": "cinescope/src/app/core/models/franchise.model.ts",
       "source_location": "L29",
       "id": "models_franchise_model_franchisecollectionsummary",
-      "community": 249,
+      "community": 0,
       "norm_label": "franchisecollectionsummary"
     },
     {
@@ -5002,7 +5002,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L1",
       "id": "services_api_cache_service",
-      "community": 167,
+      "community": 41,
       "norm_label": "api-cache.service.ts"
     },
     {
@@ -5011,7 +5011,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L5",
       "id": "services_api_cache_service_cacheentry",
-      "community": 167,
+      "community": 41,
       "norm_label": "cacheentry"
     },
     {
@@ -5020,7 +5020,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L14",
       "id": "services_api_cache_service_cache_ttl",
-      "community": 167,
+      "community": 41,
       "norm_label": "cache_ttl"
     },
     {
@@ -5029,7 +5029,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L21",
       "id": "services_api_cache_service_apicacheservice",
-      "community": 167,
+      "community": 41,
       "norm_label": "apicacheservice"
     },
     {
@@ -5038,7 +5038,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L31",
       "id": "services_api_cache_service_apicacheservice_observenetworkfirstget",
-      "community": 167,
+      "community": 41,
       "norm_label": ".observenetworkfirstget()"
     },
     {
@@ -5047,7 +5047,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L73",
       "id": "services_api_cache_service_apicacheservice_observesessiondetailget",
-      "community": 167,
+      "community": 41,
       "norm_label": ".observesessiondetailget()"
     },
     {
@@ -5056,7 +5056,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L102",
       "id": "services_api_cache_service_apicacheservice_isstaticentitydetailendpoint",
-      "community": 167,
+      "community": 41,
       "norm_label": ".isstaticentitydetailendpoint()"
     },
     {
@@ -5065,7 +5065,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L124",
       "id": "services_api_cache_service_apicacheservice_clearall",
-      "community": 167,
+      "community": 41,
       "norm_label": ".clearall()"
     },
     {
@@ -5074,7 +5074,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L147",
       "id": "services_api_cache_service_apicacheservice_getentry",
-      "community": 167,
+      "community": 41,
       "norm_label": ".getentry()"
     },
     {
@@ -5083,7 +5083,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L167",
       "id": "services_api_cache_service_apicacheservice_setentry",
-      "community": 167,
+      "community": 41,
       "norm_label": ".setentry()"
     },
     {
@@ -5092,7 +5092,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L186",
       "id": "services_api_cache_service_apicacheservice_enforcestoragecap",
-      "community": 167,
+      "community": 41,
       "norm_label": ".enforcestoragecap()"
     },
     {
@@ -5101,7 +5101,7 @@
       "source_file": "cinescope/src/app/core/services/api-cache.service.ts",
       "source_location": "L199",
       "id": "services_api_cache_service_apicacheservice_evictoldestentries",
-      "community": 167,
+      "community": 41,
       "norm_label": ".evictoldestentries()"
     },
     {
@@ -5110,7 +5110,7 @@
       "source_file": "cinescope/src/app/core/services/base-media.service.ts",
       "source_location": "L1",
       "id": "services_base_media_service",
-      "community": 16,
+      "community": 82,
       "norm_label": "base-media.service.ts"
     },
     {
@@ -5119,7 +5119,7 @@
       "source_file": "cinescope/src/app/core/services/base-media.service.ts",
       "source_location": "L5",
       "id": "services_base_media_service_basemediaservice",
-      "community": 16,
+      "community": 82,
       "norm_label": "basemediaservice"
     },
     {
@@ -5128,7 +5128,7 @@
       "source_file": "cinescope/src/app/core/services/base-media.service.ts",
       "source_location": "L13",
       "id": "services_base_media_service_basemediaservice_buildparams",
-      "community": 16,
+      "community": 82,
       "norm_label": ".buildparams()"
     },
     {
@@ -5164,7 +5164,7 @@
       "source_file": "cinescope/src/app/core/services/collection-loader.service.ts",
       "source_location": "L26",
       "id": "services_collection_loader_service_genre_map",
-      "community": 25,
+      "community": 18,
       "norm_label": "genre_map"
     },
     {
@@ -5173,7 +5173,7 @@
       "source_file": "cinescope/src/app/core/services/collection-loader.service.ts",
       "source_location": "L35",
       "id": "services_collection_loader_service_collectionquerycontext",
-      "community": 249,
+      "community": 18,
       "norm_label": "collectionquerycontext"
     },
     {
@@ -5182,7 +5182,7 @@
       "source_file": "cinescope/src/app/core/services/collection-loader.service.ts",
       "source_location": "L41",
       "id": "services_collection_loader_service_collectionpageresult",
-      "community": 25,
+      "community": 168,
       "norm_label": "collectionpageresult"
     },
     {
@@ -5299,7 +5299,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L1",
       "id": "services_extraction_service",
-      "community": 167,
+      "community": 41,
       "norm_label": "extraction.service.ts"
     },
     {
@@ -5308,7 +5308,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L8",
       "id": "services_extraction_service_extractedtitleitem",
-      "community": 167,
+      "community": 41,
       "norm_label": "extractedtitleitem"
     },
     {
@@ -5317,7 +5317,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L14",
       "id": "services_extraction_service_ingestionresult",
-      "community": 167,
+      "community": 41,
       "norm_label": "ingestionresult"
     },
     {
@@ -5326,7 +5326,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L23",
       "id": "services_extraction_service_extractionservice",
-      "community": 167,
+      "community": 41,
       "norm_label": "extractionservice"
     },
     {
@@ -5335,7 +5335,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L32",
       "id": "services_extraction_service_extractionservice_extracttitles",
-      "community": 167,
+      "community": 41,
       "norm_label": ".extracttitles()"
     },
     {
@@ -5344,7 +5344,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L65",
       "id": "services_extraction_service_extractionservice_resolveandqueuetitles",
-      "community": 167,
+      "community": 41,
       "norm_label": ".resolveandqueuetitles()"
     },
     {
@@ -5353,7 +5353,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L156",
       "id": "services_extraction_service_extractionservice_compressimage",
-      "community": 167,
+      "community": 41,
       "norm_label": ".compressimage()"
     },
     {
@@ -5362,7 +5362,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L203",
       "id": "services_extraction_service_extractionservice_pickbestcandidate",
-      "community": 167,
+      "community": 41,
       "norm_label": ".pickbestcandidate()"
     },
     {
@@ -5371,7 +5371,7 @@
       "source_file": "cinescope/src/app/core/services/extraction.service.ts",
       "source_location": "L237",
       "id": "services_extraction_service_extractionservice_generatesyntheticid",
-      "community": 167,
+      "community": 41,
       "norm_label": ".generatesyntheticid()"
     },
     {
@@ -5380,7 +5380,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L1",
       "id": "services_feed_service",
-      "community": 167,
+      "community": 41,
       "norm_label": "feed.service.ts"
     },
     {
@@ -5389,7 +5389,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L10",
       "id": "services_feed_service_feedservice",
-      "community": 167,
+      "community": 41,
       "norm_label": "feedservice"
     },
     {
@@ -5398,7 +5398,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L47",
       "id": "services_feed_service_feedservice_refreshfeed",
-      "community": 167,
+      "community": 41,
       "norm_label": ".refreshfeed()"
     },
     {
@@ -5407,7 +5407,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L83",
       "id": "services_feed_service_feedservice_loadmore",
-      "community": 167,
+      "community": 41,
       "norm_label": ".loadmore()"
     },
     {
@@ -5416,7 +5416,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L87",
       "id": "services_feed_service_feedservice_addsource",
-      "community": 167,
+      "community": 41,
       "norm_label": ".addsource()"
     },
     {
@@ -5425,7 +5425,7 @@
       "source_file": "cinescope/src/app/core/services/feed.service.ts",
       "source_location": "L100",
       "id": "services_feed_service_feedservice_removesource",
-      "community": 167,
+      "community": 41,
       "norm_label": ".removesource()"
     },
     {
@@ -5461,7 +5461,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L31",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice",
-      "community": 86,
+      "community": 249,
       "norm_label": "franchiseaggregatorservice"
     },
     {
@@ -5470,7 +5470,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L44",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_constructor",
-      "community": 86,
+      "community": 249,
       "norm_label": ".constructor()"
     },
     {
@@ -5479,7 +5479,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L55",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_normalizefranchisekey",
-      "community": 86,
+      "community": 249,
       "norm_label": ".normalizefranchisekey()"
     },
     {
@@ -5488,7 +5488,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L63",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_isfranchisetracked",
-      "community": 86,
+      "community": 249,
       "norm_label": ".isfranchisetracked()"
     },
     {
@@ -5497,7 +5497,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L82",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_trackfranchise",
-      "community": 86,
+      "community": 249,
       "norm_label": ".trackfranchise()"
     },
     {
@@ -5506,7 +5506,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L104",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_untrackfranchise",
-      "community": 86,
+      "community": 249,
       "norm_label": ".untrackfranchise()"
     },
     {
@@ -5515,7 +5515,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L122",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_persistdismissedids",
-      "community": 86,
+      "community": 249,
       "norm_label": ".persistdismissedids()"
     },
     {
@@ -5533,7 +5533,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L229",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_findfranchiseformedia",
-      "community": 249,
+      "community": 0,
       "norm_label": ".findfranchiseformedia()"
     },
     {
@@ -5542,7 +5542,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L255",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_findparentuniverseforcollection",
-      "community": 249,
+      "community": 0,
       "norm_label": ".findparentuniverseforcollection()"
     },
     {
@@ -5551,7 +5551,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L606",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_getcollectionmetadata",
-      "community": 86,
+      "community": 249,
       "norm_label": ".getcollectionmetadata()"
     },
     {
@@ -5560,7 +5560,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L615",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_hydratememoryfromlocalstorage",
-      "community": 86,
+      "community": 249,
       "norm_label": ".hydratememoryfromlocalstorage()"
     },
     {
@@ -5569,7 +5569,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L647",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_syncmissingcollectionmetadata",
-      "community": 86,
+      "community": 249,
       "norm_label": ".syncmissingcollectionmetadata()"
     },
     {
@@ -5578,7 +5578,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L685",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_drainmovielookupqueue",
-      "community": 86,
+      "community": 249,
       "norm_label": ".drainmovielookupqueue()"
     },
     {
@@ -5587,7 +5587,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L701",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_resolvemoviefranchise",
-      "community": 86,
+      "community": 249,
       "norm_label": ".resolvemoviefranchise()"
     },
     {
@@ -5596,7 +5596,7 @@
       "source_file": "cinescope/src/app/core/services/franchise-aggregator.service.ts",
       "source_location": "L719",
       "id": "services_franchise_aggregator_service_franchiseaggregatorservice_fetchandcachecollection",
-      "community": 86,
+      "community": 249,
       "norm_label": ".fetchandcachecollection()"
     },
     {
@@ -5830,7 +5830,7 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L18",
       "id": "services_movies_preferences_service_moviespreferencesservice_loadstoredvisibility",
-      "community": 35,
+      "community": 186,
       "norm_label": ".loadstoredvisibility()"
     },
     {
@@ -5839,7 +5839,7 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L30",
       "id": "services_movies_preferences_service_moviespreferencesservice_togglesection",
-      "community": 35,
+      "community": 186,
       "norm_label": ".togglesection()"
     },
     {
@@ -5857,7 +5857,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L1",
       "id": "services_navigation_service",
-      "community": 168,
+      "community": 182,
       "norm_label": "navigation.service.ts"
     },
     {
@@ -5866,7 +5866,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L7",
       "id": "services_navigation_service_navigationservice",
-      "community": 168,
+      "community": 182,
       "norm_label": "navigationservice"
     },
     {
@@ -5875,7 +5875,7 @@
       "source_file": "cinescope/src/app/core/services/navigation.service.ts",
       "source_location": "L13",
       "id": "services_navigation_service_navigationservice_navigatetohome",
-      "community": 168,
+      "community": 182,
       "norm_label": ".navigatetohome()"
     },
     {
@@ -6154,7 +6154,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L1",
       "id": "services_storage_service",
-      "community": 52,
+      "community": 18,
       "norm_label": "storage.service.ts"
     },
     {
@@ -6163,7 +6163,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L14",
       "id": "services_storage_service_tmdbpayload",
-      "community": 52,
+      "community": 41,
       "norm_label": "tmdbpayload"
     },
     {
@@ -6172,7 +6172,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L16",
       "id": "services_storage_service_mediareleasecheckresult",
-      "community": 52,
+      "community": 18,
       "norm_label": "mediareleasecheckresult"
     },
     {
@@ -6199,7 +6199,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L110",
       "id": "services_storage_service_cinescopebackuppayload",
-      "community": 21,
+      "community": 167,
       "norm_label": "cinescopebackuppayload"
     },
     {
@@ -6208,7 +6208,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L120",
       "id": "services_storage_service_backupinspectionresult",
-      "community": 52,
+      "community": 18,
       "norm_label": "backupinspectionresult"
     },
     {
@@ -6217,7 +6217,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L136",
       "id": "services_storage_service_legacygenreitem",
-      "community": 52,
+      "community": 18,
       "norm_label": "legacygenreitem"
     },
     {
@@ -6226,7 +6226,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L141",
       "id": "services_storage_service_legacycontentitem",
-      "community": 52,
+      "community": 18,
       "norm_label": "legacycontentitem"
     },
     {
@@ -6235,7 +6235,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L160",
       "id": "services_storage_service_legacybackuppayload",
-      "community": 52,
+      "community": 18,
       "norm_label": "legacybackuppayload"
     },
     {
@@ -6244,7 +6244,7 @@
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L175",
       "id": "services_storage_service_backupimportresult",
-      "community": 52,
+      "community": 18,
       "norm_label": "backupimportresult"
     },
     {
@@ -6685,7 +6685,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_collections_service",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdb-collections.service.ts"
     },
     {
@@ -6694,7 +6694,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L11",
       "id": "services_tmdb_collections_service_tmdbcollectionsservice",
-      "community": 3,
+      "community": 249,
       "norm_label": "tmdbcollectionsservice"
     },
     {
@@ -6703,7 +6703,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L17",
       "id": "services_tmdb_collections_service_tmdbcollectionsservice_getcollectiondetails",
-      "community": 3,
+      "community": 249,
       "norm_label": ".getcollectiondetails()"
     },
     {
@@ -6712,7 +6712,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L28",
       "id": "services_tmdb_collections_service_tmdbcollectionsservice_getcollectionimages",
-      "community": 3,
+      "community": 249,
       "norm_label": ".getcollectionimages()"
     },
     {
@@ -6721,7 +6721,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L44",
       "id": "services_tmdb_collections_service_tmdbcollectionsservice_getcollectiontranslations",
-      "community": 3,
+      "community": 249,
       "norm_label": ".getcollectiontranslations()"
     },
     {
@@ -6730,7 +6730,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-companies.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_companies_service",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdb-companies.service.ts"
     },
     {
@@ -6739,7 +6739,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-companies.service.ts",
       "source_location": "L9",
       "id": "services_tmdb_companies_service_tmdbcompaniesservice",
-      "community": 82,
+      "community": 24,
       "norm_label": "tmdbcompaniesservice"
     },
     {
@@ -6748,7 +6748,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-companies.service.ts",
       "source_location": "L14",
       "id": "services_tmdb_companies_service_tmdbcompaniesservice_getcompanydetails",
-      "community": 82,
+      "community": 24,
       "norm_label": ".getcompanydetails()"
     },
     {
@@ -6757,7 +6757,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-companies.service.ts",
       "source_location": "L22",
       "id": "services_tmdb_companies_service_tmdbcompaniesservice_getcompanyalternativenames",
-      "community": 82,
+      "community": 24,
       "norm_label": ".getcompanyalternativenames()"
     },
     {
@@ -6766,7 +6766,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-companies.service.ts",
       "source_location": "L31",
       "id": "services_tmdb_companies_service_tmdbcompaniesservice_getcompanyimages",
-      "community": 82,
+      "community": 24,
       "norm_label": ".getcompanyimages()"
     },
     {
@@ -6847,7 +6847,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-credits.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_credits_service",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdb-credits.service.ts"
     },
     {
@@ -6856,7 +6856,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-credits.service.ts",
       "source_location": "L7",
       "id": "services_tmdb_credits_service_tmdbcreditsservice",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbcreditsservice"
     },
     {
@@ -6865,7 +6865,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-credits.service.ts",
       "source_location": "L16",
       "id": "services_tmdb_credits_service_tmdbcreditsservice_getcreditdetails",
-      "community": 16,
+      "community": 82,
       "norm_label": ".getcreditdetails()"
     },
     {
@@ -6910,7 +6910,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-find.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_find_service",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdb-find.service.ts"
     },
     {
@@ -6919,7 +6919,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-find.service.ts",
       "source_location": "L8",
       "id": "services_tmdb_find_service_tmdbfindservice",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbfindservice"
     },
     {
@@ -6928,7 +6928,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-find.service.ts",
       "source_location": "L29",
       "id": "services_tmdb_find_service_tmdbfindservice_findbyexternalid",
-      "community": 16,
+      "community": 82,
       "norm_label": ".findbyexternalid()"
     },
     {
@@ -6937,7 +6937,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_genres_service",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdb-genres.service.ts"
     },
     {
@@ -6946,7 +6946,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L8",
       "id": "services_tmdb_genres_service_tmdbgenresservice",
-      "community": 12,
+      "community": 16,
       "norm_label": "tmdbgenresservice"
     },
     {
@@ -6955,7 +6955,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L14",
       "id": "services_tmdb_genres_service_tmdbgenresservice_getmoviegenres",
-      "community": 12,
+      "community": 16,
       "norm_label": ".getmoviegenres()"
     },
     {
@@ -6964,7 +6964,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-genres.service.ts",
       "source_location": "L32",
       "id": "services_tmdb_genres_service_tmdbgenresservice_gettvgenres",
-      "community": 12,
+      "community": 16,
       "norm_label": ".gettvgenres()"
     },
     {
@@ -6973,7 +6973,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-keywords.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_keywords_service",
-      "community": 24,
+      "community": 178,
       "norm_label": "tmdb-keywords.service.ts"
     },
     {
@@ -6982,7 +6982,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-keywords.service.ts",
       "source_location": "L7",
       "id": "services_tmdb_keywords_service_tmdbkeywordsservice",
-      "community": 24,
+      "community": 178,
       "norm_label": "tmdbkeywordsservice"
     },
     {
@@ -6991,7 +6991,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-keywords.service.ts",
       "source_location": "L13",
       "id": "services_tmdb_keywords_service_tmdbkeywordsservice_getkeyworddetails",
-      "community": 24,
+      "community": 178,
       "norm_label": ".getkeyworddetails()"
     },
     {
@@ -7018,7 +7018,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L28",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmoviecertifications",
-      "community": 14,
+      "community": 17,
       "norm_label": ".getmoviecertifications()"
     },
     {
@@ -7063,7 +7063,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L154",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmoviedetails",
-      "community": 12,
+      "community": 16,
       "norm_label": ".getmoviedetails()"
     },
     {
@@ -7117,7 +7117,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L337",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmoviekeywords",
-      "community": 24,
+      "community": 178,
       "norm_label": ".getmoviekeywords()"
     },
     {
@@ -7126,7 +7126,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L353",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getlatestmovie",
-      "community": 12,
+      "community": 16,
       "norm_label": ".getlatestmovie()"
     },
     {
@@ -7162,7 +7162,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L449",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmoviereviews",
-      "community": 16,
+      "community": 82,
       "norm_label": ".getmoviereviews()"
     },
     {
@@ -7189,7 +7189,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L520",
       "id": "services_tmdb_movies_service_tmdbmoviesservice_getmovievideos",
-      "community": 11,
+      "community": 22,
       "norm_label": ".getmovievideos()"
     },
     {
@@ -7270,7 +7270,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-people.service.ts",
       "source_location": "L33",
       "id": "services_tmdb_people_service_tmdbpeopleservice_getpopularpeople",
-      "community": 5,
+      "community": 140,
       "norm_label": ".getpopularpeople()"
     },
     {
@@ -7297,7 +7297,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-people.service.ts",
       "source_location": "L116",
       "id": "services_tmdb_people_service_tmdbpeopleservice_getpersoncombinedcredits",
-      "community": 140,
+      "community": 86,
       "norm_label": ".getpersoncombinedcredits()"
     },
     {
@@ -7360,7 +7360,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-reviews.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_reviews_service",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdb-reviews.service.ts"
     },
     {
@@ -7369,7 +7369,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-reviews.service.ts",
       "source_location": "L7",
       "id": "services_tmdb_reviews_service_tmdbreviewsservice",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbreviewsservice"
     },
     {
@@ -7378,7 +7378,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-reviews.service.ts",
       "source_location": "L23",
       "id": "services_tmdb_reviews_service_tmdbreviewsservice_getreviewdetails",
-      "community": 16,
+      "community": 82,
       "norm_label": ".getreviewdetails()"
     },
     {
@@ -7486,7 +7486,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-trending.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_trending_service",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdb-trending.service.ts"
     },
     {
@@ -7495,7 +7495,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-trending.service.ts",
       "source_location": "L11",
       "id": "services_tmdb_trending_service_tmdbtrendingservice",
-      "community": 17,
+      "community": 11,
       "norm_label": "tmdbtrendingservice"
     },
     {
@@ -7504,7 +7504,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-trending.service.ts",
       "source_location": "L28",
       "id": "services_tmdb_trending_service_tmdbtrendingservice_gettrendingall",
-      "community": 17,
+      "community": 11,
       "norm_label": ".gettrendingall()"
     },
     {
@@ -7513,7 +7513,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-trending.service.ts",
       "source_location": "L46",
       "id": "services_tmdb_trending_service_tmdbtrendingservice_gettrendingmovies",
-      "community": 17,
+      "community": 11,
       "norm_label": ".gettrendingmovies()"
     },
     {
@@ -7531,7 +7531,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-trending.service.ts",
       "source_location": "L76",
       "id": "services_tmdb_trending_service_tmdbtrendingservice_gettrendingpeople",
-      "community": 17,
+      "community": 11,
       "norm_label": ".gettrendingpeople()"
     },
     {
@@ -7540,7 +7540,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episode-groups.service.ts",
       "source_location": "L1",
       "id": "services_tmdb_tv_episode_groups_service",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdb-tv-episode-groups.service.ts"
     },
     {
@@ -7549,7 +7549,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episode-groups.service.ts",
       "source_location": "L7",
       "id": "services_tmdb_tv_episode_groups_service_tmdbtvepisodegroupsservice",
-      "community": 16,
+      "community": 82,
       "norm_label": "tmdbtvepisodegroupsservice"
     },
     {
@@ -7630,7 +7630,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L110",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodevideos",
-      "community": 207,
+      "community": 176,
       "norm_label": ".gettvepisodevideos()"
     },
     {
@@ -7639,7 +7639,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-episodes.service.ts",
       "source_location": "L123",
       "id": "services_tmdb_tv_episodes_service_tmdbtvepisodesservice_gettvepisodechanges",
-      "community": 187,
+      "community": 176,
       "norm_label": ".gettvepisodechanges()"
     },
     {
@@ -7666,7 +7666,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L38",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasondetails",
-      "community": 36,
+      "community": 1,
       "norm_label": ".gettvseasondetails()"
     },
     {
@@ -7675,7 +7675,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L66",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonaggregatecredits",
-      "community": 1,
+      "community": 208,
       "norm_label": ".gettvseasonaggregatecredits()"
     },
     {
@@ -7693,7 +7693,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L114",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonchanges",
-      "community": 1,
+      "community": 187,
       "norm_label": ".gettvseasonchanges()"
     },
     {
@@ -7711,7 +7711,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L151",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonimages",
-      "community": 1,
+      "community": 201,
       "norm_label": ".gettvseasonimages()"
     },
     {
@@ -7729,7 +7729,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv-seasons.service.ts",
       "source_location": "L182",
       "id": "services_tmdb_tv_seasons_service_tmdbtvseasonsservice_gettvseasonvideos",
-      "community": 1,
+      "community": 207,
       "norm_label": ".gettvseasonvideos()"
     },
     {
@@ -7765,7 +7765,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L30",
       "id": "services_tmdb_tv_service_tmdbtvservice_gettvcertifications",
-      "community": 14,
+      "community": 17,
       "norm_label": ".gettvcertifications()"
     },
     {
@@ -7810,7 +7810,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L148",
       "id": "services_tmdb_tv_service_tmdbtvservice_gettvshowdetails",
-      "community": 12,
+      "community": 16,
       "norm_label": ".gettvshowdetails()"
     },
     {
@@ -7891,7 +7891,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L362",
       "id": "services_tmdb_tv_service_tmdbtvservice_gettvkeywords",
-      "community": 24,
+      "community": 178,
       "norm_label": ".gettvkeywords()"
     },
     {
@@ -7900,7 +7900,7 @@
       "source_file": "cinescope/src/app/core/services/tmdb-tv.service.ts",
       "source_location": "L380",
       "id": "services_tmdb_tv_service_tmdbtvservice_getlatesttvshow",
-      "community": 12,
+      "community": 16,
       "norm_label": ".getlatesttvshow()"
     },
     {
@@ -8188,7 +8188,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L1",
       "id": "store_trending_store",
-      "community": 17,
+      "community": 11,
       "norm_label": "trending.store.ts"
     },
     {
@@ -8206,7 +8206,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L51",
       "id": "store_trending_store_initialstate",
-      "community": 17,
+      "community": 11,
       "norm_label": "initialstate"
     },
     {
@@ -8215,7 +8215,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L79",
       "id": "store_trending_store_maptoheroitems",
-      "community": 17,
+      "community": 3,
       "norm_label": "maptoheroitems()"
     },
     {
@@ -8224,7 +8224,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L104",
       "id": "store_trending_store_mapmoviestoswimlane",
-      "community": 17,
+      "community": 3,
       "norm_label": "mapmoviestoswimlane()"
     },
     {
@@ -8233,7 +8233,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L117",
       "id": "store_trending_store_maptvtoswimlane",
-      "community": 17,
+      "community": 3,
       "norm_label": "maptvtoswimlane()"
     },
     {
@@ -8242,7 +8242,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L130",
       "id": "store_trending_store_mappeopletoswimlane",
-      "community": 17,
+      "community": 3,
       "norm_label": "mappeopletoswimlane()"
     },
     {
@@ -8251,7 +8251,7 @@
       "source_file": "cinescope/src/app/core/store/trending.store.ts",
       "source_location": "L153",
       "id": "store_trending_store_trendingstore",
-      "community": 168,
+      "community": 182,
       "norm_label": "trendingstore"
     },
     {
@@ -8260,7 +8260,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L1",
       "id": "archive_archive_page",
-      "community": 168,
+      "community": 18,
       "norm_label": "archive.page.ts"
     },
     {
@@ -8269,7 +8269,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L28",
       "id": "archive_archive_page_archivecardvm",
-      "community": 35,
+      "community": 18,
       "norm_label": "archivecardvm"
     },
     {
@@ -8278,7 +8278,7 @@
       "source_file": "cinescope/src/app/features/archive/archive.page.ts",
       "source_location": "L36",
       "id": "archive_archive_page_favoritepersoncardvm",
-      "community": 168,
+      "community": 18,
       "norm_label": "favoritepersoncardvm"
     },
     {
@@ -8503,7 +8503,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1",
       "id": "collection_collection_page",
-      "community": 249,
+      "community": 18,
       "norm_label": "collection.page.ts"
     },
     {
@@ -8512,7 +8512,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L34",
       "id": "collection_collection_page_collectioncardvm",
-      "community": 249,
+      "community": 168,
       "norm_label": "collectioncardvm"
     },
     {
@@ -8746,7 +8746,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1088",
       "id": "collection_collection_page_collectionpage_openexistinguniverse",
-      "community": 249,
+      "community": 0,
       "norm_label": ".openexistinguniverse()"
     },
     {
@@ -8764,7 +8764,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1135",
       "id": "collection_collection_page_collectionpage_markupnextaswatched",
-      "community": 2,
+      "community": 168,
       "norm_label": ".markupnextaswatched()"
     },
     {
@@ -8800,7 +8800,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1359",
       "id": "collection_collection_page_collectionpage_getbookmarkstate",
-      "community": 18,
+      "community": 168,
       "norm_label": ".getbookmarkstate()"
     },
     {
@@ -8809,7 +8809,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1365",
       "id": "collection_collection_page_collectionpage_oncardclick",
-      "community": 18,
+      "community": 168,
       "norm_label": ".oncardclick()"
     },
     {
@@ -8818,7 +8818,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1394",
       "id": "collection_collection_page_collectionpage_ontogglebookmark",
-      "community": 18,
+      "community": 168,
       "norm_label": ".ontogglebookmark()"
     },
     {
@@ -8836,7 +8836,7 @@
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L1496",
       "id": "collection_collection_page_collectionpage_tocardvm",
-      "community": 2,
+      "community": 168,
       "norm_label": ".tocardvm()"
     },
     {
@@ -8935,7 +8935,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L1",
       "id": "discover_discover_page",
-      "community": 168,
+      "community": 182,
       "norm_label": "discover.page.ts"
     },
     {
@@ -8944,7 +8944,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L55",
       "id": "discover_discover_page_discoverpage",
-      "community": 182,
+      "community": 180,
       "norm_label": "discoverpage"
     },
     {
@@ -8953,7 +8953,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L83",
       "id": "discover_discover_page_discoverpage_constructor",
-      "community": 182,
+      "community": 180,
       "norm_label": ".constructor()"
     },
     {
@@ -8962,7 +8962,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L106",
       "id": "discover_discover_page_discoverpage_ngoninit",
-      "community": 182,
+      "community": 180,
       "norm_label": ".ngoninit()"
     },
     {
@@ -8971,7 +8971,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L110",
       "id": "discover_discover_page_discoverpage_ngafterviewinit",
-      "community": 182,
+      "community": 180,
       "norm_label": ".ngafterviewinit()"
     },
     {
@@ -8980,7 +8980,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L114",
       "id": "discover_discover_page_discoverpage_onpullrefresh",
-      "community": 182,
+      "community": 180,
       "norm_label": ".onpullrefresh()"
     },
     {
@@ -8989,7 +8989,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L138",
       "id": "discover_discover_page_discoverpage_setnewssource",
-      "community": 182,
+      "community": 180,
       "norm_label": ".setnewssource()"
     },
     {
@@ -8998,7 +8998,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L142",
       "id": "discover_discover_page_discoverpage_togglenewssort",
-      "community": 182,
+      "community": 180,
       "norm_label": ".togglenewssort()"
     },
     {
@@ -9007,7 +9007,7 @@
       "source_file": "cinescope/src/app/features/discover/discover.page.ts",
       "source_location": "L147",
       "id": "discover_discover_page_discoverpage_onsectionchange",
-      "community": 182,
+      "community": 180,
       "norm_label": ".onsectionchange()"
     },
     {
@@ -9016,7 +9016,7 @@
       "source_file": "cinescope/src/app/features/inbox/inbox.page.ts",
       "source_location": "L1",
       "id": "inbox_inbox_page",
-      "community": 52,
+      "community": 41,
       "norm_label": "inbox.page.ts"
     },
     {
@@ -9025,7 +9025,7 @@
       "source_file": "cinescope/src/app/features/inbox/inbox.page.ts",
       "source_location": "L54",
       "id": "inbox_inbox_page_inboxcardvm",
-      "community": 52,
+      "community": 41,
       "norm_label": "inboxcardvm"
     },
     {
@@ -9034,7 +9034,7 @@
       "source_file": "cinescope/src/app/features/inbox/inbox.page.ts",
       "source_location": "L67",
       "id": "inbox_inbox_page_selectedimageitem",
-      "community": 52,
+      "community": 41,
       "norm_label": "selectedimageitem"
     },
     {
@@ -9394,7 +9394,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L1",
       "id": "cast_video_gallery_cast_video_gallery_component",
-      "community": 11,
+      "community": 22,
       "norm_label": "cast-video-gallery.component.ts"
     },
     {
@@ -9403,7 +9403,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L17",
       "id": "cast_video_gallery_cast_video_gallery_component_castvideogallerycomponent",
-      "community": 11,
+      "community": 22,
       "norm_label": "castvideogallerycomponent"
     },
     {
@@ -9412,7 +9412,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L36",
       "id": "cast_video_gallery_cast_video_gallery_component_castvideogallerycomponent_openperson",
-      "community": 11,
+      "community": 22,
       "norm_label": ".openperson()"
     },
     {
@@ -9421,7 +9421,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L49",
       "id": "cast_video_gallery_cast_video_gallery_component_castvideogallerycomponent_openvideo",
-      "community": 11,
+      "community": 22,
       "norm_label": ".openvideo()"
     },
     {
@@ -9430,7 +9430,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L59",
       "id": "cast_video_gallery_cast_video_gallery_component_castvideogallerycomponent_closevideo",
-      "community": 11,
+      "community": 22,
       "norm_label": ".closevideo()"
     },
     {
@@ -9439,7 +9439,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/cast-video-gallery/cast-video-gallery.component.ts",
       "source_location": "L67",
       "id": "cast_video_gallery_cast_video_gallery_component_castvideogallerycomponent_ngondestroy",
-      "community": 11,
+      "community": 22,
       "norm_label": ".ngondestroy()"
     },
     {
@@ -9448,7 +9448,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts",
       "source_location": "L1",
       "id": "detail_hero_detail_hero_component",
-      "community": 22,
+      "community": 12,
       "norm_label": "detail-hero.component.ts"
     },
     {
@@ -9457,7 +9457,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts",
       "source_location": "L19",
       "id": "detail_hero_detail_hero_component_detailherocomponent",
-      "community": 22,
+      "community": 12,
       "norm_label": "detailherocomponent"
     },
     {
@@ -9466,7 +9466,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts",
       "source_location": "L48",
       "id": "detail_hero_detail_hero_component_detailherocomponent_constructor",
-      "community": 22,
+      "community": 12,
       "norm_label": ".constructor()"
     },
     {
@@ -9475,7 +9475,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts",
       "source_location": "L56",
       "id": "detail_hero_detail_hero_component_detailherocomponent_onbackdropload",
-      "community": 22,
+      "community": 12,
       "norm_label": ".onbackdropload()"
     },
     {
@@ -9484,7 +9484,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/detail-hero/detail-hero.component.ts",
       "source_location": "L60",
       "id": "detail_hero_detail_hero_component_detailherocomponent_resolvenetworklogo",
-      "community": 22,
+      "community": 12,
       "norm_label": ".resolvenetworklogo()"
     },
     {
@@ -9547,7 +9547,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L1",
       "id": "tv_seasons_hub_tv_seasons_hub_component",
-      "community": 36,
+      "community": 3,
       "norm_label": "tv-seasons-hub.component.ts"
     },
     {
@@ -9556,7 +9556,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L22",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent",
-      "community": 36,
+      "community": 3,
       "norm_label": "tvseasonshubcomponent"
     },
     {
@@ -9565,7 +9565,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L40",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_getmilestonebadge",
-      "community": 36,
+      "community": 3,
       "norm_label": ".getmilestonebadge()"
     },
     {
@@ -9574,7 +9574,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L70",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_toggleepisodeexpand",
-      "community": 36,
+      "community": 3,
       "norm_label": ".toggleepisodeexpand()"
     },
     {
@@ -9583,7 +9583,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L77",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_openperson",
-      "community": 36,
+      "community": 3,
       "norm_label": ".openperson()"
     },
     {
@@ -9592,7 +9592,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L95",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_getepisodekeycrew",
-      "community": 36,
+      "community": 3,
       "norm_label": ".getepisodekeycrew()"
     },
     {
@@ -9601,7 +9601,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L118",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_gettopgueststars",
-      "community": 36,
+      "community": 3,
       "norm_label": ".gettopgueststars()"
     },
     {
@@ -9610,7 +9610,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L126",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolveguestavatar",
-      "community": 36,
+      "community": 3,
       "norm_label": ".resolveguestavatar()"
     },
     {
@@ -9619,7 +9619,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L130",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_getinitials",
-      "community": 36,
+      "community": 3,
       "norm_label": ".getinitials()"
     },
     {
@@ -9628,7 +9628,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L137",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolvestill",
-      "community": 36,
+      "community": 3,
       "norm_label": ".resolvestill()"
     },
     {
@@ -9637,7 +9637,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/tv-seasons-hub/tv-seasons-hub.component.ts",
       "source_location": "L141",
       "id": "tv_seasons_hub_tv_seasons_hub_component_tvseasonshubcomponent_resolveposter",
-      "community": 36,
+      "community": 3,
       "norm_label": ".resolveposter()"
     },
     {
@@ -9646,7 +9646,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/watch-providers-panel/watch-providers-panel.component.ts",
       "source_location": "L1",
       "id": "watch_providers_panel_watch_providers_panel_component",
-      "community": 22,
+      "community": 12,
       "norm_label": "watch-providers-panel.component.ts"
     },
     {
@@ -9655,7 +9655,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/watch-providers-panel/watch-providers-panel.component.ts",
       "source_location": "L16",
       "id": "watch_providers_panel_watch_providers_panel_component_watchproviderspanelcomponent",
-      "community": 22,
+      "community": 12,
       "norm_label": "watchproviderspanelcomponent"
     },
     {
@@ -9664,7 +9664,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/watch-providers-panel/watch-providers-panel.component.ts",
       "source_location": "L116",
       "id": "watch_providers_panel_watch_providers_panel_component_watchproviderspanelcomponent_resolvelogo",
-      "community": 22,
+      "community": 12,
       "norm_label": ".resolvelogo()"
     },
     {
@@ -9673,7 +9673,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/watch-providers-panel/watch-providers-panel.component.ts",
       "source_location": "L120",
       "id": "watch_providers_panel_watch_providers_panel_component_watchproviderspanelcomponent_getcountryflagurl",
-      "community": 22,
+      "community": 12,
       "norm_label": ".getcountryflagurl()"
     },
     {
@@ -9682,7 +9682,7 @@
       "source_file": "cinescope/src/app/features/media-detail/components/watch-providers-panel/watch-providers-panel.component.ts",
       "source_location": "L125",
       "id": "watch_providers_panel_watch_providers_panel_component_watchproviderspanelcomponent_onflagerror",
-      "community": 22,
+      "community": 12,
       "norm_label": ".onflagerror()"
     },
     {
@@ -9691,7 +9691,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L1",
       "id": "media_detail_media_detail_page",
-      "community": 22,
+      "community": 12,
       "norm_label": "media-detail.page.ts"
     },
     {
@@ -9700,7 +9700,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L79",
       "id": "media_detail_media_detail_page_castmembervm",
-      "community": 11,
+      "community": 22,
       "norm_label": "castmembervm"
     },
     {
@@ -9709,7 +9709,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L87",
       "id": "media_detail_media_detail_page_tvcreatorvm",
-      "community": 22,
+      "community": 12,
       "norm_label": "tvcreatorvm"
     },
     {
@@ -9718,7 +9718,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L93",
       "id": "media_detail_media_detail_page_origincountryvm",
-      "community": 22,
+      "community": 12,
       "norm_label": "origincountryvm"
     },
     {
@@ -9727,7 +9727,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L100",
       "id": "media_detail_media_detail_page_productionstatusvm",
-      "community": 22,
+      "community": 12,
       "norm_label": "productionstatusvm"
     },
     {
@@ -9736,7 +9736,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L108",
       "id": "media_detail_media_detail_page_getcountryflagemoji",
-      "community": 22,
+      "community": 12,
       "norm_label": "getcountryflagemoji()"
     },
     {
@@ -9745,7 +9745,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L117",
       "id": "media_detail_media_detail_page_cultural_format_map",
-      "community": 22,
+      "community": 12,
       "norm_label": "cultural_format_map"
     },
     {
@@ -9754,7 +9754,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L140",
       "id": "media_detail_media_detail_page_crewspotlightvm",
-      "community": 22,
+      "community": 12,
       "norm_label": "crewspotlightvm"
     },
     {
@@ -9772,7 +9772,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L151",
       "id": "media_detail_media_detail_page_mediapreviewstate",
-      "community": 22,
+      "community": 12,
       "norm_label": "mediapreviewstate"
     },
     {
@@ -9781,7 +9781,7 @@
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L162",
       "id": "media_detail_media_detail_page_preferred_regions",
-      "community": 22,
+      "community": 12,
       "norm_label": "preferred_regions"
     },
     {
@@ -9961,7 +9961,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.spec.ts",
       "source_location": "L1",
       "id": "blind_ticket_blind_ticket_component_spec",
-      "community": 35,
+      "community": 21,
       "norm_label": "blind-ticket.component.spec.ts"
     },
     {
@@ -9970,7 +9970,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L1",
       "id": "blind_ticket_blind_ticket_component",
-      "community": 35,
+      "community": 21,
       "norm_label": "blind-ticket.component.ts"
     },
     {
@@ -9979,7 +9979,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L33",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent",
-      "community": 35,
+      "community": 52,
       "norm_label": "blindticketcomponent"
     },
     {
@@ -9988,7 +9988,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L41",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_constructor",
-      "community": 35,
+      "community": 52,
       "norm_label": ".constructor()"
     },
     {
@@ -9997,7 +9997,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L64",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_tearblindticket",
-      "community": 35,
+      "community": 52,
       "norm_label": ".tearblindticket()"
     },
     {
@@ -10006,7 +10006,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L74",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_picknextmysteryticket",
-      "community": 35,
+      "community": 52,
       "norm_label": ".picknextmysteryticket()"
     },
     {
@@ -10024,7 +10024,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L99",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getposter",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getposter()"
     },
     {
@@ -10033,7 +10033,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L102",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getyear",
-      "community": 35,
+      "community": 52,
       "norm_label": ".getyear()"
     },
     {
@@ -10042,7 +10042,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L105",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getrating",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getrating()"
     },
     {
@@ -10051,7 +10051,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L108",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getruntime",
-      "community": 35,
+      "community": 52,
       "norm_label": ".getruntime()"
     },
     {
@@ -10060,7 +10060,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L111",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getoverview",
-      "community": 35,
+      "community": 52,
       "norm_label": ".getoverview()"
     },
     {
@@ -10069,7 +10069,7 @@
       "source_file": "cinescope/src/app/features/movies/components/blind-ticket/blind-ticket.component.ts",
       "source_location": "L114",
       "id": "blind_ticket_blind_ticket_component_blindticketcomponent_getgenres",
-      "community": 35,
+      "community": 52,
       "norm_label": ".getgenres()"
     },
     {
@@ -10078,7 +10078,7 @@
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
       "source_location": "L1",
       "id": "cinematch_hero_cinematch_hero_component_spec",
-      "community": 35,
+      "community": 21,
       "norm_label": "cinematch-hero.component.spec.ts"
     },
     {
@@ -10087,50 +10087,68 @@
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
       "source_location": "L1",
       "id": "cinematch_hero_cinematch_hero_component",
-      "community": 35,
+      "community": 21,
       "norm_label": "cinematch-hero.component.ts"
     },
     {
       "label": "CinematchHeroComponent",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L41",
+      "source_location": "L69",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent",
-      "community": 35,
+      "community": 175,
       "norm_label": "cinematchherocomponent"
+    },
+    {
+      "label": ".moodOptions()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L125",
+      "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_moodoptions",
+      "community": 175,
+      "norm_label": ".moodoptions()"
     },
     {
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L103",
+      "source_location": "L225",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_constructor",
-      "community": 35,
+      "community": 175,
       "norm_label": ".constructor()"
     },
     {
       "label": ".setMood()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L130",
+      "source_location": "L275",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_setmood",
-      "community": 35,
+      "community": 175,
       "norm_label": ".setmood()"
     },
     {
       "label": ".rollTheDice()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L136",
+      "source_location": "L281",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_rollthedice",
-      "community": 35,
+      "community": 175,
       "norm_label": ".rollthedice()"
+    },
+    {
+      "label": ".loadWatchProviders()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L311",
+      "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_loadwatchproviders",
+      "community": 175,
+      "norm_label": ".loadwatchproviders()"
     },
     {
       "label": ".getTitle()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L155",
+      "source_location": "L338",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_gettitle",
       "community": 35,
       "norm_label": ".gettitle()"
@@ -10139,73 +10157,82 @@
       "label": ".getPoster()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L158",
+      "source_location": "L341",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getposter",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getposter()"
     },
     {
       "label": ".getBackdrop()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L161",
+      "source_location": "L344",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getbackdrop",
-      "community": 35,
+      "community": 175,
       "norm_label": ".getbackdrop()"
     },
     {
       "label": ".getYear()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L164",
+      "source_location": "L347",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getyear",
-      "community": 35,
+      "community": 175,
       "norm_label": ".getyear()"
     },
     {
       "label": ".getRating()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L167",
+      "source_location": "L350",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getrating",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getrating()"
     },
     {
       "label": ".getRuntime()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L170",
+      "source_location": "L353",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getruntime",
-      "community": 35,
+      "community": 175,
       "norm_label": ".getruntime()"
     },
     {
       "label": ".getTimeAgo()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L173",
+      "source_location": "L356",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_gettimeago",
-      "community": 35,
+      "community": 53,
       "norm_label": ".gettimeago()"
     },
     {
       "label": ".getOverview()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L176",
+      "source_location": "L359",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getoverview",
-      "community": 35,
+      "community": 175,
       "norm_label": ".getoverview()"
     },
     {
       "label": ".getGenres()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
-      "source_location": "L179",
+      "source_location": "L362",
       "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getgenres",
-      "community": 35,
+      "community": 175,
       "norm_label": ".getgenres()"
+    },
+    {
+      "label": ".getProviderLogo()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L365",
+      "id": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getproviderlogo",
+      "community": 175,
+      "norm_label": ".getproviderlogo()"
     },
     {
       "label": "franchise-tracker.component.ts",
@@ -10258,7 +10285,7 @@
       "source_file": "cinescope/src/app/features/movies/components/movies-swimlanes/movies-swimlanes.component.ts",
       "source_location": "L16",
       "id": "movies_swimlanes_movies_swimlanes_component_moviesswimlanescomponent",
-      "community": 18,
+      "community": 168,
       "norm_label": "moviesswimlanescomponent"
     },
     {
@@ -10267,7 +10294,7 @@
       "source_file": "cinescope/src/app/features/movies/components/movies-swimlanes/movies-swimlanes.component.ts",
       "source_location": "L43",
       "id": "movies_swimlanes_movies_swimlanes_component_moviesswimlanescomponent_toswimlaneitem",
-      "community": 18,
+      "community": 168,
       "norm_label": ".toswimlaneitem()"
     },
     {
@@ -10276,7 +10303,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L1",
       "id": "watchlist_graveyard_watchlist_graveyard_component",
-      "community": 35,
+      "community": 53,
       "norm_label": "watchlist-graveyard.component.ts"
     },
     {
@@ -10285,7 +10312,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L26",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent",
-      "community": 35,
+      "community": 53,
       "norm_label": "watchlistgraveyardcomponent"
     },
     {
@@ -10294,7 +10321,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L42",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent_constructor",
-      "community": 35,
+      "community": 53,
       "norm_label": ".constructor()"
     },
     {
@@ -10303,7 +10330,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L51",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent_gettitle",
-      "community": 35,
+      "community": 53,
       "norm_label": ".gettitle()"
     },
     {
@@ -10312,7 +10339,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L54",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent_getposter",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getposter()"
     },
     {
@@ -10321,7 +10348,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L57",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent_getrating",
-      "community": 35,
+      "community": 53,
       "norm_label": ".getrating()"
     },
     {
@@ -10330,7 +10357,7 @@
       "source_file": "cinescope/src/app/features/movies/components/watchlist-graveyard/watchlist-graveyard.component.ts",
       "source_location": "L60",
       "id": "watchlist_graveyard_watchlist_graveyard_component_watchlistgraveyardcomponent_gettimeago",
-      "community": 35,
+      "community": 53,
       "norm_label": ".gettimeago()"
     },
     {
@@ -10339,41 +10366,41 @@
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
       "source_location": "L1",
       "id": "movies_movies_models",
-      "community": 35,
+      "community": 21,
       "norm_label": "movies.models.ts"
     },
     {
       "label": "CineMatchMood",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L4",
+      "source_location": "L6",
       "id": "movies_movies_models_cinematchmood",
-      "community": 35,
+      "community": 21,
       "norm_label": "cinematchmood"
     },
     {
       "label": "MoodFilterOption",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L13",
+      "source_location": "L15",
       "id": "movies_movies_models_moodfilteroption",
-      "community": 35,
+      "community": 175,
       "norm_label": "moodfilteroption"
     },
     {
       "label": "MoviesSectionVisibility",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L20",
+      "source_location": "L22",
       "id": "movies_movies_models_moviessectionvisibility",
-      "community": 35,
+      "community": 186,
       "norm_label": "moviessectionvisibility"
     },
     {
       "label": "DEFAULT_MOVIES_VISIBILITY",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L28",
+      "source_location": "L30",
       "id": "movies_movies_models_default_movies_visibility",
       "community": 186,
       "norm_label": "default_movies_visibility"
@@ -10382,16 +10409,52 @@
       "label": "TMDB_GENRE_NAMES",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L36",
+      "source_location": "L38",
       "id": "movies_movies_models_tmdb_genre_names",
-      "community": 35,
+      "community": 21,
       "norm_label": "tmdb_genre_names"
+    },
+    {
+      "label": "TimeOfDayGreeting",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L59",
+      "id": "movies_movies_models_timeofdaygreeting",
+      "community": 21,
+      "norm_label": "timeofdaygreeting"
+    },
+    {
+      "label": "getTimeOfDayGreeting()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L67",
+      "id": "movies_movies_models_gettimeofdaygreeting",
+      "community": 21,
+      "norm_label": "gettimeofdaygreeting()"
+    },
+    {
+      "label": "ContextualHook",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L109",
+      "id": "movies_movies_models_contextualhook",
+      "community": 21,
+      "norm_label": "contextualhook"
+    },
+    {
+      "label": "getContextualHook()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L115",
+      "id": "movies_movies_models_getcontextualhook",
+      "community": 21,
+      "norm_label": "getcontextualhook()"
     },
     {
       "label": "getMovieTitle()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L57",
+      "source_location": "L186",
       "id": "movies_movies_models_getmovietitle",
       "community": 35,
       "norm_label": "getmovietitle()"
@@ -10400,73 +10463,91 @@
       "label": "getMoviePoster()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L63",
+      "source_location": "L192",
       "id": "movies_movies_models_getmovieposter",
-      "community": 35,
+      "community": 53,
       "norm_label": "getmovieposter()"
     },
     {
       "label": "getMovieBackdrop()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L70",
+      "source_location": "L199",
       "id": "movies_movies_models_getmoviebackdrop",
-      "community": 35,
+      "community": 21,
       "norm_label": "getmoviebackdrop()"
     },
     {
       "label": "getMovieYear()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L77",
+      "source_location": "L206",
       "id": "movies_movies_models_getmovieyear",
-      "community": 35,
+      "community": 21,
       "norm_label": "getmovieyear()"
     },
     {
       "label": "getMovieRating()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L84",
+      "source_location": "L213",
       "id": "movies_movies_models_getmovierating",
-      "community": 35,
+      "community": 53,
       "norm_label": "getmovierating()"
     },
     {
       "label": "getMovieRuntime()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L91",
+      "source_location": "L220",
       "id": "movies_movies_models_getmovieruntime",
-      "community": 35,
+      "community": 21,
       "norm_label": "getmovieruntime()"
     },
     {
       "label": "getAddedTimeAgo()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L101",
+      "source_location": "L230",
       "id": "movies_movies_models_getaddedtimeago",
-      "community": 35,
+      "community": 53,
       "norm_label": "getaddedtimeago()"
     },
     {
       "label": "getMovieOverview()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L112",
+      "source_location": "L241",
       "id": "movies_movies_models_getmovieoverview",
-      "community": 35,
+      "community": 21,
       "norm_label": "getmovieoverview()"
     },
     {
       "label": "getMovieGenres()",
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
-      "source_location": "L118",
+      "source_location": "L247",
       "id": "movies_movies_models_getmoviegenres",
-      "community": 35,
+      "community": 21,
       "norm_label": "getmoviegenres()"
+    },
+    {
+      "label": "StreamingAvailability",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L262",
+      "id": "movies_movies_models_streamingavailability",
+      "community": 21,
+      "norm_label": "streamingavailability"
+    },
+    {
+      "label": "resolveStreamingDetails()",
+      "file_type": "code",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L270",
+      "id": "movies_movies_models_resolvestreamingdetails",
+      "community": 21,
+      "norm_label": "resolvestreamingdetails()"
     },
     {
       "label": "movies.page.spec.ts",
@@ -10600,7 +10681,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L1",
       "id": "person_detail_person_detail_page",
-      "community": 18,
+      "community": 86,
       "norm_label": "person-detail.page.ts"
     },
     {
@@ -10609,7 +10690,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L50",
       "id": "person_detail_person_detail_page_nativegalleryplugin",
-      "community": 18,
+      "community": 86,
       "norm_label": "nativegalleryplugin"
     },
     {
@@ -10618,7 +10699,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L53",
       "id": "person_detail_person_detail_page_nativegallery",
-      "community": 18,
+      "community": 86,
       "norm_label": "nativegallery"
     },
     {
@@ -10627,7 +10708,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L73",
       "id": "person_detail_person_detail_page_personpreviewstate",
-      "community": 18,
+      "community": 86,
       "norm_label": "personpreviewstate"
     },
     {
@@ -10636,7 +10717,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L81",
       "id": "person_detail_person_detail_page_filmographyentryvm",
-      "community": 18,
+      "community": 86,
       "norm_label": "filmographyentryvm"
     },
     {
@@ -10888,7 +10969,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L784",
       "id": "person_detail_person_detail_page_persondetailpage_mapcasttovm",
-      "community": 234,
+      "community": 86,
       "norm_label": ".mapcasttovm()"
     },
     {
@@ -10897,7 +10978,7 @@
       "source_file": "cinescope/src/app/features/person-detail/person-detail.page.ts",
       "source_location": "L804",
       "id": "person_detail_person_detail_page_persondetailpage_mapcrewtovm",
-      "community": 234,
+      "community": 86,
       "norm_label": ".mapcrewtovm()"
     },
     {
@@ -11023,7 +11104,7 @@
       "source_file": "cinescope/src/app/features/search/search.page.ts",
       "source_location": "L209",
       "id": "search_search_page_searchpage_oncollectionclick",
-      "community": 249,
+      "community": 13,
       "norm_label": ".oncollectionclick()"
     },
     {
@@ -11518,7 +11599,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L1",
       "id": "header_header_component",
-      "community": 168,
+      "community": 182,
       "norm_label": "header.component.ts"
     },
     {
@@ -11527,7 +11608,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L15",
       "id": "header_header_component_headercomponent",
-      "community": 168,
+      "community": 182,
       "norm_label": "headercomponent"
     },
     {
@@ -11536,7 +11617,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L19",
       "id": "header_header_component_headercomponent_constructor",
-      "community": 168,
+      "community": 182,
       "norm_label": ".constructor()"
     },
     {
@@ -11545,7 +11626,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L23",
       "id": "header_header_component_headercomponent_onlogoclick",
-      "community": 168,
+      "community": 182,
       "norm_label": ".onlogoclick()"
     },
     {
@@ -11554,7 +11635,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L27",
       "id": "header_header_component_headercomponent_opensettings",
-      "community": 168,
+      "community": 182,
       "norm_label": ".opensettings()"
     },
     {
@@ -11563,7 +11644,7 @@
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L31",
       "id": "header_header_component_headercomponent_opensearch",
-      "community": 168,
+      "community": 182,
       "norm_label": ".opensearch()"
     },
     {
@@ -11698,7 +11779,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L22",
       "id": "swimlane_swimlane_component_swimlanecomponent",
-      "community": 18,
+      "community": 168,
       "norm_label": "swimlanecomponent"
     },
     {
@@ -11707,7 +11788,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L31",
       "id": "swimlane_swimlane_component_swimlanecomponent_constructor",
-      "community": 18,
+      "community": 168,
       "norm_label": ".constructor()"
     },
     {
@@ -11716,7 +11797,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L35",
       "id": "swimlane_swimlane_component_swimlanecomponent_openviewall",
-      "community": 18,
+      "community": 168,
       "norm_label": ".openviewall()"
     },
     {
@@ -11725,7 +11806,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L61",
       "id": "swimlane_swimlane_component_swimlanecomponent_getitembookmarkstate",
-      "community": 18,
+      "community": 168,
       "norm_label": ".getitembookmarkstate()"
     },
     {
@@ -11734,7 +11815,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L67",
       "id": "swimlane_swimlane_component_swimlanecomponent_oncardclick",
-      "community": 18,
+      "community": 168,
       "norm_label": ".oncardclick()"
     },
     {
@@ -11743,7 +11824,7 @@
       "source_file": "cinescope/src/app/shared/components/swimlane/swimlane.component.ts",
       "source_location": "L96",
       "id": "swimlane_swimlane_component_swimlanecomponent_ontogglebookmark",
-      "community": 18,
+      "community": 168,
       "norm_label": ".ontogglebookmark()"
     },
     {
@@ -11779,7 +11860,7 @@
       "source_file": "cinescope/src/app/shared/models/swimlane-item.interface.ts",
       "source_location": "L3",
       "id": "models_swimlane_item_interface_swimlaneitem",
-      "community": 18,
+      "community": 168,
       "norm_label": "swimlaneitem"
     },
     {
@@ -11806,7 +11887,7 @@
       "source_file": "cinescope/src/environments/environment.ts",
       "source_location": "L1",
       "id": "environments_environment",
-      "community": 167,
+      "community": 41,
       "norm_label": "environment.ts"
     },
     {
@@ -11815,7 +11896,7 @@
       "source_file": "cinescope/src/environments/environment.ts",
       "source_location": "L1",
       "id": "environments_environment_environment",
-      "community": 167,
+      "community": 41,
       "norm_label": "environment"
     },
     {
@@ -16711,7 +16792,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L49",
       "id": "schemas_content_schema_contentschema",
-      "community": 21,
+      "community": 167,
       "norm_label": "contentschema"
     },
     {
@@ -16720,7 +16801,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/search-history.schema.ts",
       "source_location": "L29",
       "id": "schemas_search_history_schema_searchhistoryschema",
-      "community": 21,
+      "community": 167,
       "norm_label": "searchhistoryschema"
     },
     {
@@ -16729,7 +16810,7 @@
       "source_file": "cinescope/src/app/core/database/schemas/settings.schema.ts",
       "source_location": "L38",
       "id": "schemas_settings_schema_settingsschema",
-      "community": 21,
+      "community": 167,
       "norm_label": "settingsschema"
     },
     {
@@ -16737,7 +16818,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.page.ts",
       "source_location": "L80",
-      "community": 35,
+      "community": 186,
       "norm_label": ".loadstoredvisibility()",
       "id": "movies_movies_page_moviespage_loadstoredvisibility"
     },
@@ -16746,7 +16827,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/features/movies/movies.page.ts",
       "source_location": "L92",
-      "community": 35,
+      "community": 186,
       "norm_label": ".ontogglevisibility()",
       "id": "movies_movies_page_moviespage_ontogglevisibility"
     },
@@ -16962,7 +17043,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/features/inbox/inbox.page.ts",
       "source_location": "L62",
-      "community": 52,
+      "community": 41,
       "norm_label": "selectedimagestate",
       "id": "inbox_inbox_page_selectedimagestate"
     },
@@ -16980,7 +17061,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/features/inbox/inbox.page.ts",
       "source_location": "L62",
-      "community": 52,
+      "community": 41,
       "norm_label": "sampleinboxseed",
       "id": "inbox_inbox_page_sampleinboxseed"
     },
@@ -17286,7 +17367,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/constants/api.constants.ts",
       "source_location": "L1",
-      "community": 22,
+      "community": 12,
       "norm_label": "api.constants.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_constants_api_constants_ts"
     },
@@ -17331,7 +17412,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/database/schemas/content.schema.ts",
       "source_location": "L1",
-      "community": 168,
+      "community": 18,
       "norm_label": "content.schema.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_database_schemas_content_schema_ts"
     },
@@ -17439,7 +17520,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/dtos/common/video.dto.ts",
       "source_location": "L1",
-      "community": 11,
+      "community": 22,
       "norm_label": "video.dto.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_dtos_common_video_dto_ts"
     },
@@ -17916,7 +17997,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/dtos/tv/tv-detail.dto.ts",
       "source_location": "L1",
-      "community": 22,
+      "community": 12,
       "norm_label": "tv-detail.dto.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_dtos_tv_tv_detail_dto_ts"
     },
@@ -18114,7 +18195,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/dtos/tv-seasons/tv-season-detail.dto.ts",
       "source_location": "L1",
-      "community": 36,
+      "community": 3,
       "norm_label": "tv-season-detail.dto.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_dtos_tv_seasons_tv_season_detail_dto_ts"
     },
@@ -18168,7 +18249,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/dtos/watch-providers/watch-provider.dto.ts",
       "source_location": "L1",
-      "community": 22,
+      "community": 12,
       "norm_label": "watch-provider.dto.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_dtos_watch_providers_watch_provider_dto_ts"
     },
@@ -18294,7 +18375,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/storage.service.ts",
       "source_location": "L1",
-      "community": 249,
+      "community": 274,
       "norm_label": "storage.service.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_services_storage_service_ts"
     },
@@ -18402,7 +18483,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L1",
-      "community": 41,
+      "community": 249,
       "norm_label": "tmdb-collections.service.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_core_services_tmdb_collections_service_ts"
     },
@@ -18411,7 +18492,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L11",
-      "community": 41,
+      "community": 249,
       "norm_label": "tmdbcollectionsservice",
       "id": "tmdb_collections_service_tmdbcollectionsservice"
     },
@@ -18420,7 +18501,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L17",
-      "community": 41,
+      "community": 249,
       "norm_label": ".getcollectiondetails()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectiondetails"
     },
@@ -18429,7 +18510,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L28",
-      "community": 41,
+      "community": 249,
       "norm_label": ".getcollectionimages()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectionimages"
     },
@@ -18438,7 +18519,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/core/services/tmdb-collections.service.ts",
       "source_location": "L44",
-      "community": 41,
+      "community": 249,
       "norm_label": ".getcollectiontranslations()",
       "id": "tmdb_collections_service_tmdbcollectionsservice_getcollectiontranslations"
     },
@@ -20166,7 +20247,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L1",
-      "community": 168,
+      "community": 205,
       "norm_label": "header.component.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_shared_components_header_header_component_ts"
     },
@@ -20175,7 +20256,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L14",
-      "community": 168,
+      "community": 205,
       "norm_label": "headercomponent",
       "id": "header_component_headercomponent"
     },
@@ -20184,7 +20265,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L17",
-      "community": 168,
+      "community": 205,
       "norm_label": ".constructor()",
       "id": "header_component_headercomponent_constructor"
     },
@@ -20193,7 +20274,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L21",
-      "community": 168,
+      "community": 205,
       "norm_label": ".opensettings()",
       "id": "header_component_headercomponent_opensettings"
     },
@@ -20202,7 +20283,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/header/header.component.ts",
       "source_location": "L25",
-      "community": 168,
+      "community": 205,
       "norm_label": ".opensearch()",
       "id": "header_component_headercomponent_opensearch"
     },
@@ -20238,7 +20319,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/poster-card/poster-card.component.ts",
       "source_location": "L1",
-      "community": 168,
+      "community": 12,
       "norm_label": "poster-card.component.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_shared_components_poster_card_poster_card_component_ts"
     },
@@ -20247,7 +20328,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/poster-card/poster-card.component.ts",
       "source_location": "L13",
-      "community": 168,
+      "community": 12,
       "norm_label": "postercardcomponent",
       "id": "poster_card_component_postercardcomponent"
     },
@@ -20256,7 +20337,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/components/poster-card/poster-card.component.ts",
       "source_location": "L23",
-      "community": 168,
+      "community": 12,
       "norm_label": ".handleimageerror()",
       "id": "poster_card_component_postercardcomponent_handleimageerror"
     },
@@ -20310,7 +20391,7 @@
       "file_type": "code",
       "source_file": "cinescope/src/app/shared/models/swimlane-item.interface.ts",
       "source_location": "L1",
-      "community": 249,
+      "community": 18,
       "norm_label": "swimlane-item.interface.ts",
       "id": "d_work_testbench_cinescope_cinescope_src_app_shared_models_swimlane_item_interface_ts"
     },
@@ -23414,6 +23495,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L37",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "constants_api_constants"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L11",
       "weight": 1.0,
@@ -23704,6 +23796,28 @@
       "source_location": "L708",
       "weight": 1.0,
       "source": "archive_archive_page_archivepage_tocardvm",
+      "target": "constants_api_constants_resolvemediaimageurl"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L37",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "constants_api_constants_resolvemediaimageurl"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L329",
+      "weight": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getproviderlogo",
       "target": "constants_api_constants_resolvemediaimageurl"
     },
     {
@@ -29256,6 +29370,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movie_watch_providers_dto"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/core/services/tmdb-movies.service.ts",
       "source_location": "L20",
       "weight": 1.0,
@@ -29273,6 +29398,17 @@
       "confidence_score": 1.0,
       "source": "movies_movie_watch_providers_dto_tmdbmoviewatchprovidersresponsedto",
       "target": "watch_providers_watch_provider_dto_tmdbwatchproviderregiondto"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movie_watch_providers_dto_tmdbmoviewatchprovidersresponsedto"
     },
     {
       "relation": "imports",
@@ -33414,11 +33550,33 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L36",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "watch_providers_watch_provider_dto"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L56",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "media_detail_media_detail_page",
+      "target": "watch_providers_watch_provider_dto"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
       "target": "watch_providers_watch_provider_dto"
     },
     {
@@ -33507,11 +33665,44 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L36",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "watch_providers_watch_provider_dto_tmdbwatchproviderdto"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L56",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "media_detail_media_detail_page",
+      "target": "watch_providers_watch_provider_dto_tmdbwatchproviderdto"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "watch_providers_watch_provider_dto_tmdbwatchproviderdto"
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L265",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models_streamingavailability",
       "target": "watch_providers_watch_provider_dto_tmdbwatchproviderdto"
     },
     {
@@ -37162,9 +37353,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.spec.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_spec",
-      "target": "services_movies_preferences_service",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service"
     },
     {
       "relation": "imports",
@@ -37173,9 +37364,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.spec.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_spec",
-      "target": "services_movies_preferences_service_moviespreferencesservice",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice"
     },
     {
       "relation": "imports_from",
@@ -37184,9 +37375,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.spec.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_spec",
-      "target": "services_toast_service",
-      "confidence_score": 1.0
+      "target": "services_toast_service"
     },
     {
       "relation": "imports",
@@ -37195,9 +37386,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.spec.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_spec",
-      "target": "services_toast_service_toastservice",
-      "confidence_score": 1.0
+      "target": "services_toast_service_toastservice"
     },
     {
       "relation": "imports_from",
@@ -37206,9 +37397,9 @@
       "source_file": "cinescope/src/app/features/movies/movies.page.ts",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "movies_movies_page",
-      "target": "services_movies_preferences_service",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service"
     },
     {
       "relation": "imports_from",
@@ -37217,9 +37408,9 @@
       "source_file": "cinescope/src/app/features/movies/movies.page.spec.ts",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "movies_movies_page_spec",
-      "target": "services_movies_preferences_service",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service"
     },
     {
       "relation": "imports_from",
@@ -37228,9 +37419,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "movies_movies_models",
-      "confidence_score": 1.0
+      "target": "movies_movies_models"
     },
     {
       "relation": "imports",
@@ -37239,9 +37430,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "movies_movies_models_default_movies_visibility",
-      "confidence_score": 1.0
+      "target": "movies_movies_models_default_movies_visibility"
     },
     {
       "relation": "imports",
@@ -37250,9 +37441,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "movies_movies_models_moviessectionvisibility",
-      "confidence_score": 1.0
+      "target": "movies_movies_models_moviessectionvisibility"
     },
     {
       "relation": "contains",
@@ -37260,9 +37451,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "services_movies_preferences_service_moviespreferencesservice",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice"
     },
     {
       "relation": "imports_from",
@@ -37271,9 +37462,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "services_toast_service",
-      "confidence_score": 1.0
+      "target": "services_toast_service"
     },
     {
       "relation": "imports",
@@ -37282,9 +37473,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service",
-      "target": "services_toast_service_toastservice",
-      "confidence_score": 1.0
+      "target": "services_toast_service_toastservice"
     },
     {
       "relation": "imports",
@@ -37293,9 +37484,9 @@
       "source_file": "cinescope/src/app/features/movies/movies.page.ts",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "movies_movies_page",
-      "target": "services_movies_preferences_service_moviespreferencesservice",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice"
     },
     {
       "relation": "imports",
@@ -37304,9 +37495,9 @@
       "source_file": "cinescope/src/app/features/movies/movies.page.spec.ts",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "movies_movies_page_spec",
-      "target": "services_movies_preferences_service_moviespreferencesservice",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice"
     },
     {
       "relation": "method",
@@ -37314,9 +37505,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_moviespreferencesservice",
-      "target": "services_movies_preferences_service_moviespreferencesservice_loadstoredvisibility",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice_loadstoredvisibility"
     },
     {
       "relation": "method",
@@ -37324,9 +37515,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L42",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_moviespreferencesservice",
-      "target": "services_movies_preferences_service_moviespreferencesservice_resettodefault",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice_resettodefault"
     },
     {
       "relation": "method",
@@ -37334,9 +37525,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_moviespreferencesservice",
-      "target": "services_movies_preferences_service_moviespreferencesservice_togglesection",
-      "confidence_score": 1.0
+      "target": "services_movies_preferences_service_moviespreferencesservice_togglesection"
     },
     {
       "relation": "references",
@@ -37345,9 +37536,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_moviespreferencesservice_loadstoredvisibility",
-      "target": "movies_movies_models_moviessectionvisibility",
-      "confidence_score": 1.0
+      "target": "movies_movies_models_moviessectionvisibility"
     },
     {
       "relation": "references",
@@ -37356,9 +37547,9 @@
       "source_file": "cinescope/src/app/core/services/movies-preferences.service.ts",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_movies_preferences_service_moviespreferencesservice_togglesection",
-      "target": "movies_movies_models_moviessectionvisibility",
-      "confidence_score": 1.0
+      "target": "movies_movies_models_moviessectionvisibility"
     },
     {
       "relation": "imports_from",
@@ -38006,6 +38197,28 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "services_storage_service"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
+      "target": "services_storage_service"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/collection/collection.page.ts",
       "source_location": "L9",
       "weight": 1.0,
@@ -38363,6 +38576,28 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "archive_archive_page",
+      "target": "services_storage_service_storageservice"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "services_storage_service_storageservice"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
       "target": "services_storage_service_storageservice"
     },
     {
@@ -39945,11 +40180,44 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "services_tmdb_movies_service"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
+      "target": "services_tmdb_movies_service"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L44",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "media_detail_media_detail_page",
+      "target": "services_tmdb_movies_service"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.page.spec.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_page_spec",
       "target": "services_tmdb_movies_service"
     },
     {
@@ -39988,11 +40256,44 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "services_tmdb_movies_service_tmdbmoviesservice"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
+      "target": "services_tmdb_movies_service_tmdbmoviesservice"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/media-detail/media-detail.page.ts",
       "source_location": "L44",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "media_detail_media_detail_page",
+      "target": "services_tmdb_movies_service_tmdbmoviesservice"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.page.spec.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_page_spec",
       "target": "services_tmdb_movies_service_tmdbmoviesservice"
     },
     {
@@ -45613,6 +45914,28 @@
       "target": "cinematch_hero_cinematch_hero_component_cinematchherocomponent"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
+      "target": "movies_movies_models"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.spec.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_spec",
+      "target": "movies_movies_models_resolvestreamingdetails"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
@@ -45649,11 +45972,33 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_contextualhook"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
       "source_location": "L19",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "cinematch_hero_cinematch_hero_component",
       "target": "movies_movies_models_getaddedtimeago"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_getcontextualhook"
     },
     {
       "relation": "imports",
@@ -45748,11 +46093,55 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_gettimeofdaygreeting"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
       "source_location": "L19",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "cinematch_hero_cinematch_hero_component",
       "target": "movies_movies_models_moodfilteroption"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L41",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_resolvestreamingdetails"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L41",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_streamingavailability"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component",
+      "target": "movies_movies_models_timeofdaygreeting"
     },
     {
       "relation": "imports_from",
@@ -45819,6 +46208,16 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L328",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent",
+      "target": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_getproviderlogo"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
       "source_location": "L167",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -45869,6 +46268,26 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L281",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent",
+      "target": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_loadwatchproviders"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent",
+      "target": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_moodoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
       "source_location": "L136",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -45908,6 +46327,17 @@
       "target": "cinematch_hero_cinematch_hero_component_cinematchherocomponent"
     },
     {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_moodoptions",
+      "target": "movies_movies_models_moodfilteroption",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -45928,6 +46358,17 @@
       "confidence_score": 1.0,
       "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_setmood",
       "target": "movies_movies_models_cinematchmood"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cinescope/src/app/features/movies/components/cinematch-hero/cinematch-hero.component.ts",
+      "source_location": "L301",
+      "weight": 1.0,
+      "source": "cinematch_hero_cinematch_hero_component_cinematchherocomponent_loadwatchproviders",
+      "target": "movies_movies_models_resolvestreamingdetails"
     },
     {
       "relation": "calls",
@@ -46361,6 +46802,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L107",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_contextualhook"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
       "source_location": "L28",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -46376,6 +46827,16 @@
       "confidence_score": 1.0,
       "source": "movies_movies_models",
       "target": "movies_movies_models_getaddedtimeago"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L113",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_getcontextualhook"
     },
     {
       "relation": "contains",
@@ -46461,6 +46922,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L65",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_gettimeofdaygreeting"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
       "source_location": "L13",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -46476,6 +46947,36 @@
       "confidence_score": 1.0,
       "source": "movies_movies_models",
       "target": "movies_movies_models_moviessectionvisibility"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L270",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_resolvestreamingdetails"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L262",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_streamingavailability"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cinescope/src/app/features/movies/movies.models.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "movies_movies_models",
+      "target": "movies_movies_models_timeofdaygreeting"
     },
     {
       "relation": "contains",
@@ -46961,9 +47462,9 @@
       "source_file": "cinescope/src/app/features/movies/movies.page.ts",
       "source_location": "L103",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "movies_movies_page_moviespage",
-      "target": "movies_movies_page_moviespage_opensettings",
-      "confidence_score": 1.0
+      "target": "movies_movies_page_moviespage_opensettings"
     },
     {
       "relation": "method",
@@ -56678,5 +57179,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8a3811c4323485a0bdfa94d6af08137fc9923fcd"
+  "built_at_commit": "9a3da262b16ff00691719697bb65175f2d94771f"
 }
