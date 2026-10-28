@@ -53,6 +53,65 @@
     </ion-list>
 
 <ion-list inset="true" class="cinescope-list">
+        <ion-item button (click)="isMoviesTabCollapsed.set(!isMoviesTabCollapsed())" [lines]="isMoviesTabCollapsed() ? 'none' : 'inset'">
+            <ion-icon slot="start" name="film-outline"></ion-icon>
+            <ion-label>
+                <h3>Movies Tab</h3>
+                <p>Customize visible sections & layout</p>
+            </ion-label>
+            <ion-icon slot="end" [name]="isMoviesTabCollapsed() ? 'chevron-forward-outline' : 'chevron-down-outline'"></ion-icon>
+        </ion-item>
+        @if (!isMoviesTabCollapsed()) {
+        <ion-item>
+            <ion-icon slot="start" name="sparkles-outline"></ion-icon>
+            <ion-label>
+                <h3>Tonight's Pick (CineMatch)</h3>
+                <p>Decision engine with mood filters and dice roll</p>
+            </ion-label>
+            <ion-toggle
+                slot="end"
+                [checked]="moviesPrefs.visibility().cineMatch"
+                (ionChange)="moviesPrefs.toggleSection('cineMatch')"
+                aria-label="Toggle Tonight's Pick">
+            </ion-toggle>
+        </ion-item>
+        <ion-item>
+            <ion-icon slot="start" name="albums-outline"></ion-icon>
+            <ion-label>
+                <h3>Franchises in Progress</h3>
+                <p>Track active movie sagas and completion progress</p>
+            </ion-label>
+            <ion-toggle
+                slot="end"
+                [checked]="moviesPrefs.visibility().franchises"
+                (ionChange)="moviesPrefs.toggleSection('franchises')"
+                aria-label="Toggle Franchises in Progress">
+            </ion-toggle>
+        </ion-item>
+        <ion-item>
+            <ion-icon slot="start" name="ticket-outline"></ion-icon>
+            <ion-label>
+                <h3>The Blind Ticket</h3>
+                <p>Anti-poster bias mystery card with tear-to-reveal</p>
+            </ion-label>
+            <ion-toggle
+                slot="end"
+                [checked]="moviesPrefs.visibility().blindTicket"
+                (ionChange)="moviesPrefs.toggleSection('blindTicket')"
+                aria-label="Toggle The Blind Ticket">
+            </ion-toggle>
+        </ion-item>
+        <ion-item button (click)="moviesPrefs.resetToDefault()" lines="none">
+            <ion-icon slot="start" name="refresh-outline"></ion-icon>
+            <ion-label>
+                <h3>Reset Movies Layout</h3>
+                <p>Restore all 3 sections to visible</p>
+            </ion-label>
+        </ion-item>
+        }
+    </ion-list>
+
+    <ion-list inset="true" class="cinescope-list">
         <ion-list-header>
             <ion-label>Data Management</ion-label>
         </ion-list-header>

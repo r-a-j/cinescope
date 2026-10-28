@@ -1,0 +1,241 @@
+@if (blindTicketMovie(); as ticketMovie) {
+  <section class="blind-ticket-section">
+    <div class="ticket-header-group">
+      <h3>THE BLIND TICKET</h3>
+    </div>
+
+    <div
+      class="blind-ticket-card"
+      [class.revealed]="isBlindTicketRevealed()"
+      [class.card-holding]="isHolding()"
+    >
+      <!-- Perforation Stub Notches & Stitch Line -->
+      <div class="stub-notch notch-left"></div>
+      <div class="stub-notch notch-right"></div>
+      <div class="perforation-stitch-line"></div>
+
+      <!-- Vintage Memorabilia Stamp (Revealed Only) -->
+      @if (isBlindTicketRevealed()) {
+        <div class="admit-stamp">
+          <span class="stamp-title">ADMIT ONE</span>
+          <span class="stamp-sub">VERIFIED PICK</span>
+        </div>
+      }
+
+      <div class="ticket-inner">
+        <div class="ticket-top-brand">
+          <div class="brand-left">
+            <span class="ticket-icon">🎟️</span>
+            <span class="ticket-series">CINESCOPE ADMIT ONE</span>
+          </div>
+          <span class="ticket-code">NO. {{ isBlindTicketRevealed() ? ticketMovie.tmdbId : '••••••' }}</span>
+        </div>
+
+        <!-- Content Area: Hidden vs Revealed -->
+        <div class="ticket-content-grid">
+          <div class="ticket-visual">
+            @if (isBlindTicketRevealed()) {
+              <button
+                type="button"
+                class="poster-btn"
+                (click)="openDetail.emit(ticketMovie.tmdbId)"
+                [attr.aria-label]="getTitle(ticketMovie)"
+              >
+                <img
+                  [src]="getPoster(ticketMovie)"
+                  [alt]="getTitle(ticketMovie)"
+                  class="ticket-poster-img revealed-img"
+                />
+              </button>
+            } @else {
+              <div class="ticket-mystery-placeholder">
+                <div class="wax-seal">
+                  <div class="seal-inner-ring">
+                    <ion-icon name="sparkles" class="seal-icon"></ion-icon>
+                  </div>
+                </div>
+                <span class="mystery-label">SEALED</span>
+                <span class="mystery-sub">VAULT ARCHIVE</span>
+                <div class="gold-shimmer-sweep"></div>
+              </div>
+            }
+          </div>
+
+          <div class="ticket-details">
+            <div class="ticket-title-wrap">
+              @if (isBlindTicketRevealed()) {
+                <button
+                  type="button"
+                  class="title-btn"
+                  (click)="openDetail.emit(ticketMovie.tmdbId)"
+                >
+                  <h4 class="revealed-title">
+                    {{ getTitle(ticketMovie) }}
+                  </h4>
+                </button>
+              } @else {
+                <div class="classified-title-bar">
+                  <div class="classified-tape">
+                    <span class="tape-text">RESTRICTED TITLE</span>
+                    <div class="tape-shimmer"></div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Sensory Tags -->
+            <div class="sensory-tags-row">
+              @if (isBlindTicketRevealed()) {
+                @if (getRating(ticketMovie); as rating) {
+                  <span class="sensory-tag sensory-gold">★ {{ rating }}</span>
+                }
+                @if (getYear(ticketMovie); as yr) {
+                  <span class="sensory-tag">{{ yr }}</span>
+                }
+                @for (g of getGenres(ticketMovie); track g) {
+                  <span class="sensory-tag">{{ g }}</span>
+                }
+              }
+              @if (getRuntime(ticketMovie); as rt) {
+                <span class="sensory-tag">⏱️ {{ rt }}</span>
+              }
+            </div>
+
+            <!-- OTT Streaming Availability with Region Awareness (Revealed State Only) -->
+            @if (isBlindTicketRevealed()) {
+              <div class="streaming-details-row">
+                @if (streamingDetails().type === 'flatrate') {
+                  <div class="stream-block stream-available">
+                    <div class="stream-badge-row">
+                      <span class="stream-status-dot green-dot"></span>
+                      <span class="stream-label">{{ streamingDetails().label }}</span>
+                    </div>
+                    <div class="providers-list">
+                      @for (prov of streamingDetails().providers; track prov.provider_id) {
+                        <div class="provider-pill" [title]="prov.provider_name">
+                          <img
+                            [src]="getProviderLogo(prov.logo_path)"
+                            [alt]="prov.provider_name"
+                            class="provider-logo"
+                          />
+                          <span class="provider-name">{{ prov.provider_name }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @else if (streamingDetails().type === 'rent_buy') {
+                  <div class="stream-block stream-rent">
+                    <div class="stream-badge-row">
+                      <span class="stream-status-dot yellow-dot"></span>
+                      <span class="stream-label">{{ streamingDetails().label }}</span>
+                    </div>
+                    <div class="providers-list">
+                      @for (prov of streamingDetails().providers; track prov.provider_id) {
+                        <div class="provider-pill rent-pill" [title]="prov.provider_name">
+                          <img
+                            [src]="getProviderLogo(prov.logo_path)"
+                            [alt]="prov.provider_name"
+                            class="provider-logo"
+                          />
+                          <span class="provider-name">{{ prov.provider_name }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @else if (streamingDetails().type === 'other_regions') {
+                  <div class="stream-block stream-other-regions">
+                    <div class="stream-badge-row">
+                      <span class="stream-status-dot dim-dot"></span>
+                      <span class="stream-label">{{ streamingDetails().label }}</span>
+                    </div>
+                    @if (streamingDetails().subtext) {
+                      <p class="stream-subtext">{{ streamingDetails().subtext }}</p>
+                    }
+                    @if (streamingDetails().providers.length > 0) {
+                      <div class="providers-list other-providers">
+                        @for (prov of streamingDetails().providers; track prov.provider_id) {
+                          <div class="provider-pill other-pill" [title]="prov.provider_name">
+                            <img
+                              [src]="getProviderLogo(prov.logo_path)"
+                              [alt]="prov.provider_name"
+                              class="provider-logo"
+                            />
+                            <span class="provider-name">{{ prov.provider_name }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="stream-block stream-none">
+                    <div class="stream-badge-row">
+                      <span class="stream-status-dot dim-dot"></span>
+                      <span class="stream-label">{{ streamingDetails().label }}</span>
+                    </div>
+                    @if (streamingDetails().subtext) {
+                      <p class="stream-subtext">{{ streamingDetails().subtext }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Sensory Hook / Logline -->
+            @if (getSealedOverview(ticketMovie); as logline) {
+              <div class="ticket-hook-wrapper">
+                <span class="hook-quote-mark">“</span>
+                <p class="ticket-hook-logline">
+                  {{ logline }}
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Ticket Action Button -->
+        <div class="ticket-actions-bar">
+          @if (!isBlindTicketRevealed()) {
+            <button
+              type="button"
+              class="btn-ticket btn-tear"
+              [class.holding]="isHolding()"
+              (pointerdown)="onHoldStart()"
+              (pointerup)="onHoldEnd()"
+              (pointerleave)="onHoldEnd()"
+              (pointercancel)="onHoldEnd()"
+              (keydown)="onKeyDown($event)"
+              (keyup)="onKeyUp($event)"
+              (contextmenu)="$event.preventDefault()"
+              (click)="$event.preventDefault()"
+              aria-label="Hold to tear and reveal mystery movie ticket"
+            >
+              <div class="tear-progress" [class.active]="isHolding()"></div>
+              <div class="tear-glow" [class.active]="isHolding()"></div>
+              <span class="btn-text">
+                {{ isHolding() ? '✂️ Tearing Ticket...' : '✂️ Hold to Tear & Reveal' }}
+              </span>
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-ticket btn-watch-tonight"
+              (click)="watchTonight.emit(ticketMovie)"
+            >
+              <ion-icon name="play-outline"></ion-icon>
+              <span>Watch Tonight</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-ticket btn-draw-next"
+              (click)="pickNextMysteryTicket()"
+            >
+              <ion-icon name="refresh-outline"></ion-icon>
+              <span>Draw Another</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+}

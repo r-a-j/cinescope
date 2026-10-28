@@ -15,7 +15,7 @@ cinescope-keystore-secrets.txt
 *secret*.txt
 .vscode/
 .vercel/
-cinescope-api/graphify-out/cache/*
-cinescope/graphify-out/cache/*
-graphify-out/cache/*
+graphify-out/
+cinescope/graphify-out/
+cinescope-api/graphify-out/
 REPOSITORY_ANALYSIS.md

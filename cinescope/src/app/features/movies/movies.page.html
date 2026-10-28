@@ -1,7 +1,60 @@
 <app-header></app-header>
 
-<ion-content color="background">
-  <div class="tab-placeholder">
-    <h1>MOVIES TAB</h1>
+<ion-content color="background" class="ion-no-padding">
+  <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="movies-container">
+    <!-- 1. Cinematch Hero Decision Engine -->
+    @if (moviesPrefs.visibility().cineMatch) {
+      <app-cinematch-hero
+        [watchlistMovies]="watchlistMovies()"
+        (openDetail)="openMovieDetail($event)"
+        (discoverClick)="navigateToDiscover()"
+        (toggleBookmark)="onToggleBookmark($event)"
+        (markWatched)="onMarkWatched($event)"
+      ></app-cinematch-hero>
+    }
+
+    <!-- 2. Franchise Tracker -->
+    @if (moviesPrefs.visibility().franchises && activeFranchises().length > 0) {
+      <app-franchise-tracker
+        [activeFranchises]="activeFranchises()"
+        (collectionClick)="openCollection($event.id, $event.name)"
+      ></app-franchise-tracker>
+    }
+
+    <!-- 3. The Blind Ticket -->
+    @if (moviesPrefs.visibility().blindTicket && watchlistMovies().length > 0) {
+      <app-blind-ticket
+        [watchlistMovies]="watchlistMovies()"
+        (openDetail)="openMovieDetail($event)"
+        (watchTonight)="onWatchTonight($event)"
+      ></app-blind-ticket>
+    }
+
+    <!-- Empty State if all 3 sections are toggled off in Settings -->
+    @if (allSectionsHidden()) {
+      <div class="all-hidden-empty-card">
+        <div class="empty-icon-wrap">
+          <ion-icon name="options-outline"></ion-icon>
+        </div>
+        <h3>ALL MOVIES SECTIONS ARE HIDDEN</h3>
+        <p>You have turned off all 3 sections in Settings. Customize your layout anytime.</p>
+        <button type="button" class="btn-primary" (click)="openSettings()">
+          Open Settings to Customize
+        </button>
+      </div>
+    }
+
+    <!-- Discrete Footer Settings Shortcut -->
+    <div class="movies-footer-hint">
+      <button type="button" class="settings-hint-btn" (click)="openSettings()">
+        <ion-icon name="options-outline"></ion-icon>
+        <span>Customize Movies sections in Settings</span>
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
   </div>
 </ion-content>

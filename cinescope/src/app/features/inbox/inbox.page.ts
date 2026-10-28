@@ -43,7 +43,6 @@ import {
   alertCircleOutline,
   checkmarkCircleOutline
 } from 'ionicons/icons';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -229,15 +228,6 @@ export class InboxPage {
     } catch {
       // Non-critical fallback
     }
-    void this.triggerHaptic(ImpactStyle.Light);
-  }
-
-  private async triggerHaptic(style: ImpactStyle = ImpactStyle.Light): Promise<void> {
-    try {
-      await Haptics.impact({ style });
-    } catch {
-      // Graceful no-op on non-native environments
-    }
   }
 
   private get activeCardElement(): HTMLElement | null {
@@ -250,7 +240,6 @@ export class InboxPage {
   // ==========================================
 
   public toggleSelectAll(): void {
-    void this.triggerHaptic(ImpactStyle.Light);
     if (this.isAllSelected()) {
       this.selectedIds.set(new Set());
     } else {
@@ -262,7 +251,6 @@ export class InboxPage {
     if (event) {
       event.stopPropagation();
     }
-    void this.triggerHaptic(ImpactStyle.Light);
     this.selectedIds.update((current) => {
       const next = new Set(current);
       if (next.has(cardId)) {
@@ -278,7 +266,6 @@ export class InboxPage {
     if (event) {
       event.stopPropagation();
     }
-    void this.triggerHaptic(ImpactStyle.Light);
 
     // Clean up selection if this item was checked
     this.selectedIds.update((current) => {
@@ -304,7 +291,6 @@ export class InboxPage {
     }));
 
     if (action === 'discard') {
-      void this.triggerHaptic(ImpactStyle.Light);
       const isAll = this.isAllSelected();
       const alert = await this.alertController.create({
         header: isAll ? 'Clear Entire Inbox?' : `Discard ${count} Selected Item${count > 1 ? 's' : ''}?`,
@@ -348,8 +334,6 @@ export class InboxPage {
       }
       return next;
     });
-
-    void this.triggerHaptic(ImpactStyle.Medium);
 
     const label = action === 'watchlist'
       ? `Moved ${count} item${count > 1 ? 's' : ''} to Watchlist`
@@ -518,7 +502,6 @@ export class InboxPage {
     this.rawText.set('');
     this.selectedImages.set([]);
     this.closeImportModal();
-    void this.triggerHaptic(ImpactStyle.Light);
 
     this.isProcessing.set(true);
     const startMsg = mode === 'text'
@@ -595,8 +578,6 @@ export class InboxPage {
 
       this.processingStatus.set(`Resolving ${uniqueTitles.length} title${uniqueTitles.length > 1 ? 's' : ''} on TMDB...`);
       const result = await this.extractionService.resolveAndQueueTitles(uniqueTitles);
-
-      void this.triggerHaptic(ImpactStyle.Medium);
 
       // Send notification of findings
       const sourceDesc = mode === 'text'
@@ -774,14 +755,12 @@ export class InboxPage {
     if (this.isAnimating() || this.cards().length === 0) return;
     const card = this.cards()[0];
     if (!card) return;
-    void this.triggerHaptic(ImpactStyle.Light);
     this.animateExitAndCommit(card, action);
   }
 
   private animateExitAndCommit(card: InboxCardVm, action: 'watchlist' | 'watched' | 'discard'): void {
     this.isAnimating.set(true);
     const el = this.activeCardElement;
-    void this.triggerHaptic(ImpactStyle.Medium);
 
     if (el) {
       el.classList.remove('dragging');
@@ -874,8 +853,6 @@ export class InboxPage {
     const total = this.cards().length;
     if (total === 0) return;
 
-    void this.triggerHaptic(ImpactStyle.Light);
-
     const alert = await this.alertController.create({
       header: 'Clear Inbox Queue?',
       subHeader: `${total} title${total > 1 ? 's' : ''} will be permanently removed`,
@@ -891,7 +868,6 @@ export class InboxPage {
           handler: async (): Promise<void> => {
             this.selectedIds.set(new Set());
             const count = await this.storage.clearInbox();
-            void this.triggerHaptic(ImpactStyle.Medium);
             await this.toast.presentInfo(`Cleared ${count} items from Inbox.`);
           }
         }
