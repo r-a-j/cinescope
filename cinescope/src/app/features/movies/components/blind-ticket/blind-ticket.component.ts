@@ -10,7 +10,6 @@ import {
   star,
   timeOutline
 } from 'ionicons/icons';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { ContentDocType } from '../../../../core/database/schemas/content.schema';
 import {
   getMovieTitle,
@@ -56,32 +55,19 @@ export class BlindTicketComponent {
         return;
       }
       if (!current || !movies.some(m => m.id === current.id)) {
-        this.pickNextMysteryTicket(false);
+        this.pickNextMysteryTicket();
       }
     });
   }
 
-  public async tearBlindTicket(): Promise<void> {
+  public tearBlindTicket(): void {
     if (this.isBlindTicketRevealed()) return;
-    try {
-      await Haptics.impact({ style: ImpactStyle.Heavy });
-    } catch {
-      // safe fallback
-    }
     this.isBlindTicketRevealed.set(true);
   }
 
-  public pickNextMysteryTicket(haptic = true): void {
+  public pickNextMysteryTicket(): void {
     const list = this.watchlistMovies();
     if (list.length === 0) return;
-
-    if (haptic) {
-      try {
-        void Haptics.impact({ style: ImpactStyle.Medium });
-      } catch {
-        // safe fallback
-      }
-    }
 
     const currentId = this.blindTicketMovie()?.id;
     const candidates = list.filter(m => m.id !== currentId);

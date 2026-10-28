@@ -30,7 +30,6 @@ import {
   globeOutline,
   pricetagOutline
 } from 'ionicons/icons';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { firstValueFrom } from 'rxjs';
 
 import { ContentDocType } from '../../../../core/database/schemas/content.schema';
@@ -282,16 +281,10 @@ export class CinematchHeroComponent {
     const pool = this.moodFilteredMovies();
     if (pool.length === 0) return;
 
-    try {
-      await Haptics.impact({ style: ImpactStyle.Light });
-    } catch {
-      // safe fallback in browser
-    }
-
     // Trigger smooth fade transition
     this.isShuffling.set(true);
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const currentId = this.selectedMovie()?.id;
       const candidates = pool.filter(m => m.id !== currentId);
       const nextPool = candidates.length > 0 ? candidates : pool;
@@ -299,12 +292,6 @@ export class CinematchHeroComponent {
 
       this.selectedMovie.set(nextPool[randomIdx]);
       this.isShuffling.set(false);
-
-      try {
-        await Haptics.impact({ style: ImpactStyle.Medium });
-      } catch {
-        // safe fallback
-      }
     }, 180);
   }
 
