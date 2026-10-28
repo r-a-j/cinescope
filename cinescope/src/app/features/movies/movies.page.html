@@ -30,36 +30,18 @@
       <app-blind-ticket
         [watchlistMovies]="watchlistMovies()"
         (openDetail)="openMovieDetail($event)"
-        (watchTonight)="onGraveyardWatchTonight($event)"
+        (watchTonight)="onWatchTonight($event)"
       ></app-blind-ticket>
     }
 
-    <!-- 4. The Watchlist Graveyard -->
-    @if (moviesPrefs.visibility().graveyard && graveyardCount() > 0) {
-      <app-watchlist-graveyard
-        [watchlistMovies]="watchlistMovies()"
-        (openDetail)="openMovieDetail($event)"
-        (watchTonight)="onGraveyardWatchTonight($event)"
-        (letItGo)="onGraveyardLetItGo($event)"
-        (snooze)="onGraveyardSnooze($event)"
-      ></app-watchlist-graveyard>
-    }
-
-    <!-- 5. Thematic Swimlanes -->
-    @if (moviesPrefs.visibility().swimlanes && watchlistMovies().length > 0) {
-      <app-movies-swimlanes
-        [watchlistMovies]="watchlistMovies()"
-      ></app-movies-swimlanes>
-    }
-
-    <!-- Empty State if all 5 sections are toggled off in Settings -->
+    <!-- Empty State if all 3 sections are toggled off in Settings -->
     @if (allSectionsHidden()) {
       <div class="all-hidden-empty-card">
         <div class="empty-icon-wrap">
           <ion-icon name="options-outline"></ion-icon>
         </div>
-        <h3>ALL MOVIES LOUNGE SECTIONS ARE HIDDEN</h3>
-        <p>You have turned off all 5 sections in Settings. Customize your layout anytime.</p>
+        <h3>ALL MOVIES SECTIONS ARE HIDDEN</h3>
+        <p>You have turned off all 3 sections in Settings. Customize your layout anytime.</p>
         <button type="button" class="btn-primary" (click)="openSettings()">
           Open Settings to Customize
         </button>
@@ -70,7 +52,7 @@
     <div class="movies-footer-hint">
       <button type="button" class="settings-hint-btn" (click)="openSettings()">
         <ion-icon name="options-outline"></ion-icon>
-        <span>Customize Movies Lounge sections in Settings</span>
+        <span>Customize Movies sections in Settings</span>
         <ion-icon name="chevron-forward-outline"></ion-icon>
       </button>
     </div>

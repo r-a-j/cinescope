@@ -1,12 +1,7 @@
 @if (blindTicketMovie(); as ticketMovie) {
   <section class="blind-ticket-section">
     <div class="ticket-header-group">
-      <div class="headline-badge">
-        <ion-icon name="ticket-outline"></ion-icon>
-        <span>Anti-Poster Bias</span>
-      </div>
       <h3>THE BLIND TICKET</h3>
-      <p class="headline-sub">No posters. No title bias. Pure story and vibe hook.</p>
     </div>
 
     <div class="blind-ticket-card" [class.revealed]="isBlindTicketRevealed()">

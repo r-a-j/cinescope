@@ -32,8 +32,6 @@ describe('MoviesPreferencesService', () => {
     expect(v.cineMatch).toBeTrue();
     expect(v.franchises).toBeTrue();
     expect(v.blindTicket).toBeTrue();
-    expect(v.graveyard).toBeTrue();
-    expect(v.swimlanes).toBeTrue();
   });
 
   it('should toggle an individual section off and on', () => {
@@ -46,13 +44,13 @@ describe('MoviesPreferencesService', () => {
 
   it('should reset all sections to true and show a success toast', async () => {
     service.toggleSection('blindTicket');
-    service.toggleSection('graveyard');
+    service.toggleSection('franchises');
     expect(service.visibility().blindTicket).toBeFalse();
-    expect(service.visibility().graveyard).toBeFalse();
+    expect(service.visibility().franchises).toBeFalse();
 
     await service.resetToDefault();
     expect(service.visibility().blindTicket).toBeTrue();
-    expect(service.visibility().graveyard).toBeTrue();
+    expect(service.visibility().franchises).toBeTrue();
     expect(mockToastService.presentSuccess).toHaveBeenCalled();
   });
 });

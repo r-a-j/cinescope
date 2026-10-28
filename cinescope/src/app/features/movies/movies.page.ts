@@ -21,8 +21,6 @@ import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { CinematchHeroComponent } from './components/cinematch-hero/cinematch-hero.component';
 import { FranchiseTrackerComponent } from './components/franchise-tracker/franchise-tracker.component';
 import { BlindTicketComponent } from './components/blind-ticket/blind-ticket.component';
-import { WatchlistGraveyardComponent } from './components/watchlist-graveyard/watchlist-graveyard.component';
-import { MoviesSwimlanesComponent } from './components/movies-swimlanes/movies-swimlanes.component';
 
 import { getMovieTitle } from './movies.models';
 
@@ -38,9 +36,7 @@ import { getMovieTitle } from './movies.models';
     HeaderComponent,
     CinematchHeroComponent,
     FranchiseTrackerComponent,
-    BlindTicketComponent,
-    WatchlistGraveyardComponent,
-    MoviesSwimlanesComponent
+    BlindTicketComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './movies.page.html',
@@ -63,19 +59,10 @@ export class MoviesPage {
     return this.franchiseAggregator.activeUserFranchises();
   });
 
-  // Number of items in graveyard (> 90 days old)
-  public readonly graveyardCount = computed<number>(() => {
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
-    return this.watchlistMovies().filter(item => {
-      const addedTime = new Date(item.addedAt).getTime();
-      return !Number.isNaN(addedTime) && addedTime < ninetyDaysAgo;
-    }).length;
-  });
-
-  // Check if all 5 sections are hidden in settings
+  // Check if all 3 sections are hidden in settings
   public readonly allSectionsHidden = computed<boolean>(() => {
     const v = this.moviesPrefs.visibility();
-    return !v.cineMatch && !v.franchises && !v.blindTicket && !v.graveyard && !v.swimlanes;
+    return !v.cineMatch && !v.franchises && !v.blindTicket;
   });
 
   constructor() {
@@ -132,23 +119,7 @@ export class MoviesPage {
     await this.toast.presentSuccess(`Marked "${title}" as Watched! 🍿`, 2000);
   }
 
-  public async onGraveyardWatchTonight(doc: ContentDocType): Promise<void> {
+  public async onWatchTonight(doc: ContentDocType): Promise<void> {
     this.openMovieDetail(doc.tmdbId);
-  }
-
-  public async onGraveyardLetItGo(doc: ContentDocType): Promise<void> {
-    const title = getMovieTitle(doc);
-    await this.storage.removeMedia(doc.tmdbId, 'movie');
-    await this.toast.presentInfo(`Let go of "${title}" from your Watchlist 🕊️`, 2500);
-  }
-
-  public async onGraveyardSnooze(doc: ContentDocType): Promise<void> {
-    const title = getMovieTitle(doc);
-    await this.storage.addToWatchlist(
-      doc.tmdbId,
-      'movie',
-      doc.payload as TmdbPayload
-    );
-    await this.toast.presentSuccess(`Snoozed "${title}" for 90 days ⏰`, 2000);
   }
 }

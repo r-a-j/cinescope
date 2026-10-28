@@ -95,9 +95,7 @@ describe('MoviesPage', () => {
   const mockVisibility = signal({
     cineMatch: true,
     franchises: true,
-    blindTicket: true,
-    graveyard: true,
-    swimlanes: true
+    blindTicket: true
   });
 
   const mockMoviesPreferencesService = {
@@ -109,9 +107,7 @@ describe('MoviesPage', () => {
       mockVisibility.set({
         cineMatch: true,
         franchises: true,
-        blindTicket: true,
-        graveyard: true,
-        swimlanes: true
+        blindTicket: true
       });
       return Promise.resolve();
     })
@@ -157,8 +153,6 @@ describe('MoviesPage', () => {
     expect(vis.cineMatch).toBeTrue();
     expect(vis.franchises).toBeTrue();
     expect(vis.blindTicket).toBeTrue();
-    expect(vis.graveyard).toBeTrue();
-    expect(vis.swimlanes).toBeTrue();
     expect(component.allSectionsHidden()).toBeFalse();
   });
 
@@ -166,9 +160,7 @@ describe('MoviesPage', () => {
     mockVisibility.set({
       cineMatch: false,
       franchises: false,
-      blindTicket: false,
-      graveyard: false,
-      swimlanes: false
+      blindTicket: false
     });
     expect(component.allSectionsHidden()).toBeTrue();
 
@@ -176,35 +168,8 @@ describe('MoviesPage', () => {
     mockVisibility.set({
       cineMatch: true,
       franchises: true,
-      blindTicket: true,
-      graveyard: true,
-      swimlanes: true
+      blindTicket: true
     });
     expect(component.allSectionsHidden()).toBeFalse();
-  });
-
-  it('should compute graveyard count correctly for titles > 90 days', () => {
-    expect(component.graveyardCount()).toBe(1);
-  });
-
-  it('should call storage.addToWatchlist when snoozing a graveyard title', async () => {
-    const movieToSnooze = component.watchlistMovies()[0];
-    await component.onGraveyardSnooze(movieToSnooze);
-    expect(mockStorageService.addToWatchlist).toHaveBeenCalledWith(
-      movieToSnooze.tmdbId,
-      'movie',
-      movieToSnooze.payload
-    );
-    expect(mockToastService.presentSuccess).toHaveBeenCalled();
-  });
-
-  it('should call storage.removeMedia when letting go of a graveyard title', async () => {
-    const movieToPurge = component.watchlistMovies()[0];
-    await component.onGraveyardLetItGo(movieToPurge);
-    expect(mockStorageService.removeMedia).toHaveBeenCalledWith(
-      movieToPurge.tmdbId,
-      'movie'
-    );
-    expect(mockToastService.presentInfo).toHaveBeenCalled();
   });
 });

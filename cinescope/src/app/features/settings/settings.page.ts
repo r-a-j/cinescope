@@ -14,7 +14,7 @@ import {
     trashOutline, cloudDownloadOutline, cloudUploadOutline,
     logoGithub, mailOutline, informationCircleOutline,
     downloadOutline, shareSocialOutline, closeOutline,
-    folderOutline, chevronForwardOutline, globeOutline,
+    folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
     sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
 } from 'ionicons/icons';
@@ -52,6 +52,7 @@ export class SettingsPage implements OnInit {
     private navCtrl = inject(NavController);
     public storage = inject(StorageService);
     public moviesPrefs = inject(MoviesPreferencesService);
+    public isMoviesTabCollapsed = signal<boolean>(true);
     private apiCache = inject(ApiCacheService);
     private posterCache = inject(PosterCacheService);
     private toast = inject(ToastService);
@@ -101,7 +102,7 @@ export class SettingsPage implements OnInit {
             trashOutline, cloudDownloadOutline, cloudUploadOutline,
             logoGithub, mailOutline, informationCircleOutline,
             downloadOutline, shareSocialOutline, closeOutline,
-            folderOutline, chevronForwardOutline, globeOutline,
+            folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
             sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
         });

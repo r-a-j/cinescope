@@ -23,16 +23,12 @@ export interface MoviesSectionVisibility {
   cineMatch: boolean;
   franchises: boolean;
   blindTicket: boolean;
-  graveyard: boolean;
-  swimlanes: boolean;
 }
 
 export const DEFAULT_MOVIES_VISIBILITY: MoviesSectionVisibility = {
   cineMatch: true,
   franchises: true,
-  blindTicket: true,
-  graveyard: true,
-  swimlanes: true
+  blindTicket: true
 };
 
 export const TMDB_GENRE_NAMES: Record<number, string> = {

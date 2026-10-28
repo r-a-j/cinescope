@@ -46,6 +46,6 @@ export class MoviesPreferencesService {
     } catch {
       // ignore storage error
     }
-    await this.toast.presentSuccess('Restored all Movies Lounge sections to visible', 2000);
+    await this.toast.presentSuccess('Restored all Movies sections to visible', 2000);
   }
 }
