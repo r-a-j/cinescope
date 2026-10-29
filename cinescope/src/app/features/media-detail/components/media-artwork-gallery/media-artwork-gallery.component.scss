@@ -272,41 +272,60 @@
   .lightbox-toolbar {
     position: absolute;
     top: calc(env(safe-area-inset-top, 0px) + 12px);
-    inset-inline: 14px;
+    left: 12px;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    z-index: 10;
+    z-index: 20;
+    pointer-events: none;
+
+    > * {
+      pointer-events: auto;
+    }
   }
 
-  .lightbox-meta,
+  .lightbox-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    max-width: calc(100% - 135px);
+  }
+
   .lightbox-actions {
     display: flex;
     align-items: center;
-    gap: 7px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .lightbox-counter {
+    flex-shrink: 0;
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.16);
     color: #ffffff;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 5px 11px;
+    padding: 5px 10px;
     border-radius: 999px;
     backdrop-filter: blur(8px);
+    white-space: nowrap;
   }
 
   .lightbox-badge {
+    flex-shrink: 0;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: rgba(255, 255, 255, 0.9);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     padding: 4px 8px;
     border-radius: 6px;
+    white-space: nowrap;
 
     &.is-uhd {
       background: rgba(245, 197, 24, 0.16);
@@ -316,13 +335,18 @@
   }
 
   .lightbox-lang-pill {
+    flex-shrink: 1;
     background: rgba(229, 9, 20, 0.18);
     border: 1px solid rgba(229, 9, 20, 0.38);
     color: #ff6b74;
     font-size: 10px;
     font-weight: 700;
-    padding: 4px 7px;
+    padding: 4px 8px;
     border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 125px;
   }
 
   .lightbox-btn {
@@ -330,16 +354,17 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 8px 14px;
-    height: 38px;
+    padding: 0 12px;
+    height: 36px;
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.14);
     color: #ffffff;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     backdrop-filter: blur(10px);
     cursor: pointer;
+    flex-shrink: 0;
 
     &:active {
       transform: scale(0.96);
@@ -347,9 +372,10 @@
     }
 
     &.icon-only {
-      width: 38px;
+      width: 36px;
+      height: 36px;
       padding: 0;
-      font-size: 19px;
+      font-size: 18px;
     }
 
     &.close-btn {
@@ -368,6 +394,23 @@
     }
   }
 
+  @media (max-width: 480px) {
+    .lightbox-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+
+      span {
+        display: none;
+      }
+    }
+
+    .lightbox-badge {
+      font-size: 9px;
+      padding: 3px 5px;
+    }
+  }
+
   .lightbox-stage {
     position: relative;
     width: 100%;
@@ -377,11 +420,11 @@
     justify-content: center;
     box-sizing: border-box;
     padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 115px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 145px);
     padding-inline: 16px;
 
     &.has-variant-row {
-      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 155px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 185px);
     }
 
     &.is-backdrop-stage .stage-img {
@@ -389,35 +432,26 @@
       max-height: 100%;
       aspect-ratio: 16 / 9;
       border-radius: 12px;
-      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
     &.is-poster-stage .stage-img {
-      max-width: min(82vw, 540px);
+      max-width: min(78vw, 480px);
       max-height: 100%;
       aspect-ratio: 2 / 3;
       border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
     &.is-logo-stage {
-      &::before {
-        content: '';
-        position: absolute;
-        width: min(86vw, 760px);
-        height: min(42vh, 320px);
-        border-radius: 20px;
-        background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 55%, transparent 75%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        pointer-events: none;
-      }
+      background: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
 
       .stage-img {
-        max-width: min(82vw, 720px);
-        max-height: min(38vh, 280px);
+        max-width: min(84vw, 680px);
+        max-height: min(40vh, 280px);
         box-shadow: none;
         border-radius: 0;
-        filter: drop-shadow(0 2px 14px rgba(255, 255, 255, 0.2)) drop-shadow(0 8px 32px rgba(0, 0, 0, 0.9));
+        filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.16)) drop-shadow(0 8px 28px rgba(0, 0, 0, 0.85));
       }
     }
   }
@@ -470,24 +504,28 @@
 
   .lightbox-nav {
     position: absolute;
-    top: 46%;
+    top: 50%;
     transform: translateY(-50%);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    background: rgba(18, 18, 22, 0.72);
+    width: 44px;
+    height: 44px;
+    background: rgba(18, 18, 22, 0.76);
     color: #ffffff;
     font-size: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     cursor: pointer;
     z-index: 10;
+    transition: all 0.18s ease;
 
     &:hover {
-      background: rgba(38, 38, 46, 0.9);
+      background: rgba(38, 38, 46, 0.95);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-50%) scale(1.06);
     }
 
     &:active {
@@ -495,23 +533,28 @@
     }
 
     &.prev {
-      left: 10px;
+      left: 14px;
     }
 
     &.next {
-      right: 10px;
+      right: 14px;
+    }
+
+    // On mobile screens, hide floating chevrons so they never obstruct wallpapers or logos!
+    @media (max-width: 768px) {
+      display: none;
     }
   }
 
   .lightbox-bottom-bar {
     position: absolute;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-    left: 14px;
-    right: 14px;
+    left: 12px;
+    right: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     z-index: 12;
   }
 
@@ -600,12 +643,22 @@
     &.is-logo-thumb {
       width: 66px;
       min-width: 66px;
-      height: 36px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.08);
-      padding: 3px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 6px;
+      opacity: 0.72;
 
       img {
         object-fit: contain;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+      }
+
+      &.active {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.14);
+        border-color: #e50914;
+        box-shadow: 0 0 12px rgba(229, 9, 20, 0.6);
       }
     }
 
