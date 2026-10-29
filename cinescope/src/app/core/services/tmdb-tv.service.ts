@@ -148,11 +148,13 @@ export class TmdbTvService extends BaseMediaService {
     getTvShowDetails(
         seriesId: number,
         appendToResponse?: string,
-        language?: string
+        language?: string,
+        includeImageLanguage?: string
     ): Observable<TmdbTvDetailDto> {
         const params = this.buildParams({
             language,
-            append_to_response: appendToResponse
+            append_to_response: appendToResponse,
+            include_image_language: includeImageLanguage
         });
 
         return this.http.get<TmdbTvDetailDto>(`${this.apiPrefix}/tv/${seriesId}`, { params });

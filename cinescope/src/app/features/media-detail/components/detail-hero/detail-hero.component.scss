@@ -160,6 +160,15 @@
       border: 1.5px solid rgba(255, 255, 255, 0.18);
       box-shadow: 0 14px 34px rgba(0, 0, 0, 0.78);
       background: #141418;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+
+      &.clickable {
+        cursor: zoom-in;
+        &:active {
+          transform: scale(0.97);
+          border-color: rgba(255, 255, 255, 0.32);
+        }
+      }
     }
     .hero-poster-img {
       width: 100%;

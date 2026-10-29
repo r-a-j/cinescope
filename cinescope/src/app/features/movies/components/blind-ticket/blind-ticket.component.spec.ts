@@ -4,10 +4,12 @@ import { BlindTicketComponent } from './blind-ticket.component';
 import { ContentDocType } from '../../../../core/database/schemas/content.schema';
 import { TmdbMoviesService } from '../../../../core/services/tmdb-movies.service';
 import { StorageService } from '../../../../core/services/storage.service';
+import { TimeContextService } from '../../../../core/services/time-context.service';
 
 describe('BlindTicketComponent', () => {
   let component: BlindTicketComponent;
   let fixture: ComponentFixture<BlindTicketComponent>;
+  let timeContextService: TimeContextService;
 
   const mockMovies: ContentDocType[] = [
     {
@@ -53,6 +55,7 @@ describe('BlindTicketComponent', () => {
       ]
     }).compileComponents();
 
+    timeContextService = TestBed.inject(TimeContextService);
     fixture = TestBed.createComponent(BlindTicketComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('watchlistMovies', mockMovies);
@@ -135,18 +138,21 @@ describe('BlindTicketComponent', () => {
   });
 
   it('should conceal identifying details when ticket is sealed and show them when revealed', async () => {
+    timeContextService.refresh(new Date(2026, 9, 29, 8, 0, 0));
     await fixture.whenStable();
     fixture.detectChanges();
 
     // Sealed state
     expect(component.isBlindTicketRevealed()).toBeFalse();
     let text = fixture.nativeElement.textContent;
-    expect(text).toContain('NO. ••••••');
-    expect(text).not.toContain('NO. 101');
+    expect(text).toContain("MYSTERY THIS MORNING'S FEATURED PICK");
+    expect(text).toContain('SEALED');
+    expect(text).not.toContain('ADMIT ONE');
     expect(text).not.toContain('Inception');
     expect(text).not.toContain('Action');
     expect(text).not.toContain('Sci-Fi');
     expect(fixture.nativeElement.querySelector('.streaming-details-row')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.admit-stamp')).toBeNull();
 
     // Tear ticket
     await component.tearBlindTicket();
@@ -155,11 +161,56 @@ describe('BlindTicketComponent', () => {
     // Revealed state
     expect(component.isBlindTicketRevealed()).toBeTrue();
     text = fixture.nativeElement.textContent;
-    expect(text).toContain('NO. 101');
+    expect(text).toContain("THIS MORNING'S FEATURED PICK");
+    expect(text).not.toContain("MYSTERY THIS MORNING'S FEATURED PICK");
     expect(text).toContain('Inception');
     expect(text).toContain('Action');
     expect(text).toContain('Sci-Fi');
+    expect(text).toContain('Details');
+    expect(text).not.toContain('ADMIT ONE');
     expect(fixture.nativeElement.querySelector('.streaming-details-row')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.admit-stamp')).toBeNull();
+  });
+
+  it('should dynamically update ticket series tag according to TimeContextService and reveal state', () => {
+    timeContextService.refresh(new Date(2026, 9, 29, 8, 0, 0));
+    fixture.detectChanges();
+    expect(component.ticketSeriesTag()).toBe("MYSTERY THIS MORNING'S FEATURED PICK");
+
+    timeContextService.refresh(new Date(2026, 9, 29, 14, 0, 0));
+    fixture.detectChanges();
+    expect(component.ticketSeriesTag()).toBe('MYSTERY AFTERNOON MATINEE PICK');
+
+    component.tearBlindTicket();
+    fixture.detectChanges();
+    expect(component.ticketSeriesTag()).toBe('AFTERNOON MATINEE PICK');
+
+    timeContextService.refresh(new Date(2026, 9, 29, 20, 0, 0));
+    fixture.detectChanges();
+    expect(component.ticketSeriesTag()).toBe("TONIGHT'S FEATURED PICK");
+
+    timeContextService.refresh(new Date(2026, 9, 29, 23, 30, 0));
+    fixture.detectChanges();
+    expect(component.ticketSeriesTag()).toBe('MIDNIGHT SCREENING PICK');
+  });
+
+  it('should emit openDetail when Details button is clicked and markWatched when checkmark button is clicked', () => {
+    const openDetailSpy = spyOn(component.openDetail, 'emit');
+    const markWatchedSpy = spyOn(component.markWatched, 'emit');
+
+    component.tearBlindTicket();
+    fixture.detectChanges();
+
+    const detailsBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-details');
+    expect(detailsBtn).toBeTruthy();
+    expect(detailsBtn.textContent).toContain('Details');
+    detailsBtn.click();
+    expect(openDetailSpy).toHaveBeenCalledWith(101);
+
+    const markWatchedBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.btn-mark-watched');
+    expect(markWatchedBtn).toBeTruthy();
+    markWatchedBtn.click();
+    expect(markWatchedSpy).toHaveBeenCalledWith(mockMovies[0]);
   });
 
   it('should redact movie title in sealed overview', () => {

@@ -31,20 +31,42 @@
     <!-- TRAILERS, TEASERS & FEATURETTES -->
     @if (videos().length > 0) {
       <section class="detail-section">
-        <h3 class="section-heading">VIDEOS, TRAILERS & FEATURETTES ({{ videos().length }})</h3>
+        <h3 class="section-heading">VIDEOS, TRAILERS &amp; FEATURETTES ({{ videos().length }})</h3>
+
+        <!-- Video type filter (only when there is more than one type) -->
+        @if (videoTypeGroups().length > 0) {
+          <div class="video-type-filter-row" role="radiogroup" aria-label="Video type">
+            @for (group of videoTypeGroups(); track group.type) {
+              <button
+                type="button"
+                role="radio"
+                class="video-type-chip"
+                [class.active]="effectiveVideoType() === group.type"
+                [attr.aria-checked]="effectiveVideoType() === group.type"
+                (click)="selectVideoType(group.type)">
+                {{ group.label }}
+                <span class="video-type-count">{{ group.count }}</span>
+              </button>
+            }
+          </div>
+        }
+
         <div class="videos-scroll-row">
-          @for (vid of videos().slice(0, 12); track vid.id) {
+          @for (vid of filteredVideos(); track vid.id) {
             <button type="button" class="video-thumb-card" (click)="openVideo(vid)">
               <div class="video-thumb-img-wrap">
                 <img
                   [src]="'https://img.youtube.com/vi/' + vid.key + '/hqdefault.jpg'"
                   [alt]="vid.name"
                   class="video-thumb-img"
-                  loading="lazy" />
+                  loading="lazy"
+                  (error)="onThumbError($event)" />
                 <div class="video-play-overlay">
                   <ion-icon name="play-outline"></ion-icon>
                 </div>
-                <span class="video-type-tag">{{ vid.type }}</span>
+                @if (effectiveVideoType() === 'all') {
+                  <span class="video-type-tag">{{ vid.type }}</span>
+                }
                 @if (vid.official) {
                   <span class="video-official-tag">OFFICIAL</span>
                 }

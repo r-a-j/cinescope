@@ -16,20 +16,22 @@
   </ion-toolbar>
 
   <!-- Category Filter Bar -->
-  <div class="search-filters-bar" role="tablist">
-    @for (filter of filterOptions; track filter.id) {
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="store.activeFilter() === filter.id"
-        (click)="setFilter(filter.id)"
-        role="tab"
-        [attr.aria-selected]="store.activeFilter() === filter.id">
-        <ion-icon [name]="filter.icon"></ion-icon>
-        <span>{{ filter.label }}</span>
-      </button>
-    }
-  </div>
+  <ion-toolbar class="search-filters-toolbar">
+    <div class="search-filters-bar" role="tablist">
+      @for (filter of filterOptions; track filter.id) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="store.activeFilter() === filter.id"
+          (click)="setFilter(filter.id)"
+          role="tab"
+          [attr.aria-selected]="store.activeFilter() === filter.id">
+          <ion-icon [name]="filter.icon"></ion-icon>
+          <span>{{ filter.label }}</span>
+        </button>
+      }
+    </div>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content color="background">

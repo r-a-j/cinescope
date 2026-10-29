@@ -17,21 +17,21 @@
       ></app-cinematch-hero>
     }
 
-    <!-- 2. Franchise Tracker -->
+    <!-- 2. The Blind Ticket -->
+    @if (moviesPrefs.visibility().blindTicket && watchlistMovies().length > 0) {
+      <app-blind-ticket
+        [watchlistMovies]="watchlistMovies()"
+        (openDetail)="openMovieDetail($event)"
+        (markWatched)="onMarkWatched($event)"
+      ></app-blind-ticket>
+    }
+
+    <!-- 3. Franchise Tracker -->
     @if (moviesPrefs.visibility().franchises && activeFranchises().length > 0) {
       <app-franchise-tracker
         [activeFranchises]="activeFranchises()"
         (collectionClick)="openCollection($event.id, $event.name)"
       ></app-franchise-tracker>
-    }
-
-    <!-- 3. The Blind Ticket -->
-    @if (moviesPrefs.visibility().blindTicket && watchlistMovies().length > 0) {
-      <app-blind-ticket
-        [watchlistMovies]="watchlistMovies()"
-        (openDetail)="openMovieDetail($event)"
-        (watchTonight)="onWatchTonight($event)"
-      ></app-blind-ticket>
     }
 
     <!-- Empty State if all 3 sections are toggled off in Settings -->

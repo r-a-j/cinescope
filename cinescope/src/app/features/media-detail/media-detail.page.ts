@@ -58,6 +58,7 @@ import { TmdbTvDetailDto, TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto, TmdbTvNetwo
 import { TmdbMovieCreditsResponseDto } from '../../core/dtos/movies/movie-credits.dto';
 import { TmdbTvAggregateCreditsResponseDto } from '../../core/dtos/tv/tv-aggregate-credits.dto';
 import { TmdbVideoDto } from '../../core/dtos/common/video.dto';
+import { TmdbImageDto } from '../../core/dtos/common/image.dto';
 import { TmdbWatchProviderDto, TmdbWatchProviderRegionDto } from '../../core/dtos/watch-providers/watch-provider.dto';
 import { TmdbReleaseDateGroupDto } from '../../core/dtos/movies/movie-release-dates.dto';
 import { TmdbTvContentRatingDto } from '../../core/dtos/tv/tv-content-ratings.dto';
@@ -74,6 +75,7 @@ import { DetailHeroComponent } from './components/detail-hero/detail-hero.compon
 import { WatchProvidersPanelComponent } from './components/watch-providers-panel/watch-providers-panel.component';
 import { TvSeasonsHubComponent } from './components/tv-seasons-hub/tv-seasons-hub.component';
 import { CastVideoGalleryComponent } from './components/cast-video-gallery/cast-video-gallery.component';
+import { MediaArtworkGalleryComponent } from './components/media-artwork-gallery/media-artwork-gallery.component';
 import { ProductionReviewsPanelComponent } from './components/production-reviews-panel/production-reviews-panel.component';
 
 export interface CastMemberVm {
@@ -174,6 +176,7 @@ const PREFERRED_REGIONS = ['IN', 'DE', 'US', 'GB', 'CA', 'AU'];
     WatchProvidersPanelComponent,
     TvSeasonsHubComponent,
     CastVideoGalleryComponent,
+    MediaArtworkGalleryComponent,
     ProductionReviewsPanelComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -192,6 +195,7 @@ export class MediaDetailPage implements OnInit {
   private navService = inject(NavigationService);
 
   private castVideoGallery = viewChild(CastVideoGalleryComponent);
+  private artworkGallery = viewChild(MediaArtworkGalleryComponent);
   private content = viewChild(IonContent);
 
   public mediaType = signal<'movie' | 'tv'>('movie');
@@ -219,7 +223,7 @@ export class MediaDetailPage implements OnInit {
   public isScrolled = signal<boolean>(false);
 
   // ==========================================
-  // ⚡ COMPUTED VIEW MODELS
+  // COMPUTED VIEW MODELS
   // ==========================================
 
   public bookmarkState = computed<BookmarkState>(() => {
@@ -443,7 +447,7 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 🎬 VIDEOS & OFFICIAL TRAILER
+  // VIDEOS & OFFICIAL TRAILER
   // ==========================================
   public videos = computed<TmdbVideoDto[]>(() => {
     const raw = (this.movieDetail()?.['videos'] ?? this.tvDetail()?.['videos']) as { results?: TmdbVideoDto[] } | undefined;
@@ -470,7 +474,65 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 📺 WHERE TO STREAM / RENT / BUY
+  // STILLS, WALLPAPERS, POSTERS & LOGOS
+  // ==========================================
+  private rawMediaImages = computed<{
+    backdrops?: TmdbImageDto[];
+    posters?: TmdbImageDto[];
+    logos?: TmdbImageDto[];
+  } | null>(() => {
+    const raw = (this.movieDetail()?.['images'] ?? this.tvDetail()?.['images']) as
+      | { backdrops?: TmdbImageDto[]; posters?: TmdbImageDto[]; logos?: TmdbImageDto[] }
+      | undefined;
+    return raw ?? null;
+  });
+
+  public mediaBackdrops = computed<TmdbImageDto[]>(() => {
+    const list = this.rawMediaImages()?.backdrops || [];
+    const primaryBackdrop = this.movieDetail()?.backdrop_path ?? this.tvDetail()?.backdrop_path;
+    if (primaryBackdrop && !list.some((b) => b.file_path === primaryBackdrop)) {
+      return [
+        {
+          aspect_ratio: 1.778,
+          height: 1080,
+          width: 1920,
+          iso_639_1: null,
+          file_path: primaryBackdrop,
+          vote_average: 5,
+          vote_count: 1
+        },
+        ...list
+      ];
+    }
+    return list;
+  });
+
+  public mediaPosters = computed<TmdbImageDto[]>(() => {
+    const list = this.rawMediaImages()?.posters || [];
+    const primaryPoster = this.movieDetail()?.poster_path ?? this.tvDetail()?.poster_path;
+    if (primaryPoster && !list.some((p) => p.file_path === primaryPoster)) {
+      return [
+        {
+          aspect_ratio: 0.667,
+          height: 1500,
+          width: 1000,
+          iso_639_1: 'en',
+          file_path: primaryPoster,
+          vote_average: 5,
+          vote_count: 1
+        },
+        ...list
+      ];
+    }
+    return list;
+  });
+
+  public mediaLogos = computed<TmdbImageDto[]>(() => {
+    return this.rawMediaImages()?.logos || [];
+  });
+
+  // ==========================================
+  // WHERE TO STREAM / RENT / BUY
   // ==========================================
   public watchProvidersMap = computed<Record<string, TmdbWatchProviderRegionDto>>(() => {
     const raw = (this.movieDetail()?.['watch/providers'] ?? this.tvDetail()?.['watch/providers']) as
@@ -537,7 +599,7 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 🎭 CAST & FILMMAKERS / CREATORS
+  // CAST & FILMMAKERS / CREATORS
   // ==========================================
   public castList = computed<CastMemberVm[]>(() => {
     const m = this.movieDetail();
@@ -631,7 +693,7 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 📺 TV SEASONS & EPISODES HUB
+  // TV SEASONS & EPISODES HUB
   // ==========================================
   public tvSeasons = computed<TmdbTvSeasonBaseDto[]>(() => {
     const seasons = this.tvDetail()?.seasons || [];
@@ -658,7 +720,7 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 💰 FACTS, KEYWORDS, REVIEWS & LINKS
+  // FACTS, KEYWORDS, REVIEWS & LINKS
   // ==========================================
   public originCountry = computed<OriginCountryVm | null>(() => {
     const t = this.tvDetail();
@@ -848,7 +910,7 @@ export class MediaDetailPage implements OnInit {
   });
 
   // ==========================================
-  // 🎞️ RECOMMENDATIONS & SIMILAR SWIMLANES
+  // RECOMMENDATIONS & SIMILAR SWIMLANES
   // ==========================================
   public recommendationsSwimlane = computed<SwimlaneItem[]>(() => {
     return this.extractSwimlaneList('recommendations');
@@ -961,26 +1023,43 @@ export class MediaDetailPage implements OnInit {
     this.tvDetail.set(null);
     this.seasonDetailsMap.set({});
     this.castVideoGallery()?.closeVideo();
+    this.artworkGallery()?.closeLightbox();
 
     try {
       if (type === 'movie') {
-        const res = await firstValueFrom(
-          this.moviesService.getMovieDetails(
-            id,
-            'credits,videos,watch/providers,release_dates,recommendations,similar,keywords,reviews,external_ids'
-          )
-        );
+        const [res, imagesRes] = await Promise.all([
+          firstValueFrom(
+            this.moviesService.getMovieDetails(
+              id,
+              'credits,videos,images,watch/providers,release_dates,recommendations,similar,keywords,reviews,external_ids',
+              'en-US',
+              'en,null'
+            )
+          ),
+          firstValueFrom(this.moviesService.getMovieImages(id)).catch(() => null)
+        ]);
         if (this.tmdbId() !== id || this.mediaType() !== type) return;
+        if (imagesRes && (imagesRes.backdrops?.length || imagesRes.posters?.length || imagesRes.logos?.length)) {
+          (res as Record<string, unknown>)['images'] = imagesRes;
+        }
         this.movieDetail.set(res);
         this.syncDefaultWatchRegion();
       } else {
-        const res = await firstValueFrom(
-          this.tvService.getTvShowDetails(
-            id,
-            'aggregate_credits,credits,videos,watch/providers,content_ratings,recommendations,similar,keywords,reviews,external_ids'
-          )
-        );
+        const [res, imagesRes] = await Promise.all([
+          firstValueFrom(
+            this.tvService.getTvShowDetails(
+              id,
+              'aggregate_credits,credits,videos,images,watch/providers,content_ratings,recommendations,similar,keywords,reviews,external_ids',
+              'en-US',
+              'en,null'
+            )
+          ),
+          firstValueFrom(this.tvService.getTvImages(id)).catch(() => null)
+        ]);
         if (this.tmdbId() !== id || this.mediaType() !== type) return;
+        if (imagesRes && (imagesRes.backdrops?.length || imagesRes.posters?.length || imagesRes.logos?.length)) {
+          (res as Record<string, unknown>)['images'] = imagesRes;
+        }
         this.tvDetail.set(res);
         this.syncDefaultWatchRegion();
 
@@ -1046,7 +1125,7 @@ export class MediaDetailPage implements OnInit {
   }
 
   // ==========================================
-  // 🎯 USER ACTIONS (WATCHLIST, WATCHED, TRAILER, SHARE)
+  // USER ACTIONS (WATCHLIST, WATCHED, TRAILER, SHARE)
   // ==========================================
 
   private buildStoragePayload(): TmdbPayload {
@@ -1152,6 +1231,11 @@ export class MediaDetailPage implements OnInit {
     }
   }
 
+  public openHeroPosterLightbox(): void {
+    const posterPath = this.movieDetail()?.poster_path ?? this.tvDetail()?.poster_path ?? null;
+    this.artworkGallery()?.openByFilePath(posterPath, 'posters');
+  }
+
   public async shareMedia(): Promise<void> {
     const itemTitle = this.title();
     const year = this.releaseYearLabel();
@@ -1199,6 +1283,7 @@ export class MediaDetailPage implements OnInit {
 
   public goToHome(): void {
     this.castVideoGallery()?.closeVideo();
+    this.artworkGallery()?.closeLightbox();
     this.navService.navigateToHome();
   }
 

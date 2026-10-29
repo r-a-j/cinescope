@@ -76,19 +76,6 @@
             </ion-toggle>
         </ion-item>
         <ion-item>
-            <ion-icon slot="start" name="albums-outline"></ion-icon>
-            <ion-label>
-                <h3>Franchises in Progress</h3>
-                <p>Track active movie sagas and completion progress</p>
-            </ion-label>
-            <ion-toggle
-                slot="end"
-                [checked]="moviesPrefs.visibility().franchises"
-                (ionChange)="moviesPrefs.toggleSection('franchises')"
-                aria-label="Toggle Franchises in Progress">
-            </ion-toggle>
-        </ion-item>
-        <ion-item>
             <ion-icon slot="start" name="ticket-outline"></ion-icon>
             <ion-label>
                 <h3>The Blind Ticket</h3>
@@ -99,6 +86,19 @@
                 [checked]="moviesPrefs.visibility().blindTicket"
                 (ionChange)="moviesPrefs.toggleSection('blindTicket')"
                 aria-label="Toggle The Blind Ticket">
+            </ion-toggle>
+        </ion-item>
+        <ion-item>
+            <ion-icon slot="start" name="albums-outline"></ion-icon>
+            <ion-label>
+                <h3>Franchises in Progress</h3>
+                <p>Track active movie sagas and completion progress</p>
+            </ion-label>
+            <ion-toggle
+                slot="end"
+                [checked]="moviesPrefs.visibility().franchises"
+                (ionChange)="moviesPrefs.toggleSection('franchises')"
+                aria-label="Toggle Franchises in Progress">
             </ion-toggle>
         </ion-item>
         <ion-item button (click)="moviesPrefs.resetToDefault()" lines="none">

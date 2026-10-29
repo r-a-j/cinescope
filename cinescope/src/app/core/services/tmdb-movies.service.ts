@@ -154,11 +154,13 @@ export class TmdbMoviesService extends BaseMediaService {
     getMovieDetails(
         movieId: number,
         appendToResponse?: string,
-        language = 'en-US'
+        language = 'en-US',
+        includeImageLanguage?: string
     ): Observable<TmdbMovieDetailDto> {
         const params = this.buildParams({
             language,
-            append_to_response: appendToResponse
+            append_to_response: appendToResponse,
+            include_image_language: includeImageLanguage
         });
 
         return this.http.get<TmdbMovieDetailDto>(`${this.apiPrefix}/movie/${movieId}`, { params });

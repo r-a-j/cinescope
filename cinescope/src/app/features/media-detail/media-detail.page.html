@@ -24,7 +24,8 @@
     (shareClick)="shareMedia()"
     (watchlistToggle)="onToggleWatchlist()"
     (watchedToggle)="onToggleWatched()"
-    (trailerClick)="openOfficialTrailer()">
+    (trailerClick)="openOfficialTrailer()"
+    (posterClick)="openHeroPosterLightbox()">
   </app-detail-hero>
 
   <!-- Main Body Container -->
@@ -137,6 +138,14 @@
       [castList]="castList()"
       [videos]="videos()">
     </app-cast-video-gallery>
+
+    <!-- Stills, Wallpapers, Official Posters & Title Logos Gallery -->
+    <app-media-artwork-gallery
+      [mediaTitle]="title()"
+      [backdrops]="mediaBackdrops()"
+      [posters]="mediaPosters()"
+      [logos]="mediaLogos()">
+    </app-media-artwork-gallery>
 
     <!-- Collection Banner, Production/Box Office Facts, Keywords, External Links & Community Reviews -->
     <app-production-reviews-panel

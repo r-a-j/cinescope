@@ -116,10 +116,6 @@ export class MoviesPage {
   public async onMarkWatched(doc: ContentDocType): Promise<void> {
     const title = getMovieTitle(doc);
     await this.storage.moveToWatched(doc.tmdbId, 'movie', doc.payload as TmdbPayload);
-    await this.toast.presentSuccess(`Marked "${title}" as Watched! 🍿`, 2000);
-  }
-
-  public async onWatchTonight(doc: ContentDocType): Promise<void> {
-    this.openMovieDetail(doc.tmdbId);
+    await this.toast.presentSuccess(`Marked "${title}" as Watched`, 2000);
   }
 }

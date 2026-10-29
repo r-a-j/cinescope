@@ -209,3 +209,64 @@
       color: #ff4d57;
       text-decoration: none;
     }
+
+    // Video type filter: same understated underline style as the artwork sub-category filter
+    .video-type-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: -2px 0 12px;
+      padding-left: 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .video-type-filter-row::-webkit-scrollbar {
+      display: none;
+    }
+    .video-type-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 0 5px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.48);
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.18s ease;
+
+      .video-type-count {
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.32);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        border-radius: 2px;
+        background: #e50914;
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      &.active {
+        color: #ffffff;
+
+        .video-type-count {
+          color: rgba(255, 255, 255, 0.62);
+        }
+
+        &::after {
+          transform: scaleX(1);
+        }
+      }
+    }
