@@ -153,7 +153,7 @@ export class AppTourOverlayComponent implements OnDestroy {
 
     private findTarget(targetId: string): void {
         const lookup = ++this.targetLookup;
-        let attempts = 0;
+        const deadline = Date.now() + 8000;
 
         const find = (): void => {
             if (lookup !== this.targetLookup) return;
@@ -169,8 +169,7 @@ export class AppTourOverlayComponent implements OnDestroy {
                 return;
             }
 
-            attempts++;
-            if (attempts < 60) {
+            if (Date.now() < deadline) {
                 this.document.defaultView?.requestAnimationFrame(find);
                 return;
             }

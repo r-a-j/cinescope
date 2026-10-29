@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonContent,
   IonToolbar,
@@ -78,6 +78,7 @@ export class ArchivePage implements AfterViewInit {
   public franchiseAggregator = inject(FranchiseAggregatorService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   public activeTab = signal<'watchlist' | 'watched' | 'franchises' | 'people'>('watchlist');
   public watchlistMediaFilter = signal<'all' | 'movie' | 'tv'>('all');
@@ -228,6 +229,9 @@ export class ArchivePage implements AfterViewInit {
   }
 
   public ionViewWillEnter(): void {
+    if (['franchise', 'franchise-merge'].includes(this.route.snapshot.queryParamMap.get('tour') ?? '')) {
+      this.activeTab.set('franchises');
+    }
     this.triggerFadeAnimation();
   }
 

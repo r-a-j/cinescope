@@ -16,7 +16,7 @@ import {
     downloadOutline, shareSocialOutline, closeOutline,
     folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
-    sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
+    sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { RegionService } from 'src/app/core/services/region.service';
@@ -29,7 +29,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 import { MoviesPreferencesService } from 'src/app/core/services/movies-preferences.service';
 import { AppTourService } from 'src/app/core/services/app-tour.service';
-import { APP_TOUR_MODULES, AppTourId } from 'src/app/core/constants/app-tour.constants';
+import { APP_TOUR_CATEGORIES, AppTourId } from 'src/app/core/constants/app-tour.constants';
 
 interface NativeBackupPlugin {
     saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
@@ -55,6 +55,7 @@ export class SettingsPage implements OnInit {
     public storage = inject(StorageService);
     public moviesPrefs = inject(MoviesPreferencesService);
     public isMoviesTabCollapsed = signal<boolean>(true);
+    public expandedTutorialCategories = signal<Set<string>>(new Set());
     private apiCache = inject(ApiCacheService);
     private posterCache = inject(PosterCacheService);
     private toast = inject(ToastService);
@@ -64,7 +65,7 @@ export class SettingsPage implements OnInit {
     private watchProvidersService = inject(TmdbWatchProvidersService);
     private appTour = inject(AppTourService);
     public regionService = inject(RegionService);
-    public tutorialModules = APP_TOUR_MODULES;
+    public tutorialCategories = APP_TOUR_CATEGORIES;
 
         public appVersion = signal<string>('1.2.0');
     // Region selector state
@@ -109,6 +110,22 @@ export class SettingsPage implements OnInit {
         }
     }
 
+    public isTutorialCategoryExpanded(id: string): boolean {
+        return this.expandedTutorialCategories().has(id);
+    }
+
+    public toggleTutorialCategory(id: string): void {
+        this.expandedTutorialCategories.update(expanded => {
+            const next = new Set(expanded);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
+
     constructor() {
         addIcons({
             arrowBackOutline, contrastOutline, shieldCheckmarkOutline,
@@ -117,7 +134,7 @@ export class SettingsPage implements OnInit {
             downloadOutline, shareSocialOutline, closeOutline,
             folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
-            sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline
+            sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline
         });
     }
 

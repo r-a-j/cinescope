@@ -8,7 +8,7 @@
         <ion-segment-button value="watched">
           <ion-label>WATCHED</ion-label>
         </ion-segment-button>
-        <ion-segment-button value="franchises">
+        <ion-segment-button value="franchises" data-tour="archive-franchises-tab">
           <ion-label>FRANCHISES</ion-label>
         </ion-segment-button>
         <ion-segment-button value="people">
@@ -157,7 +157,7 @@
         </div>
 
         <!-- Keep-Alive Franchises Pane -->
-        <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'franchises'">
+        <div class="archive-pane" data-tour="archive-franchise-library" [class.pane-hidden]="activeTab() !== 'franchises'">
           @if (userFranchises().length === 0) {
             <div class="empty-archive">
               <ion-icon name="albums-outline"></ion-icon>

@@ -55,8 +55,24 @@ export class MoviesPage {
   });
 
   // Active user franchise sagas in progress
-  public readonly activeFranchises = computed(() => {
-    return this.franchiseAggregator.activeUserFranchises();
+  public readonly franchiseSuggestions = computed(() => {
+    const suggestions = this.franchiseAggregator.activeUserFranchises().filter(franchise =>
+      franchise.completionPercentage < 100 || (franchise.upcomingPartsCount ?? 0) > 0
+    );
+
+    return [...suggestions].sort((a, b) => {
+      const priority = (franchise: typeof a): number => {
+        if (franchise.upNextPart && franchise.watchlistCount > 0) return 0;
+        if (franchise.upNextPart) return 1;
+        if (franchise.watchlistCount > 0) return 2;
+        if ((franchise.upcomingPartsCount ?? 0) > 0) return 3;
+        return 4;
+      };
+
+      return priority(a) - priority(b)
+        || b.completionPercentage - a.completionPercentage
+        || a.name.localeCompare(b.name);
+    });
   });
 
   // Check if all 3 sections are hidden in settings

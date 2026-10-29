@@ -4,6 +4,7 @@ import { AppTourService } from './app-tour.service';
 import { DatabaseService } from '../database/database.service';
 import { migrateSettingsTourFlag } from '../database/schemas/settings.schema';
 import { TrendingStore } from '../store/trending.store';
+import { FranchiseAggregatorService } from './franchise-aggregator.service';
 
 describe('AppTourService', () => {
     let service: AppTourService;
@@ -12,6 +13,15 @@ describe('AppTourService', () => {
     let database: { getDatabase: jasmine.Spy };
     let incrementalPatch: jasmine.Spy;
     let trendingStore: { loadTrendingData: jasmine.Spy; error: jasmine.Spy };
+    let franchises: {
+        id: string | number;
+        name: string;
+        isUniverse?: boolean;
+        universeId?: string;
+        siblingFranchises?: { id: number; name: string }[];
+        mergedSubCollectionIds?: number[];
+    }[];
+    let franchiseAggregator: { activeUserFranchises: jasmine.Spy };
 
     beforeEach(() => {
         router = {
@@ -42,13 +52,18 @@ describe('AppTourService', () => {
             loadTrendingData: jasmine.createSpy('loadTrendingData').and.resolveTo(),
             error: jasmine.createSpy('error').and.returnValue(null)
         };
+        franchises = [];
+        franchiseAggregator = {
+            activeUserFranchises: jasmine.createSpy('activeUserFranchises').and.callFake(() => franchises)
+        };
 
         TestBed.configureTestingModule({
             providers: [
                 AppTourService,
                 { provide: Router, useValue: router },
                 { provide: DatabaseService, useValue: database },
-                { provide: TrendingStore, useValue: trendingStore }
+                { provide: TrendingStore, useValue: trendingStore },
+                { provide: FranchiseAggregatorService, useValue: franchiseAggregator }
             ]
         });
         service = TestBed.inject(AppTourService);
@@ -112,6 +127,75 @@ describe('AppTourService', () => {
         expect(service.isActive()).toBeFalse();
         expect(router.navigateByUrl).toHaveBeenCalledWith('/settings');
         expect(incrementalPatch).not.toHaveBeenCalled();
+    });
+
+    it('adds focused franchise guidance for an already tracked saga', async () => {
+        franchises = [{ id: 'universe_42', name: 'Connected Sagas' }];
+        router.url = '/settings';
+
+        await service.start('franchise');
+
+        expect(service.totalSteps()).toBe(7);
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/tabs/archive?tour=franchise');
+
+        await service.next();
+        await service.next();
+        await service.next();
+
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/collection/universe_42');
+        expect(service.currentStep()?.target).toBe('franchise-actions');
+    });
+
+    it('guides users without tracked sagas to the franchise search entry point', async () => {
+        await service.start('franchise');
+
+        expect(service.totalSteps()).toBe(3);
+        await service.next();
+        await service.next();
+
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/search');
+        expect(service.currentStep()?.target).toBe('search-input');
+    });
+
+    it('guides users through merging and explains where the saga appears', async () => {
+        franchises = [{
+            id: 'universe_777',
+            name: 'Connected Universe',
+            isUniverse: true,
+            siblingFranchises: [{ id: 42, name: 'Example Saga' }],
+            mergedSubCollectionIds: []
+        }];
+
+        await service.start('franchise-merge');
+
+        expect(service.totalSteps()).toBe(4);
+        await service.next();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/collection/42');
+        expect(service.currentStep()?.target).toBe('franchise-merge-toggle');
+
+        await service.next();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/collection/universe_777');
+        expect(service.currentStep()?.target).toBe('franchise-progress');
+
+        await service.next();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/tabs/archive?tour=franchise-merge');
+        expect(service.currentStep()?.description).toContain('top-level card');
+    });
+
+    it('guides users through unmerging an already folded saga', async () => {
+        franchises = [{
+            id: 'universe_777',
+            name: 'Connected Universe',
+            isUniverse: true,
+            mergedSubCollectionIds: [42]
+        }];
+
+        await service.start('franchise-merge');
+        await service.next();
+
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/collection/42');
+        expect(service.currentStep()?.title).toContain('Unmerge');
+        expect(service.currentStep()?.description).toContain('return as a standalone Archive entry');
     });
 
     it('marks the full tour complete when it is skipped', async () => {

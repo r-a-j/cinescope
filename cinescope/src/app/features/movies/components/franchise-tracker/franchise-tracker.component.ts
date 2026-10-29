@@ -27,4 +27,21 @@ export class FranchiseTrackerComponent {
   public onSelectCollection(id: number | string, name: string): void {
     this.collectionClick.emit({ id, name });
   }
+
+  public progressLabel(franchise: FranchiseCollectionSummary): string {
+    if (franchise.completionPercentage >= 100 && (franchise.upcomingPartsCount ?? 0) > 0) {
+      const count = franchise.upcomingPartsCount ?? 0;
+      return `Caught up · ${count} upcoming`;
+    }
+
+    if (franchise.upNextPart) {
+      return `${franchise.watchedCount > 0 ? 'Next' : 'Start'}: ${franchise.upNextPart.title}`;
+    }
+
+    if (franchise.watchlistCount > 0) {
+      return `${franchise.watchlistCount} in your watchlist`;
+    }
+
+    return `${Math.max(0, franchise.totalParts - franchise.watchedCount)} released to watch`;
+  }
 }

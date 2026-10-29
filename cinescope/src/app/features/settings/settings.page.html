@@ -56,21 +56,46 @@
         <ion-list-header data-tour="settings-tutorials">
             <ion-label>Help & Tutorials</ion-label>
         </ion-list-header>
-        <ion-item button (click)="startTutorial('app')">
+        <ion-item button data-tour="settings-full-tour" (click)="startTutorial('app')">
             <ion-icon slot="start" name="sparkles-outline"></ion-icon>
             <ion-label>
                 <h3>Full App Tour</h3>
                 <p>Visit the main sections and learn the key shortcuts</p>
             </ion-label>
         </ion-item>
-        @for (tutorial of tutorialModules; track tutorial.id) {
-            <ion-item button (click)="startTutorial(tutorial.id)" lines="none">
-                <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+        @for (category of tutorialCategories; track category.id) {
+            <ion-item
+                button
+                detail="false"
+                [attr.data-tour]="category.id === 'library' ? 'settings-tutorial-library' : null"
+                (click)="toggleTutorialCategory(category.id)"
+                [attr.aria-expanded]="isTutorialCategoryExpanded(category.id)"
+                [attr.aria-controls]="'tutorial-category-' + category.id"
+                [lines]="isTutorialCategoryExpanded(category.id) ? 'inset' : 'none'">
+                <ion-icon slot="start" [name]="category.icon"></ion-icon>
                 <ion-label>
-                    <h3>{{ tutorial.label }}</h3>
-                    <p>{{ tutorial.description }}</p>
+                    <h3>{{ category.label }}</h3>
+                    <p>{{ category.description }}</p>
                 </ion-label>
+                <ion-note slot="end">{{ category.tutorials.length }}</ion-note>
+                <ion-icon slot="end" [name]="isTutorialCategoryExpanded(category.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
             </ion-item>
+            <div
+                [id]="'tutorial-category-' + category.id"
+                class="tutorial-category-items"
+                [hidden]="!isTutorialCategoryExpanded(category.id)">
+                @if (isTutorialCategoryExpanded(category.id)) {
+                    @for (tutorial of category.tutorials; track tutorial.id) {
+                        <ion-item button (click)="startTutorial(tutorial.id)" lines="none">
+                            <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+                            <ion-label>
+                                <h3>{{ tutorial.label }}</h3>
+                                <p>{{ tutorial.description }}</p>
+                            </ion-label>
+                        </ion-item>
+                    }
+                }
+            </div>
         }
     </ion-list>
 

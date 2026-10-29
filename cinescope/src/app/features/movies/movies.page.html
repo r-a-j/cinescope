@@ -27,9 +27,9 @@
     }
 
     <!-- 3. Franchise Tracker -->
-    @if (moviesPrefs.visibility().franchises && activeFranchises().length > 0) {
+    @if (moviesPrefs.visibility().franchises && franchiseSuggestions().length > 0) {
       <app-franchise-tracker
-        [activeFranchises]="activeFranchises()"
+        [activeFranchises]="franchiseSuggestions()"
         (collectionClick)="openCollection($event.id, $event.name)"
       ></app-franchise-tracker>
     }

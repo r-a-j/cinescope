@@ -158,9 +158,12 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
     for (const f of allActive) {
       if (!f.isUniverse) continue;
-      if (f.siblingFranchises?.some((s) => s.id === colId)) {
+    if (f.mergedSubCollectionIds?.includes(colId)) {
         return f;
       }
+    if (f.siblingFranchises?.some((s) => s.id === colId)) {
+      return f;
+    }
       if (firstMovieId && f.parts?.some((p) => Number(p.id) === Number(firstMovieId) && (p.mediaType || 'movie') === 'movie')) {
         return f;
       }

@@ -1,4 +1,4 @@
-export type AppTourId = 'app' | 'discover' | 'movies' | 'tv' | 'archive' | 'inbox' | 'search';
+export type AppTourId = 'app' | 'discover' | 'movies' | 'tv' | 'archive' | 'franchise' | 'franchise-merge' | 'inbox' | 'search';
 
 export interface AppTourStep {
     route: string;
@@ -12,6 +12,14 @@ export interface AppTourDefinition {
     label: string;
     description: string;
     steps: AppTourStep[];
+}
+
+export interface AppTourCategory {
+    id: 'discover' | 'library' | 'recommendations';
+    label: string;
+    description: string;
+    icon: string;
+    tutorials: AppTourDefinition[];
 }
 
 const discoverSteps: AppTourStep[] = [
@@ -62,6 +70,42 @@ const archiveSteps: AppTourStep[] = [
     }
 ];
 
+const franchiseSteps: AppTourStep[] = [
+    {
+        route: '/tabs/archive?tour=franchise',
+        target: 'archive-filters',
+        title: 'Open your Franchises shelf',
+        description: 'Archive keeps your Watchlist, Watched titles, Franchises, and favorite people. The tutorial opens Franchises for you.'
+    },
+    {
+        route: '/tabs/archive?tour=franchise',
+        target: 'archive-franchise-library',
+        title: 'Your sagas and universes',
+        description: 'Tracked sagas show watched progress and what to watch next. If this shelf is empty, use Search Franchises & Universes to find a collection, then choose Track Saga.'
+    },
+    {
+        route: '/search',
+        target: 'search-input',
+        title: 'Find a saga to follow',
+        description: 'Search for a film series or collection, open it, and choose Track Saga. Your tracked sagas then appear in Archive and Movies.'
+    }
+];
+
+const franchiseMergeSteps: AppTourStep[] = [
+    {
+        route: '/tabs/archive?tour=franchise-merge',
+        target: 'archive-franchise-library',
+        title: 'Find a saga to organize',
+        description: 'Universe merge tools are available from a saga that CineScope recognizes as part of a tracked universe.'
+    },
+    {
+        route: '/search',
+        target: 'search-input',
+        title: 'Set up a shared universe first',
+        description: 'Search for a saga, open its collection, and use AI Universe to review and create a shared universe. Then replay this tutorial to learn how to merge or unmerge it.'
+    }
+];
+
 const inboxSteps: AppTourStep[] = [
     {
         route: '/tabs/inbox',
@@ -89,9 +133,9 @@ const searchSteps: AppTourStep[] = [
 const settingsSteps: AppTourStep[] = [
     {
         route: '/settings',
-        target: 'settings-tutorials',
+        target: 'settings-tutorial-library',
         title: 'Replay a tutorial anytime',
-        description: 'Return here whenever you need a refresher. Start the full app tour or replay just the section you want.'
+        description: 'Return here whenever you need a refresher. Tutorials are grouped by task; expand a category and choose a focused walkthrough.'
     }
 ];
 
@@ -166,6 +210,18 @@ export const APP_TOURS: Record<AppTourId, AppTourDefinition> = {
         description: 'Manage your watchlist, watched titles, and more.',
         steps: archiveSteps
     },
+    franchise: {
+        id: 'franchise',
+        label: 'Franchise Tracker',
+        description: 'Track sagas, follow watch order, and understand progress and universes.',
+        steps: franchiseSteps
+    },
+    'franchise-merge': {
+        id: 'franchise-merge',
+        label: 'Universe Merge & Unmerge',
+        description: 'Fold related sagas together in Archive without changing the universe canon.',
+        steps: franchiseMergeSteps
+    },
     inbox: {
         id: 'inbox',
         label: 'Inbox',
@@ -185,6 +241,32 @@ export const APP_TOUR_MODULES: AppTourDefinition[] = [
     APP_TOURS.movies,
     APP_TOURS.tv,
     APP_TOURS.archive,
+    APP_TOURS.franchise,
+    APP_TOURS['franchise-merge'],
     APP_TOURS.inbox,
     APP_TOURS.search
+];
+
+export const APP_TOUR_CATEGORIES: AppTourCategory[] = [
+    {
+        id: 'discover',
+        label: 'Explore & Discover',
+        description: 'Browse titles and find your next watch.',
+        icon: 'compass-outline',
+        tutorials: [APP_TOURS.discover, APP_TOURS.movies, APP_TOURS.tv, APP_TOURS.search]
+    },
+    {
+        id: 'library',
+        label: 'Your Library',
+        description: 'Save titles, track sagas, and follow watch progress.',
+        icon: 'albums-outline',
+        tutorials: [APP_TOURS.archive, APP_TOURS.franchise, APP_TOURS['franchise-merge']]
+    },
+    {
+        id: 'recommendations',
+        label: 'Recommendations',
+        description: 'Collect suggestions and review them later.',
+        icon: 'mail-outline',
+        tutorials: [APP_TOURS.inbox]
+    }
 ];
