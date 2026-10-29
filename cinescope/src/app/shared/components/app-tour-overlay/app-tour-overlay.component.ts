@@ -31,6 +31,9 @@ export class AppTourOverlayComponent implements OnDestroy {
 
     private currentTarget: Element | null = null;
     private targetLookup = 0;
+    private modalActive = false;
+    private previouslyFocusedElement: HTMLElement | null = null;
+    private readonly backgroundStates: { element: HTMLElement; inert: boolean; ariaHidden: string | null }[] = [];
     private cardHeight = signal(0);
     private safeAreaTop = signal(0);
     private safeAreaBottom = signal(0);
@@ -38,9 +41,13 @@ export class AppTourOverlayComponent implements OnDestroy {
     private readonly backButtonSubscription: Subscription;
     private readonly updatePosition = (): void => this.refreshSpotlight();
     private readonly handleKeydown = (event: KeyboardEvent): void => {
-        if (event.key === 'Escape' && this.tour.isActive()) {
+        if (!this.tour.isActive()) return;
+
+        if (event.key === 'Escape') {
             event.preventDefault();
             void this.runAction(() => this.tour.skip());
+        } else if (event.key === 'Tab') {
+            this.trapFocus(event);
         }
     };
 
@@ -74,8 +81,21 @@ export class AppTourOverlayComponent implements OnDestroy {
         });
 
         effect(() => {
+            const isActive = this.tour.isActive();
+            if (isActive !== this.modalActive) {
+                this.modalActive = isActive;
+                if (isActive) {
+                    this.enterModal();
+                } else {
+                    this.exitModal();
+                }
+            }
+
             const step = this.tour.currentStep();
             const isNavigating = this.tour.isNavigating();
+            if (isActive && step && !isNavigating) {
+                this.focusDialog();
+            }
             if (!step || isNavigating) {
                 this.targetLookup++;
                 this.currentTarget = null;
@@ -103,6 +123,9 @@ export class AppTourOverlayComponent implements OnDestroy {
         this.document.defaultView?.removeEventListener('resize', this.updatePosition);
         this.resizeObserver?.disconnect();
         this.backButtonSubscription.unsubscribe();
+        if (this.modalActive) {
+            this.exitModal();
+        }
     }
 
     public cardTop(): number {
@@ -149,6 +172,78 @@ export class AppTourOverlayComponent implements OnDestroy {
         void this.tour.startFirstRun().catch(error => {
             console.error('[AppTour] Could not start the first-run tutorial:', error);
         });
+    }
+
+    private enterModal(): void {
+        const activeElement = this.document.activeElement;
+        this.previouslyFocusedElement = activeElement instanceof HTMLElement && activeElement !== this.document.body
+            ? activeElement
+            : null;
+
+        for (const element of this.document.querySelectorAll<HTMLElement>('ion-router-outlet')) {
+            this.backgroundStates.push({
+                element,
+                inert: element.inert,
+                ariaHidden: element.getAttribute('aria-hidden')
+            });
+            element.inert = true;
+            element.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    private exitModal(): void {
+        for (const state of this.backgroundStates.splice(0)) {
+            state.element.inert = state.inert;
+            if (state.ariaHidden === null) {
+                state.element.removeAttribute('aria-hidden');
+            } else {
+                state.element.setAttribute('aria-hidden', state.ariaHidden);
+            }
+        }
+
+        const element = this.previouslyFocusedElement;
+        this.previouslyFocusedElement = null;
+        this.document.defaultView?.requestAnimationFrame(() => {
+            if (element?.isConnected && this.isVisible(element)) {
+                element.focus({ preventScroll: true });
+            }
+        });
+    }
+
+    private focusDialog(): void {
+        this.document.defaultView?.requestAnimationFrame(() => {
+            if (!this.tour.isActive() || this.tour.isNavigating()) return;
+            this.document.querySelector<HTMLElement>('[role="dialog"].tour-card')
+                ?.focus({ preventScroll: true });
+        });
+    }
+
+    private trapFocus(event: KeyboardEvent): void {
+        const dialog = this.document.querySelector<HTMLElement>('[role="dialog"].tour-card');
+        if (!dialog) return;
+
+        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(element => element.tabIndex >= 0 && this.isVisible(element));
+        if (focusable.length === 0) {
+            event.preventDefault();
+            dialog.focus();
+            return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const activeElement = this.document.activeElement;
+        if (!dialog.contains(activeElement)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && (activeElement === first || activeElement === dialog)) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && (activeElement === last || activeElement === dialog)) {
+            event.preventDefault();
+            first.focus();
+        }
     }
 
     private findTarget(targetId: string): void {

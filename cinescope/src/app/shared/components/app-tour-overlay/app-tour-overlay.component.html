@@ -26,6 +26,7 @@
             [style.top.px]="cardTop()"
             role="dialog"
             aria-modal="true"
+            tabindex="-1"
             [attr.aria-labelledby]="'app-tour-title'"
             [attr.aria-describedby]="'app-tour-description'">
             @if (tour.isNavigating()) {

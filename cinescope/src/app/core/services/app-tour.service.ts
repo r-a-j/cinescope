@@ -62,8 +62,9 @@ export class AppTourService {
 
         if (settings.appTourCompleted) return;
 
+        const initialUrl = this.router.url || '/tabs/discover';
         await this.trendingStore.loadTrendingData();
-        if (this.trendingStore.error()) return;
+        if (this.trendingStore.error() || this.router.url !== initialUrl) return;
 
         await this.start('app');
     }
@@ -216,12 +217,18 @@ export class AppTourService {
             await settings.incrementalPatch({ appTourCompleted: true });
         }
 
-        this.session.set(null);
         if (this.router.url !== session.returnUrl) {
-            const returned = await this.router.navigateByUrl(session.returnUrl);
-            if (!returned) {
-                throw new Error(`Could not return to "${session.returnUrl}" after the tutorial.`);
+            this.isNavigating.set(true);
+            try {
+                const returned = await this.router.navigateByUrl(session.returnUrl);
+                if (!returned) {
+                    throw new Error(`Could not return to "${session.returnUrl}" after the tutorial.`);
+                }
+            } finally {
+                this.isNavigating.set(false);
             }
         }
+
+        this.session.set(null);
     }
 }

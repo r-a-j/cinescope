@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { MoviesPage } from './movies.page';
+import { FranchiseTrackerComponent } from './components/franchise-tracker/franchise-tracker.component';
 import { StorageService } from '../../core/services/storage.service';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -209,10 +211,48 @@ describe('MoviesPage', () => {
         collectedCount: 0,
         watchlistCount: 0,
         completionPercentage: 0
+      },
+      {
+        id: 6,
+        name: 'Nearly Complete Saga',
+        totalParts: 200,
+        watchedCount: 199,
+        collectedCount: 199,
+        watchlistCount: 0,
+        completionPercentage: 100,
+        upcomingPartsCount: 0,
+        upNextPart: { id: 206, title: 'Final Chapter' }
       }
     ]);
 
-    expect(component.franchiseSuggestions().map(franchise => franchise.id)).toEqual([2, 4, 3, 5]);
+    expect(component.franchiseSuggestions().map(franchise => franchise.id)).toEqual([2, 6, 4, 3, 5]);
+  });
+
+  it('shows the next released title even when upcoming releases also exist', () => {
+    const tracker = fixture.debugElement.query(By.directive(FranchiseTrackerComponent))
+      .componentInstance as FranchiseTrackerComponent;
+    const franchise: FranchiseCollectionSummary = {
+      id: 7,
+      name: 'Almost Caught Up',
+      totalParts: 200,
+      watchedCount: 199,
+      collectedCount: 199,
+      watchlistCount: 0,
+      completionPercentage: 100,
+      upcomingPartsCount: 1,
+      upNextPart: { id: 207, title: 'Final Chapter' }
+    };
+
+    expect(tracker.progressLabel(franchise)).toBe('Next: Final Chapter');
+    expect(tracker.progressLabel({
+      ...franchise,
+      watchedCount: 0,
+      totalParts: 2,
+      releasedPartsCount: 0,
+      completionPercentage: 0,
+      upcomingPartsCount: 2,
+      upNextPart: null
+    })).toBe('2 upcoming');
   });
 
   it('should detect when all sections are hidden', () => {

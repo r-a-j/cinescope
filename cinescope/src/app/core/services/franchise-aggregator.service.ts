@@ -208,7 +208,7 @@ export class FranchiseAggregatorService {
     const effectiveTotal = releasedPartsCount > 0 ? releasedPartsCount : sortedParts.length;
     const collectedCount = watchedCount + watchlistCount;
     const completionPercentage = effectiveTotal > 0
-      ? Math.min(100, Math.round((watchedCount / effectiveTotal) * 100))
+      ? Math.min(100, Math.floor((watchedCount / effectiveTotal) * 100))
       : 0;
 
     return {
@@ -534,7 +534,7 @@ export class FranchiseAggregatorService {
         releasedPartsCount = totalParts;
         upcomingPartsCount = 0;
         completionPercentage = totalParts > 0
-          ? Math.min(100, Math.round((watchedCount / totalParts) * 100))
+          ? Math.min(100, Math.floor((watchedCount / totalParts) * 100))
           : 0;
       }
 

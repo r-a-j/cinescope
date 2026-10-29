@@ -270,7 +270,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
 
     const effectiveTotal = releasedCount > 0 ? releasedCount : items.length;
-    const percentage = effectiveTotal > 0 ? Math.min(100, Math.round((watched / effectiveTotal) * 100)) : 0;
+    const percentage = effectiveTotal > 0 ? Math.min(100, Math.floor((watched / effectiveTotal) * 100)) : 0;
 
     return {
       watched,

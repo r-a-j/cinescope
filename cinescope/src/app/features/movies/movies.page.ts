@@ -57,7 +57,10 @@ export class MoviesPage {
   // Active user franchise sagas in progress
   public readonly franchiseSuggestions = computed(() => {
     const suggestions = this.franchiseAggregator.activeUserFranchises().filter(franchise =>
-      franchise.completionPercentage < 100 || (franchise.upcomingPartsCount ?? 0) > 0
+      franchise.completionPercentage < 100
+      || (franchise.upcomingPartsCount ?? 0) > 0
+      || franchise.upNextPart != null
+      || franchise.watchlistCount > 0
     );
 
     return [...suggestions].sort((a, b) => {

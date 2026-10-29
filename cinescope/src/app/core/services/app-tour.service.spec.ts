@@ -89,6 +89,24 @@ describe('AppTourService', () => {
         expect(service.isActive()).toBeTrue();
     });
 
+    it('does not redirect users who leave Discover while its first-run feed is loading', async () => {
+        let finishLoading!: () => void;
+        trendingStore.loadTrendingData.and.returnValue(new Promise<void>(resolve => {
+            finishLoading = resolve;
+        }));
+
+        const startPromise = service.startFirstRun();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+        router.url = '/tabs/movies';
+        finishLoading();
+        await startPromise;
+
+        expect(service.isActive()).toBeFalse();
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
     it('starts the full tour only when first-run settings say it is incomplete', async () => {
         await service.startFirstRun();
 
