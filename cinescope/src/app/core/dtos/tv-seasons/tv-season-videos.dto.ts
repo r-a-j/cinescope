@@ -1,5 +1,4 @@
-// tv-season-videos.dto.ts
-import { TmdbVideoDto } from '../tv/tv-videos.dto';
+import { TmdbVideoDto } from '../common/video.dto';
 
 export interface TmdbTvSeasonVideosResponseDto {
     /** The TMDB Season ID. */

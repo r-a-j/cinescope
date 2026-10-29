@@ -41,13 +41,14 @@ export class TmdbTvEpisodesService extends BaseMediaService {
         seasonNumber: number,
         episodeNumber: number,
         appendToResponse?: string,
-        language = 'en-US'
+        language = 'en-US',
+        includeImageLanguage?: string
     ): Observable<TmdbTvEpisodeDetailDto> {
-        let params = this.buildParams({ language });
-
-        if (appendToResponse) {
-            params = params.set('append_to_response', appendToResponse);
-        }
+        const params = this.buildParams({
+            language,
+            append_to_response: appendToResponse,
+            include_image_language: includeImageLanguage
+        });
 
         return this.http.get<TmdbTvEpisodeDetailDto>(
             `${this.apiPrefix}/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}`,
@@ -85,9 +86,21 @@ export class TmdbTvEpisodesService extends BaseMediaService {
      * Feature: When a user scrubs through the timeline of an episode on the CINESCOPE video player, the app uses the Episode Images (stills) endpoint to render beautiful, high-res preview thumbnails above the progress bar.
      * (Beware of Spoilers!): Episode stills are notoriously spoiler-heavy. If an episode is marked as unwatched by your user, you should apply a CSS backdrop-filter: blur(10px) to the images returned by this endpoint. Reveal the crystal-clear image only after they hit "Watched"!
      */
-    getTvEpisodeImages(seriesId: number, seasonNumber: number, episodeNumber: number, language?: string): Observable<TmdbTvEpisodeImagesResponseDto> {
-        const params = this.buildParams({ language });
-        return this.http.get<TmdbTvEpisodeImagesResponseDto>(`${this.apiPrefix}/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}/images`, { params });
+    getTvEpisodeImages(
+        seriesId: number,
+        seasonNumber: number,
+        episodeNumber: number,
+        language?: string,
+        includeImageLanguage?: string
+    ): Observable<TmdbTvEpisodeImagesResponseDto> {
+        const params = this.buildParams({
+            language,
+            include_image_language: includeImageLanguage
+        });
+        return this.http.get<TmdbTvEpisodeImagesResponseDto>(
+            `${this.apiPrefix}/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}/images`,
+            { params }
+        );
     }
 
     /**

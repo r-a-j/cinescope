@@ -4,7 +4,6 @@ import {
   input,
   signal,
   computed,
-  effect,
   inject,
   OnDestroy,
   HostListener
@@ -30,6 +29,19 @@ import {
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
 import { TmdbImageDto } from '../../../../core/dtos/common/image.dto';
+import { TmdbMovieImagesResponseDto } from '../../../../core/dtos/movies/movie-images.dto';
+import { TmdbTvImagesResponseDto } from '../../../../core/dtos/tv/tv-images.dto';
+import { TmdbTvSeasonImagesResponseDto } from '../../../../core/dtos/tv-seasons/tv-season-images.dto';
+import { TmdbTvEpisodeImagesResponseDto } from '../../../../core/dtos/tv-episodes/tv-episode-images.dto';
+import { TmdbPersonImagesResponseDto } from '../../../../core/dtos/people/person-images.dto';
+
+export type TmdbImagesContainer =
+  | TmdbMovieImagesResponseDto
+  | TmdbTvImagesResponseDto
+  | TmdbTvSeasonImagesResponseDto
+  | TmdbTvEpisodeImagesResponseDto
+  | TmdbPersonImagesResponseDto
+  | Record<string, unknown>;
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 import { ToastService } from '../../../../core/services/toast.service';
 
@@ -38,9 +50,64 @@ interface NativeGalleryPlugin {
 }
 const NativeGallery = registerPlugin<NativeGalleryPlugin>('NativeGallery');
 
-export type ArtworkCategory = 'backdrops' | 'posters' | 'logos';
+export type ArtworkCategory = 'backdrops' | 'posters' | 'logos' | 'stills' | 'profiles' | string;
 
 export type ArtworkVariant = 'textless' | 'titled';
+
+export interface ArtworkCategoryMeta {
+  key: string;
+  label: string;
+  singularLabel: string;
+  order: number;
+  isLandscape: boolean;
+  isTransparent: boolean;
+  isPoster: boolean;
+}
+
+const CATEGORY_META: Record<string, { label: string; singularLabel: string; order: number; isLandscape?: boolean; isTransparent?: boolean; isPoster?: boolean }> = {
+  backdrops: { label: 'Wallpapers', singularLabel: 'Wallpaper', order: 1, isLandscape: true },
+  posters: { label: 'Posters', singularLabel: 'Poster', order: 2, isPoster: true },
+  logos: { label: 'Logos', singularLabel: 'Logo', order: 3, isTransparent: true },
+  stills: { label: 'Stills', singularLabel: 'Still', order: 4, isLandscape: true },
+  profiles: { label: 'Portraits', singularLabel: 'Portrait', order: 5, isPoster: true }
+};
+
+export function getCategoryMeta(key: string): ArtworkCategoryMeta {
+  const meta = CATEGORY_META[key];
+  if (meta) {
+    return {
+      key,
+      label: meta.label,
+      singularLabel: meta.singularLabel,
+      order: meta.order,
+      isLandscape: !!meta.isLandscape,
+      isTransparent: !!meta.isTransparent,
+      isPoster: !!meta.isPoster
+    };
+  }
+  const formatted = key.charAt(0).toUpperCase() + key.slice(1);
+  return {
+    key,
+    label: formatted,
+    singularLabel: formatted,
+    order: 99,
+    isLandscape: false,
+    isTransparent: false,
+    isPoster: false
+  };
+}
+
+export function isLandscapeCategory(category: ArtworkCategory): boolean {
+  return category === 'backdrops' || category === 'stills';
+}
+
+export function isPosterCategory(category: ArtworkCategory): boolean {
+  return category === 'posters' || category === 'profiles';
+}
+
+export function isLogoCategory(category: ArtworkCategory): boolean {
+  return category === 'logos';
+}
 
 export interface ArtworkGalleryItem {
   filePath: string;
@@ -59,6 +126,15 @@ export interface ArtworkGalleryItem {
   qualityTag: string;
   voteAverage: number;
   voteCount: number;
+}
+
+export interface ArtworkCategoryTab {
+  key: string;
+  label: string;
+  singularLabel: string;
+  count: number;
+  items: ArtworkGalleryItem[];
+  order: number;
 }
 
 export interface ArtworkFilterOption {
@@ -82,23 +158,25 @@ export function mapTmdbImageToArtworkItem(
   img: TmdbImageDto,
   category: ArtworkCategory
 ): ArtworkGalleryItem {
-  const thumbSize = category === 'backdrops' ? 'w780' : 'w342';
-  const previewSize = category === 'backdrops' ? 'w1280' : 'w780';
+  const isLandscape = isLandscapeCategory(category);
+  const isLogo = isLogoCategory(category);
+  const thumbSize = isLandscape ? 'w780' : isLogo ? 'w500' : 'w342';
+  const previewSize = isLandscape ? 'w1280' : isLogo ? 'w500' : 'w780';
 
   const w = img.width || 0;
   const h = img.height || 0;
   const resolutionLabel = w > 0 && h > 0 ? `${w} × ${h}` : 'HD';
 
   let qualityTag = 'HD';
-  if (category === 'backdrops') {
+  if (isLandscape) {
     if (w >= 3840) qualityTag = '4K UHD';
     else if (w >= 2560) qualityTag = '2K QHD';
     else if (w >= 1920) qualityTag = '1080p FHD';
-  } else if (category === 'posters') {
+  } else if (isLogo) {
+    qualityTag = 'PNG';
+  } else {
     if (h >= 3000) qualityTag = 'UHD';
     else if (h >= 1500) qualityTag = 'HD';
-  } else {
-    qualityTag = 'PNG';
   }
 
   const code = img.iso_639_1 ? img.iso_639_1.toLowerCase() : null;
@@ -118,7 +196,7 @@ export function mapTmdbImageToArtworkItem(
     originalUrl: resolveMediaImageUrl(img.file_path, 'original'),
     width: w,
     height: h,
-    aspectRatio: img.aspect_ratio || (category === 'backdrops' ? 1.778 : 0.667),
+    aspectRatio: img.aspect_ratio || (isLandscape ? 1.778 : isLogo ? 2.5 : 0.667),
     resolutionLabel,
     qualityTag,
     voteAverage: img.vote_average || 0,
@@ -161,10 +239,11 @@ export function buildArtworkFilterOptions(
 
   if (counts.size <= 1) return [];
 
+  const isLandscape = isLandscapeCategory(category);
   const entries: ArtworkFilterOption[] = Array.from(counts.entries()).map(([code, count]) => {
     let label = '';
     if (code === 'none') {
-      label = category === 'backdrops' ? 'Textless Wallpapers' : 'No Language';
+      label = isLandscape ? 'Textless Wallpapers' : 'No Language';
     } else {
       label = getLanguageDisplayName(code);
     }
@@ -172,7 +251,7 @@ export function buildArtworkFilterOptions(
   });
 
   entries.sort((a, b) => {
-    if (category === 'backdrops') {
+    if (isLandscape) {
       if (a.id === 'none') return -1;
       if (b.id === 'none') return 1;
       if (a.id === 'en') return -1;
@@ -203,11 +282,22 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   private toast = inject(ToastService);
 
   public mediaTitle = input.required<string>();
+
+  /**
+   * Primary dynamic input: directly pass a map of image arrays from any TMDB endpoint,
+   * e.g. from Movie/TV ({ backdrops, posters, logos }), Season ({ posters }),
+   * Episode ({ stills }), or Person ({ profiles }).
+   */
+  public images = input<TmdbImagesContainer | null>(null);
+  public primaryBackdropPath = input<string | null>(null);
+  public primaryPosterPath = input<string | null>(null);
+
+  /** Backward-compatible legacy inputs */
   public backdrops = input<TmdbImageDto[]>([]);
   public posters = input<TmdbImageDto[]>([]);
   public logos = input<TmdbImageDto[]>([]);
 
-  public activeCategory = signal<ArtworkCategory>('backdrops');
+  public activeCategory = signal<string>('backdrops');
   public selectedFilterId = signal<string>('all');
   public lightboxIndex = signal<number | null>(null);
   public lightboxLoaded = signal<boolean>(false);
@@ -218,35 +308,145 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   private touchStartY = 0;
   private touchStartTime = 0;
 
-  public backdropItems = computed<ArtworkGalleryItem[]>(() => {
-    return sortAndDedupeTmdbImages(this.backdrops()).map((img) => mapTmdbImageToArtworkItem(img, 'backdrops'));
+  /** Dynamically resolves all categories present in the incoming images */
+  public availableCategories = computed<ArtworkCategoryTab[]>(() => {
+    const map = new Map<string, TmdbImageDto[]>();
+
+    // 1. Gather from dynamic images input if provided
+    const dynamicMap = this.images();
+    if (dynamicMap) {
+      for (const [key, value] of Object.entries(dynamicMap)) {
+        if (Array.isArray(value) && value.length > 0) {
+          const first = value[0] as unknown;
+          if (typeof first === 'object' && first !== null && 'file_path' in first) {
+            map.set(key, value as TmdbImageDto[]);
+          }
+        }
+      }
+    }
+
+    // 2. Gather from legacy inputs if not already present
+    if (this.backdrops().length > 0 && !map.has('backdrops')) {
+      map.set('backdrops', this.backdrops());
+    }
+    if (this.posters().length > 0 && !map.has('posters')) {
+      map.set('posters', this.posters());
+    }
+    if (this.logos().length > 0 && !map.has('logos')) {
+      map.set('logos', this.logos());
+    }
+
+    // 3. Inject primary hero assets if provided and not already included
+    const primaryBackdrop = this.primaryBackdropPath();
+    const existingBackdrops = map.get('backdrops');
+    if (primaryBackdrop && existingBackdrops) {
+      if (!existingBackdrops.some((b) => b.file_path === primaryBackdrop)) {
+        map.set('backdrops', [
+          {
+            aspect_ratio: 1.778,
+            height: 1080,
+            width: 1920,
+            iso_639_1: null,
+            file_path: primaryBackdrop,
+            vote_average: 5,
+            vote_count: 1
+          },
+          ...existingBackdrops
+        ]);
+      }
+    }
+
+    const primaryPoster = this.primaryPosterPath();
+    if (primaryPoster) {
+      const targetKey = map.has('posters') ? 'posters' : map.has('profiles') ? 'profiles' : null;
+      if (targetKey) {
+        const list = map.get(targetKey);
+        if (list && !list.some((p) => p.file_path === primaryPoster)) {
+          map.set(targetKey, [
+            {
+              aspect_ratio: 0.667,
+              height: 1500,
+              width: 1000,
+              iso_639_1: 'en',
+              file_path: primaryPoster,
+              vote_average: 5,
+              vote_count: 1
+            },
+            ...list
+          ]);
+        }
+      }
+    }
+
+    const priorityOrder: Record<string, number> = {
+      backdrops: 1,
+      posters: 2,
+      logos: 3,
+      stills: 4,
+      profiles: 5
+    };
+
+    const tabs: ArtworkCategoryTab[] = [];
+    for (const [key, rawList] of map.entries()) {
+      const items = sortAndDedupeTmdbImages(rawList).map((img) =>
+        mapTmdbImageToArtworkItem(img, key)
+      );
+      if (items.length === 0) continue;
+
+      const meta = getCategoryMeta(key);
+      tabs.push({
+        key,
+        label: meta.label,
+        singularLabel: meta.singularLabel,
+        count: items.length,
+        items,
+        order: priorityOrder[key] ?? 99
+      });
+    }
+
+    return tabs.sort((a, b) => a.order - b.order);
   });
 
-  public posterItems = computed<ArtworkGalleryItem[]>(() => {
-    return sortAndDedupeTmdbImages(this.posters()).map((img) => mapTmdbImageToArtworkItem(img, 'posters'));
+  /** Falls back automatically to the first available non-empty category */
+  public effectiveCategory = computed<string>(() => {
+    const list = this.availableCategories();
+    if (list.length === 0) return 'backdrops';
+    const active = this.activeCategory();
+    return list.some((c) => c.key === active) ? active : list[0].key;
   });
 
-  public logoItems = computed<ArtworkGalleryItem[]>(() => {
-    return sortAndDedupeTmdbImages(this.logos()).map((img) => mapTmdbImageToArtworkItem(img, 'logos'));
+  public currentCategoryTab = computed<ArtworkCategoryTab | null>(() => {
+    const eff = this.effectiveCategory();
+    return this.availableCategories().find((c) => c.key === eff) ?? null;
   });
 
   public totalCount = computed<number>(() => {
-    return this.backdropItems().length + this.posterItems().length + this.logoItems().length;
+    return this.availableCategories().reduce((acc, cat) => acc + cat.count, 0);
   });
 
-  /** All items of the active main category, before sub-category filtering. */
+  /** Legacy computed arrays for backward compatibility */
+  public backdropItems = computed<ArtworkGalleryItem[]>(() => {
+    return this.availableCategories().find((c) => c.key === 'backdrops')?.items ?? [];
+  });
+
+  public posterItems = computed<ArtworkGalleryItem[]>(() => {
+    return this.availableCategories().find((c) => c.key === 'posters')?.items ?? [];
+  });
+
+  public logoItems = computed<ArtworkGalleryItem[]>(() => {
+    return this.availableCategories().find((c) => c.key === 'logos')?.items ?? [];
+  });
+
+  /** All items of the active main category, before sub-category filtering */
   public categoryItems = computed<ArtworkGalleryItem[]>(() => {
-    const cat = this.activeCategory();
-    if (cat === 'backdrops') return this.backdropItems();
-    if (cat === 'posters') return this.posterItems();
-    return this.logoItems();
+    return this.currentCategoryTab()?.items ?? [];
   });
 
   public filterOptions = computed<ArtworkFilterOption[]>(() => {
-    return buildArtworkFilterOptions(this.categoryItems(), this.activeCategory());
+    return buildArtworkFilterOptions(this.categoryItems(), this.effectiveCategory());
   });
 
-  /** Falls back to 'all' whenever the selected filter doesn't exist for the current category. */
+  /** Falls back to 'all' whenever the selected filter doesn't exist for the current category */
   public effectiveFilterId = computed<string>(() => {
     const selected = this.selectedFilterId();
     if (selected === 'all') return 'all';
@@ -262,7 +462,7 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
     return items.filter((i) => i.languageCode === filter);
   });
 
-  /** Capped view for the carousel to ensure 60fps scrolling on titles with 400+ posters. */
+  /** Capped view for the carousel to ensure 60fps scrolling on titles with 400+ posters */
   public displayedItems = computed<ArtworkGalleryItem[]>(() => {
     return this.activeItems().slice(0, 60);
   });
@@ -284,78 +484,91 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
       star,
       expandOutline
     });
-
-    // Ensure activeCategory automatically selects the first non-empty category
-    effect(() => {
-      const current = this.activeCategory();
-      const bLen = this.backdropItems().length;
-      const pLen = this.posterItems().length;
-      const lLen = this.logoItems().length;
-
-      if (current === 'backdrops' && bLen === 0) {
-        if (pLen > 0) this.activeCategory.set('posters');
-        else if (lLen > 0) this.activeCategory.set('logos');
-      } else if (current === 'posters' && pLen === 0) {
-        if (bLen > 0) this.activeCategory.set('backdrops');
-        else if (lLen > 0) this.activeCategory.set('logos');
-      } else if (current === 'logos' && lLen === 0) {
-        if (bLen > 0) this.activeCategory.set('backdrops');
-        else if (pLen > 0) this.activeCategory.set('posters');
-      }
-    });
   }
 
   ngOnDestroy(): void {
     this.cleanupBackButton();
   }
 
-  public selectCategory(category: ArtworkCategory): void {
-    if (this.activeCategory() === category) return;
+  public selectCategory(category: string): void {
+    if (this.effectiveCategory() === category) return;
     this.activeCategory.set(category);
     this.selectedFilterId.set('all');
+    this.lightboxIndex.set(null);
   }
 
   public selectFilter(filterId: string): void {
     if (this.effectiveFilterId() === filterId) return;
     this.selectedFilterId.set(filterId);
-    if (this.lightboxIndex() !== null) {
+
+    // Keep lightbox index pointing to a valid item in the filtered set
+    const currentIdx = this.lightboxIndex();
+    if (currentIdx !== null) {
+      const maxIdx = Math.max(0, this.activeItems().length - 1);
+      this.lightboxIndex.set(Math.min(currentIdx, maxIdx));
       this.lightboxLoaded.set(false);
-      this.lightboxIndex.set(0);
-      this.scrollActiveThumbnail();
     }
   }
 
-  public openLightbox(index: number, category?: ArtworkCategory): void {
-    if (category && this.activeCategory() !== category) {
+  public openLightbox(index = 0, category?: string): void {
+    if (category && category !== this.effectiveCategory()) {
       this.activeCategory.set(category);
       this.selectedFilterId.set('all');
     }
-    const items = this.activeItems();
-    if (index < 0 || index >= items.length) return;
-
+    const maxIdx = Math.max(0, this.activeItems().length - 1);
+    const safeIdx = Math.min(Math.max(0, index), maxIdx);
     this.lightboxLoaded.set(false);
-    this.lightboxIndex.set(index);
-    this.scrollActiveThumbnail();
-
-    if (!this.backButtonSub) {
-      const sub = this.platform.backButton.subscribeWithPriority(9999, (): void => {
-        this.closeLightbox();
-      });
-      this.backButtonSub = (): void => sub.unsubscribe();
-    }
+    this.lightboxIndex.set(safeIdx);
+    this.setupBackButtonListener();
+    this.scrollActiveThumbnail(safeIdx);
   }
 
-  public openByFilePath(filePath: string | null | undefined, category: ArtworkCategory): void {
-    this.activeCategory.set(category);
+  public openByFilePath(filePath: string | null | undefined, category = 'posters'): void {
+    if (!filePath) {
+      this.openLightbox(0, category);
+      return;
+    }
+    this.selectCategory(category);
     this.selectedFilterId.set('all');
-    const items = this.activeItems();
-    const matchIndex = filePath ? items.findIndex((item) => item.filePath === filePath) : -1;
-    this.openLightbox(matchIndex >= 0 ? matchIndex : 0);
+    const idx = this.activeItems().findIndex((item) => item.filePath === filePath);
+    this.openLightbox(idx >= 0 ? idx : 0, category);
   }
 
   public closeLightbox(): void {
     this.lightboxIndex.set(null);
+    this.lightboxLoaded.set(false);
     this.cleanupBackButton();
+  }
+
+  public stepLightbox(delta: number, event?: Event): void {
+    event?.stopPropagation();
+    const items = this.activeItems();
+    if (items.length <= 1) return;
+
+    const current = this.lightboxIndex() ?? 0;
+    const next = (current + delta + items.length) % items.length;
+    this.lightboxLoaded.set(false);
+    this.lightboxIndex.set(next);
+    this.scrollActiveThumbnail(next);
+  }
+
+  private scrollActiveThumbnail(index: number): void {
+    if (typeof window === 'undefined') return;
+    setTimeout(() => {
+      const thumbs = document.querySelectorAll<HTMLElement>('.artwork-lightbox .lb-mini-thumb');
+      const activeThumb = thumbs[index];
+      if (activeThumb) {
+        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }, 50);
+  }
+
+  private setupBackButtonListener(): void {
+    if (this.backButtonSub) return;
+    const backSub = this.platform.backButton.subscribeWithPriority(9999, () => {
+      this.closeLightbox();
+    });
+    this.backButtonSub = (): void => backSub.unsubscribe();
   }
 
   private cleanupBackButton(): void {
@@ -371,79 +584,60 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
     }
   }
 
-  public stepLightbox(delta: number, event?: Event): void {
-    event?.stopPropagation();
-    const idx = this.lightboxIndex();
-    const len = this.activeItems().length;
-    if (idx === null || len <= 1) return;
-    const nextIdx = (idx + delta + len) % len;
-    if (nextIdx === idx) return;
-    this.lightboxLoaded.set(false);
-    this.lightboxIndex.set(nextIdx);
-    this.scrollActiveThumbnail();
-  }
-
-  private scrollActiveThumbnail(): void {
-    setTimeout(() => {
-      const el = document.querySelector('.lb-mini-thumb.active');
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, 50);
-  }
-
   @HostListener('window:keydown', ['$event'])
-  public onKeyDown(event: KeyboardEvent): void {
+  public handleKeydown(event: KeyboardEvent): void {
     if (this.lightboxIndex() === null) return;
-    if (event.key === 'Escape') {
-      this.closeLightbox();
-    } else if (event.key === 'ArrowRight') {
-      this.stepLightbox(1);
-    } else if (event.key === 'ArrowLeft') {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
       this.stepLightbox(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.stepLightbox(1);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeLightbox();
     }
   }
 
   public onTouchStart(event: TouchEvent): void {
-    if (event.touches.length === 1) {
-      this.touchStartX = event.touches[0].clientX;
-      this.touchStartY = event.touches[0].clientY;
-      this.touchStartTime = Date.now();
-    }
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    this.touchStartX = touch.clientX;
+    this.touchStartY = touch.clientY;
+    this.touchStartTime = Date.now();
   }
 
   public onTouchEnd(event: TouchEvent): void {
-    if (event.changedTouches.length === 1) {
-      const deltaX = event.changedTouches[0].clientX - this.touchStartX;
-      const deltaY = event.changedTouches[0].clientY - this.touchStartY;
-      const elapsedTime = Date.now() - this.touchStartTime;
+    if (event.changedTouches.length !== 1) return;
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - this.touchStartY;
+    const elapsedTime = Date.now() - this.touchStartTime;
 
-      if (
-        this.activeItems().length > 1 &&
-        Math.abs(deltaX) > 40 &&
-        Math.abs(deltaX) > Math.abs(deltaY) * 1.3 &&
-        elapsedTime < 600
-      ) {
-        if (deltaX < 0) {
-          this.stepLightbox(1);
-        } else {
-          this.stepLightbox(-1);
-        }
-      } else if (deltaY > 75 && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && elapsedTime < 600) {
-        this.closeLightbox();
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) && elapsedTime < 450) {
+      if (deltaX > 0) {
+        this.stepLightbox(-1);
+      } else {
+        this.stepLightbox(1);
       }
+    } else if (deltaY > 75 && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && elapsedTime < 600) {
+      this.closeLightbox();
     }
   }
 
   public getCategorySingularLabel(): string {
-    const cat = this.activeCategory();
-    if (cat === 'backdrops') return 'Wallpaper';
-    if (cat === 'posters') return 'Poster';
-    return 'Logo';
+    const cat = this.effectiveCategory();
+    const found = this.availableCategories().find((c) => c.key === cat);
+    return found?.singularLabel || getCategoryMeta(cat).singularLabel;
   }
 
   public getItemBadgeLabel(item: ArtworkGalleryItem): string {
     if (item.category === 'logos') return 'Title Logo';
     if (item.languageCode === null) {
-      return item.category === 'backdrops' ? 'Clean Wallpaper' : 'Textless Poster';
+      if (item.category === 'backdrops') return 'Clean Wallpaper';
+      if (item.category === 'stills') return 'Episode Still';
+      if (item.category === 'profiles') return 'Portrait';
+      return 'Textless Poster';
     }
     return `${item.languageName} (${item.languageTag})`;
   }
@@ -454,7 +648,7 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
     const idx = this.lightboxIndex();
     if (!item || this.isSavingImage()) return;
 
-    const sanitizedTitle = this.mediaTitle().replace(/[^a-zA-Z0-9_-]/g, '_') || 'cinescope';
+    const sanitizedTitle = this.mediaTitle().replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const ext = item.filePath.split('.').pop()?.toLowerCase() || (item.category === 'logos' ? 'png' : 'jpg');
     const fileName = `${sanitizedTitle}_${item.category}_${(idx ?? 0) + 1}.${ext}`;
     const label = this.getCategorySingularLabel();
@@ -463,9 +657,9 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
       this.isSavingImage.set(true);
       try {
         await NativeGallery.saveImage({ url: item.originalUrl, filename: fileName });
-        await this.toast.presentSuccess(`${label} saved directly to your Photos Gallery`, 2500);
-      } catch (nativeErr) {
-        console.warn('[MediaArtworkGallery] Native gallery save failed, falling back:', nativeErr);
+        await this.toast.presentSuccess(`${label} saved to Photos / Gallery`, 2500);
+      } catch (err) {
+        console.warn('[MediaArtworkGallery] Native save failed, falling back:', err);
         await this.downloadBlobFile(item, fileName, label);
       } finally {
         this.isSavingImage.set(false);
@@ -581,8 +775,6 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
         const link = document.createElement('a');
         link.href = item.originalUrl;
         link.download = fileName;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();

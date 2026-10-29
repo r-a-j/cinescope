@@ -65,7 +65,7 @@ import {
   TmdbPersonCrewCreditDto
 } from '../../core/dtos/people/person-combined-credits.dto';
 import { TmdbPersonExternalIdsDto } from '../../core/dtos/people/person-external-ids.dto';
-import { TmdbImageDto } from '../../core/dtos/common/image.dto';
+
 import { SwimlaneComponent } from '../../shared/components/swimlane/swimlane.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
@@ -198,7 +198,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   });
 
   public profileGallery = computed<PersonPortraitVm[]>(() => {
-    const imgs = this.person()?.['images'] as { profiles?: TmdbImageDto[] } | undefined;
+    const imgs = this.person()?.images;
     const list = imgs?.profiles || [];
     const seen = new Set<string>();
     const unique = list.filter((img) => {

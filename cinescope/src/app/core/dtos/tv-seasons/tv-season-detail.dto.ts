@@ -1,3 +1,6 @@
+import { TmdbTvSeasonImagesResponseDto } from './tv-season-images.dto';
+import { TmdbTvSeasonVideosResponseDto } from './tv-season-videos.dto';
+
 export interface TmdbTvSeasonCrewDto {
     /** The department the crew member worked in (e.g., 'Directing', 'Writing'). */
     department: string;
@@ -56,6 +59,9 @@ export interface TmdbTvSeasonEpisodeDto {
     crew: TmdbTvSeasonCrewDto[];
     /** The guest stars appearing in this specific episode. */
     guest_stars: TmdbTvSeasonGuestStarDto[];
+
+    /** Optional catch-all for append_to_response payloads (e.g. images, videos, credits). */
+    [key: string]: unknown;
 }
 
 export interface TmdbTvSeasonDetailDto {
@@ -76,4 +82,11 @@ export interface TmdbTvSeasonDetailDto {
     season_number: number;
     /** The average rating across all episodes in the season. */
     vote_average: number;
+
+    /** Strongly typed appended responses. */
+    images?: TmdbTvSeasonImagesResponseDto;
+    videos?: TmdbTvSeasonVideosResponseDto;
+
+    /** Optional catch-all for append_to_response payloads (e.g. images, videos, credits). */
+    [key: string]: unknown;
 }

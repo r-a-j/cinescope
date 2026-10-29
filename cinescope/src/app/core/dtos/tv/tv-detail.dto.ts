@@ -2,6 +2,8 @@ import { TmdbGenreDto } from '../genres/genre.dto';
 import { TmdbProductionCompanyDto } from '../movies/movie-detail.dto';
 import { TmdbProductionCountryDto } from '../movies/movie-detail.dto';
 import { TmdbSpokenLanguageDto } from '../movies/movie-detail.dto';
+import { TmdbTvImagesResponseDto } from './tv-images.dto';
+import { TmdbTvVideosResponseDto } from './tv-videos.dto';
 
 export interface TmdbTvCreatorDto {
     id: number;
@@ -84,6 +86,10 @@ export interface TmdbTvDetailDto {
     type: string;
     vote_average: number;
     vote_count: number;
+
+    /** Strongly typed appended responses. */
+    images?: TmdbTvImagesResponseDto;
+    videos?: TmdbTvVideosResponseDto;
 
     /** Optional catch-all for append_to_response. */
     [key: string]: unknown;

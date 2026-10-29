@@ -124,7 +124,7 @@
     <!-- Portrait Gallery -->
     @if (profileGallery().length > 0) {
       <section class="person-section">
-        <h3 class="section-heading">PORTRAITS ({{ profileGallery().length }})</h3>
+        <h3 class="section-heading">PORTRAITS</h3>
         <div class="portraits-scroll">
           @for (img of profileGallery(); track img.original; let i = $index) {
             <img

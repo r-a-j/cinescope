@@ -39,13 +39,14 @@ export class TmdbTvSeasonsService extends BaseMediaService {
         seriesId: number,
         seasonNumber: number,
         appendToResponse?: string,
-        language?: string
+        language?: string,
+        includeImageLanguage?: string
     ): Observable<TmdbTvSeasonDetailDto> {
-        let params = this.buildParams({ language, appendToResponse });
-
-        if (appendToResponse) {
-            params = params.set('append_to_response', appendToResponse);
-        }
+        const params = this.buildParams({
+            language,
+            append_to_response: appendToResponse,
+            include_image_language: includeImageLanguage
+        });
 
         return this.http.get<TmdbTvSeasonDetailDto>(`${this.apiPrefix}/tv/${seriesId}/season/${seasonNumber}`, { params });
     }
@@ -151,9 +152,13 @@ export class TmdbTvSeasonsService extends BaseMediaService {
     getTvSeasonImages(
         seriesId: number,
         seasonNumber: number,
-        language?: string
+        language?: string,
+        includeImageLanguage?: string
     ): Observable<TmdbTvSeasonImagesResponseDto> {
-        const params = this.buildParams({ language });
+        const params = this.buildParams({
+            language,
+            include_image_language: includeImageLanguage
+        });
         return this.http.get<TmdbTvSeasonImagesResponseDto>(`${this.apiPrefix}/tv/${seriesId}/season/${seasonNumber}/images`, { params });
     }
 
