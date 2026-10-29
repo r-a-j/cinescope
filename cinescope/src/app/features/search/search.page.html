@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-searchbar 
+    <ion-searchbar data-tour="search-input"
       placeholder="Search movies, tv, franchises, people..." 
       [value]="store.query()"
       (ionInput)="onSearchChange($event)"

@@ -44,6 +44,7 @@ interface TrendingState {
     breakoutActors: SwimlaneItem[];
     isActorsLoading: boolean;
 
+    hasLoadedTrendingData: boolean;
     isLoading: boolean;
     error: string | null;
 }
@@ -72,6 +73,8 @@ const initialState: TrendingState = {
     popularActors: [],
     breakoutActors: [],
     isActorsLoading: false,
+
+    hasLoadedTrendingData: false,
     isLoading: false,
     error: null,
 };
@@ -160,41 +163,53 @@ export const TrendingStore = signalStore(
         moviesService = inject(TmdbMoviesService),
         tvService = inject(TmdbTvService),
         peopleService = inject(TmdbPeopleService)
-    ) => ({
+    ) => {
+        let trendingDataPromise: Promise<void> | null = null;
 
-        async loadTrendingData(force = false): Promise<void> {
-            if (!force && ((store.movies().length > 0 && store.tvShows().length > 0) || store.isLoading())) {
-                return;
+        return {
+
+        loadTrendingData(force = false): Promise<void> {
+            if (trendingDataPromise) {
+                return trendingDataPromise;
+            }
+            if (!force && store.hasLoadedTrendingData()) {
+                return Promise.resolve();
             }
             patchState(store, { isLoading: true, error: null });
 
-            try {
-                // Smart Pulse Logic: 0 = Sunday, 5 = Friday, 6 = Saturday
-                const today = new Date().getDay();
-                const isWeekend = today === 0 || today === 5 || today === 6;
-                const pulseWindow = isWeekend ? 'week' : 'day';
+            trendingDataPromise = (async (): Promise<void> => {
+                try {
+                    // Smart Pulse Logic: 0 = Sunday, 5 = Friday, 6 = Saturday
+                    const today = new Date().getDay();
+                    const isWeekend = today === 0 || today === 5 || today === 6;
+                    const pulseWindow = isWeekend ? 'week' : 'day';
 
-                const [allRes, moviesRes, nowPlayingRes, tvRes, onTheAirRes] = await Promise.all([
-                    firstValueFrom(trendingService.getTrendingAll('week')),
-                    firstValueFrom(trendingService.getTrendingMovies(pulseWindow)),
-                    firstValueFrom(moviesService.getNowPlayingMovies('en-US', 1, 'IN')),
-                    firstValueFrom(trendingService.getTrendingTvShows(pulseWindow)),
-                    firstValueFrom(tvService.getTvOnTheAir('en-US', 1))
-                ]);
+                    const [allRes, moviesRes, nowPlayingRes, tvRes, onTheAirRes] = await Promise.all([
+                        firstValueFrom(trendingService.getTrendingAll('week')),
+                        firstValueFrom(trendingService.getTrendingMovies(pulseWindow)),
+                        firstValueFrom(moviesService.getNowPlayingMovies('en-US', 1, 'IN')),
+                        firstValueFrom(trendingService.getTrendingTvShows(pulseWindow)),
+                        firstValueFrom(tvService.getTvOnTheAir('en-US', 1))
+                    ]);
 
-                patchState(store, {
-                    heroItems: mapToHeroItems(allRes.results),
-                    movies: mapMoviesToSwimlane(moviesRes.results),
-                    nowPlayingMovies: mapMoviesToSwimlane(nowPlayingRes.results || []),
-                    tvShows: mapTvToSwimlane(tvRes.results),
-                    airingTvShows: mapTvToSwimlane(onTheAirRes.results || []),
-                    isLoading: false
-                });
+                    patchState(store, {
+                        heroItems: mapToHeroItems(allRes.results),
+                        movies: mapMoviesToSwimlane(moviesRes.results),
+                        nowPlayingMovies: mapMoviesToSwimlane(nowPlayingRes.results || []),
+                        tvShows: mapTvToSwimlane(tvRes.results),
+                        airingTvShows: mapTvToSwimlane(onTheAirRes.results || []),
+                        hasLoadedTrendingData: true
+                    });
+                } catch (error) {
+                    console.error('Failed to load trending data', error);
+                    patchState(store, { error: 'Failed to load feed.' });
+                } finally {
+                    patchState(store, { isLoading: false });
+                    trendingDataPromise = null;
+                }
+            })();
 
-            } catch (error) {
-                console.error('Failed to load trending data', error);
-                patchState(store, { isLoading: false, error: 'Failed to load feed.' });
-            }
+            return trendingDataPromise;
         },
 
         async loadDesiHubData(force = false): Promise<void> {
@@ -325,5 +340,6 @@ export const TrendingStore = signalStore(
                 patchState(store, { isActorsLoading: false });
             }
         }
-    }))
+        };
+    })
 );

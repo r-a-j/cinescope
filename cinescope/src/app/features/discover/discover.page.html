@@ -1,7 +1,7 @@
 <app-header></app-header>
 
 <ion-toolbar class="segment-toolbar">
-    <ion-segment [scrollable]="true" [value]="activeSection()" (ionChange)="onSectionChange($event)">
+    <ion-segment data-tour="discover-sections" [scrollable]="true" [value]="activeSection()" (ionChange)="onSectionChange($event)">
 
         @for (tab of discoverTabs; track tab.value) {
         <ion-segment-button [value]="tab.value">
@@ -12,7 +12,7 @@
     </ion-segment>
 </ion-toolbar>
 
-<ion-content color="background" class="ion-no-padding">
+<ion-content data-tour="discover-feed" color="background" class="ion-no-padding">
     <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
         <ion-refresher-content></ion-refresher-content>
     </ion-refresher>
@@ -34,6 +34,12 @@
             </div>
         </div>
 
+        } @else if (store.error()) {
+        <div class="feed-error" role="alert">
+            <h2>Discover could not load</h2>
+            <p>Check your connection, then try loading the catalog again.</p>
+            <ion-button expand="block" (click)="retryTrending()">Try again</ion-button>
+        </div>
         } @else {
 
         @if (store.heroItems().length > 0) {

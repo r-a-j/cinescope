@@ -3,11 +3,12 @@ import { IonApp, IonRouterOutlet, Platform } from '@ionic/angular/standalone';
 import { App } from '@capacitor/app';
 import { Location } from '@angular/common';
 import { NavController } from '@ionic/angular/standalone';
+import { AppTourOverlayComponent } from './shared/components/app-tour-overlay/app-tour-overlay.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
-  imports: [IonApp, IonRouterOutlet],
+  imports: [IonApp, IonRouterOutlet, AppTourOverlayComponent],
 })
 export class AppComponent {
   private platform = inject(Platform);
@@ -27,7 +28,6 @@ export class AppComponent {
   private setupHardwareBackButton(): void {
     // Priority 10 ensures this listener runs before Ionic's default handlers
     this.platform.backButton.subscribeWithPriority(10, async (processNextHandler) => {
-
       const currentPath = this.location.path();
 
       const secondaryTabs = [

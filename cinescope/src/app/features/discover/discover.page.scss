@@ -114,6 +114,31 @@ ion-segment-button {
     border-radius: 8px;
 }
 
+.feed-error {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 48px 24px;
+    text-align: center;
+
+    h2 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    p {
+        max-width: 28rem;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.5;
+    }
+
+    ion-button {
+        min-height: 48px;
+        width: min(100%, 20rem);
+    }
+}
+
 // News Tab
 .news-container {
     padding: 16px 16px 36px;

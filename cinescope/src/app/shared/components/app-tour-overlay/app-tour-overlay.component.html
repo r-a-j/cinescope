@@ -1,0 +1,57 @@
+@if (tour.isActive()) {
+    <div class="tour-layer" role="presentation">
+        @if (spotlight(); as rect) {
+            <div class="tour-blocker top" [style.height.px]="rect.top"></div>
+            <div class="tour-blocker left"
+                [style.top.px]="rect.top"
+                [style.width.px]="rect.left"
+                [style.height.px]="rect.height"></div>
+            <div class="tour-blocker right"
+                [style.top.px]="rect.top"
+                [style.left.px]="rect.right"
+                [style.height.px]="rect.height"></div>
+            <div class="tour-blocker bottom" [style.top.px]="rect.bottom"></div>
+            <div class="tour-spotlight"
+                [style.top.px]="rect.top"
+                [style.left.px]="rect.left"
+                [style.width.px]="rect.width"
+                [style.height.px]="rect.height"></div>
+        } @else {
+            <div class="tour-blocker full"></div>
+        }
+
+        <section
+            #tourCard
+            class="tour-card"
+            [style.top.px]="cardTop()"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-labelledby]="'app-tour-title'"
+            [attr.aria-describedby]="'app-tour-description'">
+            @if (tour.isNavigating()) {
+                <p class="tour-loading" aria-live="polite">Opening the next section…</p>
+            } @else if (tour.currentStep(); as step) {
+                <div class="tour-card-header">
+                    <p class="tour-progress">STEP {{ tour.currentStepNumber() }} OF {{ tour.totalSteps() }}</p>
+                    <button type="button" class="tour-close" aria-label="Close tutorial" (click)="skip()">×</button>
+                </div>
+                <h2 id="app-tour-title">{{ step.title }}</h2>
+                <p id="app-tour-description" class="tour-description">{{ step.description }}</p>
+                @if (errorMessage()) {
+                    <p class="tour-error" role="alert">{{ errorMessage() }}</p>
+                }
+                <div class="tour-actions">
+                    <button type="button" class="tour-skip" (click)="skip()">Skip tour</button>
+                    <div class="tour-navigation">
+                        @if (tour.canGoBack()) {
+                            <button type="button" class="tour-back" (click)="previous()">Back</button>
+                        }
+                        <button type="button" class="tour-next" (click)="next()">
+                            {{ tour.currentStepNumber() === tour.totalSteps() ? 'Finish' : 'Next' }}
+                        </button>
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+}

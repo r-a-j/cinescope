@@ -1,7 +1,7 @@
 <app-header></app-header>
 
     <ion-toolbar class="archive-toolbar">
-      <ion-segment [value]="activeTab()" (ionChange)="onTabChange($event)">
+      <ion-segment data-tour="archive-filters" [value]="activeTab()" (ionChange)="onTabChange($event)">
         <ion-segment-button value="watchlist">
           <ion-label>WATCHLIST</ion-label>
         </ion-segment-button>
@@ -79,7 +79,7 @@
     }
 
     <ion-content color="background">
-      <div class="archive-panes-wrapper">
+      <div class="archive-panes-wrapper" data-tour="archive-library">
         <!-- Keep-Alive Watchlist Pane -->
         <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watchlist'">
           @if (filteredWatchlist().length === 0) {

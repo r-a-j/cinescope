@@ -3,7 +3,7 @@ import { ExtractDocumentTypeFromTypedRxJsonSchema, MigrationStrategies, RxJsonSc
 export const settingsSchemaLiteral = {
     title: 'settings schema',
     description: 'Stores user application settings',
-    version: 2,
+    version: 3,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -28,14 +28,23 @@ export const settingsSchemaLiteral = {
         isManualRegion: {
             type: 'boolean',
             default: false
+        },
+        appTourCompleted: {
+            type: 'boolean',
+            default: false
         }
     },
-    required: ['id', 'allowAdultContent', 'theme', 'region']
+    required: ['id', 'allowAdultContent', 'theme', 'region', 'appTourCompleted']
 } as const;
 
 export const settingsSchemaTyped = toTypedRxJsonSchema(settingsSchemaLiteral);
 export type SettingsDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof settingsSchemaTyped>;
 export const settingsSchema: RxJsonSchema<SettingsDocType> = settingsSchemaLiteral;
+export const migrateSettingsTourFlag = (oldDoc: Record<string, unknown>): Record<string, unknown> => ({
+    ...oldDoc,
+    appTourCompleted: true
+});
+
 export const settingsMigrationStrategies: MigrationStrategies = {
     1: (oldDoc: Record<string, unknown>) => {
         const rawRegion = typeof oldDoc['region'] === 'string' && (oldDoc['region'] as string).trim().length > 0
@@ -51,5 +60,6 @@ export const settingsMigrationStrategies: MigrationStrategies = {
             ...oldDoc,
             isManualRegion: Boolean(oldDoc['isManualRegion'])
         };
-    }
+    },
+    3: (oldDoc: Record<string, unknown>) => migrateSettingsTourFlag(oldDoc)
 };

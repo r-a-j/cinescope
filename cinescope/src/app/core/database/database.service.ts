@@ -91,7 +91,8 @@ export class DatabaseService {
                         allowAdultContent: false,
                         theme: 'system',
                         region: 'IN',
-                        isManualRegion: false
+                        isManualRegion: false,
+                        appTourCompleted: false
                     });
                 }
 

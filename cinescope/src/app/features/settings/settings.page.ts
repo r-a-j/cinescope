@@ -28,6 +28,8 @@ import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { SearchStore } from 'src/app/core/store/search.store';
 import { MoviesPreferencesService } from 'src/app/core/services/movies-preferences.service';
+import { AppTourService } from 'src/app/core/services/app-tour.service';
+import { APP_TOUR_MODULES, AppTourId } from 'src/app/core/constants/app-tour.constants';
 
 interface NativeBackupPlugin {
     saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
@@ -60,7 +62,9 @@ export class SettingsPage implements OnInit {
     private actionSheetCtrl = inject(ActionSheetController);
     private searchStore = inject(SearchStore);
     private watchProvidersService = inject(TmdbWatchProvidersService);
+    private appTour = inject(AppTourService);
     public regionService = inject(RegionService);
+    public tutorialModules = APP_TOUR_MODULES;
 
         public appVersion = signal<string>('1.2.0');
     // Region selector state
@@ -95,6 +99,15 @@ export class SettingsPage implements OnInit {
         const dateStr = new Date().toISOString().slice(0, 10);
         return `cinescope-backup-${dateStr}.json`;
     });
+
+    public async startTutorial(id: AppTourId): Promise<void> {
+        try {
+            await this.appTour.start(id);
+        } catch (error) {
+            console.error('[SettingsPage] Could not start tutorial:', error);
+            await this.toast.presentError('Could not open this tutorial. Please try again.');
+        }
+    }
 
     constructor() {
         addIcons({

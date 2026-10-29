@@ -168,6 +168,7 @@ export interface LegacyBackupPayload {
         settings?: {
             allowAdultContent?: boolean;
             theme?: string;
+            appTourCompleted?: boolean;
         };
     };
 }
@@ -1217,7 +1218,10 @@ export class StorageService {
                 region: typeof (rawSettings as Record<string, unknown>)['region'] === 'string'
                     ? ((rawSettings as Record<string, unknown>)['region'] as string).trim().toUpperCase()
                     : 'IN',
-                isManualRegion: Boolean((rawSettings as Record<string, unknown>)['isManualRegion'])
+                isManualRegion: Boolean((rawSettings as Record<string, unknown>)['isManualRegion']),
+                appTourCompleted: rawSettings.appTourCompleted === undefined
+                    ? true
+                    : Boolean(rawSettings.appTourCompleted)
             });
         }
 
