@@ -505,8 +505,10 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
     const currentIdx = this.lightboxIndex();
     if (currentIdx !== null) {
       const maxIdx = Math.max(0, this.activeItems().length - 1);
-      this.lightboxIndex.set(Math.min(currentIdx, maxIdx));
+      const safeIdx = Math.min(currentIdx, maxIdx);
+      this.lightboxIndex.set(safeIdx);
       this.lightboxLoaded.set(false);
+      this.scrollActiveThumbnail(safeIdx);
     }
   }
 
@@ -555,12 +557,14 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   private scrollActiveThumbnail(index: number): void {
     if (typeof window === 'undefined') return;
     setTimeout(() => {
+      const container = document.querySelector<HTMLElement>('.artwork-lightbox .lightbox-thumb-strip');
       const thumbs = document.querySelectorAll<HTMLElement>('.artwork-lightbox .lb-mini-thumb');
       const activeThumb = thumbs[index];
-      if (activeThumb) {
-        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      if (container && activeThumb) {
+        const targetScrollLeft = activeThumb.offsetLeft - (container.clientWidth / 2) + (activeThumb.offsetWidth / 2);
+        container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
       }
-    }, 50);
+    }, 60);
   }
 
   private setupBackButtonListener(): void {
@@ -579,7 +583,15 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   }
 
   public onBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest('.lightbox-bottom-bar') ||
+      target?.closest('.lightbox-toolbar') ||
+      target?.closest('.stage-img')
+    ) {
+      return;
+    }
+    if (event.target === event.currentTarget || target?.classList.contains('lightbox-stage')) {
       this.closeLightbox();
     }
   }
@@ -600,6 +612,11 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   }
 
   public onTouchStart(event: TouchEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.lightbox-bottom-bar') || target?.closest('.lightbox-toolbar')) {
+      this.touchStartX = 0;
+      return;
+    }
     if (event.touches.length !== 1) return;
     const touch = event.touches[0];
     this.touchStartX = touch.clientX;
@@ -608,11 +625,18 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   }
 
   public onTouchEnd(event: TouchEvent): void {
+    if (this.touchStartX === 0) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.lightbox-bottom-bar') || target?.closest('.lightbox-toolbar')) {
+      this.touchStartX = 0;
+      return;
+    }
     if (event.changedTouches.length !== 1) return;
     const touch = event.changedTouches[0];
     const deltaX = touch.clientX - this.touchStartX;
     const deltaY = touch.clientY - this.touchStartY;
     const elapsedTime = Date.now() - this.touchStartTime;
+    this.touchStartX = 0;
 
     if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) && elapsedTime < 450) {
       if (deltaX > 0) {
@@ -632,7 +656,9 @@ export class MediaArtworkGalleryComponent implements OnDestroy {
   }
 
   public getItemBadgeLabel(item: ArtworkGalleryItem): string {
-    if (item.category === 'logos') return 'Title Logo';
+    if (item.category === 'logos') {
+      return item.languageCode ? `${item.languageName} (${item.languageTag})` : 'Title Logo';
+    }
     if (item.languageCode === null) {
       if (item.category === 'backdrops') return 'Clean Wallpaper';
       if (item.category === 'stills') return 'Episode Still';

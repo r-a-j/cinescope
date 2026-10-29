@@ -108,16 +108,14 @@
     <div class="lightbox-toolbar">
       <div class="lightbox-meta">
         <span class="lightbox-counter">{{ (lightboxIndex() ?? 0) + 1 }} / {{ activeItems().length }}</span>
-        @if (lb.category !== 'posters') {
+        @if (lb.category !== 'posters' && lb.category !== 'profiles') {
           <span class="lightbox-badge" [class.is-uhd]="lb.qualityTag.includes('4K') || lb.qualityTag === 'UHD'">
             {{ lb.qualityTag }} • {{ lb.resolutionLabel }}
           </span>
         }
-        @if (lb.category !== 'logos') {
-          <span class="lightbox-lang-pill" [class.is-textless]="lb.languageCode === null">
-            {{ getItemBadgeLabel(lb) }}
-          </span>
-        }
+        <span class="lightbox-lang-pill" [class.is-textless]="lb.languageCode === null">
+          {{ getItemBadgeLabel(lb) }}
+        </span>
       </div>
 
       <div class="lightbox-actions">
@@ -157,6 +155,8 @@
     <!-- Main Image Stage with Progressive Cross-Fade -->
     <div
       class="lightbox-stage"
+      [class.is-backdrop-stage]="lb.category === 'backdrops' || lb.category === 'stills'"
+      [class.is-poster-stage]="lb.category === 'posters' || lb.category === 'profiles'"
       [class.is-logo-stage]="lb.category === 'logos'"
       [class.has-variant-row]="filterOptions().length > 0">
       <img
@@ -237,6 +237,7 @@
               class="lb-mini-thumb"
               [class.active]="lightboxIndex() === idx"
               [class.is-poster-thumb]="thumbItem.category === 'posters' || thumbItem.category === 'profiles'"
+              [class.is-logo-thumb]="thumbItem.category === 'logos'"
               (click)="openLightbox(idx)">
               <img [src]="thumbItem.thumbUrl" [alt]="mediaTitle() + ' thumbnail ' + (idx + 1)" loading="lazy" />
             </button>
