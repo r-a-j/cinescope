@@ -163,4 +163,21 @@ describe('MediaArtworkGalleryComponent', () => {
     expect(component.lightboxIndex()).toBe(0);
     expect(component.lightboxItem()?.filePath).toBe('/titled1.jpg');
   });
+
+  it('dynamically adapts to TV episode stills or custom category containers', () => {
+    fixture.componentRef.setInput('images', {
+      id: 123,
+      stills: [
+        img({ file_path: '/still1.jpg', aspect_ratio: 1.778 }),
+        img({ file_path: '/still2.jpg', aspect_ratio: 1.778 })
+      ]
+    });
+    fixture.detectChanges();
+
+    const categories = component.availableCategories();
+    expect(categories.some((c) => c.key === 'stills')).toBeTrue();
+    const stillTab = categories.find((c) => c.key === 'stills');
+    expect(stillTab?.count).toBe(2);
+    expect(stillTab?.label).toBe('Stills');
+  });
 });

@@ -1,4 +1,6 @@
 import { TmdbGenreDto } from '../genres/genre.dto';
+import { TmdbMovieImagesResponseDto } from './movie-images.dto';
+import { TmdbMovieVideosResponseDto } from './movie-videos.dto';
 
 export interface TmdbBelongsToCollectionDto {
     id: number;
@@ -53,8 +55,14 @@ export interface TmdbMovieDetailDto {
     vote_count: number;
 
     /**
-     * Optional field to accommodate the `append_to_response` feature.
-     * (e.g., if you append 'credits', response.credits will exist here).
+     * Strongly typed appended responses.
+     */
+    images?: TmdbMovieImagesResponseDto;
+    videos?: TmdbMovieVideosResponseDto;
+
+    /**
+     * Optional field to accommodate additional `append_to_response` payloads
+     * (e.g. credits, watch/providers, release_dates, recommendations, etc.).
      */
     [key: string]: unknown;
 }

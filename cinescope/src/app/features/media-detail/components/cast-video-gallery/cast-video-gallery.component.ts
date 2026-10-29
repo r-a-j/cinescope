@@ -14,20 +14,23 @@ export interface VideoTypeGroup {
 }
 
 /** Display order and plural labels for TMDB's internal video types. */
-const VIDEO_TYPE_META: Record<string, { order: number; label: string }> = {
+const KNOWN_VIDEO_TYPE_META: Record<string, { order: number; label: string }> = {
   Trailer: { order: 1, label: 'Trailers' },
   Teaser: { order: 2, label: 'Teasers' },
-  Clip: { order: 3, label: 'Clips' },
-  Featurette: { order: 4, label: 'Featurettes' },
-  'Behind the Scenes': { order: 5, label: 'Behind the Scenes' },
-  Bloopers: { order: 6, label: 'Bloopers' },
-  'Opening Credits': { order: 7, label: 'Opening Credits' },
-  Recap: { order: 8, label: 'Recaps' }
+  Promo: { order: 3, label: 'Promos' },
+  Clip: { order: 4, label: 'Clips' },
+  Featurette: { order: 5, label: 'Featurettes' },
+  'Behind the Scenes': { order: 6, label: 'Behind the Scenes' },
+  Bloopers: { order: 7, label: 'Bloopers' },
+  'Opening Credits': { order: 8, label: 'Opening Credits' },
+  Recap: { order: 9, label: 'Recaps' },
+  'Sneak Peek': { order: 10, label: 'Sneak Peeks' }
 };
 
 /**
- * Groups videos by their TMDB type into filter options, ordered by relevance.
- * Returns an empty list when all videos share one type, since a filter would add no value.
+ * Groups videos by their TMDB type into dynamic filter options, ordered by relevance.
+ * Handles any raw type from TMDB, preserving known priorities while gracefully
+ * pluralizing and counting any unexpected or episode/season specific types.
  */
 export function buildVideoTypeGroups(videos: TmdbVideoDto[]): VideoTypeGroup[] {
   const counts = new Map<string, number>();
@@ -38,12 +41,17 @@ export function buildVideoTypeGroups(videos: TmdbVideoDto[]): VideoTypeGroup[] {
   if (counts.size <= 1) return [];
 
   const groups = [...counts.entries()]
-    .map(([type, count]) => ({
-      type,
-      label: VIDEO_TYPE_META[type]?.label ?? type,
-      count,
-      order: VIDEO_TYPE_META[type]?.order ?? 99
-    }))
+    .map(([type, count]) => {
+      const meta = KNOWN_VIDEO_TYPE_META[type];
+      const label = meta?.label ?? type;
+      const order = meta?.order ?? 99;
+      return {
+        type,
+        label,
+        count,
+        order
+      };
+    })
     .sort((a, b) => a.order - b.order || b.count - a.count)
     .map(({ type, label, count }) => ({ type, label, count }));
 
@@ -64,13 +72,15 @@ export class CastVideoGalleryComponent implements OnDestroy {
   private platform = inject(Platform);
   private backButtonSub: (() => void) | null = null;
 
-  public castList = input.required<CastMemberVm[]>();
-  public videos = input.required<TmdbVideoDto[]>();
+  public castList = input<CastMemberVm[]>([]);
+  public videos = input<TmdbVideoDto[]>([]);
 
   public activeVideo = signal<TmdbVideoDto | null>(null);
   public selectedVideoType = signal<string>('all');
 
-  public videoTypeGroups = computed<VideoTypeGroup[]>(() => buildVideoTypeGroups(this.videos()));
+  public videoTypeGroups = computed<VideoTypeGroup[]>(() => {
+    return buildVideoTypeGroups(this.videos());
+  });
 
   /** Falls back to 'all' when the selected type isn't available (e.g. after navigating to another title). */
   public effectiveVideoType = computed<string>(() => {
@@ -106,30 +116,28 @@ export class CastVideoGalleryComponent implements OnDestroy {
   }
 
   public openPerson(actor: CastMemberVm): void {
-    void this.router.navigate(['/person', actor.id], {
-      state: {
-        preview: {
-          id: actor.id,
-          name: actor.name,
-          profileUrl: actor.profileUrl,
-          knownForDepartment: 'Acting'
-        }
-      }
-    });
+    void this.router.navigate(['/person', actor.id]);
   }
 
   public openVideo(video: TmdbVideoDto): void {
     this.activeVideo.set(video);
-    if (!this.backButtonSub) {
-      const sub = this.platform.backButton.subscribeWithPriority(9999, (): void => {
-        this.closeVideo();
-      });
-      this.backButtonSub = (): void => sub.unsubscribe();
-    }
+    this.setupBackButtonListener();
   }
 
   public closeVideo(): void {
     this.activeVideo.set(null);
+    this.cleanupBackButton();
+  }
+
+  private setupBackButtonListener(): void {
+    if (this.backButtonSub) return;
+    const sub = this.platform.backButton.subscribeWithPriority(9999, () => {
+      this.closeVideo();
+    });
+    this.backButtonSub = (): void => sub.unsubscribe();
+  }
+
+  private cleanupBackButton(): void {
     if (this.backButtonSub) {
       this.backButtonSub();
       this.backButtonSub = null;
@@ -137,9 +145,6 @@ export class CastVideoGalleryComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.backButtonSub) {
-      this.backButtonSub();
-      this.backButtonSub = null;
-    }
+    this.cleanupBackButton();
   }
 }

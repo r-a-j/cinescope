@@ -65,7 +65,7 @@ import {
   TmdbPersonCrewCreditDto
 } from '../../core/dtos/people/person-combined-credits.dto';
 import { TmdbPersonExternalIdsDto } from '../../core/dtos/people/person-external-ids.dto';
-import { TmdbImageDto } from '../../core/dtos/common/image.dto';
+
 import { SwimlaneComponent } from '../../shared/components/swimlane/swimlane.component';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
@@ -198,7 +198,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   });
 
   public profileGallery = computed<PersonPortraitVm[]>(() => {
-    const imgs = this.person()?.['images'] as { profiles?: TmdbImageDto[] } | undefined;
+    const imgs = this.person()?.images;
     const list = imgs?.profiles || [];
     const seen = new Set<string>();
     const unique = list.filter((img) => {
@@ -264,7 +264,15 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   public onBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest('.lightbox-bottom-bar') ||
+      target?.closest('.lightbox-toolbar') ||
+      target?.closest('.stage-img')
+    ) {
+      return;
+    }
+    if (event.target === event.currentTarget || target?.classList.contains('lightbox-stage')) {
       this.closeLightbox();
     }
   }
@@ -292,9 +300,13 @@ export class PersonDetailPage implements OnInit, OnDestroy {
 
   private scrollActiveThumbnail(): void {
     setTimeout(() => {
-      const el = document.querySelector('.filmstrip-thumb.active');
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, 50);
+      const container = document.querySelector<HTMLElement>('.person-lightbox .lightbox-filmstrip');
+      const activeThumb = document.querySelector<HTMLElement>('.person-lightbox .filmstrip-thumb.active');
+      if (container && activeThumb) {
+        const targetScrollLeft = activeThumb.offsetLeft - (container.clientWidth / 2) + (activeThumb.offsetWidth / 2);
+        container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      }
+    }, 60);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -310,6 +322,11 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   public onTouchStart(event: TouchEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.lightbox-bottom-bar') || target?.closest('.lightbox-toolbar')) {
+      this.touchStartX = 0;
+      return;
+    }
     if (event.touches.length === 1) {
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;

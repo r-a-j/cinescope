@@ -31,7 +31,7 @@
     <!-- TRAILERS, TEASERS & FEATURETTES -->
     @if (videos().length > 0) {
       <section class="detail-section">
-        <h3 class="section-heading">VIDEOS, TRAILERS &amp; FEATURETTES ({{ videos().length }})</h3>
+        <h3 class="section-heading">VIDEOS, TRAILERS &amp; FEATURETTES</h3>
 
         <!-- Video type filter (only when there is more than one type) -->
         @if (videoTypeGroups().length > 0) {
@@ -44,8 +44,7 @@
                 [class.active]="effectiveVideoType() === group.type"
                 [attr.aria-checked]="effectiveVideoType() === group.type"
                 (click)="selectVideoType(group.type)">
-                {{ group.label }}
-                <span class="video-type-count">{{ group.count }}</span>
+                <span>{{ group.label }}</span>
               </button>
             }
           </div>

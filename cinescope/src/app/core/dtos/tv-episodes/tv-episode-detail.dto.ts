@@ -1,8 +1,12 @@
 import { TmdbTvSeasonEpisodeDto } from '../tv-seasons/tv-season-detail.dto';
+import { TmdbTvEpisodeImagesResponseDto } from './tv-episode-images.dto';
+import { TmdbTvEpisodeVideosResponseDto } from './tv-episode-videos.dto';
 
 /**
  * The detailed response for a single TV episode.
- * Because TMDB uses the exact same data structure here as it does in the Season Details array,
- * we can cleanly extend our existing DTO while adding any root-level keys if they ever change.
+ * Extends the episode schema with optional appended images and videos payloads.
  */
-export type TmdbTvEpisodeDetailDto = TmdbTvSeasonEpisodeDto;
+export interface TmdbTvEpisodeDetailDto extends TmdbTvSeasonEpisodeDto {
+    images?: TmdbTvEpisodeImagesResponseDto;
+    videos?: TmdbTvEpisodeVideosResponseDto;
+}

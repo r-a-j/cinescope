@@ -1,3 +1,5 @@
+import { TmdbPersonImagesResponseDto } from './person-images.dto';
+
 export interface TmdbPersonDetailDto {
     adult: boolean;
     also_known_as: string[];
@@ -17,9 +19,12 @@ export interface TmdbPersonDetailDto {
     popularity: number;
     profile_path: string | null;
 
+    /** Strongly typed appended images. */
+    images?: TmdbPersonImagesResponseDto;
+
     /**
-     * Optional field to accommodate the `append_to_response` feature.
-     * (e.g., if you append 'movie_credits', response.movie_credits will exist here).
+     * Optional field to accommodate additional `append_to_response` payloads
+     * (e.g., if you append 'combined_credits', response.combined_credits will exist here).
      */
     [key: string]: unknown;
 }

@@ -58,7 +58,6 @@ import { TmdbTvDetailDto, TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto, TmdbTvNetwo
 import { TmdbMovieCreditsResponseDto } from '../../core/dtos/movies/movie-credits.dto';
 import { TmdbTvAggregateCreditsResponseDto } from '../../core/dtos/tv/tv-aggregate-credits.dto';
 import { TmdbVideoDto } from '../../core/dtos/common/video.dto';
-import { TmdbImageDto } from '../../core/dtos/common/image.dto';
 import { TmdbWatchProviderDto, TmdbWatchProviderRegionDto } from '../../core/dtos/watch-providers/watch-provider.dto';
 import { TmdbReleaseDateGroupDto } from '../../core/dtos/movies/movie-release-dates.dto';
 import { TmdbTvContentRatingDto } from '../../core/dtos/tv/tv-content-ratings.dto';
@@ -75,7 +74,7 @@ import { DetailHeroComponent } from './components/detail-hero/detail-hero.compon
 import { WatchProvidersPanelComponent } from './components/watch-providers-panel/watch-providers-panel.component';
 import { TvSeasonsHubComponent } from './components/tv-seasons-hub/tv-seasons-hub.component';
 import { CastVideoGalleryComponent } from './components/cast-video-gallery/cast-video-gallery.component';
-import { MediaArtworkGalleryComponent } from './components/media-artwork-gallery/media-artwork-gallery.component';
+import { MediaArtworkGalleryComponent, TmdbImagesContainer } from './components/media-artwork-gallery/media-artwork-gallery.component';
 import { ProductionReviewsPanelComponent } from './components/production-reviews-panel/production-reviews-panel.component';
 
 export interface CastMemberVm {
@@ -450,7 +449,7 @@ export class MediaDetailPage implements OnInit {
   // VIDEOS & OFFICIAL TRAILER
   // ==========================================
   public videos = computed<TmdbVideoDto[]>(() => {
-    const raw = (this.movieDetail()?.['videos'] ?? this.tvDetail()?.['videos']) as { results?: TmdbVideoDto[] } | undefined;
+    const raw = this.movieDetail()?.videos ?? this.tvDetail()?.videos;
     const list = (raw?.results || []).filter((v) => v.site === 'YouTube' && v.key);
     const typePriority: Record<string, number> = {
       Trailer: 1,
@@ -476,59 +475,16 @@ export class MediaDetailPage implements OnInit {
   // ==========================================
   // STILLS, WALLPAPERS, POSTERS & LOGOS
   // ==========================================
-  private rawMediaImages = computed<{
-    backdrops?: TmdbImageDto[];
-    posters?: TmdbImageDto[];
-    logos?: TmdbImageDto[];
-  } | null>(() => {
-    const raw = (this.movieDetail()?.['images'] ?? this.tvDetail()?.['images']) as
-      | { backdrops?: TmdbImageDto[]; posters?: TmdbImageDto[]; logos?: TmdbImageDto[] }
-      | undefined;
-    return raw ?? null;
+  public mediaImages = computed<TmdbImagesContainer | null>(() => {
+    return this.movieDetail()?.images ?? this.tvDetail()?.images ?? null;
   });
 
-  public mediaBackdrops = computed<TmdbImageDto[]>(() => {
-    const list = this.rawMediaImages()?.backdrops || [];
-    const primaryBackdrop = this.movieDetail()?.backdrop_path ?? this.tvDetail()?.backdrop_path;
-    if (primaryBackdrop && !list.some((b) => b.file_path === primaryBackdrop)) {
-      return [
-        {
-          aspect_ratio: 1.778,
-          height: 1080,
-          width: 1920,
-          iso_639_1: null,
-          file_path: primaryBackdrop,
-          vote_average: 5,
-          vote_count: 1
-        },
-        ...list
-      ];
-    }
-    return list;
+  public detailPosterPath = computed<string | null>(() => {
+    return this.movieDetail()?.poster_path ?? this.tvDetail()?.poster_path ?? null;
   });
 
-  public mediaPosters = computed<TmdbImageDto[]>(() => {
-    const list = this.rawMediaImages()?.posters || [];
-    const primaryPoster = this.movieDetail()?.poster_path ?? this.tvDetail()?.poster_path;
-    if (primaryPoster && !list.some((p) => p.file_path === primaryPoster)) {
-      return [
-        {
-          aspect_ratio: 0.667,
-          height: 1500,
-          width: 1000,
-          iso_639_1: 'en',
-          file_path: primaryPoster,
-          vote_average: 5,
-          vote_count: 1
-        },
-        ...list
-      ];
-    }
-    return list;
-  });
-
-  public mediaLogos = computed<TmdbImageDto[]>(() => {
-    return this.rawMediaImages()?.logos || [];
+  public detailBackdropPath = computed<string | null>(() => {
+    return this.movieDetail()?.backdrop_path ?? this.tvDetail()?.backdrop_path ?? null;
   });
 
   // ==========================================
@@ -1040,7 +996,7 @@ export class MediaDetailPage implements OnInit {
         ]);
         if (this.tmdbId() !== id || this.mediaType() !== type) return;
         if (imagesRes && (imagesRes.backdrops?.length || imagesRes.posters?.length || imagesRes.logos?.length)) {
-          (res as Record<string, unknown>)['images'] = imagesRes;
+          res.images = imagesRes;
         }
         this.movieDetail.set(res);
         this.syncDefaultWatchRegion();
@@ -1058,7 +1014,7 @@ export class MediaDetailPage implements OnInit {
         ]);
         if (this.tmdbId() !== id || this.mediaType() !== type) return;
         if (imagesRes && (imagesRes.backdrops?.length || imagesRes.posters?.length || imagesRes.logos?.length)) {
-          (res as Record<string, unknown>)['images'] = imagesRes;
+          res.images = imagesRes;
         }
         this.tvDetail.set(res);
         this.syncDefaultWatchRegion();
