@@ -16,7 +16,8 @@ import {
   ticketOutline,
   lockClosedOutline,
   eyeOutline,
-  playOutline,
+  informationCircleOutline,
+  checkmarkCircle,
   refreshOutline,
   star,
   timeOutline,
@@ -27,6 +28,7 @@ import { firstValueFrom } from 'rxjs';
 import { ContentDocType } from '../../../../core/database/schemas/content.schema';
 import { TmdbMoviesService } from '../../../../core/services/tmdb-movies.service';
 import { StorageService } from '../../../../core/services/storage.service';
+import { TimeContextService } from '../../../../core/services/time-context.service';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 import {
   StreamingAvailability,
@@ -52,15 +54,20 @@ import {
 export class BlindTicketComponent {
   private tmdbMovies = inject(TmdbMoviesService);
   private storage = inject(StorageService);
+  private timeContext = inject(TimeContextService);
   private providerCache = new Map<string, StreamingAvailability>();
 
   public watchlistMovies = input.required<ContentDocType[]>();
   public openDetail = output<number>();
-  public watchTonight = output<ContentDocType>();
+  public markWatched = output<ContentDocType>();
 
   public readonly isBlindTicketRevealed = signal<boolean>(false);
   public readonly blindTicketMovie = signal<ContentDocType | null>(null);
   public readonly isHolding = signal<boolean>(false);
+  public readonly ticketSeriesTag = computed<string>(() => {
+    const tag = this.timeContext.cardTag();
+    return this.isBlindTicketRevealed() ? tag : `MYSTERY ${tag}`;
+  });
   public readonly userRegion = computed<string>(() => {
     const reg = typeof this.storage.userRegion === 'function' ? this.storage.userRegion() : 'US';
     return (reg || 'US').toUpperCase();
@@ -79,7 +86,8 @@ export class BlindTicketComponent {
       ticketOutline,
       lockClosedOutline,
       eyeOutline,
-      playOutline,
+      informationCircleOutline,
+      checkmarkCircle,
       refreshOutline,
       star,
       timeOutline,

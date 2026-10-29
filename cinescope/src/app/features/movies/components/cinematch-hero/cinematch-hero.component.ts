@@ -35,15 +35,14 @@ import { firstValueFrom } from 'rxjs';
 import { ContentDocType } from '../../../../core/database/schemas/content.schema';
 import { TmdbMoviesService } from '../../../../core/services/tmdb-movies.service';
 import { StorageService } from '../../../../core/services/storage.service';
+import { TimeContextService, TimeOfDayContext } from '../../../../core/services/time-context.service';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 
 import {
   CineMatchMood,
   MoodFilterOption,
-  TimeOfDayGreeting,
   ContextualHook,
   StreamingAvailability,
-  getTimeOfDayGreeting,
   getContextualHook,
   resolveStreamingDetails,
   getMovieTitle,
@@ -68,6 +67,7 @@ import {
 export class CinematchHeroComponent {
   private tmdbMovies = inject(TmdbMoviesService);
   private storage = inject(StorageService);
+  private timeContext = inject(TimeContextService);
 
   public watchlistMovies = input.required<ContentDocType[]>();
 
@@ -91,8 +91,8 @@ export class CinematchHeroComponent {
     subtext: 'Loading availability...'
   });
 
-  // Time of Day Greeting
-  public readonly greeting = computed<TimeOfDayGreeting>(() => getTimeOfDayGreeting());
+  // Shared Time-of-Day Context from TimeContextService
+  public readonly greeting = computed<TimeOfDayContext>(() => this.timeContext.context());
 
   public readonly baseMoodOptions: MoodFilterOption[] = [
     { id: 'all', label: 'Any Mood', icon: 'shuffle-outline' },

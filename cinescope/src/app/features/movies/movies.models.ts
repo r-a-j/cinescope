@@ -2,6 +2,10 @@ import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 import { TmdbWatchProviderDto } from '../../core/dtos/watch-providers/watch-provider.dto';
 import { TmdbMovieWatchProvidersResponseDto } from '../../core/dtos/movies/movie-watch-providers.dto';
+import {
+  TimeOfDayContext,
+  resolveTimeOfDayContext
+} from '../../core/services/time-context.service';
 
 export type CineMatchMood =
   | 'all'
@@ -52,54 +56,10 @@ export const TMDB_GENRE_NAMES: Record<number, string> = {
   37: 'Western'
 };
 
-export interface TimeOfDayGreeting {
-  badge: string;
-  badgeIcon: string;
-  headline: string;
-  subtitle: string;
-  cardTag: string;
-}
+export type TimeOfDayGreeting = TimeOfDayContext;
 
 export function getTimeOfDayGreeting(now: Date = new Date()): TimeOfDayGreeting {
-  const hour = now.getHours();
-
-  if (hour >= 5 && hour < 12) {
-    return {
-      badge: 'Morning Cinema',
-      badgeIcon: 'sunny-outline',
-      headline: 'WHAT SHOULD I WATCH THIS MORNING?',
-      subtitle: 'Start your day with an inspiring pick from your Watchlist',
-      cardTag: "THIS MORNING'S FEATURED PICK"
-    };
-  }
-
-  if (hour >= 12 && hour < 17) {
-    return {
-      badge: 'Afternoon Matinee',
-      badgeIcon: 'film-outline',
-      headline: 'WHAT SHOULD I WATCH THIS AFTERNOON?',
-      subtitle: 'A curated matinee feature from your Watchlist',
-      cardTag: 'AFTERNOON MATINEE PICK'
-    };
-  }
-
-  if (hour >= 17 && hour < 22) {
-    return {
-      badge: 'Prime Time Cinema',
-      badgeIcon: 'sparkles',
-      headline: 'WHAT SHOULD I WATCH TONIGHT?',
-      subtitle: 'Instant curated pick tailored to your mood from your Watchlist',
-      cardTag: "TONIGHT'S FEATURED PICK"
-    };
-  }
-
-  return {
-    badge: 'Late-Night Screening',
-    badgeIcon: 'moon-outline',
-    headline: 'WHAT SHOULD I WATCH LATE NIGHT?',
-    subtitle: 'Quiet nocturnal cinema & midnight gems from your Watchlist',
-    cardTag: 'MIDNIGHT SCREENING PICK'
-  };
+  return resolveTimeOfDayContext(now);
 }
 
 export interface ContextualHook {

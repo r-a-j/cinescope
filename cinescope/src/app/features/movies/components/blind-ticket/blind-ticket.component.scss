@@ -573,18 +573,37 @@
       }
     }
 
-    &.btn-watch-tonight {
+    &.btn-details {
       flex: 1.4;
       background: #e50914;
       color: #ffffff;
       border: none;
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.35);
+
+      ion-icon {
+        font-size: 1.15rem;
+      }
     }
 
     &.btn-draw-next {
-      flex: 1.2;
+      flex: 1.4;
       background: rgba(255, 255, 255, 0.1);
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    &.btn-mark-watched {
+      flex: 0 0 42px;
+      height: 42px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0;
+
+      ion-icon {
+        font-size: 1.25rem;
+        color: #2ed573;
+      }
     }
   }
 }

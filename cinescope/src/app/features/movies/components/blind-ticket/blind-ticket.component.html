@@ -14,7 +14,7 @@
           <div class="brand-left">
             <ion-icon name="ticket-outline" class="ticket-icon"></ion-icon>
             <span class="ticket-series">
-              {{ isBlindTicketRevealed() ? 'WATCHLIST PICK' : 'MYSTERY WATCHLIST PICK' }}
+              {{ ticketSeriesTag() }}
             </span>
           </div>
           <span class="ticket-status-pill" [class.is-revealed]="isBlindTicketRevealed()">
@@ -235,11 +235,11 @@
           } @else {
             <button
               type="button"
-              class="btn-ticket btn-watch-tonight"
-              (click)="watchTonight.emit(ticketMovie)"
+              class="btn-ticket btn-details"
+              (click)="openDetail.emit(ticketMovie.tmdbId)"
             >
-              <ion-icon name="play-outline"></ion-icon>
-              <span>Watch Tonight</span>
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <span>Details</span>
             </button>
 
             <button
@@ -249,6 +249,16 @@
             >
               <ion-icon name="refresh-outline"></ion-icon>
               <span>Draw Another</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-ticket btn-mark-watched"
+              (click)="markWatched.emit(ticketMovie)"
+              title="Mark as Watched"
+              aria-label="Mark as Watched"
+            >
+              <ion-icon name="checkmark-circle"></ion-icon>
             </button>
           }
         </div>
