@@ -160,7 +160,8 @@
       <div class="lightbox-toolbar">
         <div class="lightbox-meta">
           <span class="lightbox-counter">{{ (lightboxIndex() ?? 0) + 1 }} / {{ profileGallery().length }}</span>
-          <span class="lightbox-badge">ORIGINAL HD</span>
+          <span class="lightbox-badge">{{ lb.qualityTag || 'ORIGINAL HD' }}</span>
+          <span class="lightbox-res">{{ lb.resolutionLabel }}</span>
         </div>
 
         <div class="lightbox-actions">
@@ -240,13 +241,30 @@
         </button>
       }
 
-      <!-- Bottom Swipe Hint & Long-Press Tip for Mobile -->
-      <div class="lightbox-footer">
+      <!-- Bottom Thumbnail Filmstrip Scrubber & Swipe Hint -->
+      <div class="lightbox-bottom-bar">
         @if (profileGallery().length > 1) {
-          <span>Swipe left/right to browse • Long-press photo to Save to Gallery</span>
-        } @else {
-          <span>Long-press photo to Save to Gallery</span>
+          <div class="lightbox-filmstrip">
+            @for (thumbItem of profileGallery(); track thumbItem.original; let idx = $index) {
+              <button
+                type="button"
+                class="filmstrip-thumb"
+                [class.active]="idx === lightboxIndex()"
+                (click)="selectLightboxIndex(idx, $event)"
+                [attr.aria-label]="'View portrait ' + (idx + 1)">
+                <img [src]="thumbItem.thumb" alt="" loading="lazy" />
+              </button>
+            }
+          </div>
         }
+
+        <div class="lightbox-footer">
+          @if (profileGallery().length > 1) {
+            <span>Swipe left/right to browse • Long-press photo to Save to Gallery</span>
+          } @else {
+            <span>Long-press photo to Save to Gallery</span>
+          }
+        </div>
       </div>
     </div>
   }

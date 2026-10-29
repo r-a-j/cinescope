@@ -41,8 +41,14 @@
       <div class="hero-backdrop-scrim"></div>
 
       <div class="hero-foreground">
-        <!-- Poster Thumbnail -->
-        <div class="hero-poster-frame">
+        <!-- Poster Thumbnail (tap to enlarge in Posters lightbox) -->
+        <div
+          class="hero-poster-frame clickable"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="'Enlarge poster for ' + title()"
+          (click)="posterClick.emit()"
+          (keyup.enter)="posterClick.emit()">
           <img
             [src]="posterUrl()"
             [alt]="title()"

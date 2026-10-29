@@ -78,6 +78,13 @@ export interface PersonPreviewState {
   knownForDepartment?: string | undefined;
 }
 
+export interface PersonPortraitVm {
+  thumb: string;
+  original: string;
+  resolutionLabel: string;
+  qualityTag: string | null;
+}
+
 export interface FilmographyEntryVm {
   uid: string;
   id: number;
@@ -190,15 +197,34 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     return links;
   });
 
-  public profileGallery = computed<{ thumb: string; original: string }[]>(() => {
+  public profileGallery = computed<PersonPortraitVm[]>(() => {
     const imgs = this.person()?.['images'] as { profiles?: TmdbImageDto[] } | undefined;
     const list = imgs?.profiles || [];
-    return list
-      .slice(0, 12)
-      .map((img) => ({
-        thumb: resolveMediaImageUrl(img.file_path, 'w342'),
-        original: resolveMediaImageUrl(img.file_path, 'original')
-      }));
+    const seen = new Set<string>();
+    const unique = list.filter((img) => {
+      if (!img?.file_path || seen.has(img.file_path)) return false;
+      seen.add(img.file_path);
+      return true;
+    });
+
+    return unique
+      .slice(0, 30)
+      .map((img) => {
+        const w = img.width || 0;
+        const h = img.height || 0;
+        let qualityTag: string | null = null;
+        if (h >= 2000 || w >= 1400) {
+          qualityTag = 'UHD';
+        } else if (h >= 1000 || w >= 680) {
+          qualityTag = 'HD';
+        }
+        return {
+          thumb: resolveMediaImageUrl(img.file_path, 'w342'),
+          original: resolveMediaImageUrl(img.file_path, 'original'),
+          resolutionLabel: w > 0 && h > 0 ? `${w} × ${h}` : 'HD',
+          qualityTag
+        };
+      });
   });
 
   public lightboxIndex = signal<number | null>(null);
@@ -210,7 +236,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   private touchStartY = 0;
   private touchStartTime = 0;
 
-  public lightboxImage = computed(() => {
+  public lightboxImage = computed<PersonPortraitVm | null>(() => {
     const i = this.lightboxIndex();
     return i === null ? null : (this.profileGallery()[i] ?? null);
   });
@@ -218,6 +244,7 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   public openLightbox(index: number): void {
     this.lightboxLoaded.set(false);
     this.lightboxIndex.set(index);
+    this.scrollActiveThumbnail();
 
     // Register hardware back button priority handler to dismiss lightbox on Android / mobile
     if (!this.backButtonSub) {
@@ -242,6 +269,15 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     }
   }
 
+  public selectLightboxIndex(index: number, event?: Event): void {
+    event?.stopPropagation();
+    if (index === this.lightboxIndex()) return;
+    if (index < 0 || index >= this.profileGallery().length) return;
+    this.lightboxLoaded.set(false);
+    this.lightboxIndex.set(index);
+    this.scrollActiveThumbnail();
+  }
+
   public stepLightbox(delta: number, event?: Event): void {
     event?.stopPropagation();
     const i = this.lightboxIndex();
@@ -251,6 +287,14 @@ export class PersonDetailPage implements OnInit, OnDestroy {
     if (nextIndex === i) return;
     this.lightboxLoaded.set(false);
     this.lightboxIndex.set(nextIndex);
+    this.scrollActiveThumbnail();
+  }
+
+  private scrollActiveThumbnail(): void {
+    setTimeout(() => {
+      const el = document.querySelector('.filmstrip-thumb.active');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 50);
   }
 
   @HostListener('window:keydown', ['$event'])

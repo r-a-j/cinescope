@@ -145,7 +145,7 @@ describe('BlindTicketComponent', () => {
     // Sealed state
     expect(component.isBlindTicketRevealed()).toBeFalse();
     let text = fixture.nativeElement.textContent;
-    expect(text).toContain('MYSTERY MORNING PICK');
+    expect(text).toContain("MYSTERY THIS MORNING'S FEATURED PICK");
     expect(text).toContain('SEALED');
     expect(text).not.toContain('ADMIT ONE');
     expect(text).not.toContain('Inception');
@@ -161,8 +161,8 @@ describe('BlindTicketComponent', () => {
     // Revealed state
     expect(component.isBlindTicketRevealed()).toBeTrue();
     text = fixture.nativeElement.textContent;
-    expect(text).toContain('MORNING PICK');
-    expect(text).not.toContain('MYSTERY MORNING PICK');
+    expect(text).toContain("THIS MORNING'S FEATURED PICK");
+    expect(text).not.toContain("MYSTERY THIS MORNING'S FEATURED PICK");
     expect(text).toContain('Inception');
     expect(text).toContain('Action');
     expect(text).toContain('Sci-Fi');
@@ -175,23 +175,23 @@ describe('BlindTicketComponent', () => {
   it('should dynamically update ticket series tag according to TimeContextService and reveal state', () => {
     timeContextService.refresh(new Date(2026, 9, 29, 8, 0, 0));
     fixture.detectChanges();
-    expect(component.ticketSeriesTag()).toBe('MYSTERY MORNING PICK');
+    expect(component.ticketSeriesTag()).toBe("MYSTERY THIS MORNING'S FEATURED PICK");
 
     timeContextService.refresh(new Date(2026, 9, 29, 14, 0, 0));
     fixture.detectChanges();
-    expect(component.ticketSeriesTag()).toBe('MYSTERY AFTERNOON PICK');
+    expect(component.ticketSeriesTag()).toBe('MYSTERY AFTERNOON MATINEE PICK');
 
     component.tearBlindTicket();
     fixture.detectChanges();
-    expect(component.ticketSeriesTag()).toBe('AFTERNOON PICK');
+    expect(component.ticketSeriesTag()).toBe('AFTERNOON MATINEE PICK');
 
     timeContextService.refresh(new Date(2026, 9, 29, 20, 0, 0));
     fixture.detectChanges();
-    expect(component.ticketSeriesTag()).toBe("TONIGHT'S PICK");
+    expect(component.ticketSeriesTag()).toBe("TONIGHT'S FEATURED PICK");
 
     timeContextService.refresh(new Date(2026, 9, 29, 23, 30, 0));
     fixture.detectChanges();
-    expect(component.ticketSeriesTag()).toBe('LATE NIGHT PICK');
+    expect(component.ticketSeriesTag()).toBe('MIDNIGHT SCREENING PICK');
   });
 
   it('should emit openDetail when Details button is clicked and markWatched when checkmark button is clicked', () => {

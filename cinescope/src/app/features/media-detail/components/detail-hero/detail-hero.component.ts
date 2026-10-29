@@ -42,6 +42,7 @@ export class DetailHeroComponent {
   public watchlistToggle = output();
   public watchedToggle = output();
   public trailerClick = output();
+  public posterClick = output();
 
   public isBackdropLoaded = signal<boolean>(false);
 
