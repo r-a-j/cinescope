@@ -141,12 +141,14 @@ describe('BlindTicketComponent', () => {
     // Sealed state
     expect(component.isBlindTicketRevealed()).toBeFalse();
     let text = fixture.nativeElement.textContent;
-    expect(text).toContain('NO. ••••••');
-    expect(text).not.toContain('NO. 101');
+    expect(text).toContain('MYSTERY WATCHLIST PICK');
+    expect(text).toContain('SEALED');
+    expect(text).not.toContain('ADMIT ONE');
     expect(text).not.toContain('Inception');
     expect(text).not.toContain('Action');
     expect(text).not.toContain('Sci-Fi');
     expect(fixture.nativeElement.querySelector('.streaming-details-row')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.admit-stamp')).toBeNull();
 
     // Tear ticket
     await component.tearBlindTicket();
@@ -155,11 +157,13 @@ describe('BlindTicketComponent', () => {
     // Revealed state
     expect(component.isBlindTicketRevealed()).toBeTrue();
     text = fixture.nativeElement.textContent;
-    expect(text).toContain('NO. 101');
+    expect(text).toContain('WATCHLIST PICK');
     expect(text).toContain('Inception');
     expect(text).toContain('Action');
     expect(text).toContain('Sci-Fi');
+    expect(text).not.toContain('ADMIT ONE');
     expect(fixture.nativeElement.querySelector('.streaming-details-row')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.admit-stamp')).toBeNull();
   });
 
   it('should redact movie title in sealed overview', () => {

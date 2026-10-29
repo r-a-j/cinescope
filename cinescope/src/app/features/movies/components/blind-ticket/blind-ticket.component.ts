@@ -14,6 +14,7 @@ import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   ticketOutline,
+  lockClosedOutline,
   eyeOutline,
   playOutline,
   refreshOutline,
@@ -36,7 +37,8 @@ import {
   getMovieRating,
   getMovieRuntime,
   getMovieOverview,
-  getMovieGenres
+  getMovieGenres,
+  getAddedTimeAgo
 } from '../../movies.models';
 
 @Component({
@@ -75,6 +77,7 @@ export class BlindTicketComponent {
   constructor() {
     addIcons({
       ticketOutline,
+      lockClosedOutline,
       eyeOutline,
       playOutline,
       refreshOutline,
@@ -215,6 +218,9 @@ export class BlindTicketComponent {
   }
   public getOverview(doc: ContentDocType | null): string {
     return getMovieOverview(doc);
+  }
+  public getAddedLabel(addedAt: string | undefined): string {
+    return getAddedTimeAgo(addedAt);
   }
   public getSealedOverview(doc: ContentDocType | null): string {
     const raw = getMovieOverview(doc);

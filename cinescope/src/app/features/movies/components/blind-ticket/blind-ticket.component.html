@@ -9,26 +9,24 @@
       [class.revealed]="isBlindTicketRevealed()"
       [class.card-holding]="isHolding()"
     >
-      <!-- Perforation Stub Notches & Stitch Line -->
-      <div class="stub-notch notch-left"></div>
-      <div class="stub-notch notch-right"></div>
-      <div class="perforation-stitch-line"></div>
-
-      <!-- Vintage Memorabilia Stamp (Revealed Only) -->
-      @if (isBlindTicketRevealed()) {
-        <div class="admit-stamp">
-          <span class="stamp-title">ADMIT ONE</span>
-          <span class="stamp-sub">VERIFIED PICK</span>
-        </div>
-      }
-
       <div class="ticket-inner">
         <div class="ticket-top-brand">
           <div class="brand-left">
-            <span class="ticket-icon">🎟️</span>
-            <span class="ticket-series">CINESCOPE ADMIT ONE</span>
+            <ion-icon name="ticket-outline" class="ticket-icon"></ion-icon>
+            <span class="ticket-series">
+              {{ isBlindTicketRevealed() ? 'WATCHLIST PICK' : 'MYSTERY WATCHLIST PICK' }}
+            </span>
           </div>
-          <span class="ticket-code">NO. {{ isBlindTicketRevealed() ? ticketMovie.tmdbId : '••••••' }}</span>
+          <span class="ticket-status-pill" [class.is-revealed]="isBlindTicketRevealed()">
+            {{ isBlindTicketRevealed() ? getAddedLabel(ticketMovie.addedAt) : 'SEALED' }}
+          </span>
+        </div>
+
+        <!-- Perforation Divider with Aligned Die-Cut Notches -->
+        <div class="ticket-perforation" aria-hidden="true">
+          <div class="stub-notch notch-left"></div>
+          <div class="perforation-stitch-line"></div>
+          <div class="stub-notch notch-right"></div>
         </div>
 
         <!-- Content Area: Hidden vs Revealed -->
@@ -51,11 +49,11 @@
               <div class="ticket-mystery-placeholder">
                 <div class="wax-seal">
                   <div class="seal-inner-ring">
-                    <ion-icon name="sparkles" class="seal-icon"></ion-icon>
+                    <ion-icon name="lock-closed-outline" class="seal-icon"></ion-icon>
                   </div>
                 </div>
-                <span class="mystery-label">SEALED</span>
-                <span class="mystery-sub">VAULT ARCHIVE</span>
+                <span class="mystery-label">HIDDEN</span>
+                <span class="mystery-sub">WATCHLIST</span>
                 <div class="gold-shimmer-sweep"></div>
               </div>
             }
@@ -76,18 +74,22 @@
               } @else {
                 <div class="classified-title-bar">
                   <div class="classified-tape">
-                    <span class="tape-text">RESTRICTED TITLE</span>
+                    <ion-icon name="lock-closed-outline" class="tape-icon"></ion-icon>
+                    <span class="tape-text">HIDDEN TITLE</span>
                     <div class="tape-shimmer"></div>
                   </div>
                 </div>
               }
             </div>
 
-            <!-- Sensory Tags -->
+            <!-- Metadata Tags -->
             <div class="sensory-tags-row">
               @if (isBlindTicketRevealed()) {
                 @if (getRating(ticketMovie); as rating) {
-                  <span class="sensory-tag sensory-gold">★ {{ rating }}</span>
+                  <span class="sensory-tag sensory-gold">
+                    <ion-icon name="star" class="tag-icon"></ion-icon>
+                    {{ rating }}
+                  </span>
                 }
                 @if (getYear(ticketMovie); as yr) {
                   <span class="sensory-tag">{{ yr }}</span>
@@ -95,9 +97,14 @@
                 @for (g of getGenres(ticketMovie); track g) {
                   <span class="sensory-tag">{{ g }}</span>
                 }
+              } @else {
+                <span class="sensory-tag">{{ getAddedLabel(ticketMovie.addedAt) }}</span>
               }
               @if (getRuntime(ticketMovie); as rt) {
-                <span class="sensory-tag">⏱️ {{ rt }}</span>
+                <span class="sensory-tag sensory-runtime">
+                  <ion-icon name="time-outline" class="tag-icon"></ion-icon>
+                  {{ rt }}
+                </span>
               }
             </div>
 
@@ -180,10 +187,9 @@
               </div>
             }
 
-            <!-- Sensory Hook / Logline -->
+            <!-- Plot Hook / Logline -->
             @if (getSealedOverview(ticketMovie); as logline) {
               <div class="ticket-hook-wrapper">
-                <span class="hook-quote-mark">“</span>
                 <p class="ticket-hook-logline">
                   {{ logline }}
                 </p>
@@ -207,13 +213,24 @@
               (keyup)="onKeyUp($event)"
               (contextmenu)="$event.preventDefault()"
               (click)="$event.preventDefault()"
-              aria-label="Hold to tear and reveal mystery movie ticket"
+              aria-label="Hold to reveal mystery movie ticket"
             >
               <div class="tear-progress" [class.active]="isHolding()"></div>
               <div class="tear-glow" [class.active]="isHolding()"></div>
               <span class="btn-text">
-                {{ isHolding() ? '✂️ Tearing Ticket...' : '✂️ Hold to Tear & Reveal' }}
+                <ion-icon name="eye-outline"></ion-icon>
+                <span>{{ isHolding() ? 'Revealing Pick...' : 'Hold to Reveal Pick' }}</span>
               </span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-ticket btn-draw-icon"
+              (click)="pickNextMysteryTicket()"
+              title="Draw another mystery movie"
+              aria-label="Draw another mystery movie"
+            >
+              <ion-icon name="refresh-outline"></ion-icon>
             </button>
           } @else {
             <button

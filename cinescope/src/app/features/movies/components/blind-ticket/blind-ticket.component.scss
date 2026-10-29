@@ -12,7 +12,8 @@
   margin: 0;
   cursor: pointer;
   display: block;
-  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
   line-height: 0;
 
   &:focus-visible {
@@ -46,123 +47,48 @@
   flex-direction: column;
   gap: 4px;
 
-  .headline-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    align-self: flex-start;
-    background: rgba(245, 197, 24, 0.15);
-    border: 1px solid rgba(245, 197, 24, 0.35);
-    color: #f5c518;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
   h3 {
     margin: 0;
     font-size: 1.35rem;
     font-weight: 800;
     color: #ffffff;
   }
-
-  .headline-sub {
-    margin: 0;
-    font-size: 0.82rem;
-    color: rgba(255, 255, 255, 0.65);
-  }
 }
 
 .blind-ticket-card {
+  --ticket-border-color: rgba(245, 197, 24, 0.32);
+  --ticket-perforation-color: rgba(245, 197, 24, 0.22);
+
   position: relative;
-  background: radial-gradient(circle at 85% 15%, rgba(245, 197, 24, 0.09) 0%, rgba(24, 20, 14, 0.96) 55%, #100e0a 100%);
-  border: 2px dashed rgba(245, 197, 24, 0.35);
+  background: radial-gradient(
+    circle at 85% 15%,
+    rgba(245, 197, 24, 0.08) 0%,
+    rgba(22, 18, 13, 0.96) 55%,
+    #0e0c09 100%
+  );
+  border: 1px solid var(--ticket-border-color);
   border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(245, 197, 24, 0.1);
-  overflow: hidden;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 14px 16px 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(245, 197, 24, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
 
   &.card-holding {
-    border-color: rgba(245, 197, 24, 0.75);
-    box-shadow: 0 0 28px rgba(245, 197, 24, 0.25), 0 12px 32px rgba(0, 0, 0, 0.85);
+    --ticket-border-color: rgba(245, 197, 24, 0.72);
+    --ticket-perforation-color: rgba(245, 197, 24, 0.45);
+    box-shadow: 0 0 24px rgba(245, 197, 24, 0.2), 0 12px 30px rgba(0, 0, 0, 0.82);
     transform: scale(0.995);
   }
 
   &.revealed {
-    border-style: solid;
-    border-color: rgba(245, 197, 24, 0.65);
-    background: radial-gradient(circle at 85% 15%, rgba(245, 197, 24, 0.12) 0%, rgba(20, 17, 12, 0.98) 55%, #0d0b08 100%);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 197, 24, 0.12);
-  }
-
-  .stub-notch {
-    position: absolute;
-    top: 50%;
-    width: 22px;
-    height: 22px;
-    background-color: var(--ion-background-color, #000000);
-    border: 2px dashed rgba(245, 197, 24, 0.35);
-    border-radius: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-
-    &.notch-left {
-      left: -12px;
-    }
-
-    &.notch-right {
-      right: -12px;
-    }
-  }
-
-  .perforation-stitch-line {
-    position: absolute;
-    top: 48px;
-    left: 8px;
-    right: 8px;
-    border-bottom: 1px dashed rgba(245, 197, 24, 0.18);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  // Vintage Memorabilia Admit Stamp
-  .admit-stamp {
-    position: absolute;
-    top: 10px;
-    right: 14px;
-    transform: rotate(-9deg);
-    border: 2px dashed #f5c518;
-    background: rgba(245, 197, 24, 0.08);
-    border-radius: 4px;
-    padding: 2px 8px;
-    text-align: center;
-    pointer-events: none;
-    z-index: 4;
-    animation: stampDown 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-
-    .stamp-title {
-      display: block;
-      font-size: 0.66rem;
-      font-weight: 900;
-      letter-spacing: 1.6px;
-      color: #f5c518;
-      line-height: 1.1;
-      text-shadow: 0 0 6px rgba(245, 197, 24, 0.4);
-    }
-
-    .stamp-sub {
-      display: block;
-      font-size: 0.45rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: rgba(245, 197, 24, 0.85);
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
+    --ticket-border-color: rgba(245, 197, 24, 0.52);
+    --ticket-perforation-color: rgba(245, 197, 24, 0.32);
+    background: radial-gradient(
+      circle at 85% 15%,
+      rgba(245, 197, 24, 0.11) 0%,
+      rgba(20, 17, 12, 0.98) 55%,
+      #0c0a07 100%
+    );
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.82), 0 0 18px rgba(245, 197, 24, 0.1);
   }
 
   .ticket-inner {
@@ -170,34 +96,100 @@
     z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .ticket-top-brand {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 10px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: #f5c518;
+    gap: 10px;
+    min-height: 24px;
 
     .brand-left {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .ticket-icon {
+      font-size: 0.95rem;
+      color: #f5c518;
+      flex-shrink: 0;
     }
 
     .ticket-series {
-      letter-spacing: 2px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: #f5c518;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .ticket-code {
-      color: rgba(245, 197, 24, 0.65);
-      font-family: monospace;
-      font-size: 0.75rem;
-      letter-spacing: 1.5px;
+    .ticket-status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: rgba(245, 197, 24, 0.85);
+      background: rgba(245, 197, 24, 0.1);
+      border: 1px solid rgba(245, 197, 24, 0.24);
+      flex-shrink: 0;
+
+      &.is-revealed {
+        color: rgba(255, 255, 255, 0.78);
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.14);
+        text-transform: none;
+        letter-spacing: 0.2px;
+      }
+    }
+  }
+
+  // Aligned Perforation Tear Line & Die-Cut Notches
+  .ticket-perforation {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 2px;
+    margin: 0;
+    pointer-events: none;
+
+    .perforation-stitch-line {
+      width: 100%;
+      border-top: 1px dashed var(--ticket-perforation-color);
+      transition: border-color 0.3s ease;
+    }
+
+    .stub-notch {
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      background-color: var(--ion-background-color, #000000);
+      border: 1px solid var(--ticket-border-color);
+      border-radius: 50%;
+      transform: translateY(-50%);
+      transition: border-color 0.3s ease;
+      z-index: 3;
+
+      &.notch-left {
+        left: -26px;
+        clip-path: inset(-2px -2px -2px 50%);
+      }
+
+      &.notch-right {
+        right: -26px;
+        clip-path: inset(-2px 50% -2px -2px);
+      }
     }
   }
 }
@@ -206,60 +198,58 @@
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  padding-top: 2px;
 
   .ticket-visual {
     width: 90px;
     aspect-ratio: 2 / 3;
     flex-shrink: 0;
     border-radius: 8px;
+    border: 1px solid var(--ticket-border-color);
     overflow: hidden;
+    background: #14110c;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    transition: border-color 0.3s ease;
 
     .ticket-mystery-placeholder {
       position: relative;
       overflow: hidden;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 50% 35%, #2a2315 0%, #17140e 100%);
-      border: 1px solid rgba(245, 197, 24, 0.35);
-      border-radius: 8px;
+      background: radial-gradient(circle at 50% 35%, #262013 0%, #14110b 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.65);
+      gap: 4px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
 
       .wax-seal {
-        width: 42px;
-        height: 42px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
-        background: radial-gradient(circle, #f5c518 0%, #b8860b 80%, #7d5b00 100%);
+        background: rgba(245, 197, 24, 0.12);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(245, 197, 24, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.5);
-        border: 2px solid #ffe885;
+        border: 1px solid rgba(245, 197, 24, 0.38);
 
         .seal-inner-ring {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          border: 1px dashed rgba(0, 0, 0, 0.4);
           display: flex;
           align-items: center;
           justify-content: center;
 
           .seal-icon {
             font-size: 1.05rem;
-            color: #1a1400;
+            color: #f5c518;
           }
         }
       }
 
       .mystery-label {
-        font-size: 0.64rem;
-        font-weight: 900;
-        letter-spacing: 1.8px;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 1.6px;
         color: #f5c518;
         text-transform: uppercase;
         margin-top: 2px;
@@ -267,7 +257,7 @@
 
       .mystery-sub {
         font-size: 0.46rem;
-        font-weight: 800;
+        font-weight: 700;
         letter-spacing: 0.8px;
         color: rgba(255, 255, 255, 0.45);
         text-transform: uppercase;
@@ -279,7 +269,7 @@
         left: -80%;
         width: 60%;
         height: 200%;
-        background: linear-gradient(90deg, transparent, rgba(245, 197, 24, 0.18), transparent);
+        background: linear-gradient(90deg, transparent, rgba(245, 197, 24, 0.14), transparent);
         transform: rotate(25deg);
         animation: shimmerSweep 3.2s infinite ease-in-out;
         pointer-events: none;
@@ -290,12 +280,11 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+      display: block;
       cursor: pointer;
 
       &.revealed-img {
-        animation: posterPopIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: posterPopIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       }
     }
   }
@@ -303,7 +292,7 @@
   .ticket-details {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
     flex: 1;
     min-width: 0;
 
@@ -323,16 +312,22 @@
           overflow: hidden;
           display: inline-flex;
           align-items: center;
-          background: #0d0b07;
-          border: 1px dashed rgba(245, 197, 24, 0.35);
-          border-radius: 4px;
+          gap: 5px;
+          background: rgba(245, 197, 24, 0.08);
+          border: 1px solid rgba(245, 197, 24, 0.28);
+          border-radius: 5px;
           padding: 3px 9px;
 
+          .tape-icon {
+            font-size: 0.72rem;
+            color: #f5c518;
+          }
+
           .tape-text {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 800;
-            letter-spacing: 1.8px;
-            color: rgba(245, 197, 24, 0.78);
+            letter-spacing: 1.4px;
+            color: rgba(245, 197, 24, 0.88);
             text-transform: uppercase;
           }
 
@@ -342,8 +337,8 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(245, 197, 24, 0.25), transparent);
-            animation: classifiedShimmer 2.6s infinite ease-in-out;
+            background: linear-gradient(90deg, transparent, rgba(245, 197, 24, 0.18), transparent);
+            animation: classifiedShimmer 2.8s infinite ease-in-out;
           }
         }
       }
@@ -352,22 +347,29 @@
     .sensory-tags-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 5px;
 
       .sensory-tag {
-        background: rgba(255, 255, 255, 0.08);
-        color: rgba(255, 255, 255, 0.85);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.07);
+        color: rgba(255, 255, 255, 0.82);
         font-size: 0.68rem;
         font-weight: 600;
         padding: 2px 8px;
         border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        .tag-icon {
+          font-size: 0.72rem;
+        }
 
         &.sensory-gold {
           color: #f5c518;
           font-weight: 700;
           border-color: rgba(245, 197, 24, 0.25);
-          background: rgba(245, 197, 24, 0.08);
+          background: rgba(245, 197, 24, 0.09);
         }
 
         &.sensory-runtime {
@@ -472,28 +474,15 @@
 
     .ticket-hook-wrapper {
       position: relative;
-      margin-top: 4px;
-      padding-left: 14px;
-      border-left: 2px solid rgba(245, 197, 24, 0.4);
-
-      .hook-quote-mark {
-        position: absolute;
-        top: -6px;
-        left: 2px;
-        font-family: serif;
-        font-size: 1.4rem;
-        color: #f5c518;
-        opacity: 0.45;
-        line-height: 1;
-        pointer-events: none;
-      }
+      margin-top: 2px;
+      padding-left: 10px;
+      border-left: 2px solid rgba(245, 197, 24, 0.35);
 
       .ticket-hook-logline {
         margin: 0;
         font-size: 0.78rem;
-        color: rgba(255, 245, 225, 0.82);
-        line-height: 1.42;
-        font-style: italic;
+        color: rgba(255, 245, 225, 0.8);
+        line-height: 1.44;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
@@ -506,7 +495,7 @@
 .ticket-actions-bar {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 2px;
 
   .btn-ticket {
     display: inline-flex;
@@ -519,7 +508,7 @@
     font-weight: 800;
     letter-spacing: 0.5px;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 
     &:active {
       transform: scale(0.96);
@@ -528,11 +517,11 @@
     &.btn-tear {
       position: relative;
       overflow: hidden;
-      width: 100%;
+      flex: 1;
       background: #f5c518;
       color: #000000;
       border: none;
-      box-shadow: 0 4px 14px rgba(245, 197, 24, 0.35);
+      box-shadow: 0 4px 14px rgba(245, 197, 24, 0.3);
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
@@ -544,7 +533,7 @@
         left: 0;
         bottom: 0;
         width: 0%;
-        background: rgba(0, 0, 0, 0.25);
+        background: rgba(0, 0, 0, 0.22);
         pointer-events: none;
         transition: none;
 
@@ -560,11 +549,27 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+
+        ion-icon {
+          font-size: 1rem;
+        }
       }
 
       &.holding {
-        transform: scale(0.97);
-        box-shadow: 0 2px 8px rgba(245, 197, 24, 0.2);
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(245, 197, 24, 0.18);
+      }
+    }
+
+    &.btn-draw-icon {
+      width: 42px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+
+      ion-icon {
+        font-size: 1.05rem;
       }
     }
 
@@ -577,28 +582,16 @@
 
     &.btn-draw-next {
       flex: 1.2;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.1);
       color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.18);
     }
-  }
-}
-
-// Keyframes
-@keyframes stampDown {
-  0% {
-    transform: rotate(-24deg) scale(1.6);
-    opacity: 0;
-  }
-  100% {
-    transform: rotate(-9deg) scale(1);
-    opacity: 0.92;
   }
 }
 
 @keyframes posterPopIn {
   0% {
-    transform: scale(0.91);
+    transform: scale(0.94);
     opacity: 0;
   }
   100% {
