@@ -58,10 +58,10 @@
       <!-- 1. Hero Showcase Command Center -->
       @if (heroSeries(); as hero) {
         <section class="tv-hero-stage">
-          @if (hero.backdropUrl) {
+          @if (heroBackdropUrl(); as backdrop) {
             <div class="hero-backdrop">
               <img
-                [src]="hero.backdropUrl"
+                [src]="backdrop"
                 [alt]="hero.title"
                 class="backdrop-img"
                 (error)="onBackdropError($event, hero.id)" />

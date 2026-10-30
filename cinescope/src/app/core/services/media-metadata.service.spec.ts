@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 import { MediaMetadataService } from './media-metadata.service';
 import { TmdbMoviesService } from './tmdb-movies.service';
 import { TmdbTvService } from './tmdb-tv.service';
+import { TmdbTvSeasonsService } from './tmdb-tv-seasons.service';
 import { StorageService } from './storage.service';
 import { TvProgressService } from './tv-progress.service';
 import { PosterCacheService } from './poster-cache.service';
@@ -16,6 +17,7 @@ describe('MediaMetadataService', () => {
 
   let mockTmdbMovies: { getMovieDetails: jasmine.Spy };
   let mockTmdbTv: { getTvShowDetails: jasmine.Spy };
+  let mockTmdbTvSeasons: { getTvSeasonDetails: jasmine.Spy };
   let mockStorage: {
     generateId: jasmine.Spy;
     updateMediaPayload: jasmine.Spy;
@@ -58,6 +60,9 @@ describe('MediaMetadataService', () => {
     mockTmdbTv = {
       getTvShowDetails: jasmine.createSpy('getTvShowDetails').and.returnValue(of(sampleTvDetail))
     };
+    mockTmdbTvSeasons = {
+      getTvSeasonDetails: jasmine.createSpy('getTvSeasonDetails').and.returnValue(of(null))
+    };
     mockStorage = {
       generateId: jasmine.createSpy('generateId').and.callFake((id, type) => `${type}_${id}`),
       updateMediaPayload: jasmine.createSpy('updateMediaPayload').and.returnValue(Promise.resolve()),
@@ -76,6 +81,7 @@ describe('MediaMetadataService', () => {
         MediaMetadataService,
         { provide: TmdbMoviesService, useValue: mockTmdbMovies },
         { provide: TmdbTvService, useValue: mockTmdbTv },
+        { provide: TmdbTvSeasonsService, useValue: mockTmdbTvSeasons },
         { provide: StorageService, useValue: mockStorage },
         { provide: TvProgressService, useValue: mockTvProgress },
         { provide: PosterCacheService, useValue: mockPosterCache }
@@ -235,5 +241,68 @@ describe('MediaMetadataService', () => {
       tick(200);
       expect(service.healMediaMetadata).toHaveBeenCalledWith(103, 'movie');
     }));
+  });
+
+  describe('getEpisodeStillUrl', () => {
+    it('should return null for invalid inputs', async () => {
+      expect(await service.getEpisodeStillUrl(0, 1, 1)).toBeNull();
+      expect(await service.getEpisodeStillUrl(95396, 0, 1)).toBeNull();
+      expect(await service.getEpisodeStillUrl(95396, 1, 0)).toBeNull();
+    });
+
+    it('should resolve immediately from next_episode_to_air when present in cached doc', async () => {
+      mockStorage.getCachedDoc.and.returnValue({
+        id: 'tv_95396',
+        payload: {
+          next_episode_to_air: {
+            season_number: 1,
+            episode_number: 4,
+            still_path: '/severance_s1e4.jpg'
+          }
+        }
+      });
+
+      const url = await service.getEpisodeStillUrl(95396, 1, 4);
+
+      expect(url).toContain('/severance_s1e4.jpg');
+      expect(mockPosterCache.prewarmUrls).toHaveBeenCalledWith([jasmine.stringMatching('/severance_s1e4.jpg')]);
+      expect(mockTmdbTvSeasons.getTvSeasonDetails).not.toHaveBeenCalled();
+    });
+
+    it('should query season details and cache all episode stills', async () => {
+      mockStorage.getCachedDoc.and.returnValue(null);
+      mockTmdbTvSeasons.getTvSeasonDetails.and.returnValue(of({
+        id: 100,
+        season_number: 1,
+        episodes: [
+          { episode_number: 1, still_path: '/s1e1.jpg' },
+          { episode_number: 2, still_path: '/s1e2.jpg' },
+          { episode_number: 3, still_path: null }
+        ]
+      }));
+
+      const ep1Url = await service.getEpisodeStillUrl(95396, 1, 1);
+      expect(ep1Url).toContain('/s1e1.jpg');
+      expect(mockTmdbTvSeasons.getTvSeasonDetails).toHaveBeenCalledWith(95396, 1);
+
+      // Subsequent query for ep 2 should hit in-memory cache without calling API again
+      mockTmdbTvSeasons.getTvSeasonDetails.calls.reset();
+      const ep2Url = await service.getEpisodeStillUrl(95396, 1, 2);
+      expect(ep2Url).toContain('/s1e2.jpg');
+      expect(mockTmdbTvSeasons.getTvSeasonDetails).not.toHaveBeenCalled();
+
+      // Query for ep 3 with no still should return null from cache
+      const ep3Url = await service.getEpisodeStillUrl(95396, 1, 3);
+      expect(ep3Url).toBeNull();
+      expect(mockTmdbTvSeasons.getTvSeasonDetails).not.toHaveBeenCalled();
+    });
+
+    it('should return null and handle API errors gracefully', async () => {
+      mockStorage.getCachedDoc.and.returnValue(null);
+      mockTmdbTvSeasons.getTvSeasonDetails.and.returnValue(throwError(() => new Error('Season not found')));
+
+      const url = await service.getEpisodeStillUrl(95396, 99, 1);
+      expect(url).toBeNull();
+    });
   });
 });

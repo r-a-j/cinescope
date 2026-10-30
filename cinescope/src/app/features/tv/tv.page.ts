@@ -94,6 +94,16 @@ export class TvPage {
   public readonly activeBingeFilter = signal<BingeFilterMode>('all');
   public readonly selectedHeroId = signal<number | null>(null);
   public readonly isRefreshing = signal<boolean>(false);
+  public readonly heroEpisodeStillUrl = signal<string | null>(null);
+
+  /**
+   * Primary backdrop for the hero stage:
+   * Prioritizes the landscape episode still of the up-next episode,
+   * falling back to the series-level backdrop if the still is not available.
+   */
+  public readonly heroBackdropUrl = computed<string | undefined>(() => {
+    return this.heroEpisodeStillUrl() ?? this.heroSeries()?.backdropUrl;
+  });
 
   /**
    * Hero showcase series (defaults to first in-progress series, or first watchlist series).
@@ -294,6 +304,31 @@ export class TvPage {
         this.mediaMetadata.queueBackgroundHealing(needsHealing);
       }
     });
+
+    // Reactive episode still loader for hero command center
+    effect(() => {
+      const hero = this.heroSeries();
+      if (!hero || hero.isCompleted || !hero.upNextSeason || !hero.upNextEpisode) {
+        this.heroEpisodeStillUrl.set(null);
+        return;
+      }
+
+      const seriesId = hero.id;
+      const season = hero.upNextSeason;
+      const episode = hero.upNextEpisode;
+
+      void this.mediaMetadata.getEpisodeStillUrl(seriesId, season, episode).then((still) => {
+        const currentHero = this.heroSeries();
+        if (
+          currentHero &&
+          currentHero.id === seriesId &&
+          currentHero.upNextSeason === season &&
+          currentHero.upNextEpisode === episode
+        ) {
+          this.heroEpisodeStillUrl.set(still);
+        }
+      });
+    });
   }
 
   public onImageError(event: Event, tmdbId: number): void {
@@ -302,6 +337,18 @@ export class TvPage {
 
   public onBackdropError(event: Event, tmdbId?: number): void {
     const img = event.target as HTMLImageElement;
+    const hero = this.heroSeries();
+
+    // If current image was the episode still, fallback to series backdrop
+    if (this.heroEpisodeStillUrl()) {
+      this.heroEpisodeStillUrl.set(null);
+      if (hero?.backdropUrl) {
+        img.src = hero.backdropUrl;
+        return;
+      }
+    }
+
+    // If series backdrop also failed or unavailable, hide img to show gradient stage
     img.style.display = 'none';
     if (tmdbId) {
       void this.mediaMetadata.healMediaMetadata(tmdbId, 'tv');
@@ -313,6 +360,7 @@ export class TvPage {
   }
 
   public selectHero(id: number): void {
+    this.heroEpisodeStillUrl.set(null);
     this.selectedHeroId.set(id);
   }
 

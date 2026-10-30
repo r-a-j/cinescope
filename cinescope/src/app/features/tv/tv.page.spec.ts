@@ -50,7 +50,8 @@ describe('TvPage', () => {
   const mockMediaMetadataService = {
     handleImageError: jasmine.createSpy('handleImageError'),
     healMediaMetadata: jasmine.createSpy('healMediaMetadata').and.returnValue(Promise.resolve()),
-    queueBackgroundHealing: jasmine.createSpy('queueBackgroundHealing')
+    queueBackgroundHealing: jasmine.createSpy('queueBackgroundHealing'),
+    getEpisodeStillUrl: jasmine.createSpy('getEpisodeStillUrl').and.returnValue(Promise.resolve(null))
   };
 
   beforeEach(async () => {
@@ -285,5 +286,41 @@ describe('TvPage', () => {
     component.onBackdropError(fakeEvent, 95396);
     expect((fakeEvent.target as HTMLImageElement).style.display).toBe('none');
     expect(mockMediaMetadataService.healMediaMetadata).toHaveBeenCalledWith(95396, 'tv');
+  });
+
+  it('should fall back from episode still to series backdrop when still fails to load', () => {
+    mockAllProgress.set([
+      {
+        id: 'tv_101',
+        tmdbId: 101,
+        seriesTitle: 'Show Alpha',
+        backdropPath: '/show_alpha_backdrop.jpg',
+        posterPath: '/show_alpha_poster.jpg',
+        totalSeasons: 2,
+        totalEpisodes: 20,
+        watchedEpisodesCount: 3,
+        watchedEpisodes: ['s1e1', 's1e2', 's1e3'],
+        lastWatchedSeason: 1,
+        lastWatchedEpisode: 3,
+        updatedAt: 1000
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    // Set episode still
+    component.heroEpisodeStillUrl.set('https://image.tmdb.org/t/p/w780/episode_still.jpg');
+    expect(component.heroBackdropUrl()).toBe('https://image.tmdb.org/t/p/w780/episode_still.jpg');
+
+    // Simulate img error on the episode still
+    const fakeImg = document.createElement('img');
+    fakeImg.src = 'https://image.tmdb.org/t/p/w780/episode_still.jpg';
+    const fakeEvent = { target: fakeImg } as unknown as Event;
+
+    component.onBackdropError(fakeEvent, 101);
+
+    // Should switch image source to series backdrop
+    expect(fakeImg.src).toContain('/show_alpha_backdrop.jpg');
+    expect(component.heroBackdropUrl()).toContain('/show_alpha_backdrop.jpg');
   });
 });
