@@ -398,12 +398,13 @@
 
     <!-- Poster Grid -->
     @if (displayedCards().length > 0) {
-      <div class="collection-grid" [attr.data-tour]="isFranchiseCollection() ? 'franchise-timeline' : null">
+      <div class="collection-grid">
         @for (card of displayedCards(); track (card.item.mediaType ? card.item.mediaType + '-' + card.item.id : card.item.id); let idx = $index) {
           <div
             class="collection-card"
             [class.is-up-next-card]="card.isUpNext"
             [class.is-watched-card]="card.isWatched"
+            [attr.data-tour]="isFranchiseCollection() && idx === upNextCardIndex() ? 'franchise-timeline' : null"
             [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
             <div class="poster-wrap">
               @if (card.chronologicalOrder) {

@@ -153,10 +153,9 @@ describe('AppTourService', () => {
 
         await service.start('franchise');
 
-        expect(service.totalSteps()).toBe(7);
+        expect(service.totalSteps()).toBe(6);
         expect(router.navigateByUrl).toHaveBeenCalledWith('/tabs/archive?tour=franchise');
 
-        await service.next();
         await service.next();
         await service.next();
 

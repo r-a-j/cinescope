@@ -427,6 +427,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
     return vms;
   });
 
+  public upNextCardIndex = computed<number>(() => {
+    const cards = this.displayedCards();
+    if (cards.length === 0) return -1;
+    const nextIdx = cards.findIndex((c) => c.isUpNext);
+    return nextIdx >= 0 ? nextIdx : 0;
+  });
+
   constructor() {
     addIcons({
       arrowBackOutline, star, homeOutline, albumsOutline, filmOutline,

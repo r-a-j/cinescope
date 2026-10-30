@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Keyboard } from '@capacitor/keyboard';
 import { APP_TOURS, AppTourId, AppTourStep } from '../constants/app-tour.constants';
 import { DatabaseService } from '../database/database.service';
 import { TrendingStore } from '../store/trending.store';
@@ -45,6 +46,7 @@ export class AppTourService {
         const returnUrl = this.router.url || '/tabs/discover';
         this.isNavigating.set(true);
         try {
+            Keyboard.hide().catch(() => console.debug('[AppTour] Keyboard hide skipped'));
             await this.navigateTo(steps[0].route);
             this.stepIndex.set(0);
             this.session.set({ id, steps, returnUrl });
@@ -96,6 +98,7 @@ export class AppTourService {
     private async moveToStep(session: AppTourSession, index: number): Promise<void> {
         this.isNavigating.set(true);
         try {
+            Keyboard.hide().catch(() => console.debug('[AppTour] Keyboard hide skipped'));
             await this.navigateTo(session.steps[index].route);
             this.stepIndex.set(index);
         } finally {
@@ -112,8 +115,9 @@ export class AppTourService {
         if (!franchise) return steps;
 
         const route = `/collection/${encodeURIComponent(String(franchise.id))}`;
+        const archiveSteps = steps.filter(step => step.route.startsWith('/tabs/archive'));
         return [
-            ...steps,
+            ...archiveSteps,
             {
                 route,
                 target: 'franchise-actions',
@@ -163,7 +167,7 @@ export class AppTourService {
         return [
             {
                 route: '/tabs/archive?tour=franchise-merge',
-                target: 'archive-filters',
+                target: 'archive-franchises-tab',
                 title: 'Open your Franchises shelf',
                 description: 'Archive is where you can see your tracked sagas and universes. Merging changes how these entries are grouped here.'
             },
@@ -183,7 +187,7 @@ export class AppTourService {
             },
             {
                 route: '/tabs/archive?tour=franchise-merge',
-                target: 'archive-franchise-library',
+                target: 'archive-franchise-' + (universe.universeId || universe.id),
                 title: 'See the result in Archive',
                 description: isMerged
                     ? `The ${universe.name} card contains this saga under its folded collections. Unmerging restores the saga as a separate card.`
@@ -220,6 +224,7 @@ export class AppTourService {
         if (this.router.url !== session.returnUrl) {
             this.isNavigating.set(true);
             try {
+                Keyboard.hide().catch(() => console.debug('[AppTour] Keyboard hide skipped'));
                 const returned = await this.router.navigateByUrl(session.returnUrl);
                 if (!returned) {
                     throw new Error(`Could not return to "${session.returnUrl}" after the tutorial.`);

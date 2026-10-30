@@ -16,7 +16,8 @@ import {
     downloadOutline, shareSocialOutline, closeOutline,
     folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
-    sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline
+    sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline,
+    helpCircleOutline
 } from 'ionicons/icons';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { RegionService } from 'src/app/core/services/region.service';
@@ -55,6 +56,7 @@ export class SettingsPage implements OnInit {
     public storage = inject(StorageService);
     public moviesPrefs = inject(MoviesPreferencesService);
     public isMoviesTabCollapsed = signal<boolean>(true);
+    public isHelpTutorialsCollapsed = signal<boolean>(true);
     public expandedTutorialCategories = signal<Set<string>>(new Set());
     private apiCache = inject(ApiCacheService);
     private posterCache = inject(PosterCacheService);
@@ -134,7 +136,8 @@ export class SettingsPage implements OnInit {
             downloadOutline, shareSocialOutline, closeOutline,
             folderOutline, chevronForwardOutline, chevronDownOutline, globeOutline,
     locateOutline, searchOutline, closeCircle, checkmarkCircle,
-            sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline
+            sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline,
+            helpCircleOutline
         });
     }
 

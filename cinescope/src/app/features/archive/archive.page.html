@@ -187,6 +187,7 @@
                   class="franchise-archive-card"
                   [class.is-universe-card]="f.isUniverse"
                   [class.is-completed-card]="f.completionPercentage >= 100 && f.totalParts > 0"
+                  [attr.data-tour]="'archive-franchise-' + (f.universeId || f.id)"
                   [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
                   tabindex="0"
                   role="button"

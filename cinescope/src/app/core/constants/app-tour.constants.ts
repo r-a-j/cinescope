@@ -73,7 +73,7 @@ const archiveSteps: AppTourStep[] = [
 const franchiseSteps: AppTourStep[] = [
     {
         route: '/tabs/archive?tour=franchise',
-        target: 'archive-filters',
+        target: 'archive-franchises-tab',
         title: 'Open your Franchises shelf',
         description: 'Archive keeps your Watchlist, Watched titles, Franchises, and favorite people. The tutorial opens Franchises for you.'
     },
@@ -133,7 +133,7 @@ const searchSteps: AppTourStep[] = [
 const settingsSteps: AppTourStep[] = [
     {
         route: '/settings',
-        target: 'settings-tutorial-library',
+        target: 'settings-tutorials',
         title: 'Replay a tutorial anytime',
         description: 'Return here whenever you need a refresher. Tutorials are grouped by task; expand a category and choose a focused walkthrough.'
     }
