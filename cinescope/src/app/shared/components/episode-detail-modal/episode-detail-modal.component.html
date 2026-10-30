@@ -6,32 +6,40 @@
   class="episode-modal-sheet">
   <ng-template>
     <div class="episode-modal-container">
-      <!-- Modal Top Bar -->
-      <div class="episode-modal-top-bar">
-        <div class="drag-handle"></div>
-        <button
-          type="button"
-          class="modal-close-btn"
-          (click)="closeModal()"
-          aria-label="Close episode details">
-          <ion-icon name="close-outline"></ion-icon>
-        </button>
-      </div>
-
       <ion-content class="episode-modal-content" [scrollY]="true">
-        <!-- Visual Hero Stage -->
+        <!-- Visual Hero Stage with Edge-to-Edge Image & Floating Controls -->
         <div class="episode-hero-stage">
           <img
             [src]="stillUrl()"
             [alt]="detail()?.name || seriesTitle() || 'Episode Still'"
             class="episode-hero-img"
             (error)="onStillError($event)" />
-          <div class="hero-gradient-overlay"></div>
 
+          <!-- Top vignette for grabber & close button visibility -->
+          <div class="hero-top-vignette"></div>
+          <!-- Bottom vignette for smooth transition to content -->
+          <div class="hero-bottom-vignette"></div>
+
+          <!-- Floating Header: Grabber & Close Button -->
+          <div class="stage-floating-header">
+            <div class="drag-handle"></div>
+            <button
+              type="button"
+              class="modal-close-btn"
+              (click)="closeModal()"
+              aria-label="Close episode details">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Hero Stage Badges -->
           <div class="hero-stage-badges">
-            <span class="ep-code-pill">{{ episodeCode() }}</span>
+            <span class="ep-badge-capsule">
+              <span class="ep-badge-dot"></span>
+              {{ episodeCode() }}
+            </span>
             @if (episodeTypeLabel(); as typeLabel) {
-              <span class="ep-type-pill">{{ typeLabel }}</span>
+              <span class="ep-type-capsule" [class.is-finale]="isFinale()">{{ typeLabel }}</span>
             }
           </div>
         </div>
@@ -58,20 +66,22 @@
                 @if (formattedAirDate(); as airDate) {
                   <span class="meta-pill">
                     <ion-icon name="calendar-outline"></ion-icon>
-                    {{ airDate }}
+                    <span>{{ airDate }}</span>
                   </span>
                 }
                 @if (formattedRuntime(); as runtime) {
                   <span class="meta-pill">
                     <ion-icon name="time-outline"></ion-icon>
-                    {{ runtime }}
+                    <span>{{ runtime }}</span>
                   </span>
                 }
                 @if (ratingFormatted(); as rating) {
                   <span class="meta-pill rating-pill">
                     <ion-icon name="star"></ion-icon>
-                    {{ rating }}
-                    <small class="vote-count">{{ voteCountFormatted() }}</small>
+                    <span class="rating-val">{{ rating }}</span>
+                    @if (voteCountFormatted(); as votes) {
+                      <span class="rating-count">({{ votes }})</span>
+                    }
                   </span>
                 }
                 @if (imdbUrl(); as imdb) {
@@ -81,53 +91,65 @@
                     rel="noopener noreferrer"
                     class="meta-pill imdb-pill"
                     (click)="$event.stopPropagation()">
-                    <span class="imdb-text">IMDb Trivia</span>
+                    <span class="imdb-badge">IMDb</span>
+                    <span class="imdb-text">Trivia</span>
                     <ion-icon name="open-outline"></ion-icon>
                   </a>
                 }
               </div>
             </div>
 
-            <!-- Command Action Bar: Watched Toggle & Nav -->
-            <div class="command-action-bar">
-              <button
-                type="button"
-                class="btn-watched-toggle"
-                [class.is-watched]="isWatched()"
-                (click)="toggleWatched()">
-                <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
-                <span>{{ isWatched() ? 'Watched (Tap to Unmark)' : 'Mark Episode Watched' }}</span>
-              </button>
-
-              <div class="episode-nav-stepper">
+            <!-- Command Center: Stepper & Watched Primary Action -->
+            <div class="command-center">
+              <div class="stepper-row">
                 <button
                   type="button"
-                  class="btn-step"
+                  class="step-nav-btn"
                   [disabled]="!canGoPrev()"
                   (click)="goToPrevEpisode()"
                   aria-label="Previous Episode">
-                  <ion-icon name="chevron-back-outline"></ion-icon>
+                  <ion-icon name="chevron-back"></ion-icon>
                   <span>Prev</span>
                 </button>
 
-                <span class="stepper-counter">E{{ currentEpisodeNumber() }}</span>
+                <div class="stepper-center-info">
+                  <span class="stepper-caption">EPISODE</span>
+                  <span class="stepper-ep-counter">
+                    {{ currentEpisodeNumber() }}
+                    @if (totalEpisodesInSeason(); as total) {
+                      <span class="stepper-ep-total">of {{ total }}</span>
+                    }
+                  </span>
+                </div>
 
                 <button
                   type="button"
-                  class="btn-step"
+                  class="step-nav-btn"
                   [disabled]="!canGoNext()"
                   (click)="goToNextEpisode()"
                   aria-label="Next Episode">
                   <span>Next</span>
-                  <ion-icon name="chevron-forward-outline"></ion-icon>
+                  <ion-icon name="chevron-forward"></ion-icon>
                 </button>
               </div>
+
+              <button
+                type="button"
+                class="btn-watched-action"
+                [class.is-watched]="isWatched()"
+                (click)="toggleWatched()">
+                <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                <span>{{ isWatched() ? 'Watched • Tap to Undo' : 'Mark Episode Watched' }}</span>
+              </button>
             </div>
 
-            <!-- Overview Section -->
+            <!-- Overview / Synopsis Section -->
             @if (detail()?.overview) {
               <div class="info-section">
-                <h4 class="section-heading">SYNOPSIS</h4>
+                <div class="section-header">
+                  <span class="section-accent"></span>
+                  <h4 class="section-title">SYNOPSIS</h4>
+                </div>
                 <p class="episode-overview">{{ detail()?.overview }}</p>
               </div>
             }
@@ -135,8 +157,9 @@
             <!-- Guest Stars Section -->
             @if (guestStars().length > 0) {
               <div class="info-section">
-                <div class="section-title-row">
-                  <h4 class="section-heading">GUEST STARS</h4>
+                <div class="section-header">
+                  <span class="section-accent"></span>
+                  <h4 class="section-title">GUEST STARS</h4>
                   <span class="section-count">{{ guestStars().length }}</span>
                 </div>
 
@@ -162,23 +185,40 @@
 
             <!-- Key Creators Section (Directors & Writers) -->
             @if (directors().length > 0 || writers().length > 0) {
-              <div class="info-section creators-section">
-                <h4 class="section-heading">CREW</h4>
-                <div class="crew-grid">
-                  @if (directors().length > 0) {
-                    <div class="crew-role-block">
-                      <span class="role-title">DIRECTED BY</span>
-                      <span class="role-names">
-                        {{ directors().map(d => d.name).join(', ') }}
-                      </span>
+              <div class="info-section">
+                <div class="section-header">
+                  <span class="section-accent"></span>
+                  <h4 class="section-title">CREW</h4>
+                </div>
+                <div class="crew-spotlight-cards">
+                  @for (dir of directors(); track dir.id || dir.name) {
+                    <div class="crew-card">
+                      @if (dir.profile_path) {
+                        <img [src]="resolveProfile(dir.profile_path)" [alt]="dir.name" class="crew-avatar" />
+                      } @else {
+                        <div class="crew-avatar placeholder">
+                          <ion-icon name="videocam-outline"></ion-icon>
+                        </div>
+                      }
+                      <div class="crew-details">
+                        <span class="crew-role">DIRECTOR</span>
+                        <span class="crew-name">{{ dir.name }}</span>
+                      </div>
                     </div>
                   }
-                  @if (writers().length > 0) {
-                    <div class="crew-role-block">
-                      <span class="role-title">WRITTEN BY</span>
-                      <span class="role-names">
-                        {{ writers().map(w => w.name).join(', ') }}
-                      </span>
+                  @for (writer of writers(); track writer.id || writer.name) {
+                    <div class="crew-card">
+                      @if (writer.profile_path) {
+                        <img [src]="resolveProfile(writer.profile_path)" [alt]="writer.name" class="crew-avatar" />
+                      } @else {
+                        <div class="crew-avatar placeholder">
+                          <ion-icon name="create-outline"></ion-icon>
+                        </div>
+                      }
+                      <div class="crew-details">
+                        <span class="crew-role">WRITER</span>
+                        <span class="crew-name">{{ writer.name }}</span>
+                      </div>
                     </div>
                   }
                 </div>
@@ -188,8 +228,9 @@
             <!-- Promos & Teaser Videos Section -->
             @if (promoVideos().length > 0) {
               <div class="info-section">
-                <div class="section-title-row">
-                  <h4 class="section-heading">PROMOS & TRAILERS</h4>
+                <div class="section-header">
+                  <span class="section-accent"></span>
+                  <h4 class="section-title">PROMOS & TRAILERS</h4>
                   <span class="section-count">{{ promoVideos().length }}</span>
                 </div>
 
@@ -226,8 +267,9 @@
                   type="button"
                   class="btn-full-guide"
                   (click)="openFullSeriesPage()">
+                  <ion-icon name="tv-outline"></ion-icon>
                   <span>Open Full Series & Seasons Guide</span>
-                  <ion-icon name="arrow-forward-outline"></ion-icon>
+                  <ion-icon name="arrow-forward-outline" class="guide-arrow"></ion-icon>
                 </button>
               </div>
             }

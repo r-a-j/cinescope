@@ -18,12 +18,15 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
+  close,
   closeOutline,
   checkmarkCircle,
   checkmarkCircleOutline,
   timeOutline,
   calendarOutline,
   star,
+  chevronBack,
+  chevronForward,
   chevronBackOutline,
   chevronForwardOutline,
   playCircleOutline,
@@ -31,7 +34,10 @@ import {
   filmOutline,
   peopleOutline,
   ribbonOutline,
-  arrowForwardOutline
+  arrowForwardOutline,
+  tvOutline,
+  videocamOutline,
+  createOutline
 } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
 import { TmdbTvEpisodesService } from '../../../core/services/tmdb-tv-episodes.service';
@@ -136,7 +142,7 @@ export class EpisodeDetailModalComponent {
   public readonly voteCountFormatted = computed<string>(() => {
     const cnt = this.detail()?.vote_count;
     if (!cnt || cnt <= 0) return '';
-    return `(${cnt.toLocaleString()} votes)`;
+    return cnt.toLocaleString();
   });
 
   public readonly episodeTypeLabel = computed<string | null>(() => {
@@ -147,18 +153,34 @@ export class EpisodeDetailModalComponent {
     return t.replace(/_/g, ' ').toUpperCase();
   });
 
+  public readonly isFinale = computed<boolean>(() => {
+    return this.detail()?.episode_type === 'finale';
+  });
+
   public readonly directors = computed<TmdbTvCrewDto[]>(() => {
     const crew = this.detail()?.crew;
     if (!crew || !Array.isArray(crew)) return [];
-    return crew.filter((c) => c.job === 'Director' || c.department === 'Directing');
+    const dirs = crew.filter((c) => c.job === 'Director' || c.department === 'Directing');
+    const seen = new Set<string>();
+    return dirs.filter((d) => {
+      if (seen.has(d.name)) return false;
+      seen.add(d.name);
+      return true;
+    });
   });
 
   public readonly writers = computed<TmdbTvCrewDto[]>(() => {
     const crew = this.detail()?.crew;
     if (!crew || !Array.isArray(crew)) return [];
-    return crew.filter(
+    const w = crew.filter(
       (c) => c.job === 'Writer' || c.job === 'Screenplay' || c.department === 'Writing'
     );
+    const seen = new Set<string>();
+    return w.filter((writer) => {
+      if (seen.has(writer.name)) return false;
+      seen.add(writer.name);
+      return true;
+    });
   });
 
   public readonly guestStars = computed<TmdbTvSeasonGuestStarDto[]>(() => {
@@ -196,12 +218,15 @@ export class EpisodeDetailModalComponent {
 
   constructor() {
     addIcons({
+      close,
       closeOutline,
       checkmarkCircle,
       checkmarkCircleOutline,
       timeOutline,
       calendarOutline,
       star,
+      chevronBack,
+      chevronForward,
       chevronBackOutline,
       chevronForwardOutline,
       playCircleOutline,
@@ -209,7 +234,10 @@ export class EpisodeDetailModalComponent {
       filmOutline,
       peopleOutline,
       ribbonOutline,
-      arrowForwardOutline
+      arrowForwardOutline,
+      tvOutline,
+      videocamOutline,
+      createOutline
     });
 
     effect(() => {

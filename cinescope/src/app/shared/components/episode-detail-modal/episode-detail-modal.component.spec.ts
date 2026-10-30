@@ -144,6 +144,7 @@ describe('EpisodeDetailModalComponent', () => {
     expect(component.formattedRuntime()).toBe('54 min');
     expect(component.ratingFormatted()).toBe('8.8');
     expect(component.episodeTypeLabel()).toBe('Season Finale');
+    expect(component.isFinale()).toBeTrue();
     expect(component.directors().length).toBe(1);
     expect(component.directors()[0].name).toBe('Ben Stiller');
     expect(component.guestStars().length).toBe(1);
