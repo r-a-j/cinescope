@@ -132,6 +132,7 @@ export interface BackupInspectionResult {
     favoritePeopleCount: number;
     historyCount: number;
     hasSettings: boolean;
+    tvProgressCount?: number | undefined;
     error?: string | undefined;
 }
 
@@ -182,6 +183,7 @@ export interface BackupImportResult {
     inboxCount: number;
     favoritePeopleCount: number;
     historyCount: number;
+    tvProgressCount?: number | undefined;
 }
 
 @Injectable({
@@ -1074,35 +1076,47 @@ export class StorageService {
         }
 
         // 1. Inspect Modern CineScope Format
-        if (Array.isArray(parsed.content)) {
+        const isModern =
+            Array.isArray(parsed.content) ||
+            Array.isArray(parsed.tvProgress) ||
+            parsed.version === 1 ||
+            Boolean(parsed.settings && typeof parsed.settings === 'object') ||
+            Array.isArray(parsed.searchHistory);
+
+        if (isModern && !parsed.data) {
             let watchlistCount = 0;
             let watchedCount = 0;
             let inboxCount = 0;
             let favoritePeopleCount = 0;
 
-            for (const item of parsed.content) {
-                if (!item || typeof item !== 'object') continue;
-                const tmdbId = Number(item.tmdbId ?? item.id);
-                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+            if (Array.isArray(parsed.content)) {
+                for (const item of parsed.content) {
+                    if (!item || typeof item !== 'object') continue;
+                    const tmdbId = Number(item.tmdbId ?? item.id);
+                    if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
 
-                const lists = Array.isArray(item.lists) ? item.lists : [];
-                if (item.mediaType === 'person' && lists.includes('favorite')) {
-                    favoritePeopleCount++;
-                } else if (lists.includes('inbox')) {
-                    inboxCount++;
-                } else if (lists.includes('watched')) {
-                    watchedCount++;
-                } else if (lists.includes('watchlist')) {
-                    watchlistCount++;
+                    const lists = Array.isArray(item.lists) ? item.lists : [];
+                    if (item.mediaType === 'person' && lists.includes('favorite')) {
+                        favoritePeopleCount++;
+                    } else if (lists.includes('inbox')) {
+                        inboxCount++;
+                    } else if (lists.includes('watched')) {
+                        watchedCount++;
+                    } else if (lists.includes('watchlist')) {
+                        watchlistCount++;
+                    }
                 }
             }
 
-            const totalTitles = parsed.content.length;
+            const totalTitles = Array.isArray(parsed.content) ? parsed.content.length : 0;
             const historyCount = Array.isArray(parsed.searchHistory) ? parsed.searchHistory.length : 0;
             const hasSettings = Boolean(parsed.settings && typeof parsed.settings === 'object');
+            const tvProgressCount = Array.isArray(parsed.tvProgress)
+                ? parsed.tvProgress.filter((p) => p && typeof p === 'object' && typeof p.id === 'string' && typeof p.tmdbId === 'number').length
+                : 0;
 
             return {
-                isValid: totalTitles > 0 || historyCount > 0 || hasSettings,
+                isValid: totalTitles > 0 || historyCount > 0 || hasSettings || tvProgressCount > 0,
                 format: 'modern',
                 version: parsed.version ?? 1,
                 appVersion: parsed.appVersion,
@@ -1113,7 +1127,8 @@ export class StorageService {
                 inboxCount,
                 favoritePeopleCount,
                 historyCount,
-                hasSettings
+                hasSettings,
+                tvProgressCount
             };
         }
 
@@ -1355,6 +1370,7 @@ export class StorageService {
         }
 
         // 5. Restore TV Progress (if present) in chunks
+        let tvProgressCount = 0;
         if (Array.isArray(parsed.tvProgress)) {
             const validProgress: TvProgressDocType[] = [];
             for (const p of parsed.tvProgress) {
@@ -1368,6 +1384,7 @@ export class StorageService {
                     const chunk = validProgress.slice(i, i + CHUNK_SIZE);
                     await this.dbService.db.tvProgress.bulkUpsert(chunk);
                 }
+                tvProgressCount = validProgress.length;
             }
         }
 
@@ -1377,7 +1394,8 @@ export class StorageService {
             watchedCount,
             inboxCount,
             favoritePeopleCount,
-            historyCount
+            historyCount,
+            tvProgressCount
         };
     }
 

@@ -12,7 +12,10 @@ export const tvProgressSchemaLiteral = {
             maxLength: 50
         },
         tmdbId: {
-            type: 'number'
+            type: 'number',
+            multipleOf: 1,
+            minimum: 1,
+            maximum: 1000000000
         },
         seriesTitle: {
             type: 'string',
@@ -68,7 +71,10 @@ export const tvProgressSchemaLiteral = {
             type: 'string'
         },
         updatedAt: {
-            type: 'number'
+            type: 'number',
+            multipleOf: 1,
+            minimum: 0,
+            maximum: 10000000000000000
         }
     },
     required: ['id', 'tmdbId', 'seriesTitle', 'totalSeasons', 'totalEpisodes', 'watchedEpisodesCount', 'watchedEpisodes', 'updatedAt'],

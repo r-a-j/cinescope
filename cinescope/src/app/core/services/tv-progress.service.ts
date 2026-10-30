@@ -12,6 +12,16 @@ export interface UpNextEpisodeInfo {
     airDate?: string | null | undefined;
 }
 
+export interface TvSeriesProgressMeta {
+    title?: string | undefined;
+    posterPath?: string | undefined;
+    backdropPath?: string | undefined;
+    totalSeasons?: number | undefined;
+    totalEpisodes?: number | undefined;
+    status?: string | undefined;
+    episodeTitle?: string | undefined;
+}
+
 export interface AirRadarItem {
     tmdbId: number;
     seriesTitle: string;
@@ -21,7 +31,7 @@ export interface AirRadarItem {
     episodeNumber: number;
     episodeTitle?: string | undefined;
     airDate: string;
-    daysUntil: number; // 0 = today, negative = aired recently, positive = upcoming
+    daysUntil: number; // 0 = today, -1 = aired yesterday, positive = upcoming
 }
 
 export interface WatchlistReadySeries {
@@ -31,9 +41,6 @@ export interface WatchlistReadySeries {
     backdropPath?: string | undefined;
     totalSeasons?: number | undefined;
     totalEpisodes?: number | undefined;
-    firstAirDate?: string | undefined;
-    overview?: string | undefined;
-    rating?: number | undefined;
 }
 
 @Injectable({
@@ -85,17 +92,15 @@ export class TvProgressService {
         for (const doc of watchlist) {
             const progress = progressMap.get(doc.tmdbId);
             if (!progress || progress.watchedEpisodesCount === 0) {
-                const payload = (doc.payload ?? {}) as Record<string, unknown>;
+                const payload = (doc.payload ?? {}) as Partial<TmdbTvDetailDto>;
+                const displayTitle = payload.name || (payload['title'] as string | undefined) || `Series #${doc.tmdbId}`;
                 results.push({
                     tmdbId: doc.tmdbId,
-                    title: String(payload['name'] || payload['title'] || `Series #${doc.tmdbId}`),
-                    posterPath: (payload['poster_path'] || payload['posterUrl']) as string | undefined,
-                    backdropPath: (payload['backdrop_path'] || payload['backdropUrl']) as string | undefined,
-                    totalSeasons: typeof payload['number_of_seasons'] === 'number' ? payload['number_of_seasons'] : undefined,
-                    totalEpisodes: typeof payload['number_of_episodes'] === 'number' ? payload['number_of_episodes'] : undefined,
-                    firstAirDate: payload['first_air_date'] as string | undefined,
-                    overview: payload['overview'] as string | undefined,
-                    rating: typeof payload['vote_average'] === 'number' ? payload['vote_average'] : undefined
+                    title: String(displayTitle),
+                    posterPath: payload.poster_path ?? undefined,
+                    backdropPath: payload.backdrop_path ?? undefined,
+                    totalSeasons: typeof payload.number_of_seasons === 'number' ? payload.number_of_seasons : undefined,
+                    totalEpisodes: typeof payload.number_of_episodes === 'number' ? payload.number_of_episodes : undefined
                 });
             }
         }
@@ -105,32 +110,73 @@ export class TvProgressService {
 
     /**
      * Radar of upcoming or recently aired episodes across active and watchlist series.
+     * Restricts to a weekly window (-1 to +7 days) using calendar UTC comparisons.
      */
     public readonly airRadar = computed<AirRadarItem[]>(() => {
         const items: AirRadarItem[] = [];
-        const now = new Date();
-        const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-        const oneDayMs = 24 * 60 * 60 * 1000;
+        const seenTmdbIds = new Set<number>();
 
+        const getCalendarDayDiff = (dateStr: string): number | null => {
+            const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+            if (!match) return null;
+            const y = parseInt(match[1], 10);
+            const m = parseInt(match[2], 10) - 1;
+            const d = parseInt(match[3], 10);
+            const now = new Date();
+            const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+            const targetUtc = Date.UTC(y, m, d);
+            const oneDayMs = 24 * 60 * 60 * 1000;
+            return Math.round((targetUtc - todayUtc) / oneDayMs);
+        };
+
+        // 1. Check actively tracked series
         for (const p of this.allProgress()) {
             if (p.nextAirDate && p.nextAirSeason && p.nextAirEpisode) {
-                const airTime = Date.parse(p.nextAirDate);
-                if (Number.isFinite(airTime)) {
-                    const daysUntil = Math.round((airTime - todayUtc) / oneDayMs);
-                    // Include episodes from 3 days ago up to 30 days ahead
-                    if (daysUntil >= -3 && daysUntil <= 30) {
-                        items.push({
-                            tmdbId: p.tmdbId,
-                            seriesTitle: p.seriesTitle,
-                            posterPath: p.posterPath,
-                            backdropPath: p.backdropPath,
-                            seasonNumber: p.nextAirSeason,
-                            episodeNumber: p.nextAirEpisode,
-                            episodeTitle: p.nextAirEpisodeTitle,
-                            airDate: p.nextAirDate,
-                            daysUntil
-                        });
+                const daysUntil = getCalendarDayDiff(p.nextAirDate);
+                if (daysUntil !== null && daysUntil >= -1 && daysUntil <= 7) {
+                    if (this.isEpisodeWatched(p.tmdbId, p.nextAirSeason, p.nextAirEpisode)) {
+                        continue;
                     }
+                    seenTmdbIds.add(p.tmdbId);
+                    items.push({
+                        tmdbId: p.tmdbId,
+                        seriesTitle: p.seriesTitle,
+                        posterPath: p.posterPath,
+                        backdropPath: p.backdropPath,
+                        seasonNumber: p.nextAirSeason,
+                        episodeNumber: p.nextAirEpisode,
+                        episodeTitle: p.nextAirEpisodeTitle,
+                        airDate: p.nextAirDate,
+                        daysUntil
+                    });
+                }
+            }
+        }
+
+        // 2. Check watchlist TV series with cached upcoming episodes
+        for (const doc of this.storage.watchlistItems()) {
+            if (doc.mediaType !== 'tv' || seenTmdbIds.has(doc.tmdbId)) continue;
+            const payload = (doc.payload ?? {}) as Partial<TmdbTvDetailDto>;
+            const nextEp = payload.next_episode_to_air;
+            if (nextEp?.air_date && nextEp.season_number && nextEp.episode_number) {
+                const daysUntil = getCalendarDayDiff(nextEp.air_date);
+                if (daysUntil !== null && daysUntil >= -1 && daysUntil <= 7) {
+                    if (this.isEpisodeWatched(doc.tmdbId, nextEp.season_number, nextEp.episode_number)) {
+                        continue;
+                    }
+                    seenTmdbIds.add(doc.tmdbId);
+                    const displayTitle = payload.name || (payload['title'] as string | undefined) || `Series #${doc.tmdbId}`;
+                    items.push({
+                        tmdbId: doc.tmdbId,
+                        seriesTitle: String(displayTitle),
+                        posterPath: payload.poster_path ?? undefined,
+                        backdropPath: payload.backdrop_path ?? undefined,
+                        seasonNumber: nextEp.season_number,
+                        episodeNumber: nextEp.episode_number,
+                        episodeTitle: nextEp.name,
+                        airDate: nextEp.air_date,
+                        daysUntil
+                    });
                 }
             }
         }
@@ -222,15 +268,7 @@ export class TvProgressService {
         tmdbId: number,
         seasonNumber: number,
         episodeNumber: number,
-        seriesMeta?: {
-            title?: string | undefined;
-            posterPath?: string | undefined;
-            backdropPath?: string | undefined;
-            totalSeasons?: number | undefined;
-            totalEpisodes?: number | undefined;
-            status?: string | undefined;
-            episodeTitle?: string | undefined;
-        }
+        seriesMeta?: TvSeriesProgressMeta
     ): Promise<void> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
@@ -277,14 +315,61 @@ export class TvProgressService {
     public async unmarkEpisodeWatched(
         tmdbId: number,
         seasonNumber: number,
-        episodeNumber: number
+        episodeNumber: number,
+        seriesMeta?: TvSeriesProgressMeta,
+        seasons?: TmdbTvSeasonBaseDto[]
     ): Promise<void> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
-        if (!existing) return;
+        let watchedSet: Set<string>;
+        let totalSeasons = existing?.totalSeasons ?? seriesMeta?.totalSeasons ?? 1;
+        let totalEpisodes = existing?.totalEpisodes ?? seriesMeta?.totalEpisodes ?? 0;
+        let title = existing?.seriesTitle || seriesMeta?.title;
+        let poster = existing?.posterPath || seriesMeta?.posterPath;
+        let backdrop = existing?.backdropPath || seriesMeta?.backdropPath;
+        let status = existing?.status || seriesMeta?.status;
+
+        if (!existing) {
+            // Check if series is in user's Watched list without a granular progress doc
+            const watchedItem = this.storage.watchedItems().find((w) => w.mediaType === 'tv' && w.tmdbId === tmdbId);
+            if (!watchedItem) return;
+
+            const payload = (watchedItem.payload ?? {}) as Partial<TmdbTvDetailDto>;
+            const fallbackTitle = payload.name || (payload['title'] as string | undefined) || `Series #${tmdbId}`;
+            title = title || String(fallbackTitle);
+            poster = poster || (payload.poster_path ?? undefined);
+            backdrop = backdrop || (payload.backdrop_path ?? undefined);
+            status = status || payload.status;
+            totalSeasons = totalSeasons || payload.number_of_seasons || 1;
+            totalEpisodes = totalEpisodes || payload.number_of_episodes || 0;
+
+            const availableSeasons = (seasons && seasons.length > 0)
+                ? seasons
+                : (Array.isArray(payload.seasons) ? payload.seasons : []);
+
+            watchedSet = new Set<string>();
+            if (availableSeasons.length > 0) {
+                for (const s of availableSeasons) {
+                    if (s.season_number <= 0) continue;
+                    for (let ep = 1; ep <= s.episode_count; ep++) {
+                        watchedSet.add(this.getEpisodeKey(s.season_number, ep));
+                    }
+                }
+            } else {
+                const maxS = Math.max(seasonNumber, totalSeasons);
+                const epPerSeason = totalEpisodes > 0 ? Math.ceil(totalEpisodes / maxS) : Math.max(episodeNumber, 10);
+                for (let s = 1; s <= maxS; s++) {
+                    const count = (s === seasonNumber) ? Math.max(episodeNumber, epPerSeason) : epPerSeason;
+                    for (let ep = 1; ep <= count; ep++) {
+                        watchedSet.add(this.getEpisodeKey(s, ep));
+                    }
+                }
+            }
+        } else {
+            watchedSet = new Set<string>(existing.watchedEpisodes);
+        }
 
         const epKey = this.getEpisodeKey(seasonNumber, episodeNumber);
-        const watchedSet = new Set<string>(existing.watchedEpisodes);
         if (!watchedSet.has(epKey)) return;
 
         watchedSet.delete(epKey);
@@ -301,26 +386,30 @@ export class TvProgressService {
             nextLastEpisode = last.episode;
         }
 
+        if (totalEpisodes <= 0) {
+            totalEpisodes = watchedList.length + 1;
+        }
+
         const doc: TvProgressDocType = {
-            id: existing.id,
-            tmdbId: existing.tmdbId,
-            seriesTitle: existing.seriesTitle,
-            totalSeasons: existing.totalSeasons,
-            totalEpisodes: existing.totalEpisodes,
+            id: `tv_${tmdbId}`,
+            tmdbId,
+            seriesTitle: title || `Series #${tmdbId}`,
+            totalSeasons,
+            totalEpisodes,
             watchedEpisodesCount: watchedList.length,
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
 
-        if (existing.posterPath) doc.posterPath = existing.posterPath;
-        if (existing.backdropPath) doc.backdropPath = existing.backdropPath;
+        if (poster) doc.posterPath = poster;
+        if (backdrop) doc.backdropPath = backdrop;
         if (nextLastSeason !== undefined) doc.lastWatchedSeason = nextLastSeason;
         if (nextLastEpisode !== undefined) doc.lastWatchedEpisode = nextLastEpisode;
-        if (existing.status) doc.status = existing.status;
-        if (existing.nextAirDate) doc.nextAirDate = existing.nextAirDate;
-        if (existing.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
-        if (existing.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
-        if (existing.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
+        if (status) doc.status = status;
+        if (existing?.nextAirDate) doc.nextAirDate = existing.nextAirDate;
+        if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
+        if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
+        if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -329,19 +418,12 @@ export class TvProgressService {
         tmdbId: number,
         seasonNumber: number,
         episodeNumber: number,
-        seriesMeta?: {
-            title?: string | undefined;
-            posterPath?: string | undefined;
-            backdropPath?: string | undefined;
-            totalSeasons?: number | undefined;
-            totalEpisodes?: number | undefined;
-            status?: string | undefined;
-            episodeTitle?: string | undefined;
-        }
+        seriesMeta?: TvSeriesProgressMeta,
+        seasons?: TmdbTvSeasonBaseDto[]
     ): Promise<boolean> {
         const isWatched = this.isEpisodeWatched(tmdbId, seasonNumber, episodeNumber);
         if (isWatched) {
-            await this.unmarkEpisodeWatched(tmdbId, seasonNumber, episodeNumber);
+            await this.unmarkEpisodeWatched(tmdbId, seasonNumber, episodeNumber, seriesMeta, seasons);
             return false;
         }
         await this.markEpisodeWatched(tmdbId, seasonNumber, episodeNumber, seriesMeta);
@@ -352,14 +434,7 @@ export class TvProgressService {
         tmdbId: number,
         seasonNumber: number,
         episodeCount: number,
-        seriesMeta?: {
-            title?: string | undefined;
-            posterPath?: string | undefined;
-            backdropPath?: string | undefined;
-            totalSeasons?: number | undefined;
-            totalEpisodes?: number | undefined;
-            status?: string | undefined;
-        }
+        seriesMeta?: TvSeriesProgressMeta
     ): Promise<void> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
@@ -399,32 +474,100 @@ export class TvProgressService {
     public async unmarkSeasonWatched(
         tmdbId: number,
         seasonNumber: number,
-        episodeCount: number
+        episodeCount: number,
+        seriesMeta?: TvSeriesProgressMeta,
+        seasons?: TmdbTvSeasonBaseDto[]
     ): Promise<void> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
-        if (!existing) return;
+        let watchedSet: Set<string>;
+        let totalSeasons = existing?.totalSeasons ?? seriesMeta?.totalSeasons ?? seasonNumber;
+        let totalEpisodes = existing?.totalEpisodes ?? seriesMeta?.totalEpisodes ?? 0;
+        let title = existing?.seriesTitle || seriesMeta?.title;
+        let poster = existing?.posterPath || seriesMeta?.posterPath;
+        let backdrop = existing?.backdropPath || seriesMeta?.backdropPath;
+        let status = existing?.status || seriesMeta?.status;
 
-        const watchedSet = new Set<string>(existing.watchedEpisodes);
+        if (!existing) {
+            const watchedItem = this.storage.watchedItems().find((w) => w.mediaType === 'tv' && w.tmdbId === tmdbId);
+            if (!watchedItem) return;
+
+            const payload = (watchedItem.payload ?? {}) as Partial<TmdbTvDetailDto>;
+            const fallbackTitle = payload.name || (payload['title'] as string | undefined) || `Series #${tmdbId}`;
+            title = title || String(fallbackTitle);
+            poster = poster || (payload.poster_path ?? undefined);
+            backdrop = backdrop || (payload.backdrop_path ?? undefined);
+            status = status || payload.status;
+            totalSeasons = totalSeasons || payload.number_of_seasons || seasonNumber;
+            totalEpisodes = totalEpisodes || payload.number_of_episodes || 0;
+
+            const availableSeasons = (seasons && seasons.length > 0)
+                ? seasons
+                : (Array.isArray(payload.seasons) ? payload.seasons : []);
+
+            watchedSet = new Set<string>();
+            if (availableSeasons.length > 0) {
+                for (const s of availableSeasons) {
+                    if (s.season_number <= 0) continue;
+                    for (let ep = 1; ep <= s.episode_count; ep++) {
+                        watchedSet.add(this.getEpisodeKey(s.season_number, ep));
+                    }
+                }
+            } else {
+                const maxS = Math.max(seasonNumber, totalSeasons);
+                const epPerSeason = totalEpisodes > 0 ? Math.ceil(totalEpisodes / maxS) : Math.max(episodeCount, 10);
+                for (let s = 1; s <= maxS; s++) {
+                    const count = (s === seasonNumber) ? episodeCount : epPerSeason;
+                    for (let ep = 1; ep <= count; ep++) {
+                        watchedSet.add(this.getEpisodeKey(s, ep));
+                    }
+                }
+            }
+        } else {
+            watchedSet = new Set<string>(existing.watchedEpisodes);
+        }
+
         for (let ep = 1; ep <= episodeCount; ep++) {
             watchedSet.delete(this.getEpisodeKey(seasonNumber, ep));
         }
 
         const watchedList = Array.from(watchedSet);
+
+        // Find highest remaining episode
+        let nextLastSeason: number | undefined;
+        let nextLastEpisode: number | undefined;
+        if (watchedList.length > 0) {
+            const sorted = watchedList.map((k) => this.parseEpisodeKey(k)).filter(Boolean) as { season: number; episode: number }[];
+            sorted.sort((a, b) => a.season === b.season ? a.episode - b.episode : a.season - b.season);
+            const last = sorted[sorted.length - 1];
+            nextLastSeason = last.season;
+            nextLastEpisode = last.episode;
+        }
+
+        if (totalEpisodes <= 0) {
+            totalEpisodes = watchedList.length + episodeCount;
+        }
+
         const doc: TvProgressDocType = {
-            id: existing.id,
-            tmdbId: existing.tmdbId,
-            seriesTitle: existing.seriesTitle,
-            totalSeasons: existing.totalSeasons,
-            totalEpisodes: existing.totalEpisodes,
+            id: `tv_${tmdbId}`,
+            tmdbId,
+            seriesTitle: title || `Series #${tmdbId}`,
+            totalSeasons,
+            totalEpisodes,
             watchedEpisodesCount: watchedList.length,
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
 
-        if (existing.posterPath) doc.posterPath = existing.posterPath;
-        if (existing.backdropPath) doc.backdropPath = existing.backdropPath;
-        if (existing.status) doc.status = existing.status;
+        if (poster) doc.posterPath = poster;
+        if (backdrop) doc.backdropPath = backdrop;
+        if (status) doc.status = status;
+        if (nextLastSeason !== undefined) doc.lastWatchedSeason = nextLastSeason;
+        if (nextLastEpisode !== undefined) doc.lastWatchedEpisode = nextLastEpisode;
+        if (existing?.nextAirDate) doc.nextAirDate = existing.nextAirDate;
+        if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
+        if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
+        if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -432,14 +575,7 @@ export class TvProgressService {
     public async markAllWatched(
         tmdbId: number,
         seasons: TmdbTvSeasonBaseDto[],
-        seriesMeta?: {
-            title?: string | undefined;
-            posterPath?: string | undefined;
-            backdropPath?: string | undefined;
-            totalSeasons?: number | undefined;
-            totalEpisodes?: number | undefined;
-            status?: string | undefined;
-        }
+        seriesMeta?: TvSeriesProgressMeta
     ): Promise<void> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
@@ -561,29 +697,37 @@ export class TvProgressService {
         const progress = this.getSeriesProgress(tmdbId);
         const watchedSet = new Set<string>(progress?.watchedEpisodes ?? []);
 
-        const validSeasons = (seasons ?? []).filter((s) => s.season_number > 0);
-        if (validSeasons.length === 0) {
-            // Fallback: if last watched season exists, next is episode + 1
-            if (progress?.lastWatchedSeason && progress?.lastWatchedEpisode) {
-                return {
-                    seasonNumber: progress.lastWatchedSeason,
-                    episodeNumber: progress.lastWatchedEpisode + 1
-                };
+        let effectiveSeasons = seasons;
+        if (!effectiveSeasons || effectiveSeasons.length === 0) {
+            const cachedDoc = this.storage.getCachedDoc(tmdbId, 'tv');
+            const payload = cachedDoc?.payload as Partial<TmdbTvDetailDto> | undefined;
+            if (payload && Array.isArray(payload.seasons)) {
+                effectiveSeasons = payload.seasons;
             }
-            // If completely unstarted, default to S1E1
-            return { seasonNumber: 1, episodeNumber: 1 };
         }
 
-        for (const s of validSeasons) {
-            for (let ep = 1; ep <= s.episode_count; ep++) {
-                const key = this.getEpisodeKey(s.season_number, ep);
-                if (!watchedSet.has(key)) {
-                    return { seasonNumber: s.season_number, episodeNumber: ep };
+        const validSeasons = (effectiveSeasons ?? []).filter((s) => s.season_number > 0);
+        if (validSeasons.length > 0) {
+            for (const s of validSeasons) {
+                for (let ep = 1; ep <= s.episode_count; ep++) {
+                    const key = this.getEpisodeKey(s.season_number, ep);
+                    if (!watchedSet.has(key)) {
+                        return { seasonNumber: s.season_number, episodeNumber: ep };
+                    }
                 }
             }
+            // All regular episodes across all seasons are watched
+            return null;
         }
 
-        // All episodes watched!
-        return null;
+        // Fallback when season breakdown is unknown
+        if (progress?.lastWatchedSeason !== undefined && progress.lastWatchedSeason > 0 && progress?.lastWatchedEpisode !== undefined) {
+            return {
+                seasonNumber: progress.lastWatchedSeason,
+                episodeNumber: progress.lastWatchedEpisode + 1
+            };
+        }
+
+        return { seasonNumber: 1, episodeNumber: 1 };
     }
 }

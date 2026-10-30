@@ -65,15 +65,21 @@ export class TvSeasonsHubComponent {
     const id = this.seriesId();
     if (!id) return;
 
-    const nowWatched = await this.tvProgress.toggleEpisode(id, ep.season_number, ep.episode_number, {
-      title: this.seriesTitle(),
-      posterPath: this.posterPath() ?? undefined,
-      backdropPath: this.backdropPath() ?? undefined,
-      totalSeasons: this.totalSeasons(),
-      totalEpisodes: this.totalEpisodes(),
-      status: this.showStatus() ?? undefined,
-      episodeTitle: ep.name
-    });
+    const nowWatched = await this.tvProgress.toggleEpisode(
+      id,
+      ep.season_number,
+      ep.episode_number,
+      {
+        title: this.seriesTitle(),
+        posterPath: this.posterPath() ?? undefined,
+        backdropPath: this.backdropPath() ?? undefined,
+        totalSeasons: this.totalSeasons(),
+        totalEpisodes: this.totalEpisodes(),
+        status: this.showStatus() ?? undefined,
+        episodeTitle: ep.name
+      },
+      this.seasons()
+    );
 
     if (nowWatched) {
       void this.toast.presentSuccess(`Marked S${ep.season_number} E${ep.episode_number} watched`, 1800);
@@ -96,7 +102,20 @@ export class TvSeasonsHubComponent {
     const isWatched = this.isCurrentSeasonWatched();
 
     if (isWatched) {
-      await this.tvProgress.unmarkSeasonWatched(id, sNum, count);
+      await this.tvProgress.unmarkSeasonWatched(
+        id,
+        sNum,
+        count,
+        {
+          title: this.seriesTitle(),
+          posterPath: this.posterPath() ?? undefined,
+          backdropPath: this.backdropPath() ?? undefined,
+          totalSeasons: this.totalSeasons(),
+          totalEpisodes: this.totalEpisodes(),
+          status: this.showStatus() ?? undefined
+        },
+        this.seasons()
+      );
       void this.toast.presentInfo(`Unmarked Season ${sNum}`, 1800);
     } else {
       await this.tvProgress.markSeasonWatched(id, sNum, count, {

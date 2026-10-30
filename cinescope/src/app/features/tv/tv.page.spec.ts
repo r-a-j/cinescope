@@ -7,6 +7,7 @@ import { StorageService } from '../../core/services/storage.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TvProgressDocType } from '../../core/database/schemas/tv-progress.schema';
+import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { of } from 'rxjs';
 
 describe('TvPage', () => {
@@ -20,18 +21,21 @@ describe('TvPage', () => {
   const mockCurrentlyWatching = signal<TvProgressDocType[]>([]);
   const mockCompletedSeries = signal<TvProgressDocType[]>([]);
 
+  const mockWatchedItems = signal<ContentDocType[]>([]);
+
   const mockTvProgressService = {
     allProgress: mockAllProgress,
     watchlistReadyToStart: mockWatchlistReady,
     airRadar: mockAirRadar,
     currentlyWatching: mockCurrentlyWatching,
     completedSeries: mockCompletedSeries,
-    markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve())
+    markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve()),
+    getUpNextEpisode: jasmine.createSpy('getUpNextEpisode').and.returnValue({ seasonNumber: 1, episodeNumber: 1 })
   };
 
   const mockStorageService = {
     watchlistItems: signal([]),
-    watchedItems: signal([])
+    watchedItems: mockWatchedItems
   };
 
   const mockTmdbTvService = {
@@ -48,6 +52,7 @@ describe('TvPage', () => {
     mockAirRadar.set([]);
     mockCurrentlyWatching.set([]);
     mockCompletedSeries.set([]);
+    mockWatchedItems.set([]);
 
     await TestBed.configureTestingModule({
       imports: [TvPage],
@@ -232,5 +237,32 @@ describe('TvPage', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.air-radar-section')).toBeTruthy();
     expect(compiled.querySelector('.radar-show-title')?.textContent).toContain('Show Alpha');
+  });
+
+  it('should include previously watched TV shows without progress doc as 100% completed cards', () => {
+    mockWatchedItems.set([
+      {
+        id: 'tv_888',
+        tmdbId: 888,
+        mediaType: 'tv',
+        lists: ['watched'],
+        addedAt: '2026-10-30T10:00:00Z',
+        payload: {
+          name: 'Classic Complete Series',
+          number_of_seasons: 3,
+          number_of_episodes: 30
+        }
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    const cards = component.allDisplayCards();
+    expect(cards.length).toBe(1);
+    expect(cards[0].id).toBe(888);
+    expect(cards[0].title).toBe('Classic Complete Series');
+    expect(cards[0].percentage).toBe(100);
+    expect(cards[0].isCompleted).toBeTrue();
+    expect(cards[0].isUnstarted).toBeFalse();
   });
 });

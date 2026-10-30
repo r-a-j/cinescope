@@ -5,7 +5,8 @@ import {
   IonContent,
   IonRefresher,
   IonRefresherContent,
-  IonIcon
+  IonIcon,
+  RefresherCustomEvent
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -32,9 +33,22 @@ import { StorageService } from 'src/app/core/services/storage.service';
 import { TmdbTvService } from 'src/app/core/services/tmdb-tv.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { resolveMediaImageUrl } from 'src/app/core/constants/api.constants';
+import { TmdbTvDetailDto } from 'src/app/core/dtos/tv/tv-detail.dto';
 import { firstValueFrom } from 'rxjs';
 
 export type BingeFilterMode = 'all' | 'quick' | 'weekend' | 'long' | 'unstarted';
+
+export function isQuickBite(card: { totalSeasons: number; totalEpisodes: number }): boolean {
+  return card.totalEpisodes > 0 && card.totalEpisodes <= 10;
+}
+
+export function isWeekendBinge(card: { totalSeasons: number; totalEpisodes: number }): boolean {
+  return card.totalSeasons <= 2 && card.totalEpisodes > 10 && card.totalEpisodes <= 24;
+}
+
+export function isLongHaul(card: { totalSeasons: number; totalEpisodes: number }): boolean {
+  return card.totalSeasons >= 3 || card.totalEpisodes > 24;
+}
 
 export interface TvGridCardVm {
   id: number;
@@ -104,6 +118,7 @@ export class TvPage {
 
   /**
    * Combined and deduplicated list of all trackable TV series in library.
+   * Includes active tracking progress, watchlist series, and previously watched series.
    */
   public readonly allDisplayCards = computed<TvGridCardVm[]>(() => {
     const cards: TvGridCardVm[] = [];
@@ -118,11 +133,12 @@ export class TvPage {
         ? Math.min(100, Math.round((p.watchedEpisodesCount / p.totalEpisodes) * 100))
         : 0;
 
-      let upNextS = p.lastWatchedSeason ?? 1;
-      let upNextE = (p.lastWatchedEpisode ?? 0) + 1;
-      if (isCompleted) {
-        upNextS = p.totalSeasons;
-        upNextE = p.totalEpisodes;
+      let upNextSeason: number | undefined;
+      let upNextEpisode: number | undefined;
+      if (!isCompleted) {
+        const nextEp = this.tvProgress.getUpNextEpisode(p.tmdbId);
+        upNextSeason = nextEp?.seasonNumber ?? (p.lastWatchedSeason && p.lastWatchedSeason > 0 ? p.lastWatchedSeason : 1);
+        upNextEpisode = nextEp?.episodeNumber ?? ((p.lastWatchedEpisode ?? 0) + 1);
       }
 
       cards.push({
@@ -136,8 +152,8 @@ export class TvPage {
         percentage: pct,
         isCompleted,
         isUnstarted,
-        upNextSeason: isCompleted ? undefined : upNextS,
-        upNextEpisode: isCompleted ? undefined : upNextE,
+        upNextSeason,
+        upNextEpisode,
         upNextTitle: p.lastWatchedEpisodeTitle,
         status: p.status
       });
@@ -165,6 +181,36 @@ export class TvPage {
       });
     }
 
+    // 3. Add Watched TV series from storage that don't have an explicit progress doc yet
+    // In CineScope, previously watched series default to 100% completed
+    for (const item of this.storage.watchedItems()) {
+      if (item.mediaType !== 'tv') continue;
+      if (seenIds.has(item.tmdbId)) continue;
+      seenIds.add(item.tmdbId);
+
+      const payload = (item.payload ?? {}) as Partial<TmdbTvDetailDto>;
+      const title = String(payload.name || (payload['title'] as string | undefined) || `Series #${item.tmdbId}`);
+      const totalSeasons = typeof payload.number_of_seasons === 'number' ? payload.number_of_seasons : 1;
+      const totalEpisodes = typeof payload.number_of_episodes === 'number' ? payload.number_of_episodes : 0;
+
+      cards.push({
+        id: item.tmdbId,
+        title,
+        posterUrl: resolveMediaImageUrl(payload.poster_path, 'w342'),
+        backdropUrl: payload.backdrop_path ? resolveMediaImageUrl(payload.backdrop_path, 'w780') : undefined,
+        totalSeasons,
+        totalEpisodes,
+        watchedEpisodesCount: totalEpisodes,
+        percentage: 100,
+        isCompleted: true,
+        isUnstarted: false,
+        upNextSeason: undefined,
+        upNextEpisode: undefined,
+        upNextTitle: undefined,
+        status: payload.status
+      });
+    }
+
     return cards;
   });
 
@@ -177,11 +223,11 @@ export class TvPage {
 
     switch (filter) {
       case 'quick':
-        return list.filter((c) => c.totalEpisodes > 0 && c.totalEpisodes <= 10);
+        return list.filter(isQuickBite);
       case 'weekend':
-        return list.filter((c) => c.totalSeasons <= 2 && c.totalEpisodes > 10 && c.totalEpisodes <= 24);
+        return list.filter(isWeekendBinge);
       case 'long':
-        return list.filter((c) => c.totalSeasons >= 3 || c.totalEpisodes > 24);
+        return list.filter(isLongHaul);
       case 'unstarted':
         return list.filter((c) => c.isUnstarted);
       case 'all':
@@ -202,9 +248,9 @@ export class TvPage {
 
     for (const c of list) {
       if (c.isUnstarted) unstarted++;
-      if (c.totalEpisodes > 0 && c.totalEpisodes <= 10) quick++;
-      if (c.totalSeasons <= 2 && c.totalEpisodes > 10 && c.totalEpisodes <= 24) weekend++;
-      if (c.totalSeasons >= 3 || c.totalEpisodes > 24) long++;
+      if (isQuickBite(c)) quick++;
+      if (isWeekendBinge(c)) weekend++;
+      if (isLongHaul(c)) long++;
     }
 
     return { all: list.length, quick, weekend, long, unstarted };
@@ -266,23 +312,25 @@ export class TvPage {
     void this.router.navigate(['/tabs/discover']);
   }
 
-  public async onPullRefresh(event: CustomEvent): Promise<void> {
+  public async onPullRefresh(event: RefresherCustomEvent): Promise<void> {
     this.isRefreshing.set(true);
     try {
       const active = this.tvProgress.currentlyWatching().slice(0, 5);
-      for (const p of active) {
-        try {
-          const detail = await firstValueFrom(this.tmdbTv.getTvShowDetails(p.tmdbId));
-          if (detail) {
-            await this.tvProgress.syncSeriesMeta(detail);
+      await Promise.allSettled(
+        active.map(async (p) => {
+          try {
+            const detail = await firstValueFrom(this.tmdbTv.getTvShowDetails(p.tmdbId));
+            if (detail) {
+              await this.tvProgress.syncSeriesMeta(detail);
+            }
+          } catch {
+            // Skip offline or failed single fetches
           }
-        } catch {
-          // Skip offline or failed single fetches
-        }
-      }
+        })
+      );
     } finally {
       this.isRefreshing.set(false);
-      (event.target as unknown as { complete?: () => void })?.complete?.();
+      event.target.complete();
     }
   }
 

@@ -1112,7 +1112,12 @@ export class MediaDetailPage implements OnInit {
         status: t.status,
         vote_average: t.vote_average,
         genres: t.genres,
-        media_type: 'tv'
+        media_type: 'tv',
+        number_of_seasons: t.number_of_seasons,
+        number_of_episodes: t.number_of_episodes,
+        seasons: t.seasons,
+        next_episode_to_air: t.next_episode_to_air,
+        last_episode_to_air: t.last_episode_to_air
       };
     }
     const prev = this.preview();
