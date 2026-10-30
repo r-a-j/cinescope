@@ -77,7 +77,7 @@ export class EpisodeDetailModalComponent {
   public readonly seasonNumber = input<number>(1);
   public readonly episodeNumber = input<number>(1);
   public readonly seriesTitle = input<string | undefined>(undefined);
-  public readonly seriesBackdropUrl = input<string | undefined>(undefined);
+  public readonly seriesBackdropUrl = input<string | null | undefined>(undefined);
   public readonly totalEpisodesInSeason = input<number | undefined>(undefined);
 
   // Outputs
@@ -240,11 +240,19 @@ export class EpisodeDetailModalComponent {
       createOutline
     });
 
-    effect(() => {
+    effect((onCleanup) => {
       const open = this.isOpen();
       const sId = this.seriesId();
       const sNum = this.seasonNumber();
       const eNum = this.episodeNumber();
+
+      if (open) {
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        onCleanup(() => {
+          document.body.style.overflow = prevOverflow;
+        });
+      }
 
       if (open && sId) {
         this.currentSeasonNumber.set(sNum || 1);

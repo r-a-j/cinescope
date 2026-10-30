@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { IonSpinner, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline } from 'ionicons/icons';
-import { EpisodeDetailModalComponent } from '../../../../shared/components/episode-detail-modal/episode-detail-modal.component';
 import { TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto } from '../../../../core/dtos/tv/tv-detail.dto';
 import {
   TmdbTvSeasonDetailDto,
@@ -19,7 +18,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-tv-seasons-hub',
   standalone: true,
-  imports: [CommonModule, IonSpinner, IonIcon, EpisodeDetailModalComponent],
+  imports: [CommonModule, IonSpinner, IonIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tv-seasons-hub.component.html',
   styleUrls: ['./tv-seasons-hub.component.scss'],
@@ -48,26 +47,19 @@ export class TvSeasonsHubComponent {
 
   public seasonSelect = output<number>();
   public personClick = output<{ id: number; name: string; profileUrl?: string | null }>();
+  public episodeSelect = output<{ seasonNumber: number; episodeNumber: number }>();
 
   public expandedEpisodeIds = signal<Record<number, boolean>>({});
-  public readonly isEpisodeModalOpen = signal<boolean>(false);
-  public readonly modalEpisodeNumber = signal<number>(1);
 
   constructor() {
     addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline });
   }
 
   public openEpisodeLookup(epNumber: number): void {
-    this.modalEpisodeNumber.set(epNumber);
-    this.isEpisodeModalOpen.set(true);
-  }
-
-  public closeEpisodeLookup(): void {
-    this.isEpisodeModalOpen.set(false);
-  }
-
-  public onModalEpisodeChange(event: { seasonNumber: number; episodeNumber: number }): void {
-    this.modalEpisodeNumber.set(event.episodeNumber);
+    this.episodeSelect.emit({
+      seasonNumber: this.selectedSeasonNumber(),
+      episodeNumber: epNumber
+    });
   }
 
   public isEpisodeWatched(seasonNumber: number, episodeNumber: number): boolean {

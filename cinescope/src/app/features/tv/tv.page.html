@@ -1,6 +1,6 @@
 <app-header></app-header>
 
-<ion-content data-tour="tv-page" color="background" class="ion-no-padding tv-content">
+<ion-content data-tour="tv-page" color="background" class="ion-no-padding tv-content" [scrollY]="!isEpisodeModalOpen()">
   <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
@@ -337,16 +337,16 @@
       </section>
     </div>
   }
-
-  <app-episode-detail-modal
-    [isOpen]="isEpisodeModalOpen()"
-    [seriesId]="modalSeriesId()"
-    [seasonNumber]="modalSeasonNumber()"
-    [episodeNumber]="modalEpisodeNumber()"
-    [seriesTitle]="modalSeriesTitle()"
-    [seriesBackdropUrl]="modalSeriesBackdrop()"
-    [totalEpisodesInSeason]="modalTotalEpisodesInSeason()"
-    (didDismiss)="closeEpisodeModal()"
-    (episodeChange)="onModalEpisodeChange($event)">
-  </app-episode-detail-modal>
 </ion-content>
+
+<app-episode-detail-modal
+  [isOpen]="isEpisodeModalOpen()"
+  [seriesId]="modalSeriesId()"
+  [seasonNumber]="modalSeasonNumber()"
+  [episodeNumber]="modalEpisodeNumber()"
+  [seriesTitle]="modalSeriesTitle()"
+  [seriesBackdropUrl]="modalSeriesBackdrop()"
+  [totalEpisodesInSeason]="modalTotalEpisodesInSeason()"
+  (didDismiss)="closeEpisodeModal()"
+  (episodeChange)="onModalEpisodeChange($event)">
+</app-episode-detail-modal>

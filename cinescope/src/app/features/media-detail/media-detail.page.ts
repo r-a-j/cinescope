@@ -77,6 +77,7 @@ import { TvSeasonsHubComponent } from './components/tv-seasons-hub/tv-seasons-hu
 import { CastVideoGalleryComponent } from './components/cast-video-gallery/cast-video-gallery.component';
 import { MediaArtworkGalleryComponent, TmdbImagesContainer } from './components/media-artwork-gallery/media-artwork-gallery.component';
 import { ProductionReviewsPanelComponent } from './components/production-reviews-panel/production-reviews-panel.component';
+import { EpisodeDetailModalComponent } from '../../shared/components/episode-detail-modal/episode-detail-modal.component';
 
 export interface CastMemberVm {
   id: number;
@@ -177,7 +178,8 @@ const PREFERRED_REGIONS = ['IN', 'DE', 'US', 'GB', 'CA', 'AU'];
     TvSeasonsHubComponent,
     CastVideoGalleryComponent,
     MediaArtworkGalleryComponent,
-    ProductionReviewsPanelComponent
+    ProductionReviewsPanelComponent,
+    EpisodeDetailModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './media-detail.page.html',
@@ -219,6 +221,9 @@ export class MediaDetailPage implements OnInit {
   public selectedSeasonNumber = signal<number>(1);
   public seasonDetailsMap = signal<Record<number, TmdbTvSeasonDetailDto>>({});
   public isSeasonLoading = signal<boolean>(false);
+  public readonly isEpisodeModalOpen = signal<boolean>(false);
+  public readonly modalEpisodeNumber = signal<number>(1);
+  public readonly modalSeasonNumber = signal<number>(1);
 
   public overviewExpanded = signal<boolean>(false);
   public isScrolled = signal<boolean>(false);
@@ -1174,6 +1179,21 @@ export class MediaDetailPage implements OnInit {
         await this.toast.presentWarning(`Cannot mark "${itemTitle}" as Watched — not released yet`, 2200);
       }
     }
+  }
+
+  public openEpisodeModal(event: { seasonNumber: number; episodeNumber: number }): void {
+    this.modalSeasonNumber.set(event.seasonNumber);
+    this.modalEpisodeNumber.set(event.episodeNumber);
+    this.isEpisodeModalOpen.set(true);
+  }
+
+  public closeEpisodeModal(): void {
+    this.isEpisodeModalOpen.set(false);
+  }
+
+  public onModalEpisodeChange(event: { seasonNumber: number; episodeNumber: number }): void {
+    this.modalSeasonNumber.set(event.seasonNumber);
+    this.modalEpisodeNumber.set(event.episodeNumber);
   }
 
   public openCreator(creator: TvCreatorVm): void {

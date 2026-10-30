@@ -269,15 +269,3 @@
         }
       </section>
     }
-
-    <app-episode-detail-modal
-      [isOpen]="isEpisodeModalOpen()"
-      [seriesId]="seriesId()"
-      [seasonNumber]="selectedSeasonNumber()"
-      [episodeNumber]="modalEpisodeNumber()"
-      [seriesTitle]="seriesTitle()"
-      [seriesBackdropUrl]="backdropPath() ? resolveStill(backdropPath()) : undefined"
-      [totalEpisodesInSeason]="episodes().length"
-      (didDismiss)="closeEpisodeLookup()"
-      (episodeChange)="onModalEpisodeChange($event)">
-    </app-episode-detail-modal>

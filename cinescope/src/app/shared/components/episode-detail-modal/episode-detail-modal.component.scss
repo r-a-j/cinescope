@@ -2,6 +2,7 @@
   --background: #09090e;
   --border-radius: 24px 24px 0 0;
   --backdrop-opacity: 0.78;
+  overscroll-behavior: contain;
 
   &::part(handle) {
     background: rgba(255, 255, 255, 0.4);
@@ -16,6 +17,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85);
     background: #09090e;
+    overscroll-behavior: contain;
   }
 }
 
@@ -25,11 +27,20 @@
   height: 100%;
   background: #09090e;
   color: #ffffff;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 .episode-modal-content {
   --background: #09090e;
   --color: #ffffff;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+
+  &::part(scroll) {
+    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+  }
 }
 
 .episode-hero-stage {

@@ -114,6 +114,7 @@ describe('EpisodeDetailModalComponent', () => {
   afterEach(() => {
     fixture.destroy();
     document.querySelectorAll('ion-modal').forEach((m) => m.remove());
+    document.body.style.overflow = '';
     if (document.activeElement && document.activeElement !== document.body) {
       (document.activeElement as HTMLElement).blur?.();
     }

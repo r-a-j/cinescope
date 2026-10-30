@@ -1,4 +1,4 @@
-<ion-content [fullscreen]="true" color="background" class="detail-content" [scrollEvents]="true" (ionScroll)="onScroll($event)">
+<ion-content [fullscreen]="true" color="background" class="detail-content" [scrollEvents]="true" (ionScroll)="onScroll($event)" [scrollY]="!isEpisodeModalOpen()">
   <!-- Cinematic Hero & Action Bar Component -->
   <app-detail-hero
     [mediaType]="mediaType()"
@@ -135,7 +135,8 @@
         [nextEpisodeToAir]="nextEpisodeToAir()"
         [showStatus]="statusLabel()"
         [numberOfSeasons]="tvDetail()?.number_of_seasons || 0"
-        (seasonSelect)="selectSeason($event)">
+        (seasonSelect)="selectSeason($event)"
+        (episodeSelect)="openEpisodeModal($event)">
       </app-tv-seasons-hub>
     }
 
@@ -190,3 +191,17 @@
 
   <div class="bottom-spacer"></div>
 </ion-content>
+
+@if (mediaType() === 'tv') {
+  <app-episode-detail-modal
+    [isOpen]="isEpisodeModalOpen()"
+    [seriesId]="tmdbId()"
+    [seasonNumber]="modalSeasonNumber()"
+    [episodeNumber]="modalEpisodeNumber()"
+    [seriesTitle]="title()"
+    [seriesBackdropUrl]="backdropUrl()"
+    [totalEpisodesInSeason]="activeSeasonEpisodes().length"
+    (didDismiss)="closeEpisodeModal()"
+    (episodeChange)="onModalEpisodeChange($event)">
+  </app-episode-detail-modal>
+}
