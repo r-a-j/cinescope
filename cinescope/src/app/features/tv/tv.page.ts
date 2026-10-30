@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -32,6 +32,7 @@ import { TvProgressService, AirRadarItem } from 'src/app/core/services/tv-progre
 import { StorageService } from 'src/app/core/services/storage.service';
 import { TmdbTvService } from 'src/app/core/services/tmdb-tv.service';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { MediaMetadataService } from 'src/app/core/services/media-metadata.service';
 import { resolveMediaImageUrl } from 'src/app/core/constants/api.constants';
 import { TmdbTvDetailDto } from 'src/app/core/dtos/tv/tv-detail.dto';
 import { firstValueFrom } from 'rxjs';
@@ -88,6 +89,7 @@ export class TvPage {
   private readonly router = inject(Router);
   private readonly tmdbTv = inject(TmdbTvService);
   private readonly toast = inject(ToastService);
+  public readonly mediaMetadata = inject(MediaMetadataService);
 
   public readonly activeBingeFilter = signal<BingeFilterMode>('all');
   public readonly selectedHeroId = signal<number | null>(null);
@@ -279,6 +281,31 @@ export class TvPage {
       flameOutline,
       hourglassOutline
     });
+
+    // Centralized idle healing: scans for any cards missing posters or episode totals
+    effect(() => {
+      const cards = this.allDisplayCards();
+      const needsHealing = cards
+        .filter((c) => !c.posterUrl || c.posterUrl.includes('placeholder') || c.totalEpisodes === 0)
+        .slice(0, 10)
+        .map((c) => ({ tmdbId: c.id, mediaType: 'tv' as const }));
+
+      if (needsHealing.length > 0) {
+        this.mediaMetadata.queueBackgroundHealing(needsHealing);
+      }
+    });
+  }
+
+  public onImageError(event: Event, tmdbId: number): void {
+    this.mediaMetadata.handleImageError(event, tmdbId, 'tv');
+  }
+
+  public onBackdropError(event: Event, tmdbId?: number): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    if (tmdbId) {
+      void this.mediaMetadata.healMediaMetadata(tmdbId, 'tv');
+    }
   }
 
   public setFilter(mode: BingeFilterMode): void {

@@ -106,6 +106,8 @@
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
                     [priority]="idx < 8"
+                    [tmdbId]="vm.doc.tmdbId"
+                    [mediaType]="vm.doc.mediaType"
                     bookmarkState="watchlist"
                     (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">
@@ -144,6 +146,8 @@
                     [title]="vm.title"
                     [imageUrl]="vm.posterUrl"
                     [priority]="idx < 8"
+                    [tmdbId]="vm.doc.tmdbId"
+                    [mediaType]="vm.doc.mediaType"
                     bookmarkState="watched"
                     (cardClick)="onOpenDetail(vm)"
                     (bookmarkToggle)="onToggleBookmark(vm.doc)">

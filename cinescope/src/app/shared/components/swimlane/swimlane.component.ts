@@ -64,6 +64,15 @@ export class SwimlaneComponent {
         return this.storageService.getBookmarkState(item.id, mediaType);
     }
 
+    public getNumericTmdbId(item: SwimlaneItem): number | undefined {
+        const num = Number(item.id);
+        return Number.isFinite(num) && num > 0 ? num : undefined;
+    }
+
+    public getMediaType(item: SwimlaneItem): 'movie' | 'tv' | undefined {
+        return item.mediaType === 'movie' || item.mediaType === 'tv' ? item.mediaType : undefined;
+    }
+
     public onCardClick(item: SwimlaneItem): void {
         if (item.mediaType === 'person') {
             void this.router.navigate(['/person', item.id], {

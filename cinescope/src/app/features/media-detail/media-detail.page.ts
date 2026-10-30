@@ -48,6 +48,7 @@ import {
 import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { TmdbTvSeasonsService } from '../../core/services/tmdb-tv-seasons.service';
+import { MediaMetadataService } from '../../core/services/media-metadata.service';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -192,6 +193,7 @@ export class MediaDetailPage implements OnInit {
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private navService = inject(NavigationService);
+  private mediaMetadata = inject(MediaMetadataService);
 
   private castVideoGallery = viewChild(CastVideoGalleryComponent);
   private artworkGallery = viewChild(MediaArtworkGalleryComponent);
@@ -1000,6 +1002,7 @@ export class MediaDetailPage implements OnInit {
         }
         this.movieDetail.set(res);
         this.syncDefaultWatchRegion();
+        void this.mediaMetadata.syncActiveLibraryDoc(id, 'movie', res);
       } else {
         const [res, imagesRes] = await Promise.all([
           firstValueFrom(
@@ -1018,6 +1021,7 @@ export class MediaDetailPage implements OnInit {
         }
         this.tvDetail.set(res);
         this.syncDefaultWatchRegion();
+        void this.mediaMetadata.syncActiveLibraryDoc(id, 'tv', res);
 
         const firstSeason =
           res.seasons?.find((s) => s.season_number === 1) ??

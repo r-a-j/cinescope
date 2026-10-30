@@ -60,7 +60,11 @@
         <section class="tv-hero-stage">
           @if (hero.backdropUrl) {
             <div class="hero-backdrop">
-              <img [src]="hero.backdropUrl" [alt]="hero.title" class="backdrop-img" />
+              <img
+                [src]="hero.backdropUrl"
+                [alt]="hero.title"
+                class="backdrop-img"
+                (error)="onBackdropError($event, hero.id)" />
               <div class="backdrop-gradient"></div>
             </div>
           }
@@ -158,7 +162,8 @@
                   <img
                     [src]="item.posterPath ? 'https://image.tmdb.org/t/p/w185' + item.posterPath : 'assets/placeholders/placeholder.webp'"
                     [alt]="item.seriesTitle"
-                    loading="lazy" />
+                    loading="lazy"
+                    (error)="onImageError($event, item.tmdbId)" />
                   <span class="radar-countdown-pill" [class.is-today]="item.daysUntil === 0">
                     {{ formatRadarLabel(item) }}
                   </span>
@@ -194,7 +199,12 @@
                 class="queue-chip"
                 [class.is-active]="heroSeries()?.id === card.id"
                 (click)="selectHero(card.id)">
-                <img [src]="card.posterUrl" [alt]="card.title" class="queue-thumb" loading="lazy" />
+                <img
+                  [src]="card.posterUrl"
+                  [alt]="card.title"
+                  class="queue-thumb"
+                  loading="lazy"
+                  (error)="onImageError($event, card.id)" />
                 <div class="queue-meta">
                   <span class="queue-name">{{ card.title }}</span>
                   <span class="queue-sub">
@@ -281,7 +291,12 @@
               (click)="openShowDetail(card.id)"
               (keyup.enter)="openShowDetail(card.id)">
               <div class="tv-poster-wrap">
-                <img [src]="card.posterUrl" [alt]="card.title" loading="lazy" class="tv-poster" />
+                <img
+                  [src]="card.posterUrl"
+                  [alt]="card.title"
+                  loading="lazy"
+                  class="tv-poster"
+                  (error)="onImageError($event, card.id)" />
 
                 @if (card.isCompleted) {
                   <span class="card-status-badge completed">

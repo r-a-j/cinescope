@@ -6,6 +6,7 @@ import { TvProgressService, AirRadarItem, WatchlistReadySeries } from '../../cor
 import { StorageService } from '../../core/services/storage.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { ToastService } from '../../core/services/toast.service';
+import { MediaMetadataService } from '../../core/services/media-metadata.service';
 import { TvProgressDocType } from '../../core/database/schemas/tv-progress.schema';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { of } from 'rxjs';
@@ -46,6 +47,12 @@ describe('TvPage', () => {
     presentSuccess: jasmine.createSpy('presentSuccess').and.returnValue(Promise.resolve())
   };
 
+  const mockMediaMetadataService = {
+    handleImageError: jasmine.createSpy('handleImageError'),
+    healMediaMetadata: jasmine.createSpy('healMediaMetadata').and.returnValue(Promise.resolve()),
+    queueBackgroundHealing: jasmine.createSpy('queueBackgroundHealing')
+  };
+
   beforeEach(async () => {
     mockAllProgress.set([]);
     mockWatchlistReady.set([]);
@@ -61,7 +68,8 @@ describe('TvPage', () => {
         { provide: TvProgressService, useValue: mockTvProgressService },
         { provide: StorageService, useValue: mockStorageService },
         { provide: TmdbTvService, useValue: mockTmdbTvService },
-        { provide: ToastService, useValue: mockToastService }
+        { provide: ToastService, useValue: mockToastService },
+        { provide: MediaMetadataService, useValue: mockMediaMetadataService }
       ]
     }).compileComponents();
 
@@ -264,5 +272,18 @@ describe('TvPage', () => {
     expect(cards[0].percentage).toBe(100);
     expect(cards[0].isCompleted).toBeTrue();
     expect(cards[0].isUnstarted).toBeFalse();
+  });
+
+  it('should delegate image errors and backdrop errors to MediaMetadataService', () => {
+    const fakeEvent = {
+      target: document.createElement('img')
+    } as unknown as Event;
+
+    component.onImageError(fakeEvent, 95396);
+    expect(mockMediaMetadataService.handleImageError).toHaveBeenCalledWith(fakeEvent, 95396, 'tv');
+
+    component.onBackdropError(fakeEvent, 95396);
+    expect((fakeEvent.target as HTMLImageElement).style.display).toBe('none');
+    expect(mockMediaMetadataService.healMediaMetadata).toHaveBeenCalledWith(95396, 'tv');
   });
 });

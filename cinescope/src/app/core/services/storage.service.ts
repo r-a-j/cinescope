@@ -1479,7 +1479,7 @@ export class StorageService {
         return current;
     }
 
-    private generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
+    public generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
         return `${mediaType}_${tmdbId}`;
     }
 }

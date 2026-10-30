@@ -424,6 +424,8 @@
                 [title]="card.item.title"
                 [imageUrl]="card.item.posterUrl || 'assets/placeholders/placeholder.webp'"
                 [priority]="idx < 12"
+                [tmdbId]="getCardTmdbId(card.item)"
+                [mediaType]="getCardMediaType(card.item)"
                 [showBookmark]="card.item.mediaType !== 'person'"
                 [bookmarkState]="getBookmarkState(card.item)"
                 (cardClick)="onCardClick(card.item)"
