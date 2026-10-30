@@ -24,6 +24,7 @@ import { SwimlaneComponent } from 'src/app/shared/components/swimlane/swimlane.c
 import { TrendingStore } from '../../core/store/trending.store';
 import { FeedService } from '../../core/services/feed.service';
 import { NavigationService } from '../../core/services/navigation.service';
+import { AppTourService } from '../../core/services/app-tour.service';
 
 @Component({
     selector: 'app-discover',
@@ -56,6 +57,7 @@ export class DiscoverPage implements OnInit, AfterViewInit {
     public store = inject(TrendingStore);
     public feedService = inject(FeedService);
     private navService = inject(NavigationService);
+    private tour = inject(AppTourService);
 
     @ViewChild(IonContent, { static: false }) private content?: IonContent;
     private scrollEl: HTMLElement | null = null;
@@ -131,6 +133,17 @@ export class DiscoverPage implements OnInit, AfterViewInit {
         } finally {
             if (target) {
                 await target.complete();
+            }
+        }
+    }
+
+    public async retryTrending(): Promise<void> {
+        await this.store.loadTrendingData(true);
+        if (!this.store.error()) {
+            try {
+                await this.tour.startFirstRun();
+            } catch (error) {
+                console.error('[Discover] Could not start the first-run tutorial after retry:', error);
             }
         }
     }

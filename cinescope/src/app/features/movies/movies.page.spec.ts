@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { MoviesPage } from './movies.page';
+import { FranchiseTrackerComponent } from './components/franchise-tracker/franchise-tracker.component';
 import { StorageService } from '../../core/services/storage.service';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -9,10 +11,22 @@ import { MoviesPreferencesService } from '../../core/services/movies-preferences
 import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
 import { of } from 'rxjs';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
+import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
 
 describe('MoviesPage', () => {
   let component: MoviesPage;
   let fixture: ComponentFixture<MoviesPage>;
+  const baselineFranchises: FranchiseCollectionSummary[] = [
+    {
+      id: 1,
+      name: 'Mission: Impossible Series',
+      totalParts: 7,
+      watchedCount: 5,
+      collectedCount: 6,
+      watchlistCount: 1,
+      completionPercentage: 71
+    }
+  ];
 
   const mockWatchlistItems = signal<ContentDocType[]>([
     {
@@ -72,17 +86,7 @@ describe('MoviesPage', () => {
   };
 
   const mockFranchiseAggregatorService = {
-    activeUserFranchises: signal([
-      {
-        id: 1,
-        name: 'Mission: Impossible Series',
-        totalParts: 7,
-        watchedCount: 5,
-        collectedCount: 6,
-        watchlistCount: 1,
-        completionPercentage: 71
-      }
-    ])
+    activeUserFranchises: signal<FranchiseCollectionSummary[]>(baselineFranchises)
   };
 
   const mockToastService = {
@@ -121,6 +125,7 @@ describe('MoviesPage', () => {
   };
 
   beforeEach(async () => {
+    mockFranchiseAggregatorService.activeUserFranchises.set(baselineFranchises);
     await TestBed.configureTestingModule({
       imports: [MoviesPage],
       providers: [
@@ -154,6 +159,100 @@ describe('MoviesPage', () => {
     expect(vis.franchises).toBeTrue();
     expect(vis.blindTicket).toBeTrue();
     expect(component.allSectionsHidden()).toBeFalse();
+  });
+
+  it('only suggests unfinished franchises or completed sagas with upcoming releases', () => {
+    mockFranchiseAggregatorService.activeUserFranchises.set([
+      {
+        id: 1,
+        name: 'Completed Saga',
+        totalParts: 4,
+        watchedCount: 4,
+        collectedCount: 4,
+        watchlistCount: 0,
+        completionPercentage: 100,
+        upcomingPartsCount: 0
+      },
+      {
+        id: 2,
+        name: 'Saga To Continue',
+        totalParts: 5,
+        watchedCount: 2,
+        collectedCount: 3,
+        watchlistCount: 1,
+        completionPercentage: 40,
+        upcomingPartsCount: 0,
+        upNextPart: { id: 202, title: 'Next Chapter' }
+      },
+      {
+        id: 3,
+        name: 'Caught Up Saga',
+        totalParts: 3,
+        watchedCount: 3,
+        collectedCount: 3,
+        watchlistCount: 0,
+        completionPercentage: 100,
+        upcomingPartsCount: 1
+      },
+      {
+        id: 4,
+        name: 'Queued Saga',
+        totalParts: 6,
+        watchedCount: 1,
+        collectedCount: 3,
+        watchlistCount: 2,
+        completionPercentage: 17
+      },
+      {
+        id: 5,
+        name: 'Saga To Start',
+        totalParts: 4,
+        watchedCount: 0,
+        collectedCount: 0,
+        watchlistCount: 0,
+        completionPercentage: 0
+      },
+      {
+        id: 6,
+        name: 'Nearly Complete Saga',
+        totalParts: 200,
+        watchedCount: 199,
+        collectedCount: 199,
+        watchlistCount: 0,
+        completionPercentage: 100,
+        upcomingPartsCount: 0,
+        upNextPart: { id: 206, title: 'Final Chapter' }
+      }
+    ]);
+
+    expect(component.franchiseSuggestions().map(franchise => franchise.id)).toEqual([2, 6, 4, 3, 5]);
+  });
+
+  it('shows the next released title even when upcoming releases also exist', () => {
+    const tracker = fixture.debugElement.query(By.directive(FranchiseTrackerComponent))
+      .componentInstance as FranchiseTrackerComponent;
+    const franchise: FranchiseCollectionSummary = {
+      id: 7,
+      name: 'Almost Caught Up',
+      totalParts: 200,
+      watchedCount: 199,
+      collectedCount: 199,
+      watchlistCount: 0,
+      completionPercentage: 100,
+      upcomingPartsCount: 1,
+      upNextPart: { id: 207, title: 'Final Chapter' }
+    };
+
+    expect(tracker.progressLabel(franchise)).toBe('Next: Final Chapter');
+    expect(tracker.progressLabel({
+      ...franchise,
+      watchedCount: 0,
+      totalParts: 2,
+      releasedPartsCount: 0,
+      completionPercentage: 0,
+      upcomingPartsCount: 2,
+      upNextPart: null
+    })).toBe('2 upcoming');
   });
 
   it('should detect when all sections are hidden', () => {

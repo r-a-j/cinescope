@@ -63,3 +63,9 @@ When you first launch CineScope, the application performs automatic initializati
 - **Local Storage Creation**: Initializes an encrypted, offline-first RxDB database instance in your device's local storage.
 - **Zero API Key Configuration**: You do **not** need to register for The Movie Database (TMDB) or Google AI Studio accounts. The application delegates requests to a secure backend gateway that manages upstream rate limits and credentials.
 - **Immediate Offline Preparedness**: As you browse titles and add them to your watchlist, entries are cached for offline retrieval.
+
+### First-Run App Tour
+
+On a fresh installation, CineScope loads the initial Discover feed before opening a guided spotlight tour of its main sections and shortcuts. Use **Next** and **Back** to move through the tour, or **Skip tour** to close it. If the feed cannot load, retry from Discover; the automatic tour waits until the feed loads. The tour only appears automatically once; existing installations are not prompted after updating.
+
+To revisit the walkthrough later, open **Settings → Help & Tutorials**. Choose **Full App Tour** or expand a category to launch a focused tutorial. Tutorials are grouped into **Explore & Discover**, **Your Library**, and **Recommendations**. The **Your Library → Franchise Tracker** walkthrough explains how to track a saga, read its progress, use the timeline filters, and find the next title to watch. **Universe Merge & Unmerge** explains how related sagas are folded under a universe in Archive and why that does not change the universe's canon or progress. This walkthrough includes hands-on merge guidance when a merge-eligible universe is already tracked.

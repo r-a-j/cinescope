@@ -35,7 +35,7 @@
         }
 
         <!-- Compact Horizontal Action Strip -->
-        <div class="franchise-actions-bar">
+        <div class="franchise-actions-bar" data-tour="franchise-actions">
           <button
             type="button"
             class="save-franchise-btn"
@@ -83,6 +83,7 @@
               <button
                 type="button"
                 class="merge-toggle-btn"
+                data-tour="franchise-merge-toggle"
                 [class.is-merged]="isMergedIntoParentUniverse()"
                 (click)="toggleMergeWithParentUniverse()">
                 <ion-icon [name]="isMergedIntoParentUniverse() ? 'git-merge-outline' : 'git-branch-outline'"></ion-icon>
@@ -131,7 +132,7 @@
           </div>
         }
 
-        <div class="franchise-progress-card">
+        <div class="franchise-progress-card" data-tour="franchise-progress">
           <div class="progress-info">
             <div class="progress-left">
               <span class="progress-stats">
@@ -207,7 +208,7 @@
 
     <!-- Controls: Streamlined Single-Row Toolbar for Franchises -->
     @if (isFranchiseCollection() && rawItems().length > 1) {
-      <div class="franchise-toolbar">
+      <div class="franchise-toolbar" data-tour="franchise-filters">
         <div class="toolbar-chips-scroll">
           @if (hasActiveFilters()) {
             <button
@@ -403,6 +404,7 @@
             class="collection-card"
             [class.is-up-next-card]="card.isUpNext"
             [class.is-watched-card]="card.isWatched"
+            [attr.data-tour]="isFranchiseCollection() && idx === upNextCardIndex() ? 'franchise-timeline' : null"
             [style.--card-delay]="(idx < 18 ? idx * 16 : 0) + 'ms'">
             <div class="poster-wrap">
               @if (card.chronologicalOrder) {

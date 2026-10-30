@@ -52,6 +52,58 @@
         </ion-item>
     </ion-list>
 
+    <ion-list inset="true" class="cinescope-list" data-tour="settings-tutorials">
+        <ion-item button (click)="isHelpTutorialsCollapsed.set(!isHelpTutorialsCollapsed())" [lines]="isHelpTutorialsCollapsed() ? 'none' : 'inset'">
+            <ion-icon slot="start" name="help-circle-outline"></ion-icon>
+            <ion-label>
+                <h3>Help & Tutorials</h3>
+                <p>Interactive guides and full walkthroughs</p>
+            </ion-label>
+            <ion-icon slot="end" [name]="isHelpTutorialsCollapsed() ? 'chevron-forward-outline' : 'chevron-down-outline'"></ion-icon>
+        </ion-item>
+        @if (!isHelpTutorialsCollapsed()) {
+            <ion-item button data-tour="settings-full-tour" (click)="startTutorial('app')">
+                <ion-icon slot="start" name="sparkles-outline"></ion-icon>
+                <ion-label>
+                    <h3>Full App Tour</h3>
+                    <p>Visit the main sections and learn the key shortcuts</p>
+                </ion-label>
+            </ion-item>
+            @for (category of tutorialCategories; track category.id) {
+                <ion-item
+                    button
+                    detail="false"
+                    (click)="toggleTutorialCategory(category.id)"
+                    [attr.aria-expanded]="isTutorialCategoryExpanded(category.id)"
+                    [attr.aria-controls]="'tutorial-category-' + category.id"
+                    [lines]="isTutorialCategoryExpanded(category.id) ? 'inset' : 'none'">
+                    <ion-icon slot="start" [name]="category.icon"></ion-icon>
+                    <ion-label>
+                        <h3>{{ category.label }}</h3>
+                        <p>{{ category.description }}</p>
+                    </ion-label>
+                    <ion-icon slot="end" [name]="isTutorialCategoryExpanded(category.id) ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
+                </ion-item>
+                <div
+                    [id]="'tutorial-category-' + category.id"
+                    class="tutorial-category-items"
+                    [hidden]="!isTutorialCategoryExpanded(category.id)">
+                    @if (isTutorialCategoryExpanded(category.id)) {
+                        @for (tutorial of category.tutorials; track tutorial.id) {
+                            <ion-item button (click)="startTutorial(tutorial.id)" lines="none">
+                                <ion-icon slot="start" name="information-circle-outline"></ion-icon>
+                                <ion-label>
+                                    <h3>{{ tutorial.label }}</h3>
+                                    <p>{{ tutorial.description }}</p>
+                                </ion-label>
+                            </ion-item>
+                        }
+                    }
+                </div>
+            }
+        }
+    </ion-list>
+
 <ion-list inset="true" class="cinescope-list">
         <ion-item button (click)="isMoviesTabCollapsed.set(!isMoviesTabCollapsed())" [lines]="isMoviesTabCollapsed() ? 'none' : 'inset'">
             <ion-icon slot="start" name="film-outline"></ion-icon>

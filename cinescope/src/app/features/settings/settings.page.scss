@@ -28,6 +28,12 @@ ion-title {
     }
 }
 
+.tutorial-category-items ion-item {
+    --padding-start: 52px;
+    --background: #151515;
+    min-height: 60px;
+}
+
 // Footer Styling
 .tmdb-footer {
     text-align: center;

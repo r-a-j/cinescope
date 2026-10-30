@@ -39,7 +39,7 @@
         </div>
       }
 
-      <button type="button" class="import-toolbar-btn" (click)="openImportModal()">
+      <button type="button" class="import-toolbar-btn" data-tour="inbox-import" (click)="openImportModal()">
         <ion-icon name="add-circle-outline"></ion-icon>
         <span>Import</span>
       </button>
@@ -59,7 +59,7 @@
   </div>
 </ion-toolbar>
 
-<ion-content color="background" [scrollY]="viewMode() === 'list'">
+<ion-content data-tour="inbox-queue" color="background" [scrollY]="viewMode() === 'list'">
   <div class="inbox-container" [class.list-mode-active]="viewMode() === 'list' && cards().length > 0">
     @if (cards().length === 0) {
       <div class="empty-inbox">

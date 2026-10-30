@@ -158,9 +158,12 @@ export class CollectionPage implements OnInit, AfterViewInit {
 
     for (const f of allActive) {
       if (!f.isUniverse) continue;
-      if (f.siblingFranchises?.some((s) => s.id === colId)) {
+    if (f.mergedSubCollectionIds?.includes(colId)) {
         return f;
       }
+    if (f.siblingFranchises?.some((s) => s.id === colId)) {
+      return f;
+    }
       if (firstMovieId && f.parts?.some((p) => Number(p.id) === Number(firstMovieId) && (p.mediaType || 'movie') === 'movie')) {
         return f;
       }
@@ -267,7 +270,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
     }
 
     const effectiveTotal = releasedCount > 0 ? releasedCount : items.length;
-    const percentage = effectiveTotal > 0 ? Math.min(100, Math.round((watched / effectiveTotal) * 100)) : 0;
+    const percentage = effectiveTotal > 0 ? Math.min(100, Math.floor((watched / effectiveTotal) * 100)) : 0;
 
     return {
       watched,
@@ -422,6 +425,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
       return [...vms].sort((a, b) => a.item.title.localeCompare(b.item.title));
     }
     return vms;
+  });
+
+  public upNextCardIndex = computed<number>(() => {
+    const cards = this.displayedCards();
+    if (cards.length === 0) return -1;
+    const nextIdx = cards.findIndex((c) => c.isUpNext);
+    return nextIdx >= 0 ? nextIdx : 0;
   });
 
   constructor() {

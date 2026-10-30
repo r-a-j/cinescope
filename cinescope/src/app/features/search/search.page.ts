@@ -24,6 +24,7 @@ import { BookmarkState } from '../../shared/components/poster-card/poster-card.c
 import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
 import { TmdbCollectionListItemDto } from '../../core/dtos/collections/collection-list-item.dto';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
+import { AppTourService } from '../../core/services/app-tour.service';
 
 @Component({
   selector: 'app-search',
@@ -45,6 +46,7 @@ export class SearchPage implements OnInit {
   private navCtrl = inject(NavController);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private tour = inject(AppTourService);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
 
@@ -177,8 +179,15 @@ export class SearchPage implements OnInit {
   }
 
   public ionViewDidEnter(): void {
+    if (this.tour.isActive()) {
+      return;
+    }
+
     // Wait for Android view transition animation to settle before focusing and opening native keyboard
     setTimeout(async () => {
+      if (this.tour.isActive()) {
+        return;
+      }
       try {
         if (this.searchbar) {
           await this.searchbar.setFocus();
