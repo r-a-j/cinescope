@@ -254,6 +254,13 @@
       border: 1px solid rgba(251, 191, 36, 0.3);
       width: fit-content;
       max-width: 100%;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+
+      &:active {
+        background: rgba(251, 191, 36, 0.22);
+        transform: scale(0.98);
+      }
 
       .next-ep-badge {
         display: inline-flex;

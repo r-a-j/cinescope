@@ -28,6 +28,7 @@ import {
   hourglassOutline
 } from 'ionicons/icons';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import { EpisodeDetailModalComponent } from 'src/app/shared/components/episode-detail-modal/episode-detail-modal.component';
 import { TvProgressService, AirRadarItem } from 'src/app/core/services/tv-progress.service';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { TmdbTvService } from 'src/app/core/services/tmdb-tv.service';
@@ -77,7 +78,8 @@ export interface TvGridCardVm {
     IonRefresher,
     IonRefresherContent,
     IonIcon,
-    HeaderComponent
+    HeaderComponent,
+    EpisodeDetailModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tv.page.html',
@@ -95,6 +97,15 @@ export class TvPage {
   public readonly selectedHeroId = signal<number | null>(null);
   public readonly isRefreshing = signal<boolean>(false);
   public readonly heroEpisodeStillUrl = signal<string | null>(null);
+
+  // Quick Episode Lookup Modal State
+  public readonly isEpisodeModalOpen = signal<boolean>(false);
+  public readonly modalSeriesId = signal<number | undefined>(undefined);
+  public readonly modalSeasonNumber = signal<number>(1);
+  public readonly modalEpisodeNumber = signal<number>(1);
+  public readonly modalSeriesTitle = signal<string | undefined>(undefined);
+  public readonly modalSeriesBackdrop = signal<string | undefined>(undefined);
+  public readonly modalTotalEpisodesInSeason = signal<number | undefined>(undefined);
 
   /**
    * Primary backdrop for the hero stage:
@@ -381,6 +392,36 @@ export class TvPage {
 
   public openShowDetail(tmdbId: number): void {
     void this.router.navigate(['/media', 'tv', tmdbId]);
+  }
+
+  public openEpisodeGuide(hero?: TvGridCardVm | null): void {
+    if (!hero) return;
+    this.modalSeriesId.set(hero.id);
+    this.modalSeasonNumber.set(hero.upNextSeason ?? 1);
+    this.modalEpisodeNumber.set(hero.upNextEpisode ?? 1);
+    this.modalSeriesTitle.set(hero.title);
+    this.modalSeriesBackdrop.set(hero.backdropUrl);
+    this.modalTotalEpisodesInSeason.set(undefined);
+    this.isEpisodeModalOpen.set(true);
+  }
+
+  public openAirRadarEpisode(item: AirRadarItem): void {
+    this.modalSeriesId.set(item.tmdbId);
+    this.modalSeasonNumber.set(item.seasonNumber);
+    this.modalEpisodeNumber.set(item.episodeNumber);
+    this.modalSeriesTitle.set(item.seriesTitle);
+    this.modalSeriesBackdrop.set(undefined);
+    this.modalTotalEpisodesInSeason.set(undefined);
+    this.isEpisodeModalOpen.set(true);
+  }
+
+  public closeEpisodeModal(): void {
+    this.isEpisodeModalOpen.set(false);
+  }
+
+  public onModalEpisodeChange(event: { seasonNumber: number; episodeNumber: number }): void {
+    this.modalSeasonNumber.set(event.seasonNumber);
+    this.modalEpisodeNumber.set(event.episodeNumber);
   }
 
   public navigateToDiscover(): void {

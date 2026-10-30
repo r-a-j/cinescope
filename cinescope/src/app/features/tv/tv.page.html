@@ -90,7 +90,12 @@
             </h2>
 
             @if (!hero.isCompleted) {
-              <div class="next-ep-banner">
+              <div
+                class="next-ep-banner"
+                tabindex="0"
+                role="button"
+                (click)="openEpisodeGuide(hero)"
+                (keyup.enter)="openEpisodeGuide(hero)">
                 <div class="next-ep-badge">
                   <ion-icon name="play-outline"></ion-icon>
                   <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
@@ -129,7 +134,7 @@
               <button
                 type="button"
                 class="action-btn-secondary"
-                (click)="openShowDetail(hero.id)">
+                (click)="openEpisodeGuide(hero)">
                 <ion-icon name="albums-outline"></ion-icon>
                 <span>Episode Guide</span>
               </button>
@@ -156,8 +161,8 @@
                 [class.today]="item.daysUntil === 0"
                 tabindex="0"
                 role="button"
-                (click)="openShowDetail(item.tmdbId)"
-                (keyup.enter)="openShowDetail(item.tmdbId)">
+                (click)="openAirRadarEpisode(item)"
+                (keyup.enter)="openAirRadarEpisode(item)">
                 <div class="radar-card-media">
                   <img
                     [src]="item.posterPath ? 'https://image.tmdb.org/t/p/w185' + item.posterPath : 'assets/placeholders/placeholder.webp'"
@@ -332,4 +337,16 @@
       </section>
     </div>
   }
+
+  <app-episode-detail-modal
+    [isOpen]="isEpisodeModalOpen()"
+    [seriesId]="modalSeriesId()"
+    [seasonNumber]="modalSeasonNumber()"
+    [episodeNumber]="modalEpisodeNumber()"
+    [seriesTitle]="modalSeriesTitle()"
+    [seriesBackdropUrl]="modalSeriesBackdrop()"
+    [totalEpisodesInSeason]="modalTotalEpisodesInSeason()"
+    (didDismiss)="closeEpisodeModal()"
+    (episodeChange)="onModalEpisodeChange($event)">
+  </app-episode-detail-modal>
 </ion-content>

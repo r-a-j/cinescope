@@ -122,7 +122,12 @@
             @for (ep of episodes(); track ep.id) {
               <div class="episode-card" [class.is-finale]="ep.episode_type === 'finale'">
                 <div class="episode-top-row">
-                  <div class="episode-still-wrapper">
+                  <div
+                    class="episode-still-wrapper"
+                    tabindex="0"
+                    role="button"
+                    (click)="openEpisodeLookup(ep.episode_number)"
+                    (keyup.enter)="openEpisodeLookup(ep.episode_number)">
                     <img
                       [src]="resolveStill(ep.still_path)"
                       [alt]="ep.name"
@@ -139,7 +144,14 @@
 
                   <div class="episode-info">
                     <div class="episode-title-row">
-                      <h4 class="episode-name">{{ ep.name }}</h4>
+                      <h4
+                        class="episode-name"
+                        tabindex="0"
+                        role="button"
+                        (click)="openEpisodeLookup(ep.episode_number)"
+                        (keyup.enter)="openEpisodeLookup(ep.episode_number)">
+                        {{ ep.name }}
+                      </h4>
                       <div class="episode-actions-right">
                         @if (ep.vote_average > 0) {
                           <span class="episode-rating">★ {{ ep.vote_average.toFixed(1) }}</span>
@@ -257,3 +269,15 @@
         }
       </section>
     }
+
+    <app-episode-detail-modal
+      [isOpen]="isEpisodeModalOpen()"
+      [seriesId]="seriesId()"
+      [seasonNumber]="selectedSeasonNumber()"
+      [episodeNumber]="modalEpisodeNumber()"
+      [seriesTitle]="seriesTitle()"
+      [seriesBackdropUrl]="backdropPath() ? resolveStill(backdropPath()) : undefined"
+      [totalEpisodesInSeason]="episodes().length"
+      (didDismiss)="closeEpisodeLookup()"
+      (episodeChange)="onModalEpisodeChange($event)">
+    </app-episode-detail-modal>

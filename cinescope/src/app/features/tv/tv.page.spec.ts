@@ -323,4 +323,46 @@ describe('TvPage', () => {
     expect(fakeImg.src).toContain('/show_alpha_backdrop.jpg');
     expect(component.heroBackdropUrl()).toContain('/show_alpha_backdrop.jpg');
   });
+
+  it('should open episode detail modal from hero guide and air radar', () => {
+    const fakeHero = {
+      id: 95396,
+      title: 'Severance',
+      posterUrl: '/poster.jpg',
+      backdropUrl: '/backdrop.jpg',
+      totalSeasons: 2,
+      totalEpisodes: 19,
+      watchedEpisodesCount: 3,
+      percentage: 15,
+      isCompleted: false,
+      isUnstarted: false,
+      upNextSeason: 1,
+      upNextEpisode: 4
+    };
+
+    component.openEpisodeGuide(fakeHero);
+
+    expect(component.isEpisodeModalOpen()).toBeTrue();
+    expect(component.modalSeriesId()).toBe(95396);
+    expect(component.modalSeasonNumber()).toBe(1);
+    expect(component.modalEpisodeNumber()).toBe(4);
+
+    component.closeEpisodeModal();
+    expect(component.isEpisodeModalOpen()).toBeFalse();
+
+    component.openAirRadarEpisode({
+      tmdbId: 202,
+      seriesTitle: 'Radar Show',
+      seasonNumber: 2,
+      episodeNumber: 5,
+      episodeTitle: 'The Hunt',
+      airDate: '2026-11-01',
+      daysUntil: 2
+    });
+
+    expect(component.isEpisodeModalOpen()).toBeTrue();
+    expect(component.modalSeriesId()).toBe(202);
+    expect(component.modalSeasonNumber()).toBe(2);
+    expect(component.modalEpisodeNumber()).toBe(5);
+  });
 });
