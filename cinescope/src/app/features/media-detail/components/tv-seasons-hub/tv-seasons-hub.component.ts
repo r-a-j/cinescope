@@ -1,7 +1,9 @@
 import { Component, ChangeDetectionStrategy, input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { IonSpinner } from '@ionic/angular/standalone';
+import { IonSpinner, IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline } from 'ionicons/icons';
 import { TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto } from '../../../../core/dtos/tv/tv-detail.dto';
 import {
   TmdbTvSeasonDetailDto,
@@ -10,17 +12,28 @@ import {
   TmdbTvSeasonGuestStarDto
 } from '../../../../core/dtos/tv-seasons/tv-season-detail.dto';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
+import { TvProgressService } from '../../../../core/services/tv-progress.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-tv-seasons-hub',
   standalone: true,
-  imports: [CommonModule, IonSpinner],
+  imports: [CommonModule, IonSpinner, IonIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tv-seasons-hub.component.html',
   styleUrls: ['./tv-seasons-hub.component.scss'],
 })
 export class TvSeasonsHubComponent {
   private readonly router = inject(Router);
+  public readonly tvProgress = inject(TvProgressService);
+  private readonly toast = inject(ToastService);
+
+  public seriesId = input<number | undefined>(undefined);
+  public seriesTitle = input<string | undefined>(undefined);
+  public posterPath = input<string | null | undefined>(undefined);
+  public backdropPath = input<string | null | undefined>(undefined);
+  public totalEpisodes = input<number | undefined>(undefined);
+  public totalSeasons = input<number | undefined>(undefined);
 
   public seasons = input.required<TmdbTvSeasonBaseDto[]>();
   public selectedSeasonNumber = input.required<number>();
@@ -36,6 +49,67 @@ export class TvSeasonsHubComponent {
   public personClick = output<{ id: number; name: string; profileUrl?: string | null }>();
 
   public expandedEpisodeIds = signal<Record<number, boolean>>({});
+
+  constructor() {
+    addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline });
+  }
+
+  public isEpisodeWatched(seasonNumber: number, episodeNumber: number): boolean {
+    const id = this.seriesId();
+    if (!id) return false;
+    return this.tvProgress.isEpisodeWatched(id, seasonNumber, episodeNumber);
+  }
+
+  public async onToggleEpisodeWatched(event: Event, ep: TmdbTvSeasonEpisodeDto): Promise<void> {
+    event.stopPropagation();
+    const id = this.seriesId();
+    if (!id) return;
+
+    const nowWatched = await this.tvProgress.toggleEpisode(id, ep.season_number, ep.episode_number, {
+      title: this.seriesTitle(),
+      posterPath: this.posterPath() ?? undefined,
+      backdropPath: this.backdropPath() ?? undefined,
+      totalSeasons: this.totalSeasons(),
+      totalEpisodes: this.totalEpisodes(),
+      status: this.showStatus() ?? undefined,
+      episodeTitle: ep.name
+    });
+
+    if (nowWatched) {
+      void this.toast.presentSuccess(`Marked S${ep.season_number} E${ep.episode_number} watched`, 1800);
+    }
+  }
+
+  public isCurrentSeasonWatched(): boolean {
+    const id = this.seriesId();
+    if (!id) return false;
+    const count = this.episodes().length;
+    return this.tvProgress.isSeasonFullyWatched(id, this.selectedSeasonNumber(), count);
+  }
+
+  public async onToggleSeasonWatched(event: Event): Promise<void> {
+    event.stopPropagation();
+    const id = this.seriesId();
+    if (!id) return;
+    const sNum = this.selectedSeasonNumber();
+    const count = this.episodes().length;
+    const isWatched = this.isCurrentSeasonWatched();
+
+    if (isWatched) {
+      await this.tvProgress.unmarkSeasonWatched(id, sNum, count);
+      void this.toast.presentInfo(`Unmarked Season ${sNum}`, 1800);
+    } else {
+      await this.tvProgress.markSeasonWatched(id, sNum, count, {
+        title: this.seriesTitle(),
+        posterPath: this.posterPath() ?? undefined,
+        backdropPath: this.backdropPath() ?? undefined,
+        totalSeasons: this.totalSeasons(),
+        totalEpisodes: this.totalEpisodes(),
+        status: this.showStatus() ?? undefined
+      });
+      void this.toast.presentSuccess(`Marked Season ${sNum} watched (${count} eps)`, 1800);
+    }
+  }
 
   public getMilestoneBadge(
     ep: TmdbTvEpisodeBaseDto | TmdbTvSeasonEpisodeDto | null | undefined

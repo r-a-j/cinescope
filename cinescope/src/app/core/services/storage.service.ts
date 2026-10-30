@@ -5,6 +5,7 @@ import { ContentDocType } from '../database/schemas/content.schema';
 import { SettingsDocType } from '../database/schemas/settings.schema';
 import { RegionService } from './region.service';
 import { SearchHistoryDocType } from '../database/schemas/search-history.schema';
+import { TvProgressDocType } from '../database/schemas/tv-progress.schema';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { PosterCacheService } from './poster-cache.service';
@@ -115,6 +116,7 @@ export interface CinescopeBackupPayload {
     settings: SettingsDocType | null;
     content: ContentDocType[];
     searchHistory: SearchHistoryDocType[];
+    tvProgress?: TvProgressDocType[] | undefined;
 }
 
 export interface BackupInspectionResult {
@@ -1155,10 +1157,11 @@ export class StorageService {
 
     public async exportBackupJson(): Promise<string> {
         this.initReactiveStreams();
-        const [settingsDoc, contentDocs, historyDocs] = await Promise.all([
+        const [settingsDoc, contentDocs, historyDocs, tvProgressDocs] = await Promise.all([
             this.dbService.db.settings.findOne('user_preferences').exec(),
             this.dbService.db.content.find().exec(),
-            this.dbService.db.searchHistory.find().exec()
+            this.dbService.db.searchHistory.find().exec(),
+            this.dbService.db.tvProgress.find().exec()
         ]);
 
         const payload: CinescopeBackupPayload = {
@@ -1178,6 +1181,14 @@ export class StorageService {
             }),
             searchHistory: historyDocs.map((d) => {
                 const json = d.toJSON() as SearchHistoryDocType;
+                const clean = { ...json };
+                delete (clean as Record<string, unknown>)['_rev'];
+                delete (clean as Record<string, unknown>)['_deleted'];
+                delete (clean as Record<string, unknown>)['_meta'];
+                return clean;
+            }),
+            tvProgress: tvProgressDocs.map((d) => {
+                const json = d.toJSON() as TvProgressDocType;
                 const clean = { ...json };
                 delete (clean as Record<string, unknown>)['_rev'];
                 delete (clean as Record<string, unknown>)['_deleted'];
@@ -1340,6 +1351,23 @@ export class StorageService {
                     await this.dbService.db.searchHistory.bulkUpsert(chunk);
                 }
                 historyCount = validHistory.length;
+            }
+        }
+
+        // 5. Restore TV Progress (if present) in chunks
+        if (Array.isArray(parsed.tvProgress)) {
+            const validProgress: TvProgressDocType[] = [];
+            for (const p of parsed.tvProgress) {
+                if (p && typeof p.id === 'string' && typeof p.tmdbId === 'number' && Array.isArray(p.watchedEpisodes)) {
+                    validProgress.push(p);
+                }
+            }
+            if (validProgress.length > 0) {
+                const CHUNK_SIZE = 100;
+                for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
+                    const chunk = validProgress.slice(i, i + CHUNK_SIZE);
+                    await this.dbService.db.tvProgress.bulkUpsert(chunk);
+                }
             }
         }
 

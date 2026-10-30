@@ -120,6 +120,12 @@
     <!-- TV-Exclusive: Airing Pulse ("Where Was I?") & Interactive Seasons/Episodes Hub -->
     @if (mediaType() === 'tv') {
       <app-tv-seasons-hub
+        [seriesId]="tmdbId()"
+        [seriesTitle]="title()"
+        [posterPath]="tvDetail()?.poster_path"
+        [backdropPath]="tvDetail()?.backdrop_path"
+        [totalEpisodes]="tvDetail()?.number_of_episodes || 0"
+        [totalSeasons]="tvDetail()?.number_of_seasons || tvSeasons().length"
         [seasons]="tvSeasons()"
         [selectedSeasonNumber]="selectedSeasonNumber()"
         [activeSeasonDetail]="activeSeasonDetail()"
