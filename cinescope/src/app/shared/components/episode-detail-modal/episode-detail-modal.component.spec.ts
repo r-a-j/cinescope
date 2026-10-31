@@ -213,6 +213,38 @@ describe('EpisodeDetailModalComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/media', 'tv', 95396]);
   });
 
+  it('should close modal and navigate to person details on openPerson', () => {
+    spyOn(router, 'navigate');
+    let dismissed = false;
+    component.didDismiss.subscribe(() => {
+      dismissed = true;
+    });
+
+    component.openPerson({ id: 12345 });
+
+    expect(dismissed).toBeTrue();
+    expect(router.navigate).toHaveBeenCalledWith(['/person', 12345]);
+  });
+
+  it('should compute crewSpotlights correctly from episode crew', fakeAsync(() => {
+    componentRef.setInput('isOpen', true);
+    componentRef.setInput('seriesId', 95396);
+    componentRef.setInput('seasonNumber', 1);
+    componentRef.setInput('episodeNumber', 4);
+    fixture.detectChanges();
+    tick();
+
+    const spotlights = component.crewSpotlights();
+    expect(spotlights.length).toBeGreaterThan(0);
+    expect(spotlights.some((s) => s.role === 'Director' && s.names.includes('Ben Stiller'))).toBeTrue();
+  }));
+
+  it('should respect showSeriesGuideLink input', () => {
+    expect(component.showSeriesGuideLink()).toBeTrue();
+    componentRef.setInput('showSeriesGuideLink', false);
+    expect(component.showSeriesGuideLink()).toBeFalse();
+  });
+
   it('should handle API errors gracefully', fakeAsync(() => {
     mockEpisodesService.getTvEpisodeDetails.and.returnValue(
       throwError(() => new Error('TMDB Network failure'))

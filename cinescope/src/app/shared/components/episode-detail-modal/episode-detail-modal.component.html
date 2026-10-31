@@ -164,62 +164,44 @@
                   <span class="section-count">{{ guestStars().length }}</span>
                 </div>
 
-                <div class="guest-stars-scroller">
+                <div class="cast-scroll-row">
                   @for (star of guestStars(); track star.id) {
-                    <div class="guest-star-card">
-                      <img
-                        [src]="resolveProfile(star.profile_path)"
-                        [alt]="star.name"
-                        class="star-avatar"
-                        loading="lazy" />
-                      <div class="star-info">
-                        <span class="star-name">{{ star.name }}</span>
-                        @if (star.character) {
-                          <span class="star-character">{{ star.character }}</span>
-                        }
+                    <div
+                      class="cast-card"
+                      tabindex="0"
+                      role="button"
+                      (click)="openPerson(star)"
+                      (keyup.enter)="openPerson(star)">
+                      <div class="cast-avatar-wrap">
+                        <img
+                          [src]="resolveProfile(star.profile_path)"
+                          [alt]="star.name"
+                          class="cast-avatar"
+                          loading="lazy"
+                          decoding="async" />
                       </div>
+                      <div class="cast-name">{{ star.name }}</div>
+                      @if (star.character) {
+                        <div class="cast-character">{{ star.character }}</div>
+                      }
                     </div>
                   }
                 </div>
               </div>
             }
 
-            <!-- Key Creators Section (Directors & Writers) -->
-            @if (directors().length > 0 || writers().length > 0) {
+            <!-- Key Crew Section -->
+            @if (crewSpotlights().length > 0) {
               <div class="info-section">
                 <div class="section-header">
                   <span class="section-accent"></span>
                   <h4 class="section-title">CREW</h4>
                 </div>
-                <div class="crew-spotlight-cards">
-                  @for (dir of directors(); track dir.id || dir.name) {
-                    <div class="crew-card">
-                      @if (dir.profile_path) {
-                        <img [src]="resolveProfile(dir.profile_path)" [alt]="dir.name" class="crew-avatar" />
-                      } @else {
-                        <div class="crew-avatar placeholder">
-                          <ion-icon name="videocam-outline"></ion-icon>
-                        </div>
-                      }
-                      <div class="crew-details">
-                        <span class="crew-role">DIRECTOR</span>
-                        <span class="crew-name">{{ dir.name }}</span>
-                      </div>
-                    </div>
-                  }
-                  @for (writer of writers(); track writer.id || writer.name) {
-                    <div class="crew-card">
-                      @if (writer.profile_path) {
-                        <img [src]="resolveProfile(writer.profile_path)" [alt]="writer.name" class="crew-avatar" />
-                      } @else {
-                        <div class="crew-avatar placeholder">
-                          <ion-icon name="create-outline"></ion-icon>
-                        </div>
-                      }
-                      <div class="crew-details">
-                        <span class="crew-role">WRITER</span>
-                        <span class="crew-name">{{ writer.name }}</span>
-                      </div>
+                <div class="crew-spotlight-grid">
+                  @for (item of crewSpotlights(); track item.role) {
+                    <div class="crew-spotlight-item">
+                      <span class="crew-role">{{ item.role }}</span>
+                      <span class="crew-names">{{ item.names }}</span>
                     </div>
                   }
                 </div>
@@ -261,8 +243,8 @@
               </div>
             }
 
-            <!-- Bottom Deep Link to Full Series -->
-            @if (seriesId()) {
+            <!-- Bottom Deep Link to Full Series (only when opened from outside media detail) -->
+            @if (seriesId() && showSeriesGuideLink()) {
               <div class="modal-footer-action">
                 <button
                   type="button"

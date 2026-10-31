@@ -79,6 +79,7 @@ export class EpisodeDetailModalComponent {
   public readonly seriesTitle = input<string | undefined>(undefined);
   public readonly seriesBackdropUrl = input<string | null | undefined>(undefined);
   public readonly totalEpisodesInSeason = input<number | undefined>(undefined);
+  public readonly showSeriesGuideLink = input<boolean>(true);
 
   // Outputs
   public readonly didDismiss = output();
@@ -183,11 +184,55 @@ export class EpisodeDetailModalComponent {
     });
   });
 
+  public readonly crewSpotlights = computed<{ role: string; names: string }[]>(() => {
+    const crew = this.detail()?.crew;
+    if (!crew || !Array.isArray(crew)) return [];
+    const items: { role: string; names: string }[] = [];
+
+    const directors = [
+      ...new Set(
+        crew
+          .filter((c) => c.job === 'Director' || c.department === 'Directing')
+          .map((c) => c.name)
+      )
+    ];
+    const writers = [
+      ...new Set(
+        crew
+          .filter((c) => c.job === 'Writer' || c.job === 'Screenplay' || c.department === 'Writing')
+          .map((c) => c.name)
+      )
+    ];
+    const composers = [
+      ...new Set(
+        crew.filter((c) => c.job === 'Original Music Composer' || c.job === 'Music').map((c) => c.name)
+      )
+    ];
+    const cinematographers = [
+      ...new Set(crew.filter((c) => c.job === 'Director of Photography').map((c) => c.name))
+    ];
+
+    if (directors.length > 0) {
+      items.push({ role: 'Director', names: directors.slice(0, 3).join(', ') });
+    }
+    if (writers.length > 0) {
+      items.push({ role: 'Writers', names: writers.slice(0, 3).join(', ') });
+    }
+    if (composers.length > 0) {
+      items.push({ role: 'Music', names: composers.slice(0, 2).join(', ') });
+    }
+    if (cinematographers.length > 0) {
+      items.push({ role: 'Cinematography', names: cinematographers.slice(0, 2).join(', ') });
+    }
+
+    return items;
+  });
+
   public readonly guestStars = computed<TmdbTvSeasonGuestStarDto[]>(() => {
     const d = this.detail();
     const list = d?.guest_stars || (d?.credits as { guest_stars?: TmdbTvSeasonGuestStarDto[] } | undefined)?.guest_stars;
     if (!list || !Array.isArray(list)) return [];
-    return list.slice(0, 12);
+    return list.slice(0, 20);
   });
 
   public readonly promoVideos = computed<TmdbVideoDto[]>(() => {
@@ -354,6 +399,12 @@ export class EpisodeDetailModalComponent {
     if (id) {
       void this.router.navigate(['/media', 'tv', id]);
     }
+  }
+
+  public openPerson(person: { id: number }): void {
+    if (!person?.id) return;
+    this.closeModal();
+    void this.router.navigate(['/person', person.id]);
   }
 
   public openImdbTrivia(): void {

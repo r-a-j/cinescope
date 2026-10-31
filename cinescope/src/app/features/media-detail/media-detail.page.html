@@ -201,6 +201,7 @@
     [seriesTitle]="title()"
     [seriesBackdropUrl]="backdropUrl()"
     [totalEpisodesInSeason]="activeSeasonEpisodes().length"
+    [showSeriesGuideLink]="false"
     (didDismiss)="closeEpisodeModal()"
     (episodeChange)="onModalEpisodeChange($event)">
   </app-episode-detail-modal>

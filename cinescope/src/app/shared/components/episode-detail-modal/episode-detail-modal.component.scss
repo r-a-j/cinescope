@@ -477,119 +477,99 @@
   }
 }
 
-.guest-stars-scroller {
+.cast-scroll-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
   }
 
-  .guest-star-card {
-    flex: 0 0 106px;
+  .cast-card {
+    width: 98px;
+    min-width: 98px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    padding: 12px 8px 10px;
-    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
 
-    .star-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #181822;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    &:active .cast-avatar-wrap {
+      transform: scale(0.97);
     }
 
-    .star-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      width: 100%;
+    &:focus-visible .cast-avatar-wrap {
+      outline: 2px solid var(--ion-color-primary, #10b981);
+      outline-offset: 2px;
+    }
 
-      .star-name {
-        font-size: 12px;
-        font-weight: 700;
-        color: #ffffff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .cast-avatar-wrap {
+      position: relative;
+      width: 98px;
+      height: 128px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #16161c;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 
-      .star-character {
-        font-size: 10.5px;
-        color: rgba(255, 255, 255, 0.48);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .cast-avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
+    }
+
+    .cast-name {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cast-character {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.56);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
 
-.crew-spotlight-cards {
+.crew-spotlight-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 
-  .crew-card {
+  .crew-spotlight-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    flex-direction: column;
+    gap: 2px;
 
-    .crew-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #181822;
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
-      flex-shrink: 0;
-
-      &.placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 18px;
-      }
+    .crew-role {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: rgba(255, 255, 255, 0.48);
+      font-weight: 700;
     }
 
-    .crew-details {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      overflow: hidden;
-
-      .crew-role {
-        font-size: 9.5px;
-        font-weight: 800;
-        letter-spacing: 0.8px;
-        color: #fbbf24;
-        text-transform: uppercase;
-      }
-
-      .crew-name {
-        font-size: 13px;
-        font-weight: 700;
-        color: #ffffff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .crew-names {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.35;
     }
   }
 }
