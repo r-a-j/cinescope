@@ -22,57 +22,100 @@
       <!-- 1. Hero Showcase Command Center -->
       @if (heroSeries(); as hero) {
         <section class="tv-hero-stage">
-          @if (heroBackdropUrl(); as backdrop) {
-            <div class="hero-backdrop">
+          <div class="hero-backdrop" [class.has-image]="!!heroBackdropUrl()">
+            @if (heroBackdropUrl(); as backdrop) {
               <img
                 [src]="backdrop"
                 [alt]="hero.title"
                 class="backdrop-img"
+                [class.is-loaded]="isImageLoaded(backdrop)"
+                (load)="onImageLoad($event, backdrop)"
                 (error)="onBackdropError($event, hero.id)" />
-              <div class="backdrop-gradient"></div>
-            </div>
-          }
+            }
+            <div class="backdrop-ambient-glow"></div>
+            <div class="backdrop-gradient"></div>
+          </div>
 
           <div class="hero-content">
-            <div class="hero-meta-kicker">
-              <span class="live-pulse-dot"></span>
-              <span class="kicker-text">
-                {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE')) }}
-              </span>
-              @if (hero.status) {
-                <span class="status-pill">{{ hero.status }}</span>
-              }
-            </div>
+            <div class="hero-main-layout">
+              <!-- Series Poster Spotlight -->
+              <div
+                class="hero-poster-frame"
+                [class.is-loaded]="isImageLoaded(hero.posterUrl)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Open ' + hero.title + ' details'"
+                (click)="openShowDetail(hero.id)"
+                (keyup.enter)="openShowDetail(hero.id)">
+                <img
+                  [src]="hero.posterUrl"
+                  [alt]="hero.title"
+                  class="hero-poster-img"
+                  [class.is-loaded]="isImageLoaded(hero.posterUrl)"
+                  (load)="onImageLoad($event, hero.posterUrl)"
+                  (error)="onImageError($event, hero.id)" />
+                <span class="hero-seasons-tag">
+                  {{ hero.totalSeasons }} {{ hero.totalSeasons === 1 ? 'SEASON' : 'SEASONS' }}
+                </span>
+              </div>
 
-            <h2
-              class="hero-title"
-              tabindex="0"
-              role="button"
-              (click)="openShowDetail(hero.id)"
-              (keyup.enter)="openShowDetail(hero.id)">
-              {{ hero.title }}
-            </h2>
-
-            @if (!hero.isCompleted) {
-              @if (hero.upNextSeason && hero.upNextEpisode) {
-                <div
-                  class="next-ep-banner"
-                  tabindex="0"
-                  role="button"
-                  (click)="openEpisodeGuide(hero)"
-                  (keyup.enter)="openEpisodeGuide(hero)">
-                  <div class="next-ep-badge">
-                    <ion-icon name="play-outline"></ion-icon>
-                    <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
-                  </div>
-                  @if (hero.upNextTitle) {
-                    <span class="next-ep-title">{{ hero.upNextTitle }}</span>
+              <!-- Series Meta & Up Next Callout -->
+              <div class="hero-info-col">
+                <div class="hero-meta-kicker">
+                  <span
+                    class="live-pulse-dot"
+                    [class.is-completed]="hero.isCompleted"
+                    [class.is-unstarted]="hero.isUnstarted"></span>
+                  <span
+                    class="kicker-text"
+                    [class.is-completed]="hero.isCompleted"
+                    [class.is-unstarted]="hero.isUnstarted">
+                    {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE')) }}
+                  </span>
+                  @if (hero.status) {
+                    <span class="status-pill">{{ hero.status }}</span>
                   }
                 </div>
-              } @else {
-                <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
-              }
-            }
+
+                <h2
+                  class="hero-title"
+                  tabindex="0"
+                  role="button"
+                  (click)="openShowDetail(hero.id)"
+                  (keyup.enter)="openShowDetail(hero.id)">
+                  {{ hero.title }}
+                </h2>
+
+                @if (!hero.isCompleted) {
+                  @if (hero.upNextSeason && hero.upNextEpisode) {
+                    <div
+                      class="next-ep-banner"
+                      tabindex="0"
+                      role="button"
+                      (click)="openEpisodeGuide(hero)"
+                      (keyup.enter)="openEpisodeGuide(hero)">
+                      <div class="next-ep-badge">
+                        <ion-icon name="play-outline"></ion-icon>
+                        <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
+                      </div>
+                      @if (hero.upNextTitle) {
+                        <span class="next-ep-title">{{ hero.upNextTitle }}</span>
+                      } @else {
+                        <span class="next-ep-title">Inspect Episode</span>
+                      }
+                      <ion-icon name="chevron-forward-outline" class="next-ep-arrow"></ion-icon>
+                    </div>
+                  } @else {
+                    <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
+                  }
+                } @else {
+                  <div class="completed-callout">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span>Series Completed</span>
+                  </div>
+                }
+              </div>
+            </div>
 
             <!-- Progress Meter -->
             <div class="hero-progress-block">
@@ -84,10 +127,13 @@
                     <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalEpisodes || '?' }}</strong> episodes watched
                   }
                 </span>
-                <span class="pct-pill">{{ hero.percentage }}%</span>
+                <span class="pct-pill" [class.is-completed]="hero.isCompleted">{{ hero.percentage }}%</span>
               </div>
               <div class="progress-track">
-                <div class="progress-fill" [style.width.%]="hero.percentage"></div>
+                <div
+                  class="progress-fill"
+                  [class.is-completed]="hero.isCompleted"
+                  [style.width.%]="hero.percentage"></div>
               </div>
             </div>
 
@@ -120,7 +166,10 @@
         <section class="tv-section air-radar-section">
           <div class="section-header">
             <div class="header-titles">
-              <span class="section-kicker">EPISODIC RADAR</span>
+              <span class="section-kicker">
+                <span class="kicker-bar"></span>
+                EPISODIC RADAR
+              </span>
               <h3 class="section-heading">WEEKLY AIR RADAR</h3>
             </div>
             <span class="radar-badge">{{ tvProgress.airRadar().length }} EPISODES</span>
@@ -135,12 +184,16 @@
                 role="button"
                 (click)="openAirRadarEpisode(item)"
                 (keyup.enter)="openAirRadarEpisode(item)">
-                <div class="radar-card-media">
+                <div class="radar-card-media" [class.is-loaded]="isImageLoaded(resolveRadarPoster(item.posterPath))">
                   <img
-                    [src]="item.posterPath ? 'https://image.tmdb.org/t/p/w185' + item.posterPath : 'assets/placeholders/placeholder.webp'"
+                    [src]="resolveRadarPoster(item.posterPath)"
                     [alt]="item.seriesTitle"
                     loading="lazy"
+                    decoding="async"
+                    [class.is-loaded]="isImageLoaded(resolveRadarPoster(item.posterPath))"
+                    (load)="onImageLoad($event, resolveRadarPoster(item.posterPath))"
                     (error)="onImageError($event, item.tmdbId)" />
+                  <div class="radar-media-scrim"></div>
                   <span class="radar-countdown-pill" [class.is-today]="item.daysUntil === 0">
                     {{ formatRadarLabel(item) }}
                   </span>
@@ -164,7 +217,10 @@
         <section class="tv-section queue-section">
           <div class="section-header">
             <div class="header-titles">
-              <span class="section-kicker">YOUR SHELF</span>
+              <span class="section-kicker">
+                <span class="kicker-bar"></span>
+                YOUR SHELF
+              </span>
               <h3 class="section-heading">SWITCH SHOW</h3>
             </div>
           </div>
@@ -176,12 +232,17 @@
                 class="queue-chip"
                 [class.is-active]="heroSeries()?.id === card.id"
                 (click)="selectHero(card.id)">
-                <img
-                  [src]="card.posterUrl"
-                  [alt]="card.title"
-                  class="queue-thumb"
-                  loading="lazy"
-                  (error)="onImageError($event, card.id)" />
+                <div class="queue-thumb-wrap" [class.is-loaded]="isImageLoaded(card.posterUrl)">
+                  <img
+                    [src]="card.posterUrl"
+                    [alt]="card.title"
+                    class="queue-thumb"
+                    loading="lazy"
+                    decoding="async"
+                    [class.is-loaded]="isImageLoaded(card.posterUrl)"
+                    (load)="onImageLoad($event, card.posterUrl)"
+                    (error)="onImageError($event, card.id)" />
+                </div>
                 <div class="queue-meta">
                   <span class="queue-name">{{ card.title }}</span>
                   <span class="queue-sub">
@@ -199,7 +260,10 @@
       <section class="tv-section binge-sizer-section">
         <div class="section-header">
           <div class="header-titles">
-            <span class="section-kicker">DECISION ENGINE</span>
+            <span class="section-kicker">
+              <span class="kicker-bar"></span>
+              DECISION ENGINE
+            </span>
             <h3 class="section-heading">THE BINGE SIZER</h3>
           </div>
         </div>
@@ -280,13 +344,18 @@
                 role="button"
                 (click)="openShowDetail(card.id)"
                 (keyup.enter)="openShowDetail(card.id)">
-                <div class="tv-poster-wrap">
+                <div class="tv-poster-wrap" [class.is-loaded]="isImageLoaded(card.posterUrl)">
                   <img
                     [src]="card.posterUrl"
                     [alt]="card.title"
-                    loading="lazy"
+                    [loading]="isImageLoaded(card.posterUrl) ? 'eager' : 'lazy'"
+                    [decoding]="isImageLoaded(card.posterUrl) ? 'sync' : 'async'"
                     class="tv-poster"
+                    [class.is-loaded]="isImageLoaded(card.posterUrl)"
+                    (load)="onImageLoad($event, card.posterUrl)"
                     (error)="onImageError($event, card.id)" />
+
+                  <div class="poster-bottom-scrim"></div>
 
                   @if (card.isCompleted) {
                     <span class="card-status-badge completed">
@@ -299,7 +368,7 @@
                     </span>
                   } @else if (card.upNextSeason && card.upNextEpisode) {
                     <span class="card-status-badge in-progress">
-                      S{{ card.upNextSeason }} E{{ card.upNextEpisode }}
+                      S{{ card.upNextSeason }} • E{{ card.upNextEpisode }}
                     </span>
                   } @else {
                     <span class="card-status-badge in-progress">
@@ -308,7 +377,10 @@
                   }
 
                   <div class="card-progress-bar">
-                    <div class="card-progress-fill" [style.width.%]="card.percentage"></div>
+                    <div
+                      class="card-progress-fill"
+                      [class.is-completed]="card.isCompleted"
+                      [style.width.%]="card.percentage"></div>
                   </div>
                 </div>
 

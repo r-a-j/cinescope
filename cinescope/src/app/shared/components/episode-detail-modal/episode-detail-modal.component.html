@@ -1,8 +1,8 @@
 <ion-modal
   [isOpen]="isOpen()"
   (didDismiss)="onModalDidDismiss()"
-  [initialBreakpoint]="0.9"
-  [breakpoints]="[0, 0.65, 0.9, 1.0]"
+  [initialBreakpoint]="0.92"
+  [breakpoints]="[0, 0.65, 0.92, 1.0]"
   [backdropBreakpoint]="0.5"
   [backdropDismiss]="true"
   class="episode-modal-sheet">
@@ -10,19 +10,49 @@
     <div
       class="episode-modal-container"
       (wheel)="$event.stopPropagation()">
+      @if (isLoading() && detail()) {
+        <div class="episode-stepping-bar" aria-hidden="true">
+          <div class="stepping-bar-fill"></div>
+        </div>
+      }
+
       <ion-content class="episode-modal-content" [scrollY]="true">
-        <!-- Visual Hero Stage with Edge-to-Edge Image & Floating Controls -->
-        <div class="episode-hero-stage">
+        <!-- Visual Hero Stage with Edge-to-Edge 16:9 Still & Floating Cinema Controls -->
+        <div
+          class="episode-hero-stage"
+          [class.is-loaded]="isStillLoaded()"
+          [class.has-still]="hasValidLandscapeStill()">
           <img
             [src]="stillUrl()"
             [alt]="detail()?.name || seriesTitle() || 'Episode Still'"
             class="episode-hero-img"
+            [class.is-loaded]="isStillLoaded() && hasValidLandscapeStill()"
+            [class.is-hidden]="!hasValidLandscapeStill()"
+            (load)="onStillLoad($event)"
             (error)="onStillError($event)" />
 
-          <!-- Top vignette for grabber & close button visibility -->
+          @if (!hasValidLandscapeStill()) {
+            <div class="hero-cinematic-fallback" aria-hidden="true">
+              <div class="fallback-glow"></div>
+              <div class="fallback-emblem">
+                <ion-icon name="tv-outline"></ion-icon>
+                <span>{{ episodeCode() }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Top vignette for grabber & floating bar visibility -->
           <div class="hero-top-vignette"></div>
-          <!-- Bottom vignette for smooth transition to content -->
+          <!-- Bottom vignette for seamless OLED transition to content -->
           <div class="hero-bottom-vignette"></div>
+
+          <!-- Top Floating Series Context Pill -->
+          @if (seriesTitle()) {
+            <div class="hero-series-chip">
+              <ion-icon name="tv-outline"></ion-icon>
+              <span>{{ seriesTitle() }}</span>
+            </div>
+          }
 
           <!-- Floating Close Button -->
           <button
@@ -36,30 +66,60 @@
           <!-- Hero Stage Badges -->
           <div class="hero-stage-badges">
             <span class="ep-badge-capsule">
-              <span class="ep-badge-dot"></span>
-              {{ episodeCode() }}
+              <span class="ep-badge-dot" [class.is-watched]="isWatched()"></span>
+              <span>{{ episodeCode() }}</span>
             </span>
             @if (episodeTypeLabel(); as typeLabel) {
               <span class="ep-type-capsule" [class.is-finale]="isFinale()">{{ typeLabel }}</span>
             }
+            @if (isWatched()) {
+              <span class="ep-watched-capsule">
+                <ion-icon name="checkmark-circle"></ion-icon>
+                <span>WATCHED</span>
+              </span>
+            }
           </div>
         </div>
 
-        <div class="episode-modal-body">
-          @if (isLoading()) {
+        <div class="episode-modal-body" [class.is-transitioning]="isLoading() && !!detail()">
+          @if (isLoading() && !detail()) {
             <div class="episode-loading-state">
-              <ion-spinner name="crescent" color="primary"></ion-spinner>
-              <span>Loading episode details...</span>
+              <div class="loading-skeleton-block">
+                <div class="sk-line sk-kicker"></div>
+                <div class="sk-line sk-title"></div>
+                <div class="sk-pills">
+                  <div class="sk-pill"></div>
+                  <div class="sk-pill"></div>
+                  <div class="sk-pill"></div>
+                </div>
+                <div class="sk-action-bar"></div>
+                <div class="sk-line sk-body-1"></div>
+                <div class="sk-line sk-body-2"></div>
+              </div>
+              <div class="loading-spinner-caption">
+                <ion-spinner name="crescent" color="primary"></ion-spinner>
+                <span>Loading episode guide...</span>
+              </div>
             </div>
-          } @else if (error()) {
+          } @else if (error() && !detail()) {
             <div class="episode-error-banner">
               <ion-icon name="alert-circle-outline"></ion-icon>
               <span>{{ error() }}</span>
             </div>
           } @else {
-            <!-- Header Titles -->
+            @if (error()) {
+              <div class="episode-error-banner">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>{{ error() }}</span>
+              </div>
+            }
+
+            <!-- Header Titles & Metadata Ribbon -->
             <div class="episode-header-group">
-              <span class="series-name-sub">{{ seriesTitle() || 'TV Series' }}</span>
+              <span class="series-name-sub">
+                <span class="sub-accent-dot"></span>
+                SEASON {{ currentSeasonNumber() }} • EPISODE {{ currentEpisodeNumber() }}
+              </span>
               <h2 class="episode-title">{{ detail()?.name || ('Episode ' + currentEpisodeNumber()) }}</h2>
 
               <!-- Quick Meta Pills -->
@@ -93,32 +153,41 @@
                     class="meta-pill imdb-pill"
                     (click)="$event.stopPropagation()">
                     <span class="imdb-badge">IMDb</span>
-                    <span class="imdb-text">Trivia</span>
+                    <span class="imdb-text">Page</span>
                     <ion-icon name="open-outline"></ion-icon>
                   </a>
                 }
               </div>
             </div>
 
-            <!-- Command Center: Stepper & Watched Primary Action -->
+            <!-- Cinema Control Bar: Primary Watch Toggle + Sleek Episode Stepper -->
             <div class="command-center">
+              <button
+                type="button"
+                class="btn-watched-action"
+                [class.is-watched]="isWatched()"
+                (click)="toggleWatched()">
+                <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                <span>{{ isWatched() ? 'Watched • Tap to Undo' : 'Mark S' + currentSeasonNumber() + ' E' + currentEpisodeNumber() + ' Watched' }}</span>
+              </button>
+
               <div class="stepper-row">
                 <button
                   type="button"
                   class="step-nav-btn"
-                  [disabled]="!canGoPrev()"
+                  [disabled]="!canGoPrev() || isLoading()"
                   (click)="goToPrevEpisode()"
                   aria-label="Previous Episode">
                   <ion-icon name="chevron-back"></ion-icon>
-                  <span>Prev</span>
+                  <span>Prev Ep</span>
                 </button>
 
                 <div class="stepper-center-info">
-                  <span class="stepper-caption">EPISODE</span>
+                  <span class="stepper-caption">SEASON {{ currentSeasonNumber() }}</span>
                   <span class="stepper-ep-counter">
-                    {{ currentEpisodeNumber() }}
+                    EP {{ currentEpisodeNumber() }}
                     @if (totalEpisodesInSeason(); as total) {
-                      <span class="stepper-ep-total">of {{ total }}</span>
+                      <span class="stepper-ep-total">/ {{ total }}</span>
                     }
                   </span>
                 </div>
@@ -126,22 +195,13 @@
                 <button
                   type="button"
                   class="step-nav-btn"
-                  [disabled]="!canGoNext()"
+                  [disabled]="!canGoNext() || isLoading()"
                   (click)="goToNextEpisode()"
                   aria-label="Next Episode">
-                  <span>Next</span>
+                  <span>Next Ep</span>
                   <ion-icon name="chevron-forward"></ion-icon>
                 </button>
               </div>
-
-              <button
-                type="button"
-                class="btn-watched-action"
-                [class.is-watched]="isWatched()"
-                (click)="toggleWatched()">
-                <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
-                <span>{{ isWatched() ? 'Watched • Tap to Undo' : 'Mark Episode Watched' }}</span>
-              </button>
             </div>
 
             <!-- Overview / Synopsis Section -->
@@ -152,6 +212,24 @@
                   <h4 class="section-title">SYNOPSIS</h4>
                 </div>
                 <p class="episode-overview">{{ detail()?.overview }}</p>
+              </div>
+            }
+
+            <!-- Key Crew Section -->
+            @if (crewSpotlights().length > 0) {
+              <div class="info-section">
+                <div class="section-header">
+                  <span class="section-accent"></span>
+                  <h4 class="section-title">CREDITS & CREW</h4>
+                </div>
+                <div class="crew-spotlight-grid">
+                  @for (item of crewSpotlights(); track item.role) {
+                    <div class="crew-spotlight-item">
+                      <span class="crew-role">{{ item.role }}</span>
+                      <span class="crew-names">{{ item.names }}</span>
+                    </div>
+                  }
+                </div>
               </div>
             }
 
@@ -172,36 +250,29 @@
                       role="button"
                       (click)="openPerson(star)"
                       (keyup.enter)="openPerson(star)">
-                      <div class="cast-avatar-wrap">
-                        <img
-                          [src]="resolveProfile(star.profile_path)"
-                          [alt]="star.name"
-                          class="cast-avatar"
-                          loading="lazy"
-                          decoding="async" />
+                      <div
+                        class="cast-avatar-wrap"
+                        [class.is-loaded]="!star.profile_path || failedGuestIds()[star.id] || isUrlLoaded(resolveProfile(star.profile_path))">
+                        @if (star.profile_path && !failedGuestIds()[star.id]) {
+                          <img
+                            [src]="resolveProfile(star.profile_path)"
+                            [alt]="star.name"
+                            class="cast-avatar"
+                            [class.is-loaded]="isUrlLoaded(resolveProfile(star.profile_path))"
+                            loading="lazy"
+                            decoding="async"
+                            (load)="onAssetLoad($event, resolveProfile(star.profile_path))"
+                            (error)="onGuestAvatarError(star.id)" />
+                        } @else {
+                          <div class="cast-avatar-fallback">
+                            <span>{{ getInitials(star.name) }}</span>
+                          </div>
+                        }
                       </div>
                       <div class="cast-name">{{ star.name }}</div>
                       @if (star.character) {
                         <div class="cast-character">{{ star.character }}</div>
                       }
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Key Crew Section -->
-            @if (crewSpotlights().length > 0) {
-              <div class="info-section">
-                <div class="section-header">
-                  <span class="section-accent"></span>
-                  <h4 class="section-title">CREW</h4>
-                </div>
-                <div class="crew-spotlight-grid">
-                  @for (item of crewSpotlights(); track item.role) {
-                    <div class="crew-spotlight-item">
-                      <span class="crew-role">{{ item.role }}</span>
-                      <span class="crew-names">{{ item.names }}</span>
                     </div>
                   }
                 </div>
@@ -223,14 +294,20 @@
                       type="button"
                       class="promo-card"
                       (click)="openVideo(video.key)">
-                      <div class="promo-thumbnail-wrap">
+                      <div
+                        class="promo-thumbnail-wrap"
+                        [class.is-loaded]="isUrlLoaded('https://img.youtube.com/vi/' + video.key + '/hqdefault.jpg')">
                         <img
                           [src]="'https://img.youtube.com/vi/' + video.key + '/hqdefault.jpg'"
                           [alt]="video.name"
                           class="promo-img"
-                          loading="lazy" />
+                          [class.is-loaded]="isUrlLoaded('https://img.youtube.com/vi/' + video.key + '/hqdefault.jpg')"
+                          loading="lazy"
+                          (load)="onAssetLoad($event, 'https://img.youtube.com/vi/' + video.key + '/hqdefault.jpg')" />
                         <div class="play-overlay">
-                          <ion-icon name="play-circle-outline"></ion-icon>
+                          <div class="play-circle-badge">
+                            <ion-icon name="play-circle-outline"></ion-icon>
+                          </div>
                         </div>
                       </div>
                       <div class="promo-info">
@@ -250,8 +327,13 @@
                   type="button"
                   class="btn-full-guide"
                   (click)="openFullSeriesPage()">
-                  <ion-icon name="tv-outline"></ion-icon>
-                  <span>Open Full Series & Seasons Guide</span>
+                  <div class="guide-icon-box">
+                    <ion-icon name="tv-outline"></ion-icon>
+                  </div>
+                  <div class="guide-text-col">
+                    <span class="guide-label">Open Full Series & Seasons Guide</span>
+                    <span class="guide-sub">Browse all seasons, episodes, cast & ratings</span>
+                  </div>
                   <ion-icon name="arrow-forward-outline" class="guide-arrow"></ion-icon>
                 </button>
               </div>

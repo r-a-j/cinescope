@@ -452,4 +452,14 @@ describe('TvPage', () => {
     expect(component.modalSeasonNumber()).toBe(2);
     expect(component.modalEpisodeNumber()).toBe(5);
   });
+
+  it('should track loaded image state smoothly via onImageLoad and isImageLoaded', () => {
+    const testUrl = 'https://image.tmdb.org/t/p/w342/poster_test.jpg';
+    const fakeImg = document.createElement('img');
+    fakeImg.src = testUrl;
+    const loadEvent = { target: fakeImg } as unknown as Event;
+
+    component.onImageLoad(loadEvent, testUrl);
+    expect(component.isImageLoaded(testUrl)).toBeTrue();
+  });
 });

@@ -38,7 +38,8 @@ import {
   arrowForwardOutline,
   tvOutline,
   videocamOutline,
-  createOutline
+  createOutline,
+  alertCircleOutline
 } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
 import { TmdbTvEpisodesService } from '../../../core/services/tmdb-tv-episodes.service';
@@ -96,6 +97,12 @@ export class EpisodeDetailModalComponent {
   public readonly currentSeasonNumber = signal<number>(1);
   public readonly currentEpisodeNumber = signal<number>(1);
 
+  // Image Smooth Load State
+  public readonly isStillLoaded = signal<boolean>(false);
+  public readonly stillFailed = signal<boolean>(false);
+  public readonly loadedUrls = signal<Record<string, boolean>>({});
+  public readonly failedGuestIds = signal<Record<number, boolean>>({});
+
   // Computed Values
   public readonly isWatched = computed<boolean>(() => {
     const id = this.seriesId();
@@ -113,6 +120,12 @@ export class EpisodeDetailModalComponent {
       return resolveMediaImageUrl(d.still_path, 'w780');
     }
     return this.seriesBackdropUrl() || DEFAULT_POSTER_PLACEHOLDER;
+  });
+
+  public readonly hasValidLandscapeStill = computed<boolean>(() => {
+    if (this.stillFailed()) return false;
+    const d = this.detail();
+    return Boolean(d?.still_path || this.seriesBackdropUrl());
   });
 
   public readonly formattedAirDate = computed<string | null>(() => {
@@ -285,7 +298,8 @@ export class EpisodeDetailModalComponent {
       arrowForwardOutline,
       tvOutline,
       videocamOutline,
-      createOutline
+      createOutline,
+      alertCircleOutline
     });
 
     effect((onCleanup) => {
@@ -313,6 +327,7 @@ export class EpisodeDetailModalComponent {
   public async loadEpisode(seriesId: number, seasonNumber: number, episodeNumber: number): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
+    this.stillFailed.set(false);
 
     try {
       const res = await firstValueFrom(
@@ -323,6 +338,16 @@ export class EpisodeDetailModalComponent {
           'credits,videos,external_ids,images'
         )
       );
+
+      const nextStillUrl = res?.still_path
+        ? resolveMediaImageUrl(res.still_path, 'w780')
+        : this.seriesBackdropUrl() || DEFAULT_POSTER_PLACEHOLDER;
+
+      const warm =
+        nextStillUrl !== DEFAULT_POSTER_PLACEHOLDER &&
+        typeof this.posterCache.isWarm === 'function' &&
+        this.posterCache.isWarm(nextStillUrl);
+      this.isStillLoaded.set(warm);
 
       this.detail.set(res);
 
@@ -335,6 +360,53 @@ export class EpisodeDetailModalComponent {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  public onStillLoad(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    const url = this.stillUrl();
+    if (url && url !== DEFAULT_POSTER_PLACEHOLDER && typeof this.posterCache.markLoaded === 'function') {
+      this.posterCache.markLoaded(url, img ?? undefined);
+    }
+    this.isStillLoaded.set(true);
+  }
+
+  public onStillError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    const fallback = this.seriesBackdropUrl();
+    if (fallback && img.src !== fallback) {
+      img.src = fallback;
+    } else {
+      this.stillFailed.set(true);
+      this.isStillLoaded.set(true);
+      img.src = DEFAULT_POSTER_PLACEHOLDER;
+    }
+  }
+
+  public isUrlLoaded(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const warm = typeof this.posterCache.isWarm === 'function' && this.posterCache.isWarm(url);
+    return Boolean(this.loadedUrls()[url]) || warm;
+  }
+
+  public onAssetLoad(event: Event, url: string | null | undefined): void {
+    if (!url) return;
+    const img = event.target as HTMLImageElement | null;
+    if (typeof this.posterCache.markLoaded === 'function') {
+      this.posterCache.markLoaded(url, img ?? undefined);
+    }
+    this.loadedUrls.update((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  }
+
+  public onGuestAvatarError(starId: number): void {
+    this.failedGuestIds.update((prev) => ({ ...prev, [starId]: true }));
+  }
+
+  public getInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   public onModalDidDismiss(): void {
@@ -438,15 +510,5 @@ export class EpisodeDetailModalComponent {
 
   public resolveProfile(path: string | null | undefined): string {
     return resolveMediaImageUrl(path, 'w185', 'assets/placeholders/placeholder.webp');
-  }
-
-  public onStillError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    const fallback = this.seriesBackdropUrl();
-    if (fallback && img.src !== fallback) {
-      img.src = fallback;
-    } else {
-      img.src = DEFAULT_POSTER_PLACEHOLDER;
-    }
   }
 }

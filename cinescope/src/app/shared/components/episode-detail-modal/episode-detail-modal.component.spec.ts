@@ -256,4 +256,20 @@ describe('EpisodeDetailModalComponent', () => {
     expect(component.error()).toBe('Episode details could not be loaded at this time.');
     expect(component.isLoading()).toBeFalse();
   }));
+
+  it('should track still load/error states and guest star avatar initials fallback', () => {
+    expect(component.getInitials('Christopher Walken')).toBe('CW');
+    expect(component.getInitials('Zendaya')).toBe('ZE');
+
+    component.onGuestAvatarError(3);
+    expect(component.failedGuestIds()[3]).toBeTrue();
+
+    const fakeImg = document.createElement('img');
+    component.onStillLoad({ target: fakeImg } as unknown as Event);
+    expect(component.isStillLoaded()).toBeTrue();
+
+    component.onStillError({ target: fakeImg } as unknown as Event);
+    expect(component.stillFailed()).toBeTrue();
+    expect(component.hasValidLandscapeStill()).toBeFalse();
+  });
 });

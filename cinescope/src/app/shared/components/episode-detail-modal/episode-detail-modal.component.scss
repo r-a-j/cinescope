@@ -1,38 +1,75 @@
+@keyframes modalShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes steppingProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 .episode-modal-sheet {
-  --background: #09090e;
-  --border-radius: 24px 24px 0 0;
-  --backdrop-opacity: 0.78;
+  --background: #08080b;
+  --border-radius: 26px 26px 0 0;
+  --backdrop-opacity: 0.82;
   overscroll-behavior: contain;
 
   &::part(handle) {
-    background: rgba(255, 255, 255, 0.4);
-    width: 38px;
+    background: rgba(255, 255, 255, 0.42);
+    width: 40px;
     height: 4px;
     border-radius: 999px;
   }
 
   &::part(content) {
-    border-radius: 24px 24px 0 0;
+    border-radius: 26px 26px 0 0;
     overflow: hidden;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85);
-    background: #09090e;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.92);
+    background: #08080b;
     overscroll-behavior: contain;
   }
 }
 
 .episode-modal-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #09090e;
+  background: #08080b;
   color: #ffffff;
   overscroll-behavior: contain;
   overscroll-behavior-y: contain;
 }
 
+.episode-stepping-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(229, 9, 20, 0.18);
+  overflow: hidden;
+  z-index: 20;
+
+  .stepping-bar-fill {
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #e50914, #f5c518, transparent);
+    animation: steppingProgress 1.1s ease-in-out infinite;
+  }
+}
+
 .episode-modal-content {
-  --background: #09090e;
+  --background: #08080b;
   --color: #ffffff;
   overscroll-behavior: contain;
   overscroll-behavior-y: contain;
@@ -47,16 +84,87 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 250px;
-  background: #09090e;
+  max-height: 256px;
+  background: linear-gradient(
+    110deg,
+    #0e0e13 25%,
+    #1a1a23 50%,
+    #0e0e13 75%
+  );
+  background-size: 200% 100%;
+  animation: modalShimmer 1.6s ease-in-out infinite;
   overflow: hidden;
+
+  &.is-loaded {
+    animation: none;
+    background: #08080b;
+  }
 
   .episode-hero-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    filter: saturate(1.08);
+    opacity: 0;
+    transform: scale(1.03);
+    filter: saturate(1.1) contrast(1.03);
+    transition: opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &.is-loaded {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    &.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  .hero-cinematic-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 50% 35%, rgba(229, 9, 20, 0.22) 0%, rgba(12, 12, 16, 0.95) 70%),
+      #08080b;
+    z-index: 1;
+
+    .fallback-glow {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 197, 24, 0.14) 0%, transparent 70%);
+      filter: blur(18px);
+    }
+
+    .fallback-emblem {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 24px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.45);
+
+      ion-icon {
+        font-size: 28px;
+        color: rgba(229, 9, 20, 0.75);
+      }
+
+      span {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 16px;
+        letter-spacing: 1.5px;
+        color: rgba(255, 255, 255, 0.65);
+      }
+    }
   }
 
   .hero-top-vignette {
@@ -64,14 +172,11 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 72px;
+    height: 76px;
     background: linear-gradient(
       180deg,
-      rgba(9, 9, 14, 0.70) 0%,
-      rgba(9, 9, 14, 0.50) 25%,
-      rgba(9, 9, 14, 0.30) 48%,
-      rgba(9, 9, 14, 0.12) 72%,
-      rgba(9, 9, 14, 0.03) 88%,
+      rgba(8, 8, 11, 0.78) 0%,
+      rgba(8, 8, 11, 0.45) 42%,
       transparent 100%
     );
     pointer-events: none;
@@ -83,34 +188,59 @@
     bottom: -1px;
     left: 0;
     right: 0;
-    height: 180px;
+    height: 150px;
     background: linear-gradient(
       180deg,
-      rgba(9, 9, 14, 0) 0%,
-      rgba(9, 9, 14, 0.02) 15%,
-      rgba(9, 9, 14, 0.06) 28%,
-      rgba(9, 9, 14, 0.12) 38%,
-      rgba(9, 9, 14, 0.22) 48%,
-      rgba(9, 9, 14, 0.35) 58%,
-      rgba(9, 9, 14, 0.50) 68%,
-      rgba(9, 9, 14, 0.68) 78%,
-      rgba(9, 9, 14, 0.84) 87%,
-      rgba(9, 9, 14, 0.94) 94%,
-      rgba(9, 9, 14, 0.99) 98%,
-      #09090e 100%
+      rgba(8, 8, 11, 0) 0%,
+      rgba(8, 8, 11, 0.25) 38%,
+      rgba(8, 8, 11, 0.72) 72%,
+      #08080b 100%
     );
     pointer-events: none;
     z-index: 2;
+  }
+
+  .hero-series-chip {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    max-width: calc(100% - 76px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    z-index: 5;
+
+    ion-icon {
+      font-size: 13px;
+      color: #e50914;
+      flex-shrink: 0;
+    }
+
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   .modal-close-btn {
     position: absolute;
     right: 14px;
     top: 10px;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.62);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.16);
@@ -128,16 +258,18 @@
 
     &:active {
       transform: scale(0.92);
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(229, 9, 20, 0.85);
     }
   }
 
   .hero-stage-badges {
     position: absolute;
-    bottom: 12px;
-    left: 16px;
+    bottom: 10px;
+    left: 18px;
+    right: 18px;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     z-index: 4;
 
@@ -145,66 +277,160 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: 4px 11px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.76);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       color: #ffffff;
       font-family: var(--font-display, 'Bebas Neue', sans-serif);
-      font-size: 14px;
-      letter-spacing: 0.8px;
+      font-size: 14.5px;
+      letter-spacing: 1px;
 
       .ep-badge-dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #38bdf8;
-        box-shadow: 0 0 8px #38bdf8;
+        background: #e50914;
+        box-shadow: 0 0 8px #e50914;
+
+        &.is-watched {
+          background: #10b981;
+          box-shadow: 0 0 8px #10b981;
+        }
       }
     }
 
     .ep-type-capsule {
       display: inline-flex;
       align-items: center;
-      padding: 4px 9px;
+      padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(229, 9, 20, 0.2);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #ffffff;
-      font-size: 10.5px;
+      border: 1px solid rgba(229, 9, 20, 0.45);
+      color: #ff6b78;
+      font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.7px;
       text-transform: uppercase;
 
       &.is-finale {
-        background: rgba(245, 197, 24, 0.18);
-        border-color: rgba(245, 197, 24, 0.45);
-        color: #fbbf24;
+        background: rgba(245, 197, 24, 0.2);
+        border-color: rgba(245, 197, 24, 0.5);
+        color: #f5c518;
+      }
+    }
+
+    .ep-watched-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(16, 185, 129, 0.42);
+      color: #34d399;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+
+      ion-icon {
+        font-size: 12px;
       }
     }
   }
 }
 
 .episode-modal-body {
-  padding: 16px 18px 32px;
+  padding: 12px 18px 36px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
+  transition: opacity 0.2s ease;
+
+  &.is-transitioning {
+    opacity: 0.68;
+  }
 }
 
 .episode-loading-state {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px 16px;
-  color: #a1a1aa;
-  font-size: 14px;
+  gap: 20px;
+  padding: 8px 0 28px;
+
+  .loading-skeleton-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .sk-line,
+    .sk-pill,
+    .sk-action-bar {
+      border-radius: 8px;
+      background: linear-gradient(
+        110deg,
+        #121218 25%,
+        #1d1d27 50%,
+        #121218 75%
+      );
+      background-size: 200% 100%;
+      animation: modalShimmer 1.5s ease-in-out infinite;
+    }
+
+    .sk-kicker {
+      width: 120px;
+      height: 12px;
+    }
+
+    .sk-title {
+      width: 75%;
+      height: 28px;
+    }
+
+    .sk-pills {
+      display: flex;
+      gap: 8px;
+
+      .sk-pill {
+        width: 82px;
+        height: 26px;
+        border-radius: 999px;
+      }
+    }
+
+    .sk-action-bar {
+      width: 100%;
+      height: 88px;
+      border-radius: 16px;
+      margin-top: 4px;
+    }
+
+    .sk-body-1 {
+      width: 100%;
+      height: 14px;
+      margin-top: 6px;
+    }
+
+    .sk-body-2 {
+      width: 84%;
+      height: 14px;
+    }
+  }
+
+  .loading-spinner-caption {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+  }
 }
 
 .episode-error-banner {
@@ -213,9 +439,9 @@
   gap: 10px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(229, 9, 20, 0.12);
+  border: 1px solid rgba(229, 9, 20, 0.35);
+  color: #ff6b78;
   font-size: 13px;
 
   ion-icon {
@@ -230,19 +456,29 @@
   gap: 4px;
 
   .series-name-sub {
-    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: 1.5px;
-    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1.4px;
+    color: rgba(255, 255, 255, 0.52);
     text-transform: uppercase;
+
+    .sub-accent-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #e50914;
+    }
   }
 
   .episode-title {
     margin: 2px 0 0;
     font-family: var(--font-display, 'Bebas Neue', sans-serif);
-    font-size: 28px;
-    line-height: 1.12;
-    letter-spacing: 0.5px;
+    font-size: 30px;
+    line-height: 1.08;
+    letter-spacing: 0.7px;
     color: #ffffff;
   }
 
@@ -258,31 +494,34 @@
       align-items: center;
       gap: 5px;
       height: 28px;
-      padding: 0 10px;
+      padding: 0 11px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #131318;
+      border: 1px solid rgba(255, 255, 255, 0.09);
       font-size: 12px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.85);
+      color: rgba(255, 255, 255, 0.86);
 
       ion-icon {
-        font-size: 14px;
+        font-size: 13.5px;
         color: rgba(255, 255, 255, 0.55);
       }
 
       &.rating-pill {
+        background: rgba(245, 197, 24, 0.1);
+        border-color: rgba(245, 197, 24, 0.28);
+
         ion-icon {
           color: #f5c518;
         }
 
         .rating-val {
           color: #f5c518;
-          font-weight: 700;
+          font-weight: 800;
         }
 
         .rating-count {
-          color: rgba(255, 255, 255, 0.45);
+          color: rgba(255, 255, 255, 0.48);
           font-size: 11px;
           margin-left: 2px;
         }
@@ -291,26 +530,30 @@
       &.imdb-pill {
         text-decoration: none;
         cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 
         &:active {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(245, 197, 24, 0.15);
+          border-color: rgba(245, 197, 24, 0.4);
+          transform: scale(0.97);
         }
 
+        .imdb-badge,
         .imdb-tag {
           background: #f5c518;
           color: #000000;
           font-weight: 900;
           font-size: 10px;
-          padding: 1px 4px;
-          border-radius: 3px;
+          padding: 1px 5px;
+          border-radius: 4px;
           letter-spacing: -0.2px;
+          line-height: 1.3;
         }
 
         .imdb-text {
           font-size: 11.5px;
           font-weight: 600;
-          color: rgba(255, 255, 255, 0.85);
+          color: rgba(255, 255, 255, 0.88);
         }
 
         ion-icon {
@@ -323,80 +566,14 @@
 }
 
 .command-center {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #121217;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-
-  .stepper-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .step-nav-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      height: 36px;
-      padding: 0 14px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      color: #ffffff;
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-
-      ion-icon {
-        font-size: 16px;
-      }
-
-      &:active:not(:disabled) {
-        transform: scale(0.96);
-        background: rgba(255, 255, 255, 0.12);
-      }
-
-      &:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-      }
-    }
-
-    .stepper-center-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      line-height: 1.1;
-
-      .stepper-caption {
-        font-size: 9px;
-        font-weight: 800;
-        letter-spacing: 1.2px;
-        color: rgba(255, 255, 255, 0.4);
-        text-transform: uppercase;
-      }
-
-      .stepper-ep-counter {
-        font-family: var(--font-display, 'Bebas Neue', sans-serif);
-        font-size: 20px;
-        letter-spacing: 0.5px;
-        color: #ffffff;
-
-        .stepper-ep-total {
-          font-family: var(--font-body, 'Inter', sans-serif);
-          font-size: 12px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.45);
-          margin-left: 4px;
-        }
-      }
-    }
-  }
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 
   .btn-watched-action {
     display: flex;
@@ -406,14 +583,15 @@
     width: 100%;
     height: 46px;
     border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
     color: #ffffff;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.28);
-    font-size: 14.5px;
+    box-shadow: 0 6px 20px rgba(229, 9, 20, 0.32);
+    font-size: 14px;
     font-weight: 700;
+    letter-spacing: 0.2px;
     cursor: pointer;
-    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.14s ease, background 0.2s ease, box-shadow 0.2s ease;
 
     ion-icon {
       font-size: 20px;
@@ -426,8 +604,79 @@
     &.is-watched {
       background: rgba(16, 185, 129, 0.14);
       color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      border: 1px solid rgba(16, 185, 129, 0.42);
       box-shadow: none;
+    }
+  }
+
+  .stepper-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 2px;
+
+    .step-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      ion-icon {
+        font-size: 15px;
+        color: #f5c518;
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.95);
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      &:disabled {
+        opacity: 0.28;
+        cursor: not-allowed;
+      }
+    }
+
+    .stepper-center-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+
+      .stepper-caption {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: rgba(255, 255, 255, 0.45);
+        text-transform: uppercase;
+      }
+
+      .stepper-ep-counter {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 17px;
+        letter-spacing: 0.8px;
+        color: #f5c518;
+
+        .stepper-ep-total {
+          font-family: var(--font-body, 'Inter', sans-serif);
+          font-size: 11.5px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+          margin-left: 2px;
+        }
+      }
     }
   }
 }
@@ -444,36 +693,38 @@
 
     .section-accent {
       width: 3px;
-      height: 13px;
+      height: 14px;
       border-radius: 2px;
       background: #e50914;
+      box-shadow: 0 0 8px rgba(229, 9, 20, 0.55);
     }
 
     .section-title {
       margin: 0;
-      font-family: var(--font-body, 'Inter', sans-serif);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-      color: rgba(255, 255, 255, 0.65);
+      font-family: var(--font-display, 'Bebas Neue', sans-serif);
+      font-size: 17px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      color: #ffffff;
       text-transform: uppercase;
     }
 
     .section-count {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      padding: 1px 7px;
+      padding: 1px 8px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.5);
+      background: rgba(245, 197, 24, 0.12);
+      border: 1px solid rgba(245, 197, 24, 0.28);
+      color: #f5c518;
     }
   }
 
   .episode-overview {
     margin: 0;
     font-size: 14px;
-    line-height: 1.62;
-    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.64;
+    color: rgba(255, 255, 255, 0.84);
   }
 }
 
@@ -489,8 +740,8 @@
   }
 
   .cast-card {
-    width: 98px;
-    min-width: 98px;
+    width: 96px;
+    min-width: 96px;
     display: flex;
     flex-direction: column;
     cursor: pointer;
@@ -498,33 +749,73 @@
     outline: none;
 
     &:active .cast-avatar-wrap {
-      transform: scale(0.97);
+      transform: scale(0.96);
+      border-color: rgba(229, 9, 20, 0.55);
     }
 
     &:focus-visible .cast-avatar-wrap {
-      outline: 2px solid var(--ion-color-primary, #10b981);
+      outline: 2px solid #e50914;
       outline-offset: 2px;
     }
 
     .cast-avatar-wrap {
       position: relative;
-      width: 98px;
-      height: 128px;
-      border-radius: 10px;
+      width: 96px;
+      height: 124px;
+      border-radius: 12px;
       overflow: hidden;
-      background: #16161c;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      background: linear-gradient(
+        110deg,
+        #121218 25%,
+        #1e1e28 50%,
+        #121218 75%
+      );
+      background-size: 200% 100%;
+      animation: modalShimmer 1.6s ease-in-out infinite;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+
+      &.is-loaded {
+        animation: none;
+        background: #131318;
+      }
 
       .cast-avatar {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.32s ease;
+
+        &.is-loaded {
+          opacity: 1;
+        }
+      }
+
+      .cast-avatar-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          circle at 50% 35%,
+          rgba(229, 9, 20, 0.2) 0%,
+          #121217 80%
+        );
+
+        span {
+          font-family: var(--font-display, 'Bebas Neue', sans-serif);
+          font-size: 26px;
+          letter-spacing: 1px;
+          color: rgba(255, 255, 255, 0.72);
+        }
       }
     }
 
     .cast-name {
-      margin-top: 6px;
+      margin-top: 7px;
       font-size: 12px;
       font-weight: 700;
       color: #ffffff;
@@ -535,7 +826,7 @@
 
     .cast-character {
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.56);
+      color: rgba(255, 255, 255, 0.54);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -548,9 +839,9 @@
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: #121217;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
   .crew-spotlight-item {
     display: flex;
@@ -558,11 +849,11 @@
     gap: 2px;
 
     .crew-role {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
-      color: rgba(255, 255, 255, 0.48);
-      font-weight: 700;
+      letter-spacing: 0.9px;
+      color: #f5c518;
+      font-weight: 800;
     }
 
     .crew-names {
@@ -586,32 +877,53 @@
   }
 
   .promo-card {
-    flex: 0 0 180px;
+    flex: 0 0 190px;
     display: flex;
     flex-direction: column;
     text-align: left;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #121217;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     overflow: hidden;
     padding: 0;
     cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s ease, border-color 0.15s ease;
 
     &:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
+      border-color: rgba(229, 9, 20, 0.5);
     }
 
     .promo-thumbnail-wrap {
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      background: #000000;
+      background: linear-gradient(
+        110deg,
+        #121218 25%,
+        #1e1e28 50%,
+        #121218 75%
+      );
+      background-size: 200% 100%;
+      animation: modalShimmer 1.6s ease-in-out infinite;
+      overflow: hidden;
+
+      &.is-loaded {
+        animation: none;
+        background: #08080b;
+      }
 
       .promo-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.32s ease;
+
+        &.is-loaded {
+          opacity: 1;
+        }
       }
 
       .play-overlay {
@@ -620,17 +932,28 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.4);
+        background: rgba(0, 0, 0, 0.38);
 
-        ion-icon {
-          font-size: 34px;
-          color: #ffffff;
+        .play-circle-badge {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: rgba(229, 9, 20, 0.88);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 14px rgba(229, 9, 20, 0.5);
+
+          ion-icon {
+            font-size: 24px;
+            color: #ffffff;
+          }
         }
       }
     }
 
     .promo-info {
-      padding: 8px 10px;
+      padding: 9px 11px;
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -638,8 +961,8 @@
       .promo-type-tag {
         font-size: 9.5px;
         font-weight: 800;
-        letter-spacing: 0.6px;
-        color: #e50914;
+        letter-spacing: 0.7px;
+        color: #f5c518;
         text-transform: uppercase;
       }
 
@@ -662,32 +985,61 @@
   .btn-full-guide {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    height: 48px;
-    padding: 0 16px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.12) 0%, #121217 100%);
+    border: 1px solid rgba(229, 9, 20, 0.32);
     color: #ffffff;
-    font-size: 13.5px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
+    text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 
-    ion-icon {
-      font-size: 18px;
-      color: rgba(255, 255, 255, 0.7);
+    .guide-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(229, 9, 20, 0.18);
+      border: 1px solid rgba(229, 9, 20, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      ion-icon {
+        font-size: 18px;
+        color: #ff4757;
+      }
+    }
+
+    .guide-text-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+
+      .guide-label {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .guide-sub {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.54);
+      }
     }
 
     .guide-arrow {
       margin-left: auto;
-      color: rgba(255, 255, 255, 0.45);
+      font-size: 18px;
+      color: #f5c518;
+      flex-shrink: 0;
     }
 
     &:active {
-      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(229, 9, 20, 0.6);
       transform: scale(0.98);
     }
   }
