@@ -39,7 +39,7 @@ export class EmptyStateComponent {
   public readonly actionVariant = input<EmptyStateActionVariant>('primary');
   public readonly compact = input<boolean>(false);
 
-  public readonly actionClick = output<void>();
+  public readonly actionClick = output();
 
   constructor() {
     addIcons({
