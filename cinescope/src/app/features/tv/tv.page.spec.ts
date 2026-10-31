@@ -92,7 +92,7 @@ describe('TvPage', () => {
   it('should render empty state when no TV content is tracked or watchlisted', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.tv-empty-container')).toBeTruthy();
-    expect(compiled.querySelector('.tv-empty-title')?.textContent).toContain('TRACK TV SEASONS');
+    expect(compiled.querySelector('.empty-title')?.textContent).toContain('TRACK TV SEASONS');
   });
 
   it('should navigate to Discover when clicking CTA in empty state', () => {
@@ -451,5 +451,15 @@ describe('TvPage', () => {
     expect(component.modalSeriesId()).toBe(202);
     expect(component.modalSeasonNumber()).toBe(2);
     expect(component.modalEpisodeNumber()).toBe(5);
+  });
+
+  it('should track loaded image state smoothly via onImageLoad and isImageLoaded', () => {
+    const testUrl = 'https://image.tmdb.org/t/p/w342/poster_test.jpg';
+    const fakeImg = document.createElement('img');
+    fakeImg.src = testUrl;
+    const loadEvent = { target: fakeImg } as unknown as Event;
+
+    component.onImageLoad(loadEvent, testUrl);
+    expect(component.isImageLoaded(testUrl)).toBeTrue();
   });
 });

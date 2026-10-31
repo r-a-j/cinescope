@@ -1,0 +1,27 @@
+<div class="empty-state-container" [class.is-compact]="compact()">
+  <div class="empty-state-hero">
+    <div class="empty-icon-ring">
+      <ion-icon [name]="icon()"></ion-icon>
+    </div>
+
+    @if (kicker(); as kickerText) {
+      <span class="empty-kicker">{{ kickerText }}</span>
+    }
+
+    <h2 class="empty-title">{{ title() }}</h2>
+    <p class="empty-description">{{ description() }}</p>
+
+    @if (actionLabel(); as label) {
+      <button
+        type="button"
+        class="empty-cta-btn"
+        [class.variant-secondary]="actionVariant() === 'secondary'"
+        (click)="onAction()">
+        @if (actionIcon(); as btnIcon) {
+          <ion-icon [name]="btnIcon"></ion-icon>
+        }
+        <span>{{ label }}</span>
+      </button>
+    }
+  </div>
+</div>

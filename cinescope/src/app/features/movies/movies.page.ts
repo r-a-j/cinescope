@@ -11,6 +11,7 @@ import { addIcons } from 'ionicons';
 import { optionsOutline, chevronForwardOutline } from 'ionicons/icons';
 
 import { HeaderComponent } from '../../shared/components/header/header.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -34,6 +35,7 @@ import { getMovieTitle } from './movies.models';
     IonRefresher,
     IonRefresherContent,
     HeaderComponent,
+    EmptyStateComponent,
     CinematchHeroComponent,
     FranchiseTrackerComponent,
     BlindTicketComponent
@@ -82,6 +84,14 @@ export class MoviesPage {
   public readonly allSectionsHidden = computed<boolean>(() => {
     const v = this.moviesPrefs.visibility();
     return !v.cineMatch && !v.franchises && !v.blindTicket;
+  });
+
+  // Check if any movie content exists to display in the enabled sections
+  public readonly hasAnyMovieContent = computed<boolean>(() => {
+    const v = this.moviesPrefs.visibility();
+    const hasWatchlist = (v.cineMatch || v.blindTicket) && this.watchlistMovies().length > 0;
+    const hasFranchises = v.franchises && this.franchiseSuggestions().length > 0;
+    return hasWatchlist || hasFranchises;
   });
 
   constructor() {

@@ -32,10 +32,12 @@
 }
 
 .queue-label {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #ffffff;
 }
 
 .queue-pill {
@@ -167,53 +169,14 @@
     overflow: visible;
     justify-content: flex-start;
   }
-}
 
-.empty-inbox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 75vh;
-  text-align: center;
-  max-width: 360px;
-  margin: auto;
-  color: rgba(255, 255, 255, 0.6);
-
-  h2 { color: #fff; font-size: 22px; font-weight: 700; margin: 0 0 10px; }
-  p { font-size: 13.5px; line-height: 1.5; margin: 0 0 24px; color: rgba(255, 255, 255, 0.5); }
-}
-
-.empty-icon-wrap {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(229, 9, 20, 0.18) 0%, transparent 70%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-
-  ion-icon { font-size: 42px; color: #e50914; }
-}
-
-.primary-import-btn {
-  background: var(--ion-color-primary, #e50914);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-
-  ion-icon { font-size: 18px; }
+  &.empty-mode-active {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    justify-content: flex-start;
+    padding: 0;
+  }
 }
 
 /* ==========================================
@@ -771,8 +734,10 @@
 
   h3 {
     margin: 0;
-    font-size: 17px;
-    font-weight: 700;
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 1.35rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
     color: #fff;
   }
 }

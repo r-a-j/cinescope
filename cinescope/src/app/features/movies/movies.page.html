@@ -6,46 +6,58 @@
   </ion-refresher>
 
   <div class="movies-container">
-    <!-- 1. Cinematch Hero Decision Engine -->
-    @if (moviesPrefs.visibility().cineMatch) {
-      <app-cinematch-hero
-        [watchlistMovies]="watchlistMovies()"
-        (openDetail)="openMovieDetail($event)"
-        (discoverClick)="navigateToDiscover()"
-        (toggleBookmark)="onToggleBookmark($event)"
-        (markWatched)="onMarkWatched($event)"
-      ></app-cinematch-hero>
-    }
-
-    <!-- 2. The Blind Ticket -->
-    @if (moviesPrefs.visibility().blindTicket && watchlistMovies().length > 0) {
-      <app-blind-ticket
-        [watchlistMovies]="watchlistMovies()"
-        (openDetail)="openMovieDetail($event)"
-        (markWatched)="onMarkWatched($event)"
-      ></app-blind-ticket>
-    }
-
-    <!-- 3. Franchise Tracker -->
-    @if (moviesPrefs.visibility().franchises && franchiseSuggestions().length > 0) {
-      <app-franchise-tracker
-        [activeFranchises]="franchiseSuggestions()"
-        (collectionClick)="openCollection($event.id, $event.name)"
-      ></app-franchise-tracker>
-    }
-
-    <!-- Empty State if all 3 sections are toggled off in Settings -->
     @if (allSectionsHidden()) {
-      <div class="all-hidden-empty-card">
-        <div class="empty-icon-wrap">
-          <ion-icon name="options-outline"></ion-icon>
-        </div>
-        <h3>ALL MOVIES SECTIONS ARE HIDDEN</h3>
-        <p>You have turned off all 3 sections in Settings. Customize your layout anytime.</p>
-        <button type="button" class="btn-primary" (click)="openSettings()">
-          Open Settings to Customize
-        </button>
-      </div>
+      <!-- Empty State if all 3 sections are toggled off in Settings -->
+      <app-empty-state
+        class="all-hidden-empty-card"
+        icon="options-outline"
+        kicker="LAYOUT CUSTOMIZATION"
+        title="ALL MOVIES SECTIONS ARE HIDDEN"
+        description="You have turned off all 3 sections in Settings. Customize your layout anytime."
+        actionLabel="Open Settings to Customize"
+        actionIcon="options-outline"
+        (actionClick)="openSettings()"
+      ></app-empty-state>
+    } @else if (!hasAnyMovieContent()) {
+      <!-- Unified Empty / Onboarding State when no movie data is present -->
+      <app-empty-state
+        class="movies-empty-container"
+        icon="film-outline"
+        kicker="CINEMA COMMAND CENTER"
+        title="NO MOVIES IN YOUR WATCHLIST"
+        description="Explore titles on Discover and bookmark your favorite cinema to activate CineMatch picks, pull a Blind Ticket, and track film franchises."
+        actionLabel="Explore Movies on Discover"
+        actionIcon="sparkles"
+        (actionClick)="navigateToDiscover()"
+      ></app-empty-state>
+    } @else {
+      <!-- 1. Cinematch Hero Decision Engine -->
+      @if (moviesPrefs.visibility().cineMatch) {
+        <app-cinematch-hero
+          [watchlistMovies]="watchlistMovies()"
+          (openDetail)="openMovieDetail($event)"
+          (discoverClick)="navigateToDiscover()"
+          (toggleBookmark)="onToggleBookmark($event)"
+          (markWatched)="onMarkWatched($event)"
+        ></app-cinematch-hero>
+      }
+
+      <!-- 2. The Blind Ticket -->
+      @if (moviesPrefs.visibility().blindTicket && watchlistMovies().length > 0) {
+        <app-blind-ticket
+          [watchlistMovies]="watchlistMovies()"
+          (openDetail)="openMovieDetail($event)"
+          (markWatched)="onMarkWatched($event)"
+        ></app-blind-ticket>
+      }
+
+      <!-- 3. Franchise Tracker -->
+      @if (moviesPrefs.visibility().franchises && franchiseSuggestions().length > 0) {
+        <app-franchise-tracker
+          [activeFranchises]="franchiseSuggestions()"
+          (collectionClick)="openCollection($event.id, $event.name)"
+        ></app-franchise-tracker>
+      }
     }
 
     <!-- Discrete Footer Settings Shortcut -->

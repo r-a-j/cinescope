@@ -517,46 +517,9 @@
   }
 }
 
-// 8. Empty State without Card Container
+// 8. Empty State Container
 .cinematch-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
-  padding: 32px 16px;
-
-  .empty-icon-wrap {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(229, 9, 20, 0.12);
-    border: 1px solid rgba(229, 9, 20, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    ion-icon {
-      font-size: 1.5rem;
-      color: #ff4757;
-    }
-  }
-
-  h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 0.4px;
-  }
-
-  p {
-    margin: 0;
-    font-size: 0.82rem;
-    color: rgba(255, 255, 255, 0.6);
-    max-width: 320px;
-    line-height: 1.4;
-  }
+  width: 100%;
 }
 
 @keyframes pulseDot {

@@ -218,32 +218,32 @@
         </button>
       </div>
     </div>
+  <!-- Empty State with Unified Component -->
   } @else {
-    <!-- Empty State without Boxed Card -->
     <div class="cinematch-empty">
-      <div class="empty-icon-wrap">
-        <ion-icon name="film-outline"></ion-icon>
-      </div>
       @if (watchlistMovies().length === 0) {
-        <h3>NO MOVIES IN YOUR WATCHLIST</h3>
-        <p>Explore titles on Discover and bookmark your favorite cinema to activate the Decision Engine.</p>
-        <button
-          type="button"
-          class="btn-action btn-primary"
-          (click)="discoverClick.emit()"
-        >
-          Explore Movies on Discover
-        </button>
+        <app-empty-state
+          [compact]="true"
+          icon="film-outline"
+          kicker="DECISION ENGINE"
+          title="NO MOVIES IN YOUR WATCHLIST"
+          description="Explore titles on Discover and bookmark your favorite cinema to activate the Decision Engine."
+          actionLabel="Explore Movies on Discover"
+          actionIcon="sparkles"
+          (actionClick)="discoverClick.emit()"
+        ></app-empty-state>
       } @else {
-        <h3>NO MOVIES MATCH THIS MOOD</h3>
-        <p>None of the movies in your Watchlist match the "{{ activeMood() }}" criteria.</p>
-        <button
-          type="button"
-          class="btn-action btn-secondary"
-          (click)="setMood('all')"
-        >
-          Reset Mood Filter
-        </button>
+        <app-empty-state
+          [compact]="true"
+          icon="film-outline"
+          kicker="MOOD FILTER"
+          title="NO MOVIES MATCH THIS MOOD"
+          [description]="'None of the movies in your Watchlist match the ' + activeMood() + ' criteria.'"
+          actionLabel="Reset Mood Filter"
+          actionIcon="refresh-outline"
+          actionVariant="secondary"
+          (actionClick)="setMood('all')"
+        ></app-empty-state>
       }
     </div>
   }

@@ -28,7 +28,7 @@ describe('MoviesPage', () => {
     }
   ];
 
-  const mockWatchlistItems = signal<ContentDocType[]>([
+  const baselineWatchlist: ContentDocType[] = [
     {
       id: 'movie_1',
       tmdbId: 101,
@@ -73,7 +73,9 @@ describe('MoviesPage', () => {
         vote_average: 8.7
       }
     }
-  ]);
+  ];
+
+  const mockWatchlistItems = signal<ContentDocType[]>(baselineWatchlist);
 
   const mockStorageService = {
     watchlistItems: mockWatchlistItems,
@@ -125,6 +127,7 @@ describe('MoviesPage', () => {
   };
 
   beforeEach(async () => {
+    mockWatchlistItems.set(baselineWatchlist);
     mockFranchiseAggregatorService.activeUserFranchises.set(baselineFranchises);
     await TestBed.configureTestingModule({
       imports: [MoviesPage],
@@ -270,5 +273,16 @@ describe('MoviesPage', () => {
       blindTicket: true
     });
     expect(component.allSectionsHidden()).toBeFalse();
+  });
+
+  it('should render unified empty state when no watchlist movies or active franchises exist', () => {
+    mockWatchlistItems.set([]);
+    mockFranchiseAggregatorService.activeUserFranchises.set([]);
+    fixture.detectChanges();
+
+    expect(component.hasAnyMovieContent()).toBeFalse();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.movies-empty-container')).toBeTruthy();
+    expect(compiled.querySelector('.empty-title')?.textContent).toContain('NO MOVIES IN YOUR WATCHLIST');
   });
 });

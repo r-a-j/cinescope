@@ -1,271 +1,283 @@
 <!-- TV-EXCLUSIVE: NEXT / LAST EPISODE TRACKER ("Where Was I?") -->
-    @if (nextEpisodeToAir() || lastEpisodeToAir()) {
-      <section class="detail-section episode-pulse-section">
-        <h3 class="section-heading">AIRING PULSE</h3>
-        <div class="episode-pulse-grid">
-          @if (nextEpisodeToAir(); as nextEp) {
-            <div class="pulse-card upcoming" [class.is-finale]="nextEp.episode_type === 'finale'">
-              <div class="pulse-badges-group">
-                <span class="pulse-badge">NEXT EPISODE</span>
-                @if (getMilestoneBadge(nextEp); as milestone) {
-                  <span class="milestone-badge" [class]="'milestone-' + milestone.type">
-                    {{ milestone.label }}
-                  </span>
-                }
-              </div>
-              <div class="pulse-title">
-                S{{ nextEp.season_number }} • E{{ nextEp.episode_number }} — {{ nextEp.name }}
-              </div>
-              <div class="pulse-meta">
-                <span>Airs {{ nextEp.air_date || 'TBA' }}</span>
-                @if (nextEp.runtime) {
-                  <span>• {{ nextEp.runtime }}m</span>
-                }
-              </div>
-              @if (nextEp.overview) {
-                <p class="pulse-overview">{{ nextEp.overview }}</p>
-              }
-            </div>
-          }
-
-          @if (lastEpisodeToAir(); as lastEp) {
-            <div class="pulse-card latest" [class.is-finale]="lastEp.episode_type === 'finale'">
-              <div class="pulse-badges-group">
-                <span class="pulse-badge muted">LATEST AIRED</span>
-                @if (getMilestoneBadge(lastEp); as milestone) {
-                  <span class="milestone-badge" [class]="'milestone-' + milestone.type">
-                    {{ milestone.label }}
-                  </span>
-                }
-              </div>
-              <div class="pulse-title">
-                S{{ lastEp.season_number }} • E{{ lastEp.episode_number }} — {{ lastEp.name }}
-              </div>
-              <div class="pulse-meta">
-                <span>Aired {{ lastEp.air_date }}</span>
-                @if (lastEp.runtime) {
-                  <span>• {{ lastEp.runtime }}m</span>
-                }
-                @if (lastEp.vote_average > 0) {
-                  <span>• ★ {{ lastEp.vote_average.toFixed(1) }}</span>
-                }
-              </div>
-              @if (lastEp.overview) {
-                <p class="pulse-overview">{{ lastEp.overview }}</p>
-              }
-            </div>
-          }
-        </div>
-      </section>
-    }
-
-    <!-- TV-EXCLUSIVE: INTERACTIVE SEASONS & EPISODES EXPLORER -->
-    @if (seasons().length > 0) {
-      <section class="detail-section seasons-hub-section">
-        <div class="section-header-row">
-          <h3 class="section-heading">SEASONS & EPISODES ({{ seasons().length }})</h3>
-          @if (seriesId() && episodes().length > 0) {
-            <button
-              type="button"
-              class="season-watched-toggle-btn"
-              [class.is-watched]="isCurrentSeasonWatched()"
-              (click)="onToggleSeasonWatched($event)">
-              <ion-icon [name]="isCurrentSeasonWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
-              <span>{{ isCurrentSeasonWatched() ? 'Season Watched' : 'Mark Season' }}</span>
-            </button>
-          }
-        </div>
-
-        <!-- Horizontal Season Selector Cards with Season Poster Thumbnail -->
-        <div class="season-tabs-scroll">
-          @for (season of seasons(); track season.id) {
-            <button
-              type="button"
-              class="season-tab-card"
-              [class.active]="selectedSeasonNumber() === season.season_number"
-              (click)="seasonSelect.emit(season.season_number)">
-              @if (season.poster_path) {
-                <img
-                  [src]="resolvePoster(season.poster_path)"
-                  [alt]="season.name"
-                  class="season-mini-poster"
-                  loading="lazy" />
-              }
-              <div class="season-tab-content">
-                <div class="season-tab-title">{{ season.name }}</div>
-                <div class="season-tab-meta">
-                  <span>{{ season.episode_count }} Eps</span>
-                  @if (season.air_date) {
-                    <span>• {{ season.air_date.slice(0, 4) }}</span>
-                  }
-                  @if (season.vote_average > 0) {
-                    <span>• ★ {{ season.vote_average.toFixed(1) }}</span>
-                  }
-                </div>
-              </div>
-            </button>
-          }
-        </div>
-
-        <!-- Selected Season Episode List -->
-        @if (isSeasonLoading()) {
-          <div class="season-loading">
-            <ion-spinner name="crescent" color="primary"></ion-spinner>
-            <span>Loading episodes...</span>
+@if (nextEpisodeToAir() || lastEpisodeToAir()) {
+  <section class="detail-section episode-pulse-section">
+    <h3 class="section-heading">AIRING PULSE</h3>
+    <div class="episode-pulse-grid">
+      @if (nextEpisodeToAir(); as nextEp) {
+        <div class="pulse-card upcoming" [class.is-finale]="nextEp.episode_type === 'finale'">
+          <div class="pulse-badges-group">
+            <span class="pulse-badge">NEXT EPISODE</span>
+            @if (getMilestoneBadge(nextEp); as milestone) {
+              <span class="milestone-badge" [class]="'milestone-' + milestone.type">
+                {{ milestone.label }}
+              </span>
+            }
           </div>
-        } @else if (episodes().length > 0) {
-          @if (activeSeasonDetail()?.overview) {
-            <p class="season-overview-box">{{ activeSeasonDetail()?.overview }}</p>
+          <div class="pulse-title">
+            S{{ nextEp.season_number }} • E{{ nextEp.episode_number }} — {{ nextEp.name }}
+          </div>
+          <div class="pulse-meta">
+            <span>Airs {{ nextEp.air_date || 'TBA' }}</span>
+            @if (nextEp.runtime) {
+              <span>• {{ nextEp.runtime }}m</span>
+            }
+          </div>
+          @if (nextEp.overview) {
+            <p class="pulse-overview">{{ nextEp.overview }}</p>
           }
+        </div>
+      }
 
-          <div class="episodes-list">
-            @for (ep of episodes(); track ep.id) {
-              <div class="episode-card" [class.is-finale]="ep.episode_type === 'finale'">
-                <div class="episode-top-row">
-                  <div
-                    class="episode-still-wrapper"
+      @if (lastEpisodeToAir(); as lastEp) {
+        <div class="pulse-card latest" [class.is-finale]="lastEp.episode_type === 'finale'">
+          <div class="pulse-badges-group">
+            <span class="pulse-badge muted">LATEST AIRED</span>
+            @if (getMilestoneBadge(lastEp); as milestone) {
+              <span class="milestone-badge" [class]="'milestone-' + milestone.type">
+                {{ milestone.label }}
+              </span>
+            }
+          </div>
+          <div class="pulse-title">
+            S{{ lastEp.season_number }} • E{{ lastEp.episode_number }} — {{ lastEp.name }}
+          </div>
+          <div class="pulse-meta">
+            <span>Aired {{ lastEp.air_date }}</span>
+            @if (lastEp.runtime) {
+              <span>• {{ lastEp.runtime }}m</span>
+            }
+            @if (lastEp.vote_average > 0) {
+              <span>• ★ {{ lastEp.vote_average.toFixed(1) }}</span>
+            }
+          </div>
+          @if (lastEp.overview) {
+            <p class="pulse-overview">{{ lastEp.overview }}</p>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}
+
+<!-- TV-EXCLUSIVE: INTERACTIVE SEASONS & EPISODES EXPLORER -->
+@if (seasons().length > 0) {
+  <section class="detail-section seasons-hub-section">
+    <div class="section-header-row">
+      <h3 class="section-heading">SEASONS & EPISODES ({{ seasons().length }})</h3>
+      @if (seriesId() && episodes().length > 0) {
+        <button
+          type="button"
+          class="season-watched-toggle-btn"
+          [class.is-watched]="isCurrentSeasonWatched()"
+          (click)="onToggleSeasonWatched($event)">
+          <ion-icon [name]="isCurrentSeasonWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+          <span>{{ isCurrentSeasonWatched() ? 'Season Watched' : 'Mark Season' }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Horizontal Season Selector Cards with Season Poster Thumbnail -->
+    <div class="season-tabs-scroll">
+      @for (season of seasons(); track season.id) {
+        <button
+          type="button"
+          class="season-tab-card"
+          [class.active]="selectedSeasonNumber() === season.season_number"
+          (click)="seasonSelect.emit(season.season_number)">
+          @if (season.poster_path) {
+            <div class="season-mini-poster-wrap" [class.is-loaded]="isImageLoaded(resolvePoster(season.poster_path))">
+              <img
+                [src]="resolvePoster(season.poster_path)"
+                [alt]="season.name"
+                class="season-mini-poster"
+                [class.is-loaded]="isImageLoaded(resolvePoster(season.poster_path))"
+                loading="lazy"
+                decoding="async"
+                (load)="onImageLoad($event, resolvePoster(season.poster_path))" />
+            </div>
+          }
+          <div class="season-tab-content">
+            <div class="season-tab-title">{{ season.name }}</div>
+            <div class="season-tab-meta">
+              <span>{{ season.episode_count }} Eps</span>
+              @if (season.air_date) {
+                <span>• {{ season.air_date.slice(0, 4) }}</span>
+              }
+              @if (season.vote_average > 0) {
+                <span>• ★ {{ season.vote_average.toFixed(1) }}</span>
+              }
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+
+    <!-- Selected Season Episode List -->
+    @if (isSeasonLoading()) {
+      <div class="season-loading">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <span>Loading episodes...</span>
+      </div>
+    } @else if (episodes().length > 0) {
+      @if (activeSeasonDetail()?.overview) {
+        <p class="season-overview-box">{{ activeSeasonDetail()?.overview }}</p>
+      }
+
+      <div class="episodes-list">
+        @for (ep of episodes(); track ep.id) {
+          <div class="episode-card" [class.is-finale]="ep.episode_type === 'finale'">
+            <div class="episode-top-row">
+              <div
+                class="episode-still-wrapper"
+                [class.is-loaded]="isImageLoaded(resolveStill(ep.still_path))"
+                tabindex="0"
+                role="button"
+                (click)="openEpisodeLookup(ep.episode_number)"
+                (keyup.enter)="openEpisodeLookup(ep.episode_number)">
+                <img
+                  [src]="resolveStill(ep.still_path)"
+                  [alt]="ep.name"
+                  class="episode-still"
+                  [class.is-loaded]="isImageLoaded(resolveStill(ep.still_path))"
+                  loading="lazy"
+                  decoding="async"
+                  (load)="onImageLoad($event, resolveStill(ep.still_path))"
+                  (error)="onStillError($event)" />
+                <span class="ep-number-badge">E{{ ep.episode_number }}</span>
+                @if (getMilestoneBadge(ep); as milestone) {
+                  <span class="ep-milestone-badge" [class]="'milestone-' + milestone.type">
+                    {{ milestone.label }}
+                  </span>
+                }
+              </div>
+
+              <div class="episode-info">
+                <div class="episode-title-row">
+                  <h4
+                    class="episode-name"
                     tabindex="0"
                     role="button"
                     (click)="openEpisodeLookup(ep.episode_number)"
                     (keyup.enter)="openEpisodeLookup(ep.episode_number)">
-                    <img
-                      [src]="resolveStill(ep.still_path)"
-                      [alt]="ep.name"
-                      class="episode-still"
-                      loading="lazy"
-                      decoding="async" />
-                    <span class="ep-number-badge">E{{ ep.episode_number }}</span>
-                    @if (getMilestoneBadge(ep); as milestone) {
-                      <span class="ep-milestone-badge" [class]="'milestone-' + milestone.type">
-                        {{ milestone.label }}
-                      </span>
+                    {{ ep.name }}
+                  </h4>
+                  <div class="episode-actions-right">
+                    @if (ep.vote_average > 0) {
+                      <span class="episode-rating">★ {{ ep.vote_average.toFixed(1) }}</span>
                     }
-                  </div>
-
-                  <div class="episode-info">
-                    <div class="episode-title-row">
-                      <h4
-                        class="episode-name"
-                        tabindex="0"
-                        role="button"
-                        (click)="openEpisodeLookup(ep.episode_number)"
-                        (keyup.enter)="openEpisodeLookup(ep.episode_number)">
-                        {{ ep.name }}
-                      </h4>
-                      <div class="episode-actions-right">
-                        @if (ep.vote_average > 0) {
-                          <span class="episode-rating">★ {{ ep.vote_average.toFixed(1) }}</span>
-                        }
-                        @if (seriesId()) {
-                          <button
-                            type="button"
-                            class="ep-watched-btn"
-                            [class.is-watched]="isEpisodeWatched(ep.season_number, ep.episode_number)"
-                            [attr.aria-label]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'Mark unwatched' : 'Mark watched'"
-                            (click)="onToggleEpisodeWatched($event, ep)">
-                            <ion-icon [name]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
-                          </button>
-                        }
-                      </div>
-                    </div>
-
-                    <div class="episode-submeta">
-                      @if (ep.air_date) {
-                        <span>{{ ep.air_date }}</span>
-                      }
-                      @if (ep.runtime) {
-                        <span>• {{ ep.runtime }}m</span>
-                      }
-                    </div>
-
-                    @if (getEpisodeKeyCrew(ep); as keyCrew) {
-                      <div class="episode-crew-line">
-                        @if (keyCrew.director) {
-                          <span class="crew-role-label">Dir</span>
-                          <button
-                            type="button"
-                            class="crew-person-btn"
-                            [attr.aria-label]="'View director ' + keyCrew.director.name"
-                            (click)="openPerson(keyCrew.director, 'Directing')">
-                            {{ keyCrew.director.name }}
-                          </button>
-                        }
-                        @if (keyCrew.writers.length > 0) {
-                          @if (keyCrew.director) {
-                            <span class="crew-dot">•</span>
-                          }
-                          <span class="crew-role-label">Writ</span>
-                          @for (w of keyCrew.writers; track w.id; let last = $last) {
-                            <button
-                              type="button"
-                              class="crew-person-btn"
-                              [attr.aria-label]="'View writer ' + w.name"
-                              (click)="openPerson(w, 'Writing')">
-                              {{ w.name }}
-                            </button>
-                            @if (!last) {
-                              <span class="comma">, </span>
-                            }
-                          }
-                        }
-                      </div>
+                    @if (seriesId()) {
+                      <button
+                        type="button"
+                        class="ep-watched-btn"
+                        [class.is-watched]="isEpisodeWatched(ep.season_number, ep.episode_number)"
+                        [attr.aria-label]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'Mark unwatched' : 'Mark watched'"
+                        (click)="onToggleEpisodeWatched($event, ep)">
+                        <ion-icon [name]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                      </button>
                     }
                   </div>
                 </div>
 
-                @if (ep.overview) {
-                  <p
-                    class="episode-synopsis"
-                    [class.clamped]="!expandedEpisodeIds()[ep.id] && ep.overview.length > 180">
-                    {{ ep.overview }}
-                  </p>
-                  @if (ep.overview.length > 180) {
-                    <button
-                      type="button"
-                      class="ep-expand-btn"
-                      (click)="toggleEpisodeExpand(ep.id)">
-                      {{ expandedEpisodeIds()[ep.id] ? 'Show less' : 'More details' }}
-                    </button>
+                <div class="episode-submeta">
+                  @if (ep.air_date) {
+                    <span>{{ ep.air_date }}</span>
                   }
-                }
+                  @if (ep.runtime) {
+                    <span>• {{ ep.runtime }}m</span>
+                  }
+                </div>
 
-                @if (ep.guest_stars && ep.guest_stars.length > 0) {
-                  <div class="episode-guest-stars-section">
-                    <span class="gs-title">GUEST STARS ({{ ep.guest_stars.length }})</span>
-                    <div class="guest-stars-scroll">
-                      @for (star of getTopGuestStars(ep); track star.id) {
-                        <div
-                          class="guest-star-pill"
-                          role="button"
-                          tabindex="0"
-                          [attr.aria-label]="star.name + (star.character ? ' as ' + star.character : '')"
-                          (click)="openPerson(star, 'Acting')"
-                          (keyup.enter)="openPerson(star, 'Acting')">
-                          <div class="guest-avatar-wrap">
-                            @if (star.profile_path) {
-                              <img
-                                [src]="resolveGuestAvatar(star.profile_path)"
-                                [alt]="star.name"
-                                class="guest-avatar"
-                                loading="lazy" />
-                            } @else {
-                              <div class="guest-avatar-fallback">{{ getInitials(star.name) }}</div>
-                            }
-                          </div>
-                          <div class="guest-details">
-                            <span class="guest-name">{{ star.name }}</span>
-                            @if (star.character) {
-                              <span class="guest-character">{{ star.character }}</span>
-                            }
-                          </div>
-                        </div>
+                @if (getEpisodeKeyCrew(ep); as keyCrew) {
+                  <div class="episode-crew-line">
+                    @if (keyCrew.director) {
+                      <span class="crew-role-label">Dir</span>
+                      <button
+                        type="button"
+                        class="crew-person-btn"
+                        [attr.aria-label]="'View director ' + keyCrew.director.name"
+                        (click)="openPerson(keyCrew.director, 'Directing')">
+                        {{ keyCrew.director.name }}
+                      </button>
+                    }
+                    @if (keyCrew.writers.length > 0) {
+                      @if (keyCrew.director) {
+                        <span class="crew-dot">•</span>
                       }
-                    </div>
+                      <span class="crew-role-label">Writ</span>
+                      @for (w of keyCrew.writers; track w.id; let last = $last) {
+                        <button
+                          type="button"
+                          class="crew-person-btn"
+                          [attr.aria-label]="'View writer ' + w.name"
+                          (click)="openPerson(w, 'Writing')">
+                          {{ w.name }}
+                        </button>
+                        @if (!last) {
+                          <span class="comma">, </span>
+                        }
+                      }
+                    }
                   </div>
                 }
+              </div>
+            </div>
+
+            @if (ep.overview) {
+              <p
+                class="episode-synopsis"
+                [class.clamped]="!expandedEpisodeIds()[ep.id] && ep.overview.length > 180">
+                {{ ep.overview }}
+              </p>
+              @if (ep.overview.length > 180) {
+                <button
+                  type="button"
+                  class="ep-expand-btn"
+                  (click)="toggleEpisodeExpand(ep.id)">
+                  {{ expandedEpisodeIds()[ep.id] ? 'Show less' : 'More details' }}
+                </button>
+              }
+            }
+
+            @if (ep.guest_stars && ep.guest_stars.length > 0) {
+              <div class="episode-guest-stars-section">
+                <span class="gs-title">GUEST STARS ({{ ep.guest_stars.length }})</span>
+                <div class="guest-stars-scroll">
+                  @for (star of getTopGuestStars(ep); track star.id) {
+                    <div
+                      class="guest-star-pill"
+                      role="button"
+                      tabindex="0"
+                      [attr.aria-label]="star.name + (star.character ? ' as ' + star.character : '')"
+                      (click)="openPerson(star, 'Acting')"
+                      (keyup.enter)="openPerson(star, 'Acting')">
+                      <div class="guest-avatar-wrap">
+                        @if (star.profile_path && !failedGuestIds()[star.id]) {
+                          <img
+                            [src]="resolveGuestAvatar(star.profile_path)"
+                            [alt]="star.name"
+                            class="guest-avatar"
+                            [class.is-loaded]="isImageLoaded(resolveGuestAvatar(star.profile_path))"
+                            loading="lazy"
+                            (load)="onImageLoad($event, resolveGuestAvatar(star.profile_path))"
+                            (error)="onGuestAvatarError(star.id)" />
+                        } @else {
+                          <div class="guest-avatar-fallback">{{ getInitials(star.name) }}</div>
+                        }
+                      </div>
+                      <div class="guest-details">
+                        <span class="guest-name">{{ star.name }}</span>
+                        @if (star.character) {
+                          <span class="guest-character">{{ star.character }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
               </div>
             }
           </div>
         }
-      </section>
+      </div>
     }
+  </section>
+}

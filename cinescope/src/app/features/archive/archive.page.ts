@@ -14,6 +14,7 @@ import {
 import { addIcons } from 'ionicons';
 import { bookmarkOutline, checkmarkDoneCircleOutline, checkmarkCircle, playOutline, sparkles, closeOutline, heart, heartOutline, trophyOutline, albumsOutline, trashOutline, ribbonOutline, searchOutline, arrowForwardOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { PosterCardComponent, BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -58,6 +59,7 @@ export interface FavoritePersonCardVm {
     IonInfiniteScroll,
     IonInfiniteScrollContent,
     HeaderComponent,
+    EmptyStateComponent,
     PosterCardComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -266,6 +268,14 @@ export class ArchivePage implements AfterViewInit {
           void this.content?.scrollToPoint(0, targetY, 0);
         }
       });
+
+      const segmentEl = (event as CustomEvent).target as HTMLElement | null;
+      const activeBtn = segmentEl?.querySelector(`ion-segment-button[value="${val}"]`);
+      activeBtn?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
     }
   }
 
@@ -455,7 +465,15 @@ export class ArchivePage implements AfterViewInit {
     return this.onRemoveFranchiseOrUniverse(event, f);
   }
 
+  public goToDiscover(): void {
+    void this.router.navigate(['/tabs', 'discover']);
+  }
+
   public goToDiscoverFranchises(): void {
+    void this.router.navigate(['/search']);
+  }
+
+  public goToSearchPeople(): void {
     void this.router.navigate(['/search']);
   }
 }

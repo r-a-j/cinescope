@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonSpinner, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline } from 'ionicons/icons';
+import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline } from 'ionicons/icons';
 import { TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto } from '../../../../core/dtos/tv/tv-detail.dto';
 import {
   TmdbTvSeasonDetailDto,
@@ -11,9 +11,10 @@ import {
   TmdbTvSeasonCrewDto,
   TmdbTvSeasonGuestStarDto
 } from '../../../../core/dtos/tv-seasons/tv-season-detail.dto';
-import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
+import { DEFAULT_POSTER_PLACEHOLDER, resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 import { TvProgressService } from '../../../../core/services/tv-progress.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { PosterCacheService } from '../../../../core/services/poster-cache.service';
 
 @Component({
   selector: 'app-tv-seasons-hub',
@@ -27,6 +28,7 @@ export class TvSeasonsHubComponent {
   private readonly router = inject(Router);
   public readonly tvProgress = inject(TvProgressService);
   private readonly toast = inject(ToastService);
+  private readonly posterCache = inject(PosterCacheService);
 
   public seriesId = input<number | undefined>(undefined);
   public seriesTitle = input<string | undefined>(undefined);
@@ -50,9 +52,42 @@ export class TvSeasonsHubComponent {
   public episodeSelect = output<{ seasonNumber: number; episodeNumber: number }>();
 
   public expandedEpisodeIds = signal<Record<number, boolean>>({});
+  public loadedUrls = signal<Record<string, boolean>>({});
+  public failedGuestIds = signal<Record<number, boolean>>({});
 
   constructor() {
-    addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline });
+    addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline });
+  }
+
+  public isImageLoaded(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const warm = typeof this.posterCache.isWarm === 'function' && this.posterCache.isWarm(url);
+    return Boolean(this.loadedUrls()[url]) || warm;
+  }
+
+  public onImageLoad(event: Event, url: string | null | undefined): void {
+    if (!url) return;
+    const img = event.target as HTMLImageElement | null;
+    if (typeof this.posterCache.markLoaded === 'function') {
+      this.posterCache.markLoaded(url, img ?? undefined);
+    }
+    this.loadedUrls.update((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  }
+
+  public onStillError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    const backdrop = this.backdropPath() ? resolveMediaImageUrl(this.backdropPath(), 'w500') : null;
+    if (backdrop && img.src !== backdrop) {
+      img.src = backdrop;
+      this.loadedUrls.update((prev) => ({ ...prev, [backdrop]: true }));
+    } else {
+      img.src = DEFAULT_POSTER_PLACEHOLDER;
+      this.loadedUrls.update((prev) => ({ ...prev, [DEFAULT_POSTER_PLACEHOLDER]: true }));
+    }
+  }
+
+  public onGuestAvatarError(starId: number): void {
+    this.failedGuestIds.update((prev) => ({ ...prev, [starId]: true }));
   }
 
   public openEpisodeLookup(epNumber: number): void {
@@ -236,6 +271,12 @@ export class TvSeasonsHubComponent {
   }
 
   public resolveStill(path: string | null | undefined): string {
+    if (path) {
+      return resolveMediaImageUrl(path, 'w500');
+    }
+    if (this.backdropPath()) {
+      return resolveMediaImageUrl(this.backdropPath(), 'w500');
+    }
     return resolveMediaImageUrl(path, 'w500');
   }
 

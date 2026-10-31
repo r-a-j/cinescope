@@ -1,14 +1,26 @@
 .archive-toolbar {
       --background: #000000;
-      --border-width: 0 0 1px 0;
-      --border-color: rgba(255, 255, 255, 0.08);
+      --border-width: 0;
+      --min-height: 48px;
+    }
+    ion-segment {
+      --background: #000000;
     }
     ion-segment-button {
-      --color: rgba(255, 255, 255, 0.5);
+      --color: #888888;
       --color-checked: #ffffff;
       --indicator-color: var(--ion-color-primary);
-      font-size: 16px;
+      --indicator-height: 3px;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
       letter-spacing: 1px;
+      min-width: max-content;
+      flex: 1 0 auto;
+      padding: 0 16px;
+
+      &::part(indicator-background) {
+        border-radius: 0;
+      }
     }
     .filter-bar {
       display: flex;
@@ -71,31 +83,6 @@
       opacity: 0;
       pointer-events: none;
       z-index: -1;
-    }
-    .empty-archive {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 60vh;
-      padding: 0 32px;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.5);
-    }
-    .empty-archive > ion-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      color: rgba(255, 255, 255, 0.25);
-    }
-    .empty-archive h2 {
-      color: #ffffff;
-      font-size: 24px;
-      margin: 0 0 8px;
-    }
-    .empty-archive p {
-      font-size: 14px;
-      line-height: 1.5;
-      margin: 0;
     }
     .archive-grid {
       display: grid;
@@ -284,49 +271,6 @@
       font-weight: 600;
       color: #ff3b5c;
       font-variant-numeric: tabular-nums;
-    }
-
-    // Empty State Discover Franchises Button
-    .discover-franchises-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 20px;
-      padding: 12px 24px;
-      border-radius: 999px;
-      background: rgba(56, 189, 248, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.45);
-      color: #38bdf8;
-      font-size: 13.5px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.2);
-      transition: transform 0.15s ease, background 0.15s ease;
-
-      &:active {
-        transform: scale(0.96);
-        background: rgba(56, 189, 248, 0.22);
-      }
-
-      ion-icon {
-        font-size: 17px;
-        width: 17px;
-        height: 17px;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: inherit;
-        pointer-events: none;
-      }
-
-      span {
-        display: inline-block;
-        line-height: 1;
-      }
     }
 
     // Franchise Grid Layout (Cinema Saga Tracker Cards)

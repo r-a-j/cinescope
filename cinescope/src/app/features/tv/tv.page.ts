@@ -21,6 +21,7 @@ import {
   bookmarkOutline,
   albumsOutline,
   arrowForwardOutline,
+  chevronForwardOutline,
   swapVerticalOutline,
   refreshOutline,
   star,
@@ -28,12 +29,14 @@ import {
   hourglassOutline
 } from 'ionicons/icons';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import { EmptyStateComponent } from 'src/app/shared/components/empty-state/empty-state.component';
 import { EpisodeDetailModalComponent } from 'src/app/shared/components/episode-detail-modal/episode-detail-modal.component';
 import { TvProgressService, AirRadarItem } from 'src/app/core/services/tv-progress.service';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { TmdbTvService } from 'src/app/core/services/tmdb-tv.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MediaMetadataService } from 'src/app/core/services/media-metadata.service';
+import { PosterCacheService } from 'src/app/core/services/poster-cache.service';
 import { resolveMediaImageUrl } from 'src/app/core/constants/api.constants';
 import { TmdbTvDetailDto } from 'src/app/core/dtos/tv/tv-detail.dto';
 import { firstValueFrom } from 'rxjs';
@@ -79,6 +82,7 @@ export interface TvGridCardVm {
     IonRefresherContent,
     IonIcon,
     HeaderComponent,
+    EmptyStateComponent,
     EpisodeDetailModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,11 +96,13 @@ export class TvPage {
   private readonly tmdbTv = inject(TmdbTvService);
   private readonly toast = inject(ToastService);
   public readonly mediaMetadata = inject(MediaMetadataService);
+  public readonly posterCache = inject(PosterCacheService);
 
   public readonly activeBingeFilter = signal<BingeFilterMode>('all');
   public readonly selectedHeroId = signal<number | null>(null);
   public readonly isRefreshing = signal<boolean>(false);
   public readonly heroEpisodeStillUrl = signal<string | null>(null);
+  public readonly loadedImages = signal<Record<string, boolean>>({});
 
   // Quick Episode Lookup Modal State
   public readonly isEpisodeModalOpen = signal<boolean>(false);
@@ -301,6 +307,7 @@ export class TvPage {
       bookmarkOutline,
       albumsOutline,
       arrowForwardOutline,
+      chevronForwardOutline,
       swapVerticalOutline,
       refreshOutline,
       star,
@@ -308,9 +315,18 @@ export class TvPage {
       hourglassOutline
     });
 
-    // Centralized idle healing: scans for any cards missing posters or episode totals
+    // Centralized idle healing & poster prewarming
     effect(() => {
       const cards = this.allDisplayCards();
+      const urlsToWarm: string[] = [];
+      for (const c of cards) {
+        if (c.posterUrl) urlsToWarm.push(c.posterUrl);
+        if (c.backdropUrl) urlsToWarm.push(c.backdropUrl);
+      }
+      if (urlsToWarm.length > 0) {
+        this.posterCache.prewarmUrls(urlsToWarm);
+      }
+
       const needsHealing = cards
         .filter((c) => {
           const cachedDoc = this.storage.getCachedDoc(c.id, 'tv');
@@ -350,14 +366,37 @@ export class TvPage {
           currentHero.upNextSeason === season &&
           currentHero.upNextEpisode === episode
         ) {
+          if (still) {
+            this.posterCache.prewarmUrls([still]);
+          }
           this.heroEpisodeStillUrl.set(still);
         }
       });
     });
   }
 
+  public isImageLoaded(url: string | null | undefined): boolean {
+    if (!url) return false;
+    return Boolean(this.loadedImages()[url]) || this.posterCache.isWarm(url);
+  }
+
+  public onImageLoad(event: Event, url: string | null | undefined): void {
+    if (!url) return;
+    const img = event.target as HTMLImageElement | null;
+    this.posterCache.markLoaded(url, img ?? undefined);
+    this.loadedImages.update((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  }
+
+  public resolveRadarPoster(posterPath: string | null | undefined): string {
+    return resolveMediaImageUrl(posterPath, 'w185');
+  }
+
   public onImageError(event: Event, tmdbId: number): void {
     this.mediaMetadata.handleImageError(event, tmdbId, 'tv');
+    const img = event.target as HTMLImageElement | null;
+    if (img?.src) {
+      this.loadedImages.update((prev) => ({ ...prev, [img.src]: true }));
+    }
   }
 
   public onBackdropError(event: Event, tmdbId?: number): void {
