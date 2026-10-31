@@ -41,6 +41,7 @@
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     background: linear-gradient(135deg, rgba(229, 9, 20, 0.14), rgba(245, 197, 24, 0.08));
     border: 1px solid rgba(245, 197, 24, 0.28);
@@ -48,15 +49,25 @@
     color: #f5c518;
     font-size: 0.72rem;
     font-weight: 700;
+    line-height: 1;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 5px 11px 5px 12px;
+    padding: 6px 10px 6px 12px;
     cursor: pointer;
     transition: all 0.18s ease;
 
+    span {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+    }
+
     ion-icon {
-        font-size: 0.82rem;
+        display: block;
+        font-size: 0.8rem;
+        line-height: 1;
         color: #e50914;
+        flex-shrink: 0;
         transition: transform 0.18s ease;
     }
 

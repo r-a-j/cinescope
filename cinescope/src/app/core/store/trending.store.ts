@@ -9,8 +9,11 @@ import { TmdbPeopleService } from '../services/tmdb-people.service';
 import { StorageService, getLocalTodayIso } from '../services/storage.service';
 import {
     DiscoverPreferencesService,
-    DiscoverLanguageOption
+    DiscoverLanguageOption,
+    AiTasteCachedLane
 } from '../services/discover-preferences.service';
+import { SmartSearchService, SemanticIntentSection } from '../services/smart-search.service';
+import { TmdbSearchService } from '../services/tmdb-search.service';
 import { CollectionQueryContext } from '../services/collection-loader.service';
 import { TmdbTrendingMixedItemDto } from '../dtos/trending/trending-mixed-item.dto';
 import { TmdbMovieListItemDto } from '../dtos/movies/movie-list-item.dto';
@@ -40,6 +43,7 @@ interface TrendingState {
     // Personalized For You Tab
     forYouSections: DiscoverSwimlaneSection[];
     isForYouLoading: boolean;
+    isAiTasteSyncing: boolean;
     // Language & World Hub (Dynamic per user language preferences)
     languageHubSections: DiscoverSwimlaneSection[];
     lastLoadedLanguageKey: string;
@@ -83,6 +87,7 @@ const initialState: TrendingState = {
     trendingPersonalizedSections: [],
     forYouSections: [],
     isForYouLoading: false,
+    isAiTasteSyncing: false,
     languageHubSections: [],
     lastLoadedLanguageKey: '',
     desiWebSeries: [],
@@ -273,7 +278,23 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 }
             };
         default:
-            // Indian Regional Languages (Punjabi, Marathi, Bengali, Gujarati, Telugu, Tamil, Malayalam, Kannada)
+            if (lang.group === 'global') {
+                return {
+                    primaryMovieTitle: `${lang.label.toUpperCase()} CINEMA SPOTLIGHT`,
+                    primaryMovieParams: {
+                        with_original_language: code,
+                        sort_by: 'popularity.desc',
+                        'vote_count.gte': 10
+                    },
+                    secondaryTitle: `POPULAR ${lang.label.toUpperCase()} SERIES`,
+                    secondaryType: 'tv',
+                    secondaryTvParams: {
+                        with_original_language: code,
+                        sort_by: 'popularity.desc'
+                    }
+                };
+            }
+            // Indian Regional Languages (Punjabi, Marathi, Bengali, Gujarati, Telugu, Tamil, Malayalam, Kannada, Odia, Urdu, Assamese, etc.)
             return {
                 primaryMovieTitle: `${lang.label.toUpperCase()} BLOCKBUSTERS`,
                 primaryMovieParams: {
@@ -286,7 +307,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 secondaryMovieParams: {
                     with_original_language: code,
                     sort_by: 'vote_average.desc',
-                    'vote_count.gte': 15
+                    'vote_count.gte': 10
                 }
             };
     }
@@ -302,6 +323,8 @@ export const TrendingStore = signalStore(
         moviesService = inject(TmdbMoviesService),
         tvService = inject(TmdbTvService),
         peopleService = inject(TmdbPeopleService),
+        searchService = inject(TmdbSearchService),
+        smartSearchService = inject(SmartSearchService),
         storage = inject(StorageService),
         discoverPrefs = inject(DiscoverPreferencesService)
     ) => {
@@ -318,12 +341,193 @@ export const TrendingStore = signalStore(
             return items.filter((it) => !watchedKeys.has(`${it.mediaType}_${it.id}`));
         };
 
-        const buildPersonalizedTopLanes = async (): Promise<DiscoverSwimlaneSection[]> => {
+        /**
+         * Resolves 12-hour Gemini AI Taste lanes from the user's Watched & Watchlist history.
+         * Never hallucinates movie titles: Gemini only proposes TMDB Discover query graphs
+         * (genres, keywords, actors, sort_by) which are resolved against real TMDB endpoints
+         * and cached for 12 hours in localStorage.
+         */
+        const hydrateAiTasteSections = async (
+            langPipe: string,
+            forceRefresh = false
+        ): Promise<DiscoverSwimlaneSection[]> => {
+            let cachedPayload = forceRefresh ? null : discoverPrefs.getValidAiTasteCache();
+
+            if (!cachedPayload) {
+                const watchedDocs = storage.watchedItems();
+                const watchlistDocs = storage.watchlistItems();
+                const combinedLibrary = [...watchedDocs, ...watchlistDocs].sort((a, b) =>
+                    (b.addedAt || '').localeCompare(a.addedAt || '')
+                );
+
+                const seedTitles = combinedLibrary
+                    .map((doc) => {
+                        const p = (doc.payload || {}) as Record<string, unknown>;
+                        return String(p['title'] || p['name'] || '').trim();
+                    })
+                    .filter(Boolean)
+                    .slice(0, 4);
+
+                const genreLabels = discoverPrefs
+                    .selectedGenreOptions()
+                    .slice(0, 3)
+                    .map((g) => g.label)
+                    .join(', ');
+                const vibeLabels = discoverPrefs
+                    .selectedVibeOptions()
+                    .slice(0, 2)
+                    .map((v) => v.label)
+                    .join(', ');
+
+                const tasteContext =
+                    seedTitles.length > 0
+                        ? `fan of ${seedTitles.join(', ')}`
+                        : `fan of ${[genreLabels, vibeLabels].filter(Boolean).join(', ') || 'thriller and sci-fi cinema'}`;
+
+                const aiQuery = `Curate 3 distinct movie or TV discover categories for a ${tasteContext}`.slice(0, 260);
+
+                patchState(store, { isAiTasteSyncing: true });
+                try {
+                    const aiResponse = await firstValueFrom(smartSearchService.getSmartSuggestions(aiQuery));
+                    const rawSections: SemanticIntentSection[] = (aiResponse.sections || []).slice(0, 4);
+                    const builtLanes: AiTasteCachedLane[] = [];
+
+                    for (let idx = 0; idx < rawSections.length; idx++) {
+                        const sec = rawSections[idx];
+                        if (sec.action !== 'discover_movies' && sec.action !== 'discover_tv') {
+                            continue;
+                        }
+
+                        const rawTitle = (sec.title || '').trim();
+                        if (!rawTitle) continue;
+
+                        let castId: string | undefined;
+                        if (sec.parameters?.person_name) {
+                            try {
+                                const pRes = await firstValueFrom(
+                                    searchService.searchPerson(sec.parameters.person_name, 1)
+                                );
+                                if (pRes.results && pRes.results.length > 0) {
+                                    castId = String(pRes.results[0].id);
+                                }
+                            } catch {
+                                // Ignore person lookup failure
+                            }
+                        }
+
+                        let keywordPipe: string | undefined;
+                        if (sec.parameters?.keywords && sec.parameters.keywords.length > 0) {
+                            try {
+                                const kwIds = await Promise.all(
+                                    sec.parameters.keywords.slice(0, 3).map(async (kw) => {
+                                        const kwRes = await firstValueFrom(searchService.searchKeywords(kw, 1));
+                                        return kwRes.results?.[0]?.id ? String(kwRes.results[0].id) : null;
+                                    })
+                                );
+                                const validKw = kwIds.filter((k): k is string => !!k);
+                                if (validKw.length > 0) {
+                                    keywordPipe = validKw.join('|');
+                                }
+                            } catch {
+                                // Ignore keyword lookup failure
+                            }
+                        }
+
+                        const genrePipe =
+                            sec.parameters?.genres && sec.parameters.genres.length > 0
+                                ? sec.parameters.genres.join('|')
+                                : undefined;
+
+                        if (sec.action === 'discover_tv') {
+                            const tvParams: TmdbDiscoverTvParamsDto = {
+                                ...(langPipe ? { with_original_language: langPipe } : {}),
+                                ...(genrePipe ? { with_genres: genrePipe } : {}),
+                                ...(keywordPipe ? { with_keywords: keywordPipe } : {}),
+                                sort_by: 'popularity.desc',
+                                'vote_count.gte': 15
+                            };
+                            builtLanes.push({
+                                id: `ai-taste-tv-${idx}`,
+                                title: `AI CURATED: ${rawTitle.toUpperCase()}`,
+                                mediaType: 'tv',
+                                tvParams
+                            });
+                        } else {
+                            const movieParams: TmdbDiscoverMovieParamsDto = {
+                                ...(!castId && langPipe ? { with_original_language: langPipe } : {}),
+                                ...(castId ? { with_cast: castId } : {}),
+                                ...(genrePipe ? { with_genres: genrePipe } : {}),
+                                ...(keywordPipe ? { with_keywords: keywordPipe } : {}),
+                                sort_by: sec.parameters?.sort_by || 'popularity.desc',
+                                'vote_count.gte': 20
+                            };
+                            builtLanes.push({
+                                id: `ai-taste-movie-${idx}`,
+                                title: `AI CURATED: ${rawTitle.toUpperCase()}`,
+                                mediaType: 'movie',
+                                movieParams
+                            });
+                        }
+                    }
+
+                    if (builtLanes.length > 0) {
+                        cachedPayload = discoverPrefs.saveAiTasteCache(builtLanes, tasteContext);
+                    }
+                } catch {
+                    // Gracefully fall back if offline or Gemini quota reached
+                    cachedPayload = discoverPrefs.aiTasteCache();
+                } finally {
+                    patchState(store, { isAiTasteSyncing: false });
+                }
+            }
+
+            if (!cachedPayload || cachedPayload.lanes.length === 0) {
+                return [];
+            }
+
+            const hydratedSections: DiscoverSwimlaneSection[] = [];
+            await Promise.all(
+                cachedPayload.lanes.map(async (lane) => {
+                    try {
+                        if (lane.mediaType === 'tv' && lane.tvParams) {
+                            const res = await firstValueFrom(discoverService.discoverTv(lane.tvParams));
+                            const items = filterWatched(mapTvToSwimlane(res.results || []));
+                            if (items.length > 0) {
+                                hydratedSections.push({
+                                    id: lane.id,
+                                    title: lane.title,
+                                    items,
+                                    queryContext: { type: 'discover_tv', tvParams: lane.tvParams }
+                                });
+                            }
+                        } else if (lane.movieParams) {
+                            const res = await firstValueFrom(discoverService.discoverMovies(lane.movieParams));
+                            const items = filterWatched(mapMoviesToSwimlane(res.results || []));
+                            if (items.length > 0) {
+                                hydratedSections.push({
+                                    id: lane.id,
+                                    title: lane.title,
+                                    items,
+                                    queryContext: { type: 'discover_movies', movieParams: lane.movieParams }
+                                });
+                            }
+                        }
+                    } catch {
+                        // Skip failed lane
+                    }
+                })
+            );
+
+            return hydratedSections;
+        };
+
+        const buildPersonalizedTopLanes = async (forceAiRefresh = false): Promise<DiscoverSwimlaneSection[]> => {
             const sections: DiscoverSwimlaneSection[] = [];
             const todayIso = getLocalTodayIso();
             const preferredLangs = discoverPrefs.preferredLanguages();
             const langPipe = preferredLangs.join('|');
             const selectedGenres = discoverPrefs.selectedGenreOptions();
+            const selectedVibes = discoverPrefs.selectedVibeOptions();
             const movieGenrePipe = selectedGenres.map((g) => g.movieGenreIds).join('|');
             const tvGenrePipe = selectedGenres.map((g) => g.tvGenreIds).join('|');
 
@@ -397,7 +601,13 @@ export const TrendingStore = signalStore(
                 }
             }
 
-            // 2. Curated For Your Taste (Movies) + Series + Upcoming in Your Languages + Quick Watch
+            // 2. 12-Hour Gemini AI Taste Curation (Zero-Hallucination TMDB Discover Execution Graph)
+            const aiSections = await hydrateAiTasteSections(langPipe || 'hi|en', forceAiRefresh);
+            for (const aiSec of aiSections) {
+                sections.push(aiSec);
+            }
+
+            // 3. Curated For Your Taste (Movies) + Series + Upcoming in Your Languages + Quick Watch
             const curatedMoviesParams: TmdbDiscoverMovieParamsDto = {
                 with_original_language: langPipe || 'hi|en',
                 ...(movieGenrePipe ? { with_genres: movieGenrePipe } : {}),
@@ -420,19 +630,10 @@ export const TrendingStore = signalStore(
                 sort_by: 'popularity.desc'
             };
 
-            const quickWatchParams: TmdbDiscoverMovieParamsDto = {
-                with_original_language: langPipe || 'hi|en',
-                'with_runtime.lte': 100,
-                'vote_average.gte': 6.8,
-                'vote_count.gte': 40,
-                sort_by: 'popularity.desc'
-            };
-
-            const [curatedMoviesRes, curatedTvRes, upcomingRes, quickWatchRes] = await Promise.all([
+            const [curatedMoviesRes, curatedTvRes, upcomingRes] = await Promise.all([
                 firstValueFrom(discoverService.discoverMovies(curatedMoviesParams)),
                 firstValueFrom(discoverService.discoverTv(curatedTvParams)),
-                firstValueFrom(discoverService.discoverMovies(upcomingLangParams)),
-                firstValueFrom(discoverService.discoverMovies(quickWatchParams))
+                firstValueFrom(discoverService.discoverMovies(upcomingLangParams))
             ]);
 
             const curatedMovies = filterWatched(mapMoviesToSwimlane(curatedMoviesRes.results || []));
@@ -465,14 +666,65 @@ export const TrendingStore = signalStore(
                 });
             }
 
-            const quickWatchItems = filterWatched(mapMoviesToSwimlane(quickWatchRes.results || []));
-            if (quickWatchItems.length > 0) {
-                sections.push({
-                    id: 'quick-watch-tonight',
-                    title: 'QUICK WATCH TONIGHT (< 100 MINS)',
-                    items: quickWatchItems,
-                    queryContext: { type: 'discover_movies', movieParams: quickWatchParams }
-                });
+            // 4. Selected Cinema Vibes & Moods (Deterministic TMDB Discover Rules)
+            const vibeFetches = selectedVibes.slice(0, 4).map(async (vibe) => {
+                try {
+                    const vibeParams: TmdbDiscoverMovieParamsDto = {
+                        ...vibe.movieParams,
+                        with_original_language: langPipe || 'hi|en'
+                    };
+                    const res = await firstValueFrom(discoverService.discoverMovies(vibeParams));
+                    const items = filterWatched(mapMoviesToSwimlane(res.results || []));
+                    if (items.length > 0) {
+                        return {
+                            id: `vibe-${vibe.key}`,
+                            title: vibe.swimlaneTitle,
+                            items,
+                            queryContext: { type: 'discover_movies', movieParams: vibeParams }
+                        } as DiscoverSwimlaneSection;
+                    }
+                } catch {
+                    // Ignore failed vibe fetch
+                }
+                return null;
+            });
+
+            // 5. Individual Selected Official Genre Lanes
+            const genreFetches = selectedGenres.slice(0, 4).map(async (genre) => {
+                try {
+                    const genreParams: TmdbDiscoverMovieParamsDto = {
+                        with_original_language: langPipe || 'hi|en',
+                        with_genres: genre.movieGenreIds,
+                        'vote_average.gte': 6.7,
+                        'vote_count.gte': 25,
+                        sort_by: 'popularity.desc'
+                    };
+                    const res = await firstValueFrom(discoverService.discoverMovies(genreParams));
+                    const items = filterWatched(mapMoviesToSwimlane(res.results || []));
+                    if (items.length > 0) {
+                        return {
+                            id: `genre-${genre.key}`,
+                            title: `TOP ${genre.label.toUpperCase()} IN YOUR LANGUAGES`,
+                            items,
+                            queryContext: { type: 'discover_movies', movieParams: genreParams }
+                        } as DiscoverSwimlaneSection;
+                    }
+                } catch {
+                    // Ignore failed genre fetch
+                }
+                return null;
+            });
+
+            const [resolvedVibes, resolvedGenres] = await Promise.all([
+                Promise.all(vibeFetches),
+                Promise.all(genreFetches)
+            ]);
+
+            for (const vSec of resolvedVibes) {
+                if (vSec) sections.push(vSec);
+            }
+            for (const gSec of resolvedGenres) {
+                if (gSec) sections.push(gSec);
             }
 
             return sections;
@@ -540,6 +792,22 @@ export const TrendingStore = signalStore(
                 });
             } catch (error) {
                 console.error('Failed to load For You data', error);
+                patchState(store, { isForYouLoading: false });
+            }
+        },
+
+        async refreshAiTasteNow(): Promise<void> {
+            if (store.isAiTasteSyncing()) return;
+            patchState(store, { isForYouLoading: true });
+            try {
+                const sections = await buildPersonalizedTopLanes(true);
+                patchState(store, {
+                    forYouSections: sections,
+                    trendingPersonalizedSections: sections.slice(0, 3),
+                    isForYouLoading: false
+                });
+            } catch (error) {
+                console.error('Failed to refresh AI Taste lanes', error);
                 patchState(store, { isForYouLoading: false });
             }
         },

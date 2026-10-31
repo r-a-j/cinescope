@@ -20,8 +20,11 @@ import {
     sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline,
     helpCircleOutline, flameOutline, tvOutline, trophyOutline, peopleOutline, newspaperOutline,
     flashOutline, eyeOutline, planetOutline, happyOutline, skullOutline, heartOutline, videocamOutline,
-    eyeOffOutline, languageOutline, optionsOutline, checkmark
+    eyeOffOutline, languageOutline, optionsOutline, checkmark,
+    fingerPrintOutline, helpBuoyOutline, colorWandOutline, hourglassOutline, shieldOutline,
+    musicalNotesOutline, sunnyOutline, hardwareChipOutline
 } from 'ionicons/icons';
+import { TrendingStore } from 'src/app/core/store/trending.store';
 import { StorageService } from 'src/app/core/services/storage.service';
 import { RegionService } from 'src/app/core/services/region.service';
 import { ApiCacheService } from 'src/app/core/services/api-cache.service';
@@ -62,8 +65,50 @@ export class SettingsPage implements OnInit {
     public storage = inject(StorageService);
     public moviesPrefs = inject(MoviesPreferencesService);
     public discoverPrefs = inject(DiscoverPreferencesService);
+    public trendingStore = inject(TrendingStore);
     public isDiscoverTabCollapsed = signal<boolean>(true);
+    public isLanguagesModalOpen = signal<boolean>(false);
+    public languageGroupFilter = signal<'all' | 'indian' | 'global' | 'selected'>('all');
+    public isDiscoverGenresExpanded = signal<boolean>(false);
+    public isDiscoverAiExpanded = signal<boolean>(false);
+    public isDiscoverTabsExpanded = signal<boolean>(false);
+    public discoverLangSearchQuery = signal<string>('');
     public isMoviesTabCollapsed = signal<boolean>(true);
+
+    public filteredModalLanguages = computed(() => {
+        const q = this.discoverLangSearchQuery().trim().toLowerCase();
+        const group = this.languageGroupFilter();
+        const selected = new Set(this.discoverPrefs.preferredLanguages());
+
+        let baseList = [
+            ...this.discoverPrefs.indianLanguageOptions(),
+            ...this.discoverPrefs.globalLanguageOptions()
+        ];
+
+        if (group === 'indian') {
+            baseList = this.discoverPrefs.indianLanguageOptions();
+        } else if (group === 'global') {
+            baseList = this.discoverPrefs.globalLanguageOptions();
+        } else if (group === 'selected') {
+            baseList = this.discoverPrefs.selectedLanguageOptions();
+        } else {
+            // Sort selected first when in 'all' view
+            baseList.sort((a, b) => {
+                const aSel = selected.has(a.code) ? 0 : 1;
+                const bSel = selected.has(b.code) ? 0 : 1;
+                return aSel - bSel;
+            });
+        }
+
+        if (!q) return baseList;
+        return baseList.filter(
+            (l) =>
+                l.label.toLowerCase().includes(q) ||
+                l.nativeLabel.toLowerCase().includes(q) ||
+                l.code.toLowerCase().includes(q) ||
+                l.badge.toLowerCase().includes(q)
+        );
+    });
     public isHelpTutorialsCollapsed = signal<boolean>(true);
     public expandedTutorialCategories = signal<Set<string>>(new Set());
     private apiCache = inject(ApiCacheService);
@@ -147,8 +192,48 @@ export class SettingsPage implements OnInit {
             sparklesOutline, albumsOutline, ticketOutline, filmOutline, timeOutline, refreshOutline, compassOutline,
             helpCircleOutline, flameOutline, tvOutline, trophyOutline, peopleOutline, newspaperOutline,
             flashOutline, eyeOutline, planetOutline, happyOutline, skullOutline, heartOutline, videocamOutline,
-            eyeOffOutline, languageOutline, optionsOutline, checkmark
+            eyeOffOutline, languageOutline, optionsOutline, checkmark,
+            fingerPrintOutline, helpBuoyOutline, colorWandOutline, hourglassOutline, shieldOutline,
+            musicalNotesOutline, sunnyOutline, hardwareChipOutline
         });
+    }
+
+    public toggleDiscoverMainAccordion(): void {
+        const nextCollapsed = !this.isDiscoverTabCollapsed();
+        this.isDiscoverTabCollapsed.set(nextCollapsed);
+        if (!nextCollapsed) {
+            void this.discoverPrefs.ensureApiCatalogsLoaded();
+        }
+    }
+
+    public openLanguagesModal(): void {
+        this.discoverLangSearchQuery.set('');
+        this.languageGroupFilter.set('all');
+        this.isLanguagesModalOpen.set(true);
+        void this.discoverPrefs.ensureApiCatalogsLoaded();
+    }
+
+    public closeLanguagesModal(): void {
+        this.isLanguagesModalOpen.set(false);
+        this.discoverLangSearchQuery.set('');
+    }
+
+    public setLanguageGroupFilter(group: 'all' | 'indian' | 'global' | 'selected'): void {
+        this.languageGroupFilter.set(group);
+    }
+
+    public onDiscoverLangSearch(event: Event): void {
+        const input = event.target as HTMLInputElement | null;
+        this.discoverLangSearchQuery.set(input?.value || '');
+    }
+
+    public clearDiscoverLangSearch(): void {
+        this.discoverLangSearchQuery.set('');
+    }
+
+    public async refreshAiTasteFromSettings(): Promise<void> {
+        await this.trendingStore.refreshAiTasteNow();
+        await this.toast.presentSuccess('AI Taste lanes refreshed for the next 12 hours', 2200);
     }
 
     // --- REGION MANAGEMENT ---

@@ -103,7 +103,17 @@ export class DiscoverPage implements OnInit, AfterViewInit {
 
     public readonly sortedQuickLanguageChips = computed(() => {
         const selected = new Set(this.discoverPrefs.preferredLanguages());
-        return [...DISCOVER_LANGUAGE_OPTIONS].sort((a, b) => {
+        const combined = [
+            ...this.discoverPrefs.indianLanguageOptions().slice(0, 14),
+            ...this.discoverPrefs.globalLanguageOptions().slice(0, 18)
+        ];
+        // Ensure any custom selected language from the full 180+ TMDB catalog is also present
+        for (const selOpt of this.discoverPrefs.selectedLanguageOptions()) {
+            if (!combined.some((c) => c.code === selOpt.code)) {
+                combined.unshift(selOpt);
+            }
+        }
+        return combined.sort((a, b) => {
             const aSel = selected.has(a.code) ? 0 : 1;
             const bSel = selected.has(b.code) ? 0 : 1;
             return aSel - bSel;
@@ -253,6 +263,7 @@ export class DiscoverPage implements OnInit, AfterViewInit {
     }
 
     ngOnInit(): void {
+        void this.discoverPrefs.ensureApiCatalogsLoaded();
         this.store.loadTrendingData();
     }
 

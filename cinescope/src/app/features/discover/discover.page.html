@@ -11,15 +11,6 @@
             }
 
         </ion-segment>
-
-        <button
-            type="button"
-            class="discover-customize-btn"
-            aria-label="Customize Discover Preferences"
-            title="Customize Discover & Languages"
-            (click)="openDiscoverPreferences()">
-            <ion-icon name="options-outline"></ion-icon>
-        </button>
     </div>
 </ion-toolbar>
 
@@ -50,10 +41,6 @@
                     (click)="onQuickToggleHideWatched()">
                     <ion-icon [name]="discoverPrefs.hideWatchedInDiscover() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                     <span>{{ discoverPrefs.hideWatchedInDiscover() ? 'Watched Hidden' : 'Hide Watched' }}</span>
-                </button>
-                <button type="button" class="taste-edit-pill" (click)="openDiscoverPreferences()">
-                    <ion-icon name="options-outline"></ion-icon>
-                    <span>Tune</span>
                 </button>
             </div>
         </div>
@@ -156,9 +143,6 @@
                     <ion-icon name="language-outline"></ion-icon>
                     <span>ACTIVE LANGUAGES ({{ discoverPrefs.preferredLanguages().length }})</span>
                 </div>
-                <button type="button" class="quick-lang-settings-link" (click)="openDiscoverPreferences()">
-                    All Preferences
-                </button>
             </div>
             <div class="quick-lang-chips-scroll">
                 @for (lang of sortedQuickLanguageChips(); track lang.code) {

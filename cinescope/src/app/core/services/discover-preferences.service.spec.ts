@@ -43,10 +43,30 @@ describe('DiscoverPreferencesService', () => {
     expect(toastSpy.presentInfo).toHaveBeenCalled();
   });
 
-  it('toggles favorite genres and persists state', () => {
+  it('toggles favorite genres, cinema vibes, and caches 12h AI taste lanes', () => {
     expect(service.isGenreSelected('comedy')).toBeFalse();
     service.toggleGenre('comedy');
     expect(service.isGenreSelected('comedy')).toBeTrue();
+
+    expect(service.isVibeSelected('hidden-gems')).toBeFalse();
+    service.toggleVibe('hidden-gems');
+    expect(service.isVibeSelected('hidden-gems')).toBeTrue();
+
+    service.saveAiTasteCache(
+      [
+        {
+          id: 'ai-test-1',
+          title: 'AI CURATED: NEO-NOIR THRILLERS',
+          mediaType: 'movie',
+          movieParams: { with_genres: '53', sort_by: 'popularity.desc' }
+        }
+      ],
+      'fan of Inception'
+    );
+    const cached = service.getValidAiTasteCache();
+    expect(cached).not.toBeNull();
+    expect(cached?.lanes.length).toBe(1);
+    service.clearAiTasteCache();
   });
 
   it('toggles tab visibility and resets to defaults', async () => {

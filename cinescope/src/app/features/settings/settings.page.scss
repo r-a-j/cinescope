@@ -37,51 +37,197 @@ ion-title {
 /* ==========================================
    DISCOVER & TASTE PREFERENCES PANEL
    ========================================== */
-.discover-pref-block {
-    padding: 16px 16px 14px;
-    background: #0d0d10;
-    border-bottom: 1px solid #222222;
-}
+.discover-sub-accordion-header {
+    --background: #141418;
+    --padding-start: 20px;
 
-.pref-block-header {
-    margin-bottom: 12px;
-}
+    ion-icon[slot="start"] {
+        color: #f5c518;
+        font-size: 1.1rem;
+    }
 
-.pref-block-title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    h3 {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
 
-    ion-icon {
-        color: #e50914;
-        font-size: 1.05rem;
+    p {
+        font-size: 0.74rem;
+        color: rgba(255, 255, 255, 0.56);
     }
 }
 
-.pref-block-title {
-    font-family: var(--font-display, 'Bebas Neue', sans-serif);
-    font-size: 1rem;
-    letter-spacing: 0.08em;
-    color: #ffffff;
+.selected-languages-inline-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px 14px 20px;
+    background: #141418;
+    border-bottom: 1px solid #222222;
 }
 
-.pref-block-count {
-    margin-left: auto;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 2px 8px;
+.add-more-lang-pill {
+    border-style: dashed;
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.08);
+
+    .pill-main {
+        color: #38bdf8;
+    }
+
+    .genre-pill-icon {
+        color: #38bdf8;
+    }
+}
+
+.modal-selected-lang-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.modal-selected-lang-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
     border-radius: 999px;
-    background: rgba(245, 197, 24, 0.14);
-    border: 1px solid rgba(245, 197, 24, 0.35);
+    background: rgba(56, 189, 248, 0.16);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 14px;
+        color: #38bdf8;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.lang-modal-group-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.lang-group-tab {
+    flex: 1 0 auto;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &.active {
+        background: rgba(56, 189, 248, 0.18);
+        border-color: rgba(56, 189, 248, 0.5);
+        color: #38bdf8;
+    }
+}
+
+.discover-pref-block {
+    padding: 14px 16px 16px;
+    background: #0b0b0f;
+    border-bottom: 1px solid #222222;
+}
+
+.pref-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 12px;
+
+    &:focus-within {
+        border-color: rgba(229, 9, 20, 0.55);
+        background: rgba(255, 255, 255, 0.07);
+    }
+
+    .pref-search-icon {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.48);
+        flex-shrink: 0;
+    }
+
+    .pref-search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 0.8rem;
+
+        &::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+    }
+
+    .pref-search-clear {
+        background: transparent;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.55);
+        cursor: pointer;
+
+        ion-icon {
+            font-size: 1rem;
+        }
+    }
+}
+
+.pref-expand-catalog-btn {
+    margin-top: 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px dashed rgba(245, 197, 24, 0.35);
+    background: rgba(245, 197, 24, 0.06);
     color: #f5c518;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    ion-icon {
+        font-size: 0.85rem;
+    }
+
+    &:active {
+        transform: scale(0.98);
+        background: rgba(245, 197, 24, 0.12);
+    }
 }
 
 .pref-block-desc {
-    margin: 4px 0 0;
+    margin: 0 0 12px;
     font-size: 0.76rem;
-    color: rgba(255, 255, 255, 0.58);
-    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.62);
+    line-height: 1.45;
 }
 
 .pref-group-kicker {
@@ -153,16 +299,177 @@ ion-title {
     }
 }
 
-.discover-tabs-subheader {
-    padding: 12px 16px 6px;
-    background: #0d0d10;
-    border-bottom: 1px solid #1d1d22;
+.pref-vibes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+}
 
-    span {
-        font-family: var(--font-display, 'Bebas Neue', sans-serif);
-        font-size: 0.88rem;
-        letter-spacing: 0.1em;
-        color: rgba(255, 255, 255, 0.55);
+.pref-vibe-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    .vibe-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .vibe-card-title {
+        font-size: 0.79rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .vibe-card-sub {
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.3;
+    }
+
+    .pill-check {
+        font-size: 0.85rem;
+        color: #f5c518;
+        flex-shrink: 0;
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.2), rgba(245, 197, 24, 0.06));
+        border-color: rgba(229, 9, 20, 0.6);
+
+        .vibe-card-sub {
+            color: rgba(255, 255, 255, 0.72);
+        }
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+.ai-cached-lanes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.ai-cached-lane-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(245, 197, 24, 0.1);
+    border: 1px solid rgba(245, 197, 24, 0.32);
+    color: #f5c518;
+    font-size: 0.68rem;
+    font-weight: 700;
+
+    ion-icon {
+        font-size: 0.78rem;
+        color: #e50914;
+    }
+}
+
+.ai-refresh-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(229, 9, 20, 0.5);
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.22), rgba(245, 197, 24, 0.08));
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    ion-icon {
+        font-size: 0.95rem;
+        color: #f5c518;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+}
+
+.discover-tabs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 16px 16px;
+    background: #0b0b0f;
+    border-bottom: 1px solid #222222;
+}
+
+.discover-tab-toggle-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    .tab-card-icon {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.5);
+        flex-shrink: 0;
+    }
+
+    .tab-card-label {
+        flex: 1;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .pill-check {
+        font-size: 0.85rem;
+        color: #f5c518;
+        flex-shrink: 0;
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.2), rgba(229, 9, 20, 0.06));
+        border-color: rgba(229, 9, 20, 0.55);
+        color: #ffffff;
+
+        .tab-card-icon {
+            color: #e50914;
+        }
+    }
+
+    &:active {
+        transform: scale(0.97);
     }
 }
 
