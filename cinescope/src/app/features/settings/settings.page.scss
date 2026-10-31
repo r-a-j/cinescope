@@ -34,6 +34,138 @@ ion-title {
     min-height: 60px;
 }
 
+/* ==========================================
+   DISCOVER & TASTE PREFERENCES PANEL
+   ========================================== */
+.discover-pref-block {
+    padding: 16px 16px 14px;
+    background: #0d0d10;
+    border-bottom: 1px solid #222222;
+}
+
+.pref-block-header {
+    margin-bottom: 12px;
+}
+
+.pref-block-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon {
+        color: #e50914;
+        font-size: 1.05rem;
+    }
+}
+
+.pref-block-title {
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+}
+
+.pref-block-count {
+    margin-left: auto;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(245, 197, 24, 0.14);
+    border: 1px solid rgba(245, 197, 24, 0.35);
+    color: #f5c518;
+}
+
+.pref-block-desc {
+    margin: 4px 0 0;
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.58);
+    line-height: 1.4;
+}
+
+.pref-group-kicker {
+    display: block;
+    margin: 12px 0 8px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.pref-pills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pref-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    .pill-main {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .pill-native {
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.48);
+        font-weight: 500;
+    }
+
+    .genre-pill-icon {
+        font-size: 0.92rem;
+        color: rgba(255, 255, 255, 0.65);
+    }
+
+    .pill-check {
+        font-size: 0.85rem;
+        color: #f5c518;
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.22), rgba(229, 9, 20, 0.08));
+        border-color: rgba(229, 9, 20, 0.65);
+        box-shadow: 0 2px 10px rgba(229, 9, 20, 0.18);
+
+        .pill-native {
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .genre-pill-icon {
+            color: #e50914;
+        }
+    }
+}
+
+.discover-tabs-subheader {
+    padding: 12px 16px 6px;
+    background: #0d0d10;
+    border-bottom: 1px solid #1d1d22;
+
+    span {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 0.88rem;
+        letter-spacing: 0.1em;
+        color: rgba(255, 255, 255, 0.55);
+    }
+}
+
 // Footer Styling
 .tmdb-footer {
     text-align: center;

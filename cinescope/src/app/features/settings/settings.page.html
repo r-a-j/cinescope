@@ -104,7 +104,148 @@
         }
     </ion-list>
 
-<ion-list inset="true" class="cinescope-list">
+    <ion-list inset="true" class="cinescope-list discover-prefs-list">
+        <ion-item
+            button
+            (click)="isDiscoverTabCollapsed.set(!isDiscoverTabCollapsed())"
+            [lines]="isDiscoverTabCollapsed() ? 'none' : 'inset'">
+            <ion-icon slot="start" name="compass-outline"></ion-icon>
+            <ion-label>
+                <h3>Discover &amp; Taste Preferences</h3>
+                <p>{{ discoverPrefs.summarySubtitle() }}</p>
+            </ion-label>
+            <ion-icon slot="end" [name]="isDiscoverTabCollapsed() ? 'chevron-forward-outline' : 'chevron-down-outline'"></ion-icon>
+        </ion-item>
+
+        @if (!isDiscoverTabCollapsed()) {
+            <!-- 1. PREFERRED LANGUAGES (MULTI-SELECT PILLS) -->
+            <div class="discover-pref-block">
+                <div class="pref-block-header">
+                    <div class="pref-block-title-row">
+                        <ion-icon name="language-outline"></ion-icon>
+                        <span class="pref-block-title">PREFERRED LANGUAGES</span>
+                        <span class="pref-block-count">{{ discoverPrefs.preferredLanguages().length }} selected</span>
+                    </div>
+                    <p class="pref-block-desc">
+                        Only languages you select here will populate your Language Hub &amp; personalized rows—no unwanted regional rows.
+                    </p>
+                </div>
+
+                <span class="pref-group-kicker">INDIAN LANGUAGES</span>
+                <div class="pref-pills-grid">
+                    @for (lang of discoverPrefs.indianLanguageOptions; track lang.code) {
+                        <button
+                            type="button"
+                            class="pref-pill"
+                            [class.active]="discoverPrefs.isLanguageSelected(lang.code)"
+                            [attr.aria-pressed]="discoverPrefs.isLanguageSelected(lang.code)"
+                            (click)="discoverPrefs.toggleLanguage(lang.code)">
+                            <span class="pill-main">{{ lang.label }}</span>
+                            <span class="pill-native">{{ lang.nativeLabel }}</span>
+                            @if (discoverPrefs.isLanguageSelected(lang.code)) {
+                                <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                            }
+                        </button>
+                    }
+                </div>
+
+                <span class="pref-group-kicker">GLOBAL &amp; INTERNATIONAL</span>
+                <div class="pref-pills-grid">
+                    @for (lang of discoverPrefs.globalLanguageOptions; track lang.code) {
+                        <button
+                            type="button"
+                            class="pref-pill"
+                            [class.active]="discoverPrefs.isLanguageSelected(lang.code)"
+                            [attr.aria-pressed]="discoverPrefs.isLanguageSelected(lang.code)"
+                            (click)="discoverPrefs.toggleLanguage(lang.code)">
+                            <span class="pill-main">{{ lang.label }}</span>
+                            <span class="pill-native">{{ lang.badge }}</span>
+                            @if (discoverPrefs.isLanguageSelected(lang.code)) {
+                                <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- 2. FAVORITE GENRES (MULTI-SELECT PILLS) -->
+            <div class="discover-pref-block">
+                <div class="pref-block-header">
+                    <div class="pref-block-title-row">
+                        <ion-icon name="sparkles-outline"></ion-icon>
+                        <span class="pref-block-title">FAVORITE GENRES &amp; VIBES</span>
+                        <span class="pref-block-count">{{ discoverPrefs.favoriteGenres().length }} selected</span>
+                    </div>
+                    <p class="pref-block-desc">
+                        Prioritizes your favorite genres in "For You" and custom discovery shelves.
+                    </p>
+                </div>
+
+                <div class="pref-pills-grid genre-pills-grid">
+                    @for (genre of discoverPrefs.genreOptions; track genre.key) {
+                        <button
+                            type="button"
+                            class="pref-pill genre-pill"
+                            [class.active]="discoverPrefs.isGenreSelected(genre.key)"
+                            [attr.aria-pressed]="discoverPrefs.isGenreSelected(genre.key)"
+                            (click)="discoverPrefs.toggleGenre(genre.key)">
+                            <ion-icon [name]="genre.icon" class="genre-pill-icon"></ion-icon>
+                            <span class="pill-main">{{ genre.label }}</span>
+                            @if (discoverPrefs.isGenreSelected(genre.key)) {
+                                <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- 3. SMART FILTERING -->
+            <ion-item>
+                <ion-icon slot="start" name="eye-off-outline"></ion-icon>
+                <ion-label>
+                    <h3>Hide Watched Titles</h3>
+                    <p>Filter out already-watched titles in Discover &amp; Recommendations</p>
+                </ion-label>
+                <ion-toggle
+                    slot="end"
+                    [checked]="discoverPrefs.hideWatchedInDiscover()"
+                    (ionChange)="discoverPrefs.toggleHideWatched()"
+                    aria-label="Toggle Hide Watched Titles">
+                </ion-toggle>
+            </ion-item>
+
+            <!-- 4. VISIBLE DISCOVER TABS -->
+            <div class="discover-tabs-subheader">
+                <span>VISIBLE DISCOVER TABS</span>
+            </div>
+            @for (tab of discoverPrefs.tabsCatalog; track tab.value) {
+                <ion-item>
+                    <ion-icon slot="start" [name]="tab.icon"></ion-icon>
+                    <ion-label>
+                        <h3>{{ tab.settingsTitle }}</h3>
+                        <p>{{ tab.settingsSubtitle }}</p>
+                    </ion-label>
+                    <ion-toggle
+                        slot="end"
+                        [checked]="discoverPrefs.tabVisibility()[tab.value]"
+                        (ionChange)="discoverPrefs.toggleTabVisibility(tab.value)"
+                        [attr.aria-label]="'Toggle ' + tab.settingsTitle">
+                    </ion-toggle>
+                </ion-item>
+            }
+
+            <!-- 5. RESET DISCOVER PREFERENCES -->
+            <ion-item button (click)="discoverPrefs.resetToDefault()" lines="none">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                <ion-label>
+                    <h3>Reset Discover Preferences</h3>
+                    <p>Restore Hindi &amp; English defaults, genres &amp; all tabs</p>
+                </ion-label>
+            </ion-item>
+        }
+    </ion-list>
+
+    <ion-list inset="true" class="cinescope-list">
         <ion-item button (click)="isMoviesTabCollapsed.set(!isMoviesTabCollapsed())" [lines]="isMoviesTabCollapsed() ? 'none' : 'inset'">
             <ion-icon slot="start" name="film-outline"></ion-icon>
             <ion-label>

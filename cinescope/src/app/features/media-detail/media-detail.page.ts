@@ -48,6 +48,9 @@ import {
 import { TmdbMoviesService } from '../../core/services/tmdb-movies.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { TmdbTvSeasonsService } from '../../core/services/tmdb-tv-seasons.service';
+import { TmdbDiscoverService } from '../../core/services/tmdb-discover.service';
+import { DiscoverPreferencesService } from '../../core/services/discover-preferences.service';
+import { CollectionQueryContext } from '../../core/services/collection-loader.service';
 import { MediaMetadataService } from '../../core/services/media-metadata.service';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -55,6 +58,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
 
 import { TmdbMovieDetailDto } from '../../core/dtos/movies/movie-detail.dto';
+import { TmdbDiscoverMovieParamsDto } from '../../core/dtos/discover/discover-movie-params.dto';
+import { TmdbDiscoverTvParamsDto } from '../../core/dtos/discover/discover-tv-params.dto';
 import { TmdbTvDetailDto, TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto, TmdbTvNetworkDto } from '../../core/dtos/tv/tv-detail.dto';
 import { TmdbMovieCreditsResponseDto } from '../../core/dtos/movies/movie-credits.dto';
 import { TmdbTvAggregateCreditsResponseDto } from '../../core/dtos/tv/tv-aggregate-credits.dto';
@@ -192,6 +197,8 @@ export class MediaDetailPage implements OnInit {
   private moviesService = inject(TmdbMoviesService);
   private tvService = inject(TmdbTvService);
   private tvSeasonsService = inject(TmdbTvSeasonsService);
+  private discoverService = inject(TmdbDiscoverService);
+  private discoverPrefs = inject(DiscoverPreferencesService);
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private navService = inject(NavigationService);
@@ -213,6 +220,9 @@ export class MediaDetailPage implements OnInit {
   // Full API payloads
   public movieDetail = signal<TmdbMovieDetailDto | null>(null);
   public tvDetail = signal<TmdbTvDetailDto | null>(null);
+  public fallbackDiscoverItems = signal<SwimlaneItem[]>([]);
+  public fallbackMovieParams = signal<TmdbDiscoverMovieParamsDto | undefined>(undefined);
+  public fallbackTvParams = signal<TmdbDiscoverTvParamsDto | undefined>(undefined);
 
   // Watch Providers region selection
   public selectedWatchRegion = signal<string | null>(null);
@@ -876,11 +886,60 @@ export class MediaDetailPage implements OnInit {
   // RECOMMENDATIONS & SIMILAR SWIMLANES
   // ==========================================
   public recommendationsSwimlane = computed<SwimlaneItem[]>(() => {
-    return this.extractSwimlaneList('recommendations');
+    const rawRecs = this.extractSwimlaneList('recommendations');
+    const fallback = this.fallbackDiscoverItems();
+    const combined = rawRecs.length >= 6 ? rawRecs : [...rawRecs, ...fallback];
+    return this.dedupAndFilterSwimlane(combined).slice(0, 18);
   });
 
   public similarSwimlane = computed<SwimlaneItem[]>(() => {
-    return this.extractSwimlaneList('similar');
+    const recIds = new Set(this.recommendationsSwimlane().map((i) => i.id));
+    const rawSim = this.extractSwimlaneList('similar');
+    const fallback = this.fallbackDiscoverItems();
+    const combined = rawSim.length >= 6 ? rawSim : [...rawSim, ...fallback];
+    return this.dedupAndFilterSwimlane(combined, recIds).slice(0, 18);
+  });
+
+  public recommendationsQueryContext = computed<CollectionQueryContext>(() => {
+    const rawRecs = this.extractSwimlaneList('recommendations');
+    const mParams = this.fallbackMovieParams();
+    const tParams = this.fallbackTvParams();
+    if (rawRecs.length < 4) {
+      if (this.mediaType() === 'tv' && tParams) {
+        return { type: 'discover_tv', tvParams: tParams };
+      }
+      if (this.mediaType() === 'movie' && mParams) {
+        return { type: 'discover_movies', movieParams: mParams };
+      }
+    }
+    return {
+      type: 'recommendations',
+      id: this.tmdbId(),
+      mediaType: this.mediaType(),
+      ...(mParams ? { movieParams: mParams } : {}),
+      ...(tParams ? { tvParams: tParams } : {})
+    };
+  });
+
+  public similarQueryContext = computed<CollectionQueryContext>(() => {
+    const rawSim = this.extractSwimlaneList('similar');
+    const mParams = this.fallbackMovieParams();
+    const tParams = this.fallbackTvParams();
+    if (rawSim.length < 4) {
+      if (this.mediaType() === 'tv' && tParams) {
+        return { type: 'discover_tv', tvParams: tParams };
+      }
+      if (this.mediaType() === 'movie' && mParams) {
+        return { type: 'discover_movies', movieParams: mParams };
+      }
+    }
+    return {
+      type: 'similar',
+      id: this.tmdbId(),
+      mediaType: this.mediaType(),
+      ...(mParams ? { movieParams: mParams } : {}),
+      ...(tParams ? { tvParams: tParams } : {})
+    };
   });
 
   constructor() {
@@ -984,6 +1043,9 @@ export class MediaDetailPage implements OnInit {
     this.error.set(null);
     this.movieDetail.set(null);
     this.tvDetail.set(null);
+    this.fallbackDiscoverItems.set([]);
+    this.fallbackMovieParams.set(undefined);
+    this.fallbackTvParams.set(undefined);
     this.seasonDetailsMap.set({});
     this.castVideoGallery()?.closeVideo();
     this.artworkGallery()?.closeLightbox();
@@ -1007,6 +1069,7 @@ export class MediaDetailPage implements OnInit {
         }
         this.movieDetail.set(res);
         this.syncDefaultWatchRegion();
+        void this.hydrateSmartRecommendationFallback(id, 'movie', res, null);
         void this.mediaMetadata.syncActiveLibraryDoc(id, 'movie', res);
       } else {
         const [res, imagesRes] = await Promise.all([
@@ -1026,6 +1089,7 @@ export class MediaDetailPage implements OnInit {
         }
         this.tvDetail.set(res);
         this.syncDefaultWatchRegion();
+        void this.hydrateSmartRecommendationFallback(id, 'tv', null, res);
         void this.mediaMetadata.syncActiveLibraryDoc(id, 'tv', res);
 
         const firstSeason =
@@ -1282,13 +1346,104 @@ export class MediaDetailPage implements OnInit {
     return `$${value.toLocaleString()}`;
   }
 
+  private dedupAndFilterSwimlane(items: SwimlaneItem[], excludeIds?: Set<string | number>): SwimlaneItem[] {
+    const currentId = this.tmdbId();
+    const hideWatched = this.discoverPrefs.hideWatchedInDiscover();
+    const watchedKeys = this.storage.watchedMediaKeys();
+    const seen = new Set<string | number>();
+
+    return items.filter((item) => {
+      if (Number(item.id) === currentId) return false;
+      if (excludeIds?.has(item.id)) return false;
+      if (seen.has(item.id)) return false;
+      if (hideWatched && watchedKeys.has(`${item.mediaType}_${item.id}`)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }
+
+  private async hydrateSmartRecommendationFallback(
+    id: number,
+    type: 'movie' | 'tv',
+    movie: TmdbMovieDetailDto | null,
+    tv: TmdbTvDetailDto | null
+  ): Promise<void> {
+    try {
+      if (type === 'movie' && movie) {
+        const genreIds = (movie.genres || []).map((g) => g.id).slice(0, 2).join('|');
+        const origLang = movie.original_language || 'en';
+        const params: TmdbDiscoverMovieParamsDto = {
+          with_original_language: origLang,
+          ...(genreIds ? { with_genres: genreIds } : {}),
+          'vote_average.gte': 6.5,
+          'vote_count.gte': 15,
+          sort_by: 'popularity.desc'
+        };
+        this.fallbackMovieParams.set(params);
+
+        const recCount = ((movie['recommendations'] as { results?: TmdbMovieListItemDto[] } | undefined)?.results || [])
+          .filter((r) => r.poster_path).length;
+        const simCount = ((movie['similar'] as { results?: TmdbMovieListItemDto[] } | undefined)?.results || [])
+          .filter((r) => r.poster_path).length;
+
+        if (recCount < 6 || simCount < 6) {
+          const fbRes = await firstValueFrom(this.discoverService.discoverMovies(params));
+          if (this.tmdbId() !== id || this.mediaType() !== type) return;
+          const mapped: SwimlaneItem[] = (fbRes.results || [])
+            .filter((item) => item.poster_path && item.id !== id)
+            .map((item) => ({
+              id: item.id,
+              mediaType: 'movie' as const,
+              title: item.title,
+              posterUrl: resolveMediaImageUrl(item.poster_path, 'w342'),
+              payload: item as unknown as Record<string, unknown>
+            }));
+          this.fallbackDiscoverItems.set(mapped);
+        }
+      } else if (type === 'tv' && tv) {
+        const genreIds = (tv.genres || []).map((g) => g.id).slice(0, 2).join('|');
+        const origLang = tv.original_language || 'en';
+        const params: TmdbDiscoverTvParamsDto = {
+          with_original_language: origLang,
+          ...(genreIds ? { with_genres: genreIds } : {}),
+          'vote_average.gte': 6.5,
+          'vote_count.gte': 12,
+          sort_by: 'popularity.desc'
+        };
+        this.fallbackTvParams.set(params);
+
+        const recCount = ((tv['recommendations'] as { results?: TmdbTvListItemDto[] } | undefined)?.results || [])
+          .filter((r) => r.poster_path).length;
+        const simCount = ((tv['similar'] as { results?: TmdbTvListItemDto[] } | undefined)?.results || [])
+          .filter((r) => r.poster_path).length;
+
+        if (recCount < 6 || simCount < 6) {
+          const fbRes = await firstValueFrom(this.discoverService.discoverTv(params));
+          if (this.tmdbId() !== id || this.mediaType() !== type) return;
+          const mapped: SwimlaneItem[] = (fbRes.results || [])
+            .filter((item) => item.poster_path && item.id !== id)
+            .map((item) => ({
+              id: item.id,
+              mediaType: 'tv' as const,
+              title: item.name,
+              posterUrl: resolveMediaImageUrl(item.poster_path, 'w342'),
+              payload: item as unknown as Record<string, unknown>
+            }));
+          this.fallbackDiscoverItems.set(mapped);
+        }
+      }
+    } catch {
+      // Ignore fallback network errors
+    }
+  }
+
   private extractSwimlaneList(key: 'recommendations' | 'similar'): SwimlaneItem[] {
     const m = this.movieDetail();
     if (m) {
       const raw = m[key] as { results?: TmdbMovieListItemDto[] } | undefined;
       return (raw?.results || [])
         .filter((item) => item.poster_path)
-        .slice(0, 16)
+        .slice(0, 20)
         .map((item) => ({
           id: item.id,
           mediaType: 'movie' as const,
@@ -1303,7 +1458,7 @@ export class MediaDetailPage implements OnInit {
       const raw = t[key] as { results?: TmdbTvListItemDto[] } | undefined;
       return (raw?.results || [])
         .filter((item) => item.poster_path)
-        .slice(0, 16)
+        .slice(0, 20)
         .map((item) => ({
           id: item.id,
           mediaType: 'tv' as const,

@@ -47,6 +47,9 @@ export class SwimlaneComponent {
         if (query?.type) queryParams['type'] = query.type;
         if (query?.id !== undefined) queryParams['id'] = query.id;
         if (query?.mediaType) queryParams['mediaType'] = query.mediaType;
+        if (query?.region) queryParams['region'] = query.region;
+        if (query?.movieParams) queryParams['movieParams'] = JSON.stringify(query.movieParams);
+        if (query?.tvParams) queryParams['tvParams'] = JSON.stringify(query.tvParams);
 
         void this.router.navigate(['/collection', collectionId], {
             queryParams,

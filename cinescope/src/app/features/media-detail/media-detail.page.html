@@ -174,7 +174,7 @@
       <app-swimlane
         title="RECOMMENDED FOR YOU"
         [items]="recommendationsSwimlane()"
-        [queryContext]="{ type: 'recommendations', id: tmdbId(), mediaType: mediaType() }">
+        [queryContext]="recommendationsQueryContext()">
       </app-swimlane>
     </div>
   }
@@ -184,7 +184,7 @@
       <app-swimlane
         title="MORE LIKE THIS"
         [items]="similarSwimlane()"
-        [queryContext]="{ type: 'similar', id: tmdbId(), mediaType: mediaType() }">
+        [queryContext]="similarQueryContext()">
       </app-swimlane>
     </div>
   }

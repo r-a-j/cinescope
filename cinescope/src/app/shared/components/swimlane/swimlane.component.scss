@@ -1,40 +1,76 @@
 .swimlane-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    padding: 0 16px 12px 16px; // Native margins
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px 12px 16px;
+}
+
+.swimlane-title-group {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.swimlane-accent-bar {
+    flex: 0 0 3px;
+    width: 3px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #e50914 0%, #f5c518 100%);
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
 }
 
 .swimlane-title {
-    font-size: 1.1rem;
-    font-weight: 900;
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 1.24rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+    color: #ffffff;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .swimlane-action {
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    padding: 4px 0;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.14), rgba(245, 197, 24, 0.08));
+    border: 1px solid rgba(245, 197, 24, 0.28);
+    border-radius: 999px;
+    color: #f5c518;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 5px 11px 5px 12px;
     cursor: pointer;
-    transition: color 0.15s ease, transform 0.15s ease;
+    transition: all 0.18s ease;
 
     ion-icon {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
+        color: #e50914;
+        transition: transform 0.18s ease;
     }
 
     &:hover,
     &:active {
-        color: var(--ion-color-primary, #e50914);
-        transform: translateX(2px);
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.28), rgba(245, 197, 24, 0.16));
+        border-color: rgba(229, 9, 20, 0.55);
+        color: #ffffff;
+        transform: scale(0.96);
+
+        ion-icon {
+            color: #f5c518;
+            transform: translateX(2px);
+        }
     }
 }
 
