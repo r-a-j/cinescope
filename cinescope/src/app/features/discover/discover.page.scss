@@ -14,31 +14,75 @@
 }
 
 .segment-toolbar {
-    --background: #000000;
+    --background: rgba(6, 6, 10, 0.88);
     --border-width: 0;
     --min-height: 48px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.segment-toolbar-inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(16, 16, 22, 0.65) 0%, rgba(4, 4, 8, 0.9) 100%);
+
+    ion-segment {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+.discover-customize-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 36px;
+    margin: 0 10px 0 6px;
+    border-radius: 10px;
+    border: 1px solid rgba(229, 9, 20, 0.35);
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.16), rgba(245, 197, 24, 0.06));
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 2px 10px rgba(229, 9, 20, 0.14);
+
+    ion-icon {
+        font-size: 1.1rem;
+        color: #f5c518;
+    }
+
+    &:active {
+        transform: scale(0.94);
+        background: rgba(229, 9, 20, 0.28);
+        border-color: rgba(229, 9, 20, 0.65);
+    }
 }
 
 ion-segment {
-    --background: #000000;
+    --background: transparent;
 }
 
 ion-segment-button {
-    --color: #888888; // Inactive gray
-    --color-checked: #ffffff; // Active white
-
-    // The red underline indicator from your mockup
-    --indicator-color: var(--ion-color-primary);
+    --color: rgba(255, 255, 255, 0.52);
+    --color-checked: #ffffff;
+    --indicator-color: var(--ion-color-primary, #e50914);
     --indicator-height: 3px;
 
-    font-family: var(--font-display); // Forces Bebas Neue
-    font-size: 1.1rem;
-    letter-spacing: 1px;
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 1.12rem;
+    letter-spacing: 0.06em;
     min-width: max-content;
     padding: 0 16px;
+    transition: color 0.18s ease;
 
     &::part(indicator-background) {
-        border-radius: 0; // Makes the red line sharp instead of rounded
+        border-radius: 999px 999px 0 0;
+        background: linear-gradient(90deg, #e50914 0%, #f5c518 100%);
+        box-shadow: 0 -2px 10px rgba(229, 9, 20, 0.55);
     }
 }
 
@@ -57,30 +101,221 @@ ion-segment-button {
 }
 
 .tab-section-pad {
-    padding: 16px 0 36px;
+    padding: 14px 0 36px;
 }
 
-.tab-intro-banner {
-    margin: 0 16px 20px;
-    padding: 12px 14px;
+/* ==========================================
+   FOR YOU TASTE SUMMARY BAR
+   ========================================== */
+.taste-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 16px 16px;
+    padding: 10px 14px;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(229, 9, 20, 0.14), rgba(255, 255, 255, 0.03));
-    border: 1px solid rgba(229, 9, 20, 0.25);
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.14), rgba(245, 197, 24, 0.05));
+    border: 1px solid rgba(229, 9, 20, 0.28);
 }
 
-.tab-intro-kicker {
-    display: block;
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 1.4px;
-    color: var(--ion-color-primary);
+.taste-summary-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+
+    .taste-icon {
+        font-size: 1.25rem;
+        color: #f5c518;
+        flex-shrink: 0;
+    }
 }
 
-.tab-intro-sub {
-    margin: 4px 0 0;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.72);
-    line-height: 1.4;
+.taste-summary-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .taste-kicker {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        color: #ffffff;
+    }
+
+    .taste-sub {
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.68);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.taste-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.taste-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    ion-icon {
+        font-size: 0.86rem;
+        color: rgba(255, 255, 255, 0.65);
+    }
+
+    &.active {
+        border-color: rgba(245, 197, 24, 0.55);
+        background: rgba(245, 197, 24, 0.14);
+        color: #f5c518;
+
+        ion-icon {
+            color: #f5c518;
+        }
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.taste-edit-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(229, 9, 20, 0.45);
+    background: rgba(229, 9, 20, 0.18);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 0.9rem;
+        color: #f5c518;
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+}
+
+/* ==========================================
+   IN-TAB QUICK LANGUAGE CHIP BAR (LANGUAGE HUB)
+   ========================================== */
+.quick-lang-bar {
+    margin: 0 0 18px;
+    padding: 0 16px;
+}
+
+.quick-lang-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.quick-lang-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    ion-icon {
+        font-size: 0.95rem;
+        color: #e50914;
+    }
+
+    span {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 0.88rem;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.78);
+    }
+}
+
+.quick-lang-settings-link {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #f5c518;
+    cursor: pointer;
+}
+
+.quick-lang-chips-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.quick-lang-chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    .chip-name {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .chip-native {
+        font-size: 0.68rem;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .chip-check {
+        font-size: 0.82rem;
+        color: #f5c518;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.24), rgba(229, 9, 20, 0.08));
+        border-color: rgba(229, 9, 20, 0.65);
+        box-shadow: 0 2px 8px rgba(229, 9, 20, 0.18);
+
+        .chip-native {
+            color: rgba(255, 255, 255, 0.78);
+        }
+    }
 }
 
 .tab-lanes-stack {
@@ -139,16 +374,16 @@ ion-segment-button {
     }
 }
 
-// News Tab
+// News Tab (OLED Surface & Shimmer Loading)
 .news-container {
-    padding: 16px 16px 36px;
+    padding: 16px 16px 40px;
 }
 
 .news-controls-bar {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .news-source-chips {
@@ -165,19 +400,26 @@ ion-segment-button {
 
 .news-chip {
     flex: 0 0 auto;
-    padding: 6px 12px;
+    padding: 6px 13px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(18, 18, 24, 0.85);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.74rem;
     font-weight: 700;
+    letter-spacing: 0.02em;
     cursor: pointer;
+    transition: all 0.18s ease;
 
     &.active {
-        background: var(--ion-color-primary);
-        border-color: var(--ion-color-primary);
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.9), rgba(185, 7, 16, 0.95));
+        border-color: rgba(245, 197, 24, 0.45);
         color: #ffffff;
+        box-shadow: 0 2px 10px rgba(229, 9, 20, 0.3);
+    }
+
+    &:active {
+        transform: scale(0.95);
     }
 }
 
@@ -191,54 +433,201 @@ ion-segment-button {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(18, 18, 24, 0.85);
     color: rgba(255, 255, 255, 0.85);
-    font-size: 0.74rem;
+    font-size: 0.73rem;
     font-weight: 700;
     cursor: pointer;
+    transition: all 0.18s ease;
+
+    ion-icon {
+        color: #f5c518;
+        font-size: 0.9rem;
+    }
+
+    &:active {
+        transform: scale(0.95);
+        border-color: rgba(229, 9, 20, 0.45);
+    }
 }
 
 .news-skeleton-card {
+    border-radius: 16px;
+    background: #0b0b10;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+
+.news-skeleton-banner {
     width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    margin-bottom: 16px;
+    height: 185px;
+    margin: 0;
+}
+
+.news-skeleton-body {
+    padding: 14px 16px 16px;
 }
 
 .news-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
 }
 
 .news-card {
     margin: 0;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    background: linear-gradient(165deg, rgba(20, 20, 28, 0.94) 0%, rgba(9, 9, 14, 0.98) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
     overflow: hidden;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+
+    &:active {
+        transform: scale(0.99);
+        border-color: rgba(229, 9, 20, 0.38);
+    }
+}
+
+.news-img-shell {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 192px;
+    background: #101018;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            110deg,
+            rgba(255, 255, 255, 0) 20%,
+            rgba(255, 255, 255, 0.06) 45%,
+            rgba(229, 9, 20, 0.08) 55%,
+            rgba(255, 255, 255, 0) 80%
+        );
+        background-size: 200% 100%;
+        animation: newsShimmerSweep 1.5s infinite linear;
+        z-index: 1;
+    }
+
+    &.is-loaded::before {
+        display: none;
+        animation: none;
+    }
+}
+
+@keyframes newsShimmerSweep {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 .news-card-img {
     width: 100%;
-    height: 180px;
+    height: 100%;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.28s ease-out;
+
+    &.is-loaded {
+        opacity: 1;
+    }
 }
 
-.news-card-meta {
-    font-size: 0.74rem;
-    color: var(--ion-color-primary);
+.news-img-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 40%, rgba(9, 9, 14, 0.92) 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.news-source-pill {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    z-index: 3;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(10, 10, 16, 0.86);
+    border: 1px solid rgba(245, 197, 24, 0.4);
+    backdrop-filter: blur(8px);
+    color: #f5c518;
+    font-size: 0.68rem;
     font-weight: 800;
-    margin-bottom: 4px;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
+.news-card-header {
+    padding: 14px 16px 8px;
+}
+
+.news-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.72rem;
+}
+
+.news-source-inline {
+    color: #f5c518;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.news-meta-dot {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.news-date-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.56);
+    font-weight: 600;
+
+    ion-icon {
+        font-size: 0.82rem;
+        color: #e50914;
+    }
+}
+
+.news-ext-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(229, 9, 20, 0.14);
+    border: 1px solid rgba(229, 9, 20, 0.32);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    ion-icon {
+        font-size: 0.76rem;
+        color: #f5c518;
+    }
+}
+
 .news-card-title {
-    font-size: 1.05rem;
-    line-height: 1.4;
+    font-size: 1.04rem;
+    font-weight: 700;
+    line-height: 1.38;
     color: #ffffff;
 }
 
@@ -248,18 +637,31 @@ ion-segment-button {
 }
 
 .news-card-snippet {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.86rem;
-    line-height: 1.5;
-    padding-top: 0;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.85rem;
+    line-height: 1.52;
+    padding: 0 16px 16px;
 }
 
 .news-load-more {
     margin-top: 24px;
+    --border-radius: 12px;
+    --border-color: rgba(245, 197, 24, 0.35);
+    --color: #f5c518;
+    font-weight: 700;
 }
 
 .news-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.5);
-    padding: 40px 0;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 48px 16px;
+
+    ion-icon {
+        font-size: 2.2rem;
+        color: rgba(229, 9, 20, 0.65);
+    }
 }

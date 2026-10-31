@@ -1,15 +1,17 @@
 <app-header></app-header>
 
 <ion-toolbar class="segment-toolbar">
-    <ion-segment data-tour="discover-sections" [scrollable]="true" [value]="activeSection()" (ionChange)="onSectionChange($event)">
+    <div class="segment-toolbar-inner">
+        <ion-segment data-tour="discover-sections" [scrollable]="true" [value]="activeSection()" (ionChange)="onSectionChange($event)">
 
-        @for (tab of discoverTabs; track tab.value) {
-        <ion-segment-button [value]="tab.value">
-            <ion-label>{{ tab.label }}</ion-label>
-        </ion-segment-button>
-        }
+            @for (tab of discoverTabs(); track tab.value) {
+            <ion-segment-button [value]="tab.value">
+                <ion-label>{{ tab.label }}</ion-label>
+            </ion-segment-button>
+            }
 
-    </ion-segment>
+        </ion-segment>
+    </div>
 </ion-toolbar>
 
 <ion-content data-tour="discover-feed" color="background" class="ion-no-padding">
@@ -18,6 +20,53 @@
     </ion-refresher>
 
     @switch (activeSection()) {
+
+    @case ('for-you') {
+    <div class="fade-in tab-section-pad">
+        <div class="taste-summary-bar">
+            <div class="taste-summary-left">
+                <ion-icon name="sparkles-outline" class="taste-icon"></ion-icon>
+                <div class="taste-summary-text">
+                    <span class="taste-kicker">PERSONALIZED FOR YOU</span>
+                    <span class="taste-sub">{{ discoverPrefs.summarySubtitle() }}</span>
+                </div>
+            </div>
+            <div class="taste-actions-group">
+                <button
+                    type="button"
+                    class="taste-filter-pill"
+                    [class.active]="discoverPrefs.hideWatchedInDiscover()"
+                    [attr.aria-pressed]="discoverPrefs.hideWatchedInDiscover()"
+                    title="Hide Watched Titles"
+                    (click)="onQuickToggleHideWatched()">
+                    <ion-icon [name]="discoverPrefs.hideWatchedInDiscover() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                    <span>{{ discoverPrefs.hideWatchedInDiscover() ? 'Watched Hidden' : 'Hide Watched' }}</span>
+                </button>
+            </div>
+        </div>
+
+        @if (store.isForYouLoading()) {
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <div class="tab-lanes-stack">
+            @for (section of store.forYouSections(); track section.id) {
+            <app-swimlane
+                [title]="section.title"
+                [items]="section.items"
+                [queryContext]="section.queryContext">
+            </app-swimlane>
+            }
+        </div>
+        }
+    </div>
+    }
 
     @case ('trending') {
     <div class="fade-in">
@@ -47,13 +96,37 @@
         }
 
         <div class="tab-lanes-stack">
-            <app-swimlane title="VIRAL MOVIES TODAY" [items]="store.movies()"></app-swimlane>
-            @if (store.nowPlayingMovies().length > 0) {
-            <app-swimlane title="IN THEATERS NOW" [items]="store.nowPlayingMovies()"></app-swimlane>
+            @for (section of store.trendingPersonalizedSections(); track section.id) {
+            <app-swimlane
+                [title]="section.title"
+                [items]="section.items"
+                [queryContext]="section.queryContext">
+            </app-swimlane>
             }
-            <app-swimlane title="BINGE-WORTHY SHOWS" [items]="store.tvShows()"></app-swimlane>
+
+            <app-swimlane
+                title="VIRAL MOVIES TODAY"
+                [items]="store.movies()"
+                [queryContext]="viralMoviesContext">
+            </app-swimlane>
+            @if (store.nowPlayingMovies().length > 0) {
+            <app-swimlane
+                title="IN THEATERS NOW"
+                [items]="store.nowPlayingMovies()"
+                [queryContext]="nowPlayingContext">
+            </app-swimlane>
+            }
+            <app-swimlane
+                title="BINGE-WORTHY SHOWS"
+                [items]="store.tvShows()"
+                [queryContext]="bingeTvContext">
+            </app-swimlane>
             @if (store.airingTvShows().length > 0) {
-            <app-swimlane title="AIRING THIS WEEK" [items]="store.airingTvShows()"></app-swimlane>
+            <app-swimlane
+                title="AIRING THIS WEEK"
+                [items]="store.airingTvShows()"
+                [queryContext]="airingTvContext">
+            </app-swimlane>
             }
         </div>
 
@@ -63,10 +136,32 @@
 
     @case ('desi-hub') {
     <div class="fade-in tab-section-pad">
-        <div class="tab-intro-banner">
-            <span class="tab-intro-kicker">PAN-INDIAN CINEMA & OTT</span>
-            <p class="tab-intro-sub">Regional blockbusters across Telugu, Tamil, Malayalam & Indian web series.</p>
+        <!-- In-Tab Quick Language Chip Bar -->
+        <div class="quick-lang-bar">
+            <div class="quick-lang-header">
+                <div class="quick-lang-title-wrap">
+                    <ion-icon name="language-outline"></ion-icon>
+                    <span>ACTIVE LANGUAGES ({{ discoverPrefs.preferredLanguages().length }})</span>
+                </div>
+            </div>
+            <div class="quick-lang-chips-scroll">
+                @for (lang of sortedQuickLanguageChips(); track lang.code) {
+                <button
+                    type="button"
+                    class="quick-lang-chip"
+                    [class.active]="discoverPrefs.isLanguageSelected(lang.code)"
+                    [attr.aria-pressed]="discoverPrefs.isLanguageSelected(lang.code)"
+                    (click)="onQuickToggleLanguage(lang.code)">
+                    <span class="chip-name">{{ lang.label }}</span>
+                    <span class="chip-native">{{ lang.nativeLabel }}</span>
+                    @if (discoverPrefs.isLanguageSelected(lang.code)) {
+                    <ion-icon name="checkmark" class="chip-check"></ion-icon>
+                    }
+                </button>
+                }
+            </div>
         </div>
+
         @if (store.isDesiLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -77,17 +172,12 @@
         </div>
         } @else {
         <div class="tab-lanes-stack">
-            @if (store.desiWebSeries().length > 0) {
-            <app-swimlane title="INDIAN OTT & WEB SERIES" [items]="store.desiWebSeries()"></app-swimlane>
-            }
-            @if (store.teluguBlockbusters().length > 0) {
-            <app-swimlane title="TELUGU BLOCKBUSTERS" [items]="store.teluguBlockbusters()"></app-swimlane>
-            }
-            @if (store.tamilCinema().length > 0) {
-            <app-swimlane title="TAMIL CINEMA PULSE" [items]="store.tamilCinema()"></app-swimlane>
-            }
-            @if (store.malayalamGems().length > 0) {
-            <app-swimlane title="MALAYALAM CRITICS' GEMS" [items]="store.malayalamGems()"></app-swimlane>
+            @for (section of store.languageHubSections(); track section.id) {
+            <app-swimlane
+                [title]="section.title"
+                [items]="section.items"
+                [queryContext]="section.queryContext">
+            </app-swimlane>
             }
         </div>
         }
@@ -96,10 +186,6 @@
 
     @case ('bollywood') {
     <div class="fade-in tab-section-pad">
-        <div class="tab-intro-banner">
-            <span class="tab-intro-kicker">HINDI CINEMA SPOTLIGHT</span>
-            <p class="tab-intro-sub">Fresh Hindi theatrical releases, chartbusters & timeless classics.</p>
-        </div>
         @if (store.isBollywoodLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -110,11 +196,37 @@
         </div>
         } @else {
         <div class="tab-lanes-stack">
-            @if (store.bollywoodRecent().length > 0) {
-            <app-swimlane title="NEW IN BOLLYWOOD" [items]="store.bollywoodRecent()"></app-swimlane>
+            @for (section of store.bollywoodSections(); track section.id) {
+            <app-swimlane
+                [title]="section.title"
+                [items]="section.items"
+                [queryContext]="section.queryContext">
+            </app-swimlane>
             }
-            <app-swimlane title="TRENDING IN BOLLYWOOD" [items]="store.bollywoodPopular()"></app-swimlane>
-            <app-swimlane title="CRITICS' CHOICE HINDI CLASSICS" [items]="store.bollywoodTopRated()"></app-swimlane>
+        </div>
+        }
+    </div>
+    }
+
+    @case ('ott-streaming') {
+    <div class="fade-in tab-section-pad">
+        @if (store.isOttStreamingLoading()) {
+        <div class="skeleton-swimlane">
+            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+            <div class="skeleton-cards-row">
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+            </div>
+        </div>
+        } @else {
+        <div class="tab-lanes-stack">
+            @for (section of store.ottStreamingSections(); track section.id) {
+            <app-swimlane
+                [title]="section.title"
+                [items]="section.items"
+                [queryContext]="section.queryContext">
+            </app-swimlane>
+            }
         </div>
         }
     </div>
@@ -122,10 +234,6 @@
 
     @case ('top-rated') {
     <div class="fade-in tab-section-pad">
-        <div class="tab-intro-banner">
-            <span class="tab-intro-kicker">CRITICS & AUDIENCE HALL OF FAME</span>
-            <p class="tab-intro-sub">Highest-rated cinema and prestige television across eras.</p>
-        </div>
         @if (store.isTopRatedLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -137,12 +245,28 @@
         } @else {
         <div class="tab-lanes-stack">
             @if (store.modernMasterpieces().length > 0) {
-            <app-swimlane title="MODERN MASTERPIECES (2020s)" [items]="store.modernMasterpieces()"></app-swimlane>
+            <app-swimlane
+                title="MODERN MASTERPIECES (2020s)"
+                [items]="store.modernMasterpieces()"
+                [queryContext]="modernMasterpiecesContext">
+            </app-swimlane>
             }
-            <app-swimlane title="ALL-TIME HALL OF FAME MOVIES" [items]="store.topRatedMovies()"></app-swimlane>
-            <app-swimlane title="PRESTIGE TV VAULT" [items]="store.topRatedTvShows()"></app-swimlane>
+            <app-swimlane
+                title="ALL-TIME HALL OF FAME MOVIES"
+                [items]="store.topRatedMovies()"
+                [queryContext]="hallOfFameMoviesContext">
+            </app-swimlane>
+            <app-swimlane
+                title="PRESTIGE TV VAULT"
+                [items]="store.topRatedTvShows()"
+                [queryContext]="prestigeTvContext">
+            </app-swimlane>
             @if (store.topRatedIndianMovies().length > 0) {
-            <app-swimlane title="TOP RATED INDIAN CINEMA" [items]="store.topRatedIndianMovies()"></app-swimlane>
+            <app-swimlane
+                title="TOP RATED INDIAN CINEMA"
+                [items]="store.topRatedIndianMovies()"
+                [queryContext]="topRatedIndianContext">
+            </app-swimlane>
             }
         </div>
         }
@@ -151,10 +275,6 @@
 
     @case ('actors') {
     <div class="fade-in tab-section-pad">
-        <div class="tab-intro-banner">
-            <span class="tab-intro-kicker">STAR SPOTLIGHT & FILMOGRAPHIES</span>
-            <p class="tab-intro-sub">Tap any star to explore their biography, career marathon & full filmography.</p>
-        </div>
         @if (store.isActorsLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -165,12 +285,24 @@
         </div>
         } @else {
         <div class="tab-lanes-stack">
-            <app-swimlane title="TRENDING STARS THIS WEEK" [items]="store.trendingActors()"></app-swimlane>
+            <app-swimlane
+                title="TRENDING STARS THIS WEEK"
+                [items]="store.trendingActors()"
+                [queryContext]="trendingActorsContext">
+            </app-swimlane>
             @if (store.popularActors().length > 0) {
-            <app-swimlane title="POPULAR GLOBAL ICONS" [items]="store.popularActors()"></app-swimlane>
+            <app-swimlane
+                title="POPULAR GLOBAL ICONS"
+                [items]="store.popularActors()"
+                [queryContext]="popularActorsContext">
+            </app-swimlane>
             }
             @if (store.breakoutActors().length > 0) {
-            <app-swimlane title="BREAKOUT & FAN FAVORITES" [items]="store.breakoutActors()"></app-swimlane>
+            <app-swimlane
+                title="BREAKOUT & FAN FAVORITES"
+                [items]="store.breakoutActors()"
+                [queryContext]="breakoutActorsContext">
+            </app-swimlane>
             }
         </div>
         }
@@ -203,18 +335,58 @@
         </div>
 
         @if (feedService.isLoading()) {
-        <ion-skeleton-text animated class="news-skeleton-card"></ion-skeleton-text>
-        <ion-skeleton-text animated class="news-skeleton-card"></ion-skeleton-text>
+        <div class="news-list">
+            <div class="news-skeleton-card">
+                <ion-skeleton-text animated class="news-skeleton-banner"></ion-skeleton-text>
+                <div class="news-skeleton-body">
+                    <ion-skeleton-text animated style="width: 38%; height: 12px; border-radius: 6px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 92%; height: 18px; border-radius: 6px; margin-top: 8px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 74%; height: 18px; border-radius: 6px; margin-top: 6px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 100%; height: 13px; border-radius: 6px; margin-top: 12px;"></ion-skeleton-text>
+                </div>
+            </div>
+            <div class="news-skeleton-card">
+                <ion-skeleton-text animated class="news-skeleton-banner"></ion-skeleton-text>
+                <div class="news-skeleton-body">
+                    <ion-skeleton-text animated style="width: 42%; height: 12px; border-radius: 6px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 88%; height: 18px; border-radius: 6px; margin-top: 8px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 65%; height: 18px; border-radius: 6px; margin-top: 6px;"></ion-skeleton-text>
+                </div>
+            </div>
+        </div>
         } @else if (feedService.displayedItems().length > 0) {
         <div class="news-list">
-            @for (item of feedService.displayedItems(); track item.link) {
+            @for (item of feedService.displayedItems(); track item.link; let idx = $index) {
             <ion-card class="news-card">
-                @if (item.image) {
-                <img [src]="item.image" class="news-card-img" alt="{{ item.title }}" loading="lazy" />
+                @if (item.image && !isNewsImageFailed(item.image)) {
+                <a [href]="item.link" target="_blank" rel="noopener noreferrer" class="news-img-shell" [class.is-loaded]="isNewsImageLoaded(item.image)">
+                    <img
+                        [src]="item.image"
+                        class="news-card-img"
+                        [class.is-loaded]="isNewsImageLoaded(item.image)"
+                        [attr.loading]="idx < 3 || isNewsImageLoaded(item.image) ? 'eager' : 'lazy'"
+                        [attr.decoding]="isNewsImageLoaded(item.image) ? 'sync' : 'async'"
+                        alt="{{ item.title }}"
+                        (load)="onNewsImageLoad($event, item.image)"
+                        (error)="onNewsImageError(item.image)" />
+                    <div class="news-img-gradient"></div>
+                    <span class="news-source-pill">{{ item.sourceName }}</span>
+                </a>
                 }
-                <ion-card-header>
-                    <div class="news-card-meta">
-                        {{ item.sourceName }} • {{ item.pubDate | date:'mediumDate' }}
+                <ion-card-header class="news-card-header">
+                    <div class="news-card-meta-row">
+                        @if (!item.image || isNewsImageFailed(item.image)) {
+                        <span class="news-source-inline">{{ item.sourceName }}</span>
+                        <span class="news-meta-dot">•</span>
+                        }
+                        <span class="news-date-text">
+                            <ion-icon name="time-outline"></ion-icon>
+                            {{ item.pubDate | date:'mediumDate' }}
+                        </span>
+                        <a [href]="item.link" target="_blank" rel="noopener noreferrer" class="news-ext-badge" aria-label="Read full article">
+                            <span>Read</span>
+                            <ion-icon name="open-outline"></ion-icon>
+                        </a>
                     </div>
                     <ion-card-title class="news-card-title">
                         <a [href]="item.link" target="_blank" rel="noopener noreferrer" class="news-card-link">
@@ -237,7 +409,8 @@
         </ion-button>
         } @else {
         <div class="news-empty">
-            No news available right now.
+            <ion-icon name="newspaper-outline"></ion-icon>
+            <span>No cinema news stories available right now.</span>
         </div>
         }
     </div>

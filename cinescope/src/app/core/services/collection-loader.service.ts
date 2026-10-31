@@ -13,6 +13,8 @@ import { TmdbTvListItemDto } from '../dtos/tv/tv-list-item.dto';
 import { TmdbPersonListItemDto } from '../dtos/people/person-list-item.dto';
 import { TmdbDiscoverMovieParamsDto } from '../dtos/discover/discover-movie-params.dto';
 import { TmdbDiscoverTvParamsDto } from '../dtos/discover/discover-tv-params.dto';
+import { StorageService } from './storage.service';
+import { DiscoverPreferencesService } from './discover-preferences.service';
 
 export type CollectionSortMode = 'featured' | 'rating' | 'newest' | 'alpha';
 
@@ -36,6 +38,9 @@ export interface CollectionQueryContext {
   type?: string;
   id?: number;
   mediaType?: 'movie' | 'tv';
+  movieParams?: TmdbDiscoverMovieParamsDto;
+  tvParams?: TmdbDiscoverTvParamsDto;
+  region?: string;
 }
 
 export interface CollectionPageResult {
@@ -159,9 +164,27 @@ export class CollectionLoaderService {
   private tvService = inject(TmdbTvService);
   private peopleService = inject(TmdbPeopleService);
   private collectionsService = inject(TmdbCollectionsService);
+  private storageService = inject(StorageService);
+  private discoverPrefs = inject(DiscoverPreferencesService);
+
+  private filterWatched(items: SwimlaneItem[], skipFilter = false): SwimlaneItem[] {
+    if (skipFilter || !this.discoverPrefs.hideWatchedInDiscover()) {
+      return items;
+    }
+    return items.filter((item) => {
+      if (item.mediaType !== 'movie' && item.mediaType !== 'tv') return true;
+      return this.storageService.getBookmarkState(item.id, item.mediaType) !== 'watched';
+    });
+  }
 
   public isServerSortable(title: string, context?: CollectionQueryContext): boolean {
-    if (context?.type === 'person_credits') return true;
+    if (
+      context?.type === 'person_credits' ||
+      context?.type === 'discover_movies' ||
+      context?.type === 'discover_tv'
+    ) {
+      return true;
+    }
     const t = title.toUpperCase().trim();
     return [
       'INDIAN OTT & WEB SERIES',
@@ -188,6 +211,113 @@ export class CollectionLoaderService {
     const isWeekend = today === 0 || today === 5 || today === 6;
     const pulseWindow = isWeekend ? 'week' : 'day';
     const todayIso = new Date().toISOString().slice(0, 10);
+    const activeRegion = context?.region || this.storageService.userRegion() || 'IN';
+
+    // Generic Discover Movies Context
+    if (context?.type === 'discover_movies' && context.movieParams) {
+      const baseSort = context.movieParams.sort_by || 'popularity.desc';
+      const sortBy = getDiscoverSortBy(sortMode, baseSort);
+      const movieParams: TmdbDiscoverMovieParamsDto = {
+        ...context.movieParams,
+        sort_by: sortBy,
+        page
+      };
+      applyFiltersToMovieParams(movieParams, filters);
+      const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
+      return {
+        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    // Generic Discover TV Context
+    if (context?.type === 'discover_tv' && context.tvParams) {
+      const baseSort = context.tvParams.sort_by || 'popularity.desc';
+      const sortBy = getDiscoverTvSortBy(sortMode, baseSort);
+      const tvParams: TmdbDiscoverTvParamsDto = {
+        ...context.tvParams,
+        sort_by: sortBy,
+        page
+      };
+      applyFiltersToTvParams(tvParams, filters);
+      const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
+      return {
+        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    // Structured Endpoint Contexts
+    if (context?.type === 'trending_movies') {
+      const res = await firstValueFrom(this.trendingService.getTrendingMovies(pulseWindow, 'en-US', page));
+      return {
+        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'trending_tv') {
+      const res = await firstValueFrom(this.trendingService.getTrendingTvShows(pulseWindow, 'en-US', page));
+      return {
+        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'now_playing') {
+      const res = await firstValueFrom(this.moviesService.getNowPlayingMovies('en-US', page, activeRegion));
+      return {
+        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'upcoming') {
+      const res = await firstValueFrom(this.moviesService.getUpcomingMovies('en-US', page, activeRegion));
+      return {
+        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'on_the_air') {
+      const res = await firstValueFrom(this.tvService.getTvOnTheAir('en-US', page));
+      return {
+        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'top_rated_movies') {
+      const res = await firstValueFrom(this.moviesService.getTopRatedMovies('en-US', page));
+      return {
+        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'top_rated_tv') {
+      const res = await firstValueFrom(this.tvService.getTopRatedTvShows('en-US', page));
+      return {
+        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        hasMore: res.page < res.total_pages
+      };
+    }
+
+    if (context?.type === 'trending_people') {
+      const res = await firstValueFrom(this.trendingService.getTrendingPeople('week', 'en-US', page));
+      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+    }
+
+    if (context?.type === 'popular_people') {
+      const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page));
+      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+    }
+
+    if (context?.type === 'breakout_people') {
+      const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page + 2));
+      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+    }
 
     // Person Filmography Discover
     if (context?.type === 'person_credits' && context.id) {
@@ -222,24 +352,61 @@ export class CollectionLoaderService {
       return { items, hasMore: false };
     }
 
-    // Context-driven (Recommendations / Similar on Media Detail)
-    if (context?.type === 'recommendations' && context.id) {
+    // Context-driven (Recommendations / Similar on Media Detail) with Smart Discover Fallback
+    if ((context?.type === 'recommendations' || context?.type === 'similar') && context.id) {
+      const isRecs = context.type === 'recommendations';
       if (context.mediaType === 'tv') {
-        const res = await firstValueFrom(this.tvService.getTvRecommendations(context.id, 'en-US', page));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
-      } else {
-        const res = await firstValueFrom(this.moviesService.getMovieRecommendations(context.id, 'en-US', page));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
-      }
-    }
+        const res = await firstValueFrom(
+          isRecs
+            ? this.tvService.getTvRecommendations(context.id, 'en-US', page)
+            : this.tvService.getSimilarTvShows(context.id, 'en-US', page)
+        );
+        let mapped = this.filterWatched(
+          mapTvToSwimlane(res.results).filter((i) => i.id !== context.id)
+        );
+        let hasMore = res.page < res.total_pages;
 
-    if (context?.type === 'similar' && context.id) {
-      if (context.mediaType === 'tv') {
-        const res = await firstValueFrom(this.tvService.getSimilarTvShows(context.id, 'en-US', page));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        if (mapped.length < 6 && context.tvParams) {
+          const fallbackParams: TmdbDiscoverTvParamsDto = {
+            ...context.tvParams,
+            page
+          };
+          applyFiltersToTvParams(fallbackParams, filters);
+          const fallbackRes = await firstValueFrom(this.discoverService.discoverTv(fallbackParams));
+          const fallbackItems = this.filterWatched(
+            mapTvToSwimlane(fallbackRes.results).filter((i) => i.id !== context.id)
+          );
+          const seen = new Set(mapped.map((i) => i.id));
+          mapped = [...mapped, ...fallbackItems.filter((i) => !seen.has(i.id))];
+          hasMore = hasMore || fallbackRes.page < fallbackRes.total_pages;
+        }
+        return { items: mapped, hasMore };
       } else {
-        const res = await firstValueFrom(this.moviesService.getSimilarMovies(context.id, 'en-US', page));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        const res = await firstValueFrom(
+          isRecs
+            ? this.moviesService.getMovieRecommendations(context.id, 'en-US', page)
+            : this.moviesService.getSimilarMovies(context.id, 'en-US', page)
+        );
+        let mapped = this.filterWatched(
+          mapMoviesToSwimlane(res.results).filter((i) => i.id !== context.id)
+        );
+        let hasMore = res.page < res.total_pages;
+
+        if (mapped.length < 6 && context.movieParams) {
+          const fallbackParams: TmdbDiscoverMovieParamsDto = {
+            ...context.movieParams,
+            page
+          };
+          applyFiltersToMovieParams(fallbackParams, filters);
+          const fallbackRes = await firstValueFrom(this.discoverService.discoverMovies(fallbackParams));
+          const fallbackItems = this.filterWatched(
+            mapMoviesToSwimlane(fallbackRes.results).filter((i) => i.id !== context.id)
+          );
+          const seen = new Set(mapped.map((i) => i.id));
+          mapped = [...mapped, ...fallbackItems.filter((i) => !seen.has(i.id))];
+          hasMore = hasMore || fallbackRes.page < fallbackRes.total_pages;
+        }
+        return { items: mapped, hasMore };
       }
     }
 

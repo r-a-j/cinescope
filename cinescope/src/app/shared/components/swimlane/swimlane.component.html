@@ -1,5 +1,8 @@
 <div class="swimlane-header">
-    <h2 class="swimlane-title">{{ title() }}</h2>
+    <div class="swimlane-title-group">
+        <span class="swimlane-accent-bar" aria-hidden="true"></span>
+        <h2 class="swimlane-title">{{ title() }}</h2>
+    </div>
     @if (items().length > 0) {
     <button type="button" class="swimlane-action" aria-label="See All" (click)="openViewAll()">
         <span>See All</span>

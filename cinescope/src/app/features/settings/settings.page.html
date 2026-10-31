@@ -104,7 +104,225 @@
         }
     </ion-list>
 
-<ion-list inset="true" class="cinescope-list">
+    <ion-list inset="true" class="cinescope-list discover-prefs-list">
+        <ion-item
+            button
+            (click)="toggleDiscoverMainAccordion()"
+            [lines]="isDiscoverTabCollapsed() ? 'none' : 'inset'">
+            <ion-icon slot="start" name="compass-outline"></ion-icon>
+            <ion-label>
+                <h3>Discover &amp; Taste Preferences</h3>
+                <p>{{ discoverPrefs.summarySubtitle() }}</p>
+            </ion-label>
+            <ion-icon slot="end" [name]="isDiscoverTabCollapsed() ? 'chevron-forward-outline' : 'chevron-down-outline'"></ion-icon>
+        </ion-item>
+
+        @if (!isDiscoverTabCollapsed()) {
+            <!-- 1. PREFERRED LANGUAGES (SELECTED-ONLY PREVIEW + MODAL PICKER) -->
+            <ion-item
+                button
+                class="discover-sub-accordion-header"
+                (click)="openLanguagesModal()"
+                lines="none">
+                <ion-icon slot="start" name="language-outline"></ion-icon>
+                <ion-label>
+                    <h3>Preferred Languages</h3>
+                    <p>Tap to search &amp; multi-select from {{ discoverPrefs.allAvailableLanguages().length }} Indian &amp; Global languages</p>
+                </ion-label>
+                <div slot="end" class="region-meta-tag">
+                    <span class="region-mode-pill">
+                        {{ discoverPrefs.preferredLanguages().length }} Selected
+                    </span>
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+            </ion-item>
+
+            <div class="selected-languages-inline-strip">
+                @for (lang of discoverPrefs.selectedLanguageOptions(); track lang.code) {
+                    <button
+                        type="button"
+                        class="pref-pill active"
+                        title="Tap to remove or manage languages"
+                        (click)="discoverPrefs.toggleLanguage(lang.code)">
+                        <span class="pill-main">{{ lang.label }}</span>
+                        <span class="pill-native">{{ lang.nativeLabel }}</span>
+                        <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                    </button>
+                }
+                <button
+                    type="button"
+                    class="pref-pill add-more-lang-pill"
+                    (click)="openLanguagesModal()">
+                    <ion-icon name="search-outline" class="genre-pill-icon"></ion-icon>
+                    <span class="pill-main">+ Add / Search Languages</span>
+                </button>
+            </div>
+
+            <!-- SUB-ACCORDION 2: FAVORITE GENRES & CINEMA VIBES -->
+            <ion-item
+                button
+                class="discover-sub-accordion-header"
+                (click)="isDiscoverGenresExpanded.set(!isDiscoverGenresExpanded())"
+                lines="inset">
+                <ion-icon slot="start" name="sparkles-outline"></ion-icon>
+                <ion-label>
+                    <h3>Genres &amp; Cinema Vibes</h3>
+                    <p>
+                        {{ discoverPrefs.favoriteGenres().length }} official genres •
+                        {{ discoverPrefs.favoriteVibes().length }} curated vibes
+                    </p>
+                </ion-label>
+                <ion-icon slot="end" [name]="isDiscoverGenresExpanded() ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
+            </ion-item>
+
+            @if (isDiscoverGenresExpanded()) {
+                <div class="discover-pref-block">
+                    <span class="pref-group-kicker" style="margin-top: 2px;">CINEMA VIBES &amp; MOODS</span>
+                    <div class="pref-vibes-grid">
+                        @for (vibe of discoverPrefs.vibeOptions; track vibe.key) {
+                            <button
+                                type="button"
+                                class="pref-vibe-card"
+                                [class.active]="discoverPrefs.isVibeSelected(vibe.key)"
+                                [attr.aria-pressed]="discoverPrefs.isVibeSelected(vibe.key)"
+                                (click)="discoverPrefs.toggleVibe(vibe.key)">
+                                <div class="vibe-card-top">
+                                    <span class="vibe-card-title">{{ vibe.label }}</span>
+                                    @if (discoverPrefs.isVibeSelected(vibe.key)) {
+                                        <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                                    }
+                                </div>
+                                <span class="vibe-card-sub">{{ vibe.subtitle }}</span>
+                            </button>
+                        }
+                    </div>
+
+                    <span class="pref-group-kicker">ALL OFFICIAL TMDB GENRES ({{ discoverPrefs.genreOptions.length }})</span>
+                    <div class="pref-pills-grid genre-pills-grid">
+                        @for (genre of discoverPrefs.genreOptions; track genre.key) {
+                            <button
+                                type="button"
+                                class="pref-pill genre-pill"
+                                [class.active]="discoverPrefs.isGenreSelected(genre.key)"
+                                [attr.aria-pressed]="discoverPrefs.isGenreSelected(genre.key)"
+                                (click)="discoverPrefs.toggleGenre(genre.key)">
+                                <ion-icon [name]="genre.icon" class="genre-pill-icon"></ion-icon>
+                                <span class="pill-main">{{ genre.label }}</span>
+                                @if (discoverPrefs.isGenreSelected(genre.key)) {
+                                    <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- SUB-ACCORDION 3: AI TASTE CURATOR (12-HOUR GEMINI SYNC) -->
+            <ion-item
+                button
+                class="discover-sub-accordion-header"
+                (click)="isDiscoverAiExpanded.set(!isDiscoverAiExpanded())"
+                lines="inset">
+                <ion-icon slot="start" name="hardware-chip-outline"></ion-icon>
+                <ion-label>
+                    <h3>AI Taste Curator (12h Gemini Sync)</h3>
+                    <p>{{ discoverPrefs.aiTasteStatusLabel() }}</p>
+                </ion-label>
+                <ion-icon slot="end" [name]="isDiscoverAiExpanded() ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
+            </ion-item>
+
+            @if (isDiscoverAiExpanded()) {
+                <div class="discover-pref-block">
+                    <p class="pref-block-desc">
+                        Every 12 hours, Gemini analyzes your Watched &amp; Watchlist history and translates your taste into verified TMDB Discover shelves (zero hallucinated titles).
+                    </p>
+
+                    @if (discoverPrefs.aiTasteCache(); as aiCache) {
+                        @if (aiCache.lanes.length > 0) {
+                            <div class="ai-cached-lanes-list">
+                                @for (lane of aiCache.lanes; track lane.id) {
+                                    <span class="ai-cached-lane-tag">
+                                        <ion-icon name="sparkles-outline"></ion-icon>
+                                        {{ lane.title }}
+                                    </span>
+                                }
+                            </div>
+                        }
+                    }
+
+                    <button
+                        type="button"
+                        class="ai-refresh-btn"
+                        [disabled]="trendingStore.isAiTasteSyncing()"
+                        (click)="refreshAiTasteFromSettings()">
+                        <ion-icon name="refresh-outline"></ion-icon>
+                        <span>{{ trendingStore.isAiTasteSyncing() ? 'Syncing with Gemini...' : 'Refresh AI Taste Lanes Now' }}</span>
+                    </button>
+                </div>
+            }
+
+            <!-- SUB-ACCORDION 4: DISCOVER TABS & SMART FILTERS -->
+            <ion-item
+                button
+                class="discover-sub-accordion-header"
+                (click)="isDiscoverTabsExpanded.set(!isDiscoverTabsExpanded())"
+                lines="inset">
+                <ion-icon slot="start" name="options-outline"></ion-icon>
+                <ion-label>
+                    <h3>Discover Tabs &amp; Filters</h3>
+                    <p>
+                        {{ discoverPrefs.visibleTabs().length }}/8 tabs visible •
+                        {{ discoverPrefs.hideWatchedInDiscover() ? 'Watched Hidden' : 'Showing Watched' }}
+                    </p>
+                </ion-label>
+                <ion-icon slot="end" [name]="isDiscoverTabsExpanded() ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
+            </ion-item>
+
+            @if (isDiscoverTabsExpanded()) {
+                <ion-item>
+                    <ion-icon slot="start" name="eye-off-outline"></ion-icon>
+                    <ion-label>
+                        <h3>Hide Watched Titles</h3>
+                        <p>Filter out already-watched titles in Discover &amp; Recommendations</p>
+                    </ion-label>
+                    <ion-toggle
+                        slot="end"
+                        [checked]="discoverPrefs.hideWatchedInDiscover()"
+                        (ionChange)="discoverPrefs.toggleHideWatched()"
+                        aria-label="Toggle Hide Watched Titles">
+                    </ion-toggle>
+                </ion-item>
+
+                <div class="discover-tabs-grid">
+                    @for (tab of discoverPrefs.tabsCatalog; track tab.value) {
+                        <button
+                            type="button"
+                            class="discover-tab-toggle-card"
+                            [class.active]="discoverPrefs.tabVisibility()[tab.value]"
+                            [attr.aria-pressed]="discoverPrefs.tabVisibility()[tab.value]"
+                            (click)="discoverPrefs.toggleTabVisibility(tab.value)">
+                            <ion-icon [name]="tab.icon" class="tab-card-icon"></ion-icon>
+                            <span class="tab-card-label">{{ tab.label }}</span>
+                            @if (discoverPrefs.tabVisibility()[tab.value]) {
+                                <ion-icon name="checkmark" class="pill-check"></ion-icon>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+
+            <!-- RESET DISCOVER PREFERENCES -->
+            <ion-item button (click)="discoverPrefs.resetToDefault()" lines="none">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                <ion-label>
+                    <h3>Reset Discover Preferences</h3>
+                    <p>Restore Hindi &amp; English defaults, genres, vibes &amp; all tabs</p>
+                </ion-label>
+            </ion-item>
+        }
+    </ion-list>
+
+    <ion-list inset="true" class="cinescope-list">
         <ion-item button (click)="isMoviesTabCollapsed.set(!isMoviesTabCollapsed())" [lines]="isMoviesTabCollapsed() ? 'none' : 'inset'">
             <ion-icon slot="start" name="film-outline"></ion-icon>
             <ion-label>
@@ -498,6 +716,159 @@
                             <div class="region-empty">
                                 <ion-icon name="search-outline"></ion-icon>
                                 <p>No matching countries found</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </ion-content>
+        </div>
+    </ng-template>
+</ion-modal>
+
+<!-- ==========================================
+     PREFERRED LANGUAGES MULTI-SELECT MODAL
+     ========================================== -->
+<ion-modal
+    [isOpen]="isLanguagesModalOpen()"
+    (didDismiss)="closeLanguagesModal()"
+    [initialBreakpoint]="0.88"
+    [breakpoints]="[0, 0.88, 1.0]"
+    class="region-modal-sheet">
+    <ng-template>
+        <div class="region-modal-container">
+            <!-- Modal Header -->
+            <div class="region-modal-header">
+                <div class="modal-title-row">
+                    <div class="title-with-badge">
+                        <div class="title-icon-badge region-badge">
+                            <ion-icon name="language-outline"></ion-icon>
+                        </div>
+                        <div>
+                            <h3 class="modal-title">PREFERRED LANGUAGES</h3>
+                            <p class="modal-subtitle">Multi-select Indian &amp; International languages for Discover</p>
+                        </div>
+                    </div>
+                    <button type="button" class="modal-close-btn" (click)="closeLanguagesModal()" aria-label="Close modal">
+                        <ion-icon name="close-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controls (Selected Glance + Group Filter Chips + Search) -->
+            <div class="region-modal-controls">
+                <!-- Selected Languages Glance Card -->
+                <div class="active-region-card">
+                    <div class="active-region-meta">
+                        <span class="active-region-label">Active Discover Languages ({{ discoverPrefs.preferredLanguages().length }})</span>
+                        <div class="modal-selected-lang-pills">
+                            @for (sel of discoverPrefs.selectedLanguageOptions(); track sel.code) {
+                                <button
+                                    type="button"
+                                    class="modal-selected-lang-chip"
+                                    (click)="discoverPrefs.toggleLanguage(sel.code)">
+                                    <span>{{ sel.label }}</span>
+                                    <ion-icon name="close-circle"></ion-icon>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group Filter Tabs (All / Indian / Global / Selected) -->
+                <div class="lang-modal-group-tabs">
+                    <button
+                        type="button"
+                        class="lang-group-tab"
+                        [class.active]="languageGroupFilter() === 'all'"
+                        (click)="setLanguageGroupFilter('all')">
+                        All ({{ discoverPrefs.allAvailableLanguages().length }})
+                    </button>
+                    <button
+                        type="button"
+                        class="lang-group-tab"
+                        [class.active]="languageGroupFilter() === 'indian'"
+                        (click)="setLanguageGroupFilter('indian')">
+                        Indian ({{ discoverPrefs.indianLanguageOptions().length }})
+                    </button>
+                    <button
+                        type="button"
+                        class="lang-group-tab"
+                        [class.active]="languageGroupFilter() === 'global'"
+                        (click)="setLanguageGroupFilter('global')">
+                        Global ({{ discoverPrefs.globalLanguageOptions().length }})
+                    </button>
+                    <button
+                        type="button"
+                        class="lang-group-tab"
+                        [class.active]="languageGroupFilter() === 'selected'"
+                        (click)="setLanguageGroupFilter('selected')">
+                        Selected ({{ discoverPrefs.preferredLanguages().length }})
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="region-search-wrap">
+                    <ion-icon name="search-outline"></ion-icon>
+                    <input
+                        type="text"
+                        class="region-search-input"
+                        placeholder="Search language or ISO code (e.g. Hindi, Korean, Tamil, Odia, Turkish)..."
+                        [value]="discoverLangSearchQuery()"
+                        (input)="onDiscoverLangSearch($event)" />
+                    @if (discoverLangSearchQuery()) {
+                        <button type="button" class="search-clear-btn" (click)="clearDiscoverLangSearch()" aria-label="Clear search">
+                            <ion-icon name="close-circle"></ion-icon>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Scrollable Multi-Select Language List -->
+            <ion-content class="region-modal-content" [scrollY]="true">
+                @if (discoverPrefs.isSyncingLanguages()) {
+                    <div class="region-loading">
+                        <ion-spinner name="crescent" color="primary"></ion-spinner>
+                        <p>Loading TMDB languages catalog...</p>
+                    </div>
+                } @else {
+                    <div class="region-list">
+                        @for (lang of filteredModalLanguages(); track lang.code) {
+                            <button
+                                type="button"
+                                class="region-item"
+                                [class.active]="discoverPrefs.isLanguageSelected(lang.code)"
+                                [attr.aria-pressed]="discoverPrefs.isLanguageSelected(lang.code)"
+                                (click)="discoverPrefs.toggleLanguage(lang.code)">
+                                <div class="region-flag-box">
+                                    @if (lang.originCountry) {
+                                        <img
+                                            [src]="getCountryFlagUrl(lang.originCountry)"
+                                            [alt]="lang.label"
+                                            class="region-flag-img"
+                                            loading="lazy"
+                                            (error)="onFlagError($event)" />
+                                    }
+                                    <span class="region-flag-fallback">{{ lang.code.toUpperCase() }}</span>
+                                </div>
+                                <div class="region-item-info">
+                                    <span class="region-item-name">{{ lang.label }}</span>
+                                    <div class="region-item-sub">
+                                        <span class="region-item-code-tag">{{ lang.code.toUpperCase() }}</span>
+                                        <span class="region-item-native">{{ lang.nativeLabel }}</span>
+                                        <span class="region-item-native">• {{ lang.group === 'indian' ? 'Indian' : 'International' }}</span>
+                                    </div>
+                                </div>
+                                @if (discoverPrefs.isLanguageSelected(lang.code)) {
+                                    <div class="region-active-badge">
+                                        <ion-icon name="checkmark-circle"></ion-icon>
+                                        <span>SELECTED</span>
+                                    </div>
+                                }
+                            </button>
+                        } @empty {
+                            <div class="region-empty">
+                                <ion-icon name="search-outline"></ion-icon>
+                                <p>No matching languages found</p>
                             </div>
                         }
                     </div>

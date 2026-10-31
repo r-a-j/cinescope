@@ -727,6 +727,23 @@ export class CollectionPage implements OnInit, AfterViewInit {
       if (qParams['mediaType'] === 'movie' || qParams['mediaType'] === 'tv') {
         builtContext.mediaType = qParams['mediaType'];
       }
+      if (typeof qParams['region'] === 'string') {
+        builtContext.region = qParams['region'];
+      }
+      if (typeof qParams['movieParams'] === 'string') {
+        try {
+          builtContext.movieParams = JSON.parse(qParams['movieParams']);
+        } catch {
+          // ignore invalid json
+        }
+      }
+      if (typeof qParams['tvParams'] === 'string') {
+        try {
+          builtContext.tvParams = JSON.parse(qParams['tvParams']);
+        } catch {
+          // ignore invalid json
+        }
+      }
       queryContext = builtContext;
     }
     this.queryContext.set(queryContext);
@@ -734,10 +751,15 @@ export class CollectionPage implements OnInit, AfterViewInit {
     if (Array.isArray(navState?.items) && navState.items.length > 0) {
       this.rawItems.set(navState.items);
       this.currentPage.set(1);
-      if (navState.items.length < 15 && !queryContext) {
+      if (this.isFranchiseCollection()) {
         this.hasMore.set(false);
       } else {
         this.hasMore.set(true);
+        if (navState.items.length < 18) {
+          setTimeout(() => {
+            void this.loadMore();
+          }, 150);
+        }
       }
     } else if (this.rawItems().length === 0) {
       void this.fetchInitialCollectionPage();
