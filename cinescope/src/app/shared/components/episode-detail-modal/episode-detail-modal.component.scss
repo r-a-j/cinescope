@@ -1,0 +1,694 @@
+.episode-modal-sheet {
+  --background: #09090e;
+  --border-radius: 24px 24px 0 0;
+  --backdrop-opacity: 0.78;
+  overscroll-behavior: contain;
+
+  &::part(handle) {
+    background: rgba(255, 255, 255, 0.4);
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+  }
+
+  &::part(content) {
+    border-radius: 24px 24px 0 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85);
+    background: #09090e;
+    overscroll-behavior: contain;
+  }
+}
+
+.episode-modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #09090e;
+  color: #ffffff;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+}
+
+.episode-modal-content {
+  --background: #09090e;
+  --color: #ffffff;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+
+  &::part(scroll) {
+    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+  }
+}
+
+.episode-hero-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 250px;
+  background: #09090e;
+  overflow: hidden;
+
+  .episode-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.08);
+  }
+
+  .hero-top-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: linear-gradient(
+      180deg,
+      rgba(9, 9, 14, 0.70) 0%,
+      rgba(9, 9, 14, 0.50) 25%,
+      rgba(9, 9, 14, 0.30) 48%,
+      rgba(9, 9, 14, 0.12) 72%,
+      rgba(9, 9, 14, 0.03) 88%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .hero-bottom-vignette {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 180px;
+    background: linear-gradient(
+      180deg,
+      rgba(9, 9, 14, 0) 0%,
+      rgba(9, 9, 14, 0.02) 15%,
+      rgba(9, 9, 14, 0.06) 28%,
+      rgba(9, 9, 14, 0.12) 38%,
+      rgba(9, 9, 14, 0.22) 48%,
+      rgba(9, 9, 14, 0.35) 58%,
+      rgba(9, 9, 14, 0.50) 68%,
+      rgba(9, 9, 14, 0.68) 78%,
+      rgba(9, 9, 14, 0.84) 87%,
+      rgba(9, 9, 14, 0.94) 94%,
+      rgba(9, 9, 14, 0.99) 98%,
+      #09090e 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .modal-close-btn {
+    position: absolute;
+    right: 14px;
+    top: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 6;
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    &:active {
+      transform: scale(0.92);
+      background: rgba(0, 0, 0, 0.85);
+    }
+  }
+
+  .hero-stage-badges {
+    position: absolute;
+    bottom: 12px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 4;
+
+    .ep-badge-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      font-family: var(--font-display, 'Bebas Neue', sans-serif);
+      font-size: 14px;
+      letter-spacing: 0.8px;
+
+      .ep-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #38bdf8;
+        box-shadow: 0 0 8px #38bdf8;
+      }
+    }
+
+    .ep-type-capsule {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+
+      &.is-finale {
+        background: rgba(245, 197, 24, 0.18);
+        border-color: rgba(245, 197, 24, 0.45);
+        color: #fbbf24;
+      }
+    }
+  }
+}
+
+.episode-modal-body {
+  padding: 16px 18px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.episode-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+.episode-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 13px;
+
+  ion-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+}
+
+.episode-header-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .series-name-sub {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+  }
+
+  .episode-title {
+    margin: 2px 0 0;
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 28px;
+    line-height: 1.12;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+  }
+
+  .meta-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+
+      ion-icon {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      &.rating-pill {
+        ion-icon {
+          color: #f5c518;
+        }
+
+        .rating-val {
+          color: #f5c518;
+          font-weight: 700;
+        }
+
+        .rating-count {
+          color: rgba(255, 255, 255, 0.45);
+          font-size: 11px;
+          margin-left: 2px;
+        }
+      }
+
+      &.imdb-pill {
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+
+        &:active {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .imdb-tag {
+          background: #f5c518;
+          color: #000000;
+          font-weight: 900;
+          font-size: 10px;
+          padding: 1px 4px;
+          border-radius: 3px;
+          letter-spacing: -0.2px;
+        }
+
+        .imdb-text {
+          font-size: 11.5px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.85);
+        }
+
+        ion-icon {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+    }
+  }
+}
+
+.command-center {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .stepper-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .step-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.96);
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+
+    .stepper-center-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.1;
+
+      .stepper-caption {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+      }
+
+      .stepper-ep-counter {
+        font-family: var(--font-display, 'Bebas Neue', sans-serif);
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        color: #ffffff;
+
+        .stepper-ep-total {
+          font-family: var(--font-body, 'Inter', sans-serif);
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+          margin-left: 4px;
+        }
+      }
+    }
+  }
+
+  .btn-watched-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.28);
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+    ion-icon {
+      font-size: 20px;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &.is-watched {
+      background: rgba(16, 185, 129, 0.14);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: none;
+    }
+  }
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .section-accent {
+      width: 3px;
+      height: 13px;
+      border-radius: 2px;
+      background: #e50914;
+    }
+
+    .section-title {
+      margin: 0;
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.65);
+      text-transform: uppercase;
+    }
+
+    .section-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .episode-overview {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.62;
+    color: rgba(255, 255, 255, 0.82);
+  }
+}
+
+.cast-scroll-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cast-card {
+    width: 98px;
+    min-width: 98px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+
+    &:active .cast-avatar-wrap {
+      transform: scale(0.97);
+    }
+
+    &:focus-visible .cast-avatar-wrap {
+      outline: 2px solid var(--ion-color-primary, #10b981);
+      outline-offset: 2px;
+    }
+
+    .cast-avatar-wrap {
+      position: relative;
+      width: 98px;
+      height: 128px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #16161c;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+      .cast-avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .cast-name {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cast-character {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.56);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+.crew-spotlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  .crew-spotlight-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .crew-role {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: rgba(255, 255, 255, 0.48);
+      font-weight: 700;
+    }
+
+    .crew-names {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.35;
+    }
+  }
+}
+
+.promos-scroller {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .promo-card {
+    flex: 0 0 180px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .promo-thumbnail-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000000;
+
+      .promo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .play-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.4);
+
+        ion-icon {
+          font-size: 34px;
+          color: #ffffff;
+        }
+      }
+    }
+
+    .promo-info {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .promo-type-tag {
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        color: #e50914;
+        text-transform: uppercase;
+      }
+
+      .promo-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+
+.modal-footer-action {
+  padding-top: 4px;
+  padding-bottom: 12px;
+
+  .btn-full-guide {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    ion-icon {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .guide-arrow {
+      margin-left: auto;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    &:active {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(0.98);
+    }
+  }
+}

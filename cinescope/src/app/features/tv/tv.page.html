@@ -1,7 +1,369 @@
 <app-header></app-header>
 
-<ion-content color="background">
-  <div class="tab-placeholder" data-tour="tv-page">
-    <h1>TV TAB</h1>
-  </div>
+<ion-content data-tour="tv-page" color="background" class="ion-no-padding tv-content" [scrollY]="!isEpisodeModalOpen()">
+  <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  @if (!hasAnyTvContent()) {
+    <!-- Empty / Onboarding State -->
+    <div class="tv-empty-container">
+      <div class="tv-empty-hero">
+        <div class="tv-empty-icon-ring">
+          <ion-icon name="tv-outline"></ion-icon>
+        </div>
+        <span class="tv-empty-kicker">EPISODIC COMMAND CENTER</span>
+        <h1 class="tv-empty-title">TRACK TV SEASONS & EPISODES</h1>
+        <p class="tv-empty-description">
+          Follow series across seasons, log each episode with one tap, and never lose your place again. Add shows to your Watchlist to start tracking.
+        </p>
+        <button type="button" class="tv-cta-btn" (click)="navigateToDiscover()">
+          <ion-icon name="sparkles"></ion-icon>
+          <span>Explore Trending TV Series</span>
+        </button>
+      </div>
+
+      <div class="tv-feature-trio">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <ion-icon name="play-outline"></ion-icon>
+          </div>
+          <div class="feature-text">
+            <h4>Up Next Hero</h4>
+            <p>Instantly see and mark the next episode to watch.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <div class="feature-text">
+            <h4>Weekly Air Radar</h4>
+            <p>Know exactly when new episodes of your shows air.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <ion-icon name="hourglass-outline"></ion-icon>
+          </div>
+          <div class="feature-text">
+            <h4>Binge Sizer</h4>
+            <p>Find short limited series or multi-season sagas to binge.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="tv-hub-container">
+      <!-- 1. Hero Showcase Command Center -->
+      @if (heroSeries(); as hero) {
+        <section class="tv-hero-stage">
+          @if (heroBackdropUrl(); as backdrop) {
+            <div class="hero-backdrop">
+              <img
+                [src]="backdrop"
+                [alt]="hero.title"
+                class="backdrop-img"
+                (error)="onBackdropError($event, hero.id)" />
+              <div class="backdrop-gradient"></div>
+            </div>
+          }
+
+          <div class="hero-content">
+            <div class="hero-meta-kicker">
+              <span class="live-pulse-dot"></span>
+              <span class="kicker-text">
+                {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE')) }}
+              </span>
+              @if (hero.status) {
+                <span class="status-pill">{{ hero.status }}</span>
+              }
+            </div>
+
+            <h2
+              class="hero-title"
+              tabindex="0"
+              role="button"
+              (click)="openShowDetail(hero.id)"
+              (keyup.enter)="openShowDetail(hero.id)">
+              {{ hero.title }}
+            </h2>
+
+            @if (!hero.isCompleted) {
+              @if (hero.upNextSeason && hero.upNextEpisode) {
+                <div
+                  class="next-ep-banner"
+                  tabindex="0"
+                  role="button"
+                  (click)="openEpisodeGuide(hero)"
+                  (keyup.enter)="openEpisodeGuide(hero)">
+                  <div class="next-ep-badge">
+                    <ion-icon name="play-outline"></ion-icon>
+                    <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
+                  </div>
+                  @if (hero.upNextTitle) {
+                    <span class="next-ep-title">{{ hero.upNextTitle }}</span>
+                  }
+                </div>
+              } @else {
+                <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
+              }
+            }
+
+            <!-- Progress Meter -->
+            <div class="hero-progress-block">
+              <div class="progress-labels">
+                <span class="ep-count-label">
+                  @if (hero.isCompleted && hero.totalEpisodes === 0) {
+                    All episodes marked watched
+                  } @else {
+                    <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalEpisodes || '?' }}</strong> episodes watched
+                  }
+                </span>
+                <span class="pct-pill">{{ hero.percentage }}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="hero.percentage"></div>
+              </div>
+            </div>
+
+            <!-- Hero Action Buttons -->
+            <div class="hero-actions">
+              @if (!hero.isCompleted && hero.upNextSeason && hero.upNextEpisode) {
+                <button
+                  type="button"
+                  class="action-btn-primary"
+                  (click)="onMarkNextEpisodeWatched($event, hero)">
+                  <ion-icon name="checkmark-circle"></ion-icon>
+                  <span>Mark S{{ hero.upNextSeason }} E{{ hero.upNextEpisode }} Watched</span>
+                </button>
+              }
+
+              <button
+                type="button"
+                class="action-btn-secondary"
+                (click)="openEpisodeGuide(hero)">
+                <ion-icon name="albums-outline"></ion-icon>
+                <span>Episode Guide</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- 2. Weekly Air Radar Strip -->
+      @if (tvProgress.airRadar().length > 0) {
+        <section class="tv-section air-radar-section">
+          <div class="section-header">
+            <div class="header-titles">
+              <span class="section-kicker">EPISODIC RADAR</span>
+              <h3 class="section-heading">WEEKLY AIR RADAR</h3>
+            </div>
+            <span class="radar-badge">{{ tvProgress.airRadar().length }} EPISODES</span>
+          </div>
+
+          <div class="radar-scroller">
+            @for (item of tvProgress.airRadar(); track (item.tmdbId + '-' + item.seasonNumber + '-' + item.episodeNumber)) {
+              <div
+                class="radar-card"
+                [class.today]="item.daysUntil === 0"
+                tabindex="0"
+                role="button"
+                (click)="openAirRadarEpisode(item)"
+                (keyup.enter)="openAirRadarEpisode(item)">
+                <div class="radar-card-media">
+                  <img
+                    [src]="item.posterPath ? 'https://image.tmdb.org/t/p/w185' + item.posterPath : 'assets/placeholders/placeholder.webp'"
+                    [alt]="item.seriesTitle"
+                    loading="lazy"
+                    (error)="onImageError($event, item.tmdbId)" />
+                  <span class="radar-countdown-pill" [class.is-today]="item.daysUntil === 0">
+                    {{ formatRadarLabel(item) }}
+                  </span>
+                </div>
+                <div class="radar-card-info">
+                  <span class="radar-ep-code">S{{ item.seasonNumber }} • E{{ item.episodeNumber }}</span>
+                  <h4 class="radar-show-title">{{ item.seriesTitle }}</h4>
+                  @if (item.episodeTitle) {
+                    <p class="radar-ep-title">{{ item.episodeTitle }}</p>
+                  }
+                  <span class="radar-date">{{ item.airDate }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- 3. Continue Watching Horizontal Queue -->
+      @if (allDisplayCards().length > 1) {
+        <section class="tv-section queue-section">
+          <div class="section-header">
+            <div class="header-titles">
+              <span class="section-kicker">YOUR SHELF</span>
+              <h3 class="section-heading">SWITCH SHOW</h3>
+            </div>
+          </div>
+
+          <div class="queue-scroller">
+            @for (card of allDisplayCards(); track card.id) {
+              <button
+                type="button"
+                class="queue-chip"
+                [class.is-active]="heroSeries()?.id === card.id"
+                (click)="selectHero(card.id)">
+                <img
+                  [src]="card.posterUrl"
+                  [alt]="card.title"
+                  class="queue-thumb"
+                  loading="lazy"
+                  (error)="onImageError($event, card.id)" />
+                <div class="queue-meta">
+                  <span class="queue-name">{{ card.title }}</span>
+                  <span class="queue-sub">
+                    {{ card.isCompleted ? 'Done' : (card.isUnstarted ? 'Start' : (card.upNextSeason && card.upNextEpisode ? 'S' + card.upNextSeason + ' E' + card.upNextEpisode : 'Up Next unavailable')) }}
+                    • {{ card.percentage }}%
+                  </span>
+                </div>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- 4. The Binge Sizer Decision Engine -->
+      <section class="tv-section binge-sizer-section">
+        <div class="section-header">
+          <div class="header-titles">
+            <span class="section-kicker">DECISION ENGINE</span>
+            <h3 class="section-heading">THE BINGE SIZER</h3>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="binge-filter-bar">
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeBingeFilter() === 'all'"
+            (click)="setFilter('all')">
+            <span>All</span>
+            <span class="count-tag">{{ filterCounts().all }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeBingeFilter() === 'quick'"
+            (click)="setFilter('quick')">
+            <ion-icon name="flame-outline"></ion-icon>
+            <span>Quick Bites (&le;10 eps)</span>
+            <span class="count-tag">{{ filterCounts().quick }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeBingeFilter() === 'weekend'"
+            (click)="setFilter('weekend')">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Weekend Binge (1-2 seasons)</span>
+            <span class="count-tag">{{ filterCounts().weekend }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="filter-pill"
+            [class.active]="activeBingeFilter() === 'long'"
+            (click)="setFilter('long')">
+            <ion-icon name="hourglass-outline"></ion-icon>
+            <span>Long Hauls (3+ seasons)</span>
+            <span class="count-tag">{{ filterCounts().long }}</span>
+          </button>
+
+          @if (filterCounts().unstarted > 0) {
+            <button
+              type="button"
+              class="filter-pill"
+              [class.active]="activeBingeFilter() === 'unstarted'"
+              (click)="setFilter('unstarted')">
+              <ion-icon name="bookmark-outline"></ion-icon>
+              <span>Ready to Start</span>
+              <span class="count-tag">{{ filterCounts().unstarted }}</span>
+            </button>
+          }
+        </div>
+
+        <!-- Series Grid -->
+        <div class="tv-series-grid">
+          @for (card of filteredCards(); track card.id) {
+            <div
+              class="tv-card"
+              tabindex="0"
+              role="button"
+              (click)="openShowDetail(card.id)"
+              (keyup.enter)="openShowDetail(card.id)">
+              <div class="tv-poster-wrap">
+                <img
+                  [src]="card.posterUrl"
+                  [alt]="card.title"
+                  loading="lazy"
+                  class="tv-poster"
+                  (error)="onImageError($event, card.id)" />
+
+                @if (card.isCompleted) {
+                  <span class="card-status-badge completed">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    Done
+                  </span>
+                } @else if (card.isUnstarted) {
+                  <span class="card-status-badge unstarted">
+                    Start S1
+                  </span>
+                } @else if (card.upNextSeason && card.upNextEpisode) {
+                  <span class="card-status-badge in-progress">
+                    S{{ card.upNextSeason }} E{{ card.upNextEpisode }}
+                  </span>
+                } @else {
+                  <span class="card-status-badge in-progress">
+                    Up Next unavailable
+                  </span>
+                }
+
+                <div class="card-progress-bar">
+                  <div class="card-progress-fill" [style.width.%]="card.percentage"></div>
+                </div>
+              </div>
+
+              <div class="tv-card-info">
+                <h4 class="card-title">{{ card.title }}</h4>
+                <div class="card-sub-info">
+                  <span>{{ card.totalSeasons }} {{ card.totalSeasons === 1 ? 'Season' : 'Seasons' }}</span>
+                  <span>•</span>
+                  @if (card.isCompleted && card.totalEpisodes === 0) {
+                    <span>All episodes marked watched</span>
+                  } @else {
+                    <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  }
 </ion-content>
+
+<app-episode-detail-modal
+  [isOpen]="isEpisodeModalOpen()"
+  [seriesId]="modalSeriesId()"
+  [seasonNumber]="modalSeasonNumber()"
+  [episodeNumber]="modalEpisodeNumber()"
+  [seriesTitle]="modalSeriesTitle()"
+  [seriesBackdropUrl]="modalSeriesBackdrop()"
+  [totalEpisodesInSeason]="modalTotalEpisodesInSeason()"
+  [showSeriesGuideLink]="true"
+  (didDismiss)="closeEpisodeModal()"
+  (episodeChange)="onModalEpisodeChange($event)">
+</app-episode-detail-modal>

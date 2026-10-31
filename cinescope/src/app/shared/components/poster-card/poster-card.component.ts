@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, inject, signal, computed } from '@angular/core';
 import { PosterCacheService } from '../../../core/services/poster-cache.service';
+import { MediaMetadataService } from '../../../core/services/media-metadata.service';
 import { DEFAULT_POSTER_PLACEHOLDER } from '../../../core/constants/api.constants';
 
 export type BookmarkState = 'none' | 'watchlist' | 'watched';
@@ -14,12 +15,15 @@ export type BookmarkState = 'none' | 'watchlist' | 'watched';
 })
 export class PosterCardComponent {
     private readonly posterCache = inject(PosterCacheService);
+    private readonly mediaMetadata = inject(MediaMetadataService);
 
     public imageUrl = input<string>(DEFAULT_POSTER_PLACEHOLDER);
     public title = input<string | undefined>();
     public showBookmark = input<boolean>(false);
     public bookmarkState = input<BookmarkState>('none');
     public priority = input<boolean>(false);
+    public tmdbId = input<number | undefined>(undefined);
+    public mediaType = input<'movie' | 'tv' | 'person' | undefined>(undefined);
 
     private readonly loadedUrl = signal<string | null>(null);
     private readonly erroredUrl = signal<string | null>(null);
@@ -67,11 +71,17 @@ export class PosterCardComponent {
 
     /**
      * EDGE CASE FIX: If TMDB returns a dead image link, 
-     * this forces the img tag to swap back to our local placeholder.
+     * this forces the img tag to swap back to our local placeholder
+     * and dispatches a background healing request.
      */
     public handleImageError(event: Event): void {
         const imgElement = event.target as HTMLImageElement;
         imgElement.src = DEFAULT_POSTER_PLACEHOLDER;
         this.erroredUrl.set(this.imageUrl());
+        const id = this.tmdbId();
+        const type = this.mediaType();
+        if (id && id > 0 && (type === 'movie' || type === 'tv')) {
+            void this.mediaMetadata.healMediaMetadata(id, type);
+        }
     }
 }

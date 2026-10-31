@@ -51,7 +51,7 @@ const tvSteps: AppTourStep[] = [
         route: '/tabs/tv',
         target: 'tv-page',
         title: 'TV shows',
-        description: 'This dedicated TV tab is not available yet. You can still discover series, search for them, and open their episode guides from other sections.'
+        description: 'Track your series, mark episodes watched, use the Binge Sizer to find your next show, and check the weekly air radar.'
     }
 ];
 
@@ -158,7 +158,7 @@ const appSteps: AppTourStep[] = [
         route: '/tabs/tv',
         target: 'tab-tv',
         title: 'TV',
-        description: 'The dedicated TV tab is still being built. Series are already discoverable through Discover and Search.'
+        description: 'Track your series, mark episodes watched, use the Binge Sizer to find your next show, and check the weekly air radar.'
     },
     ...tvSteps,
     {
@@ -201,7 +201,7 @@ export const APP_TOURS: Record<AppTourId, AppTourDefinition> = {
     tv: {
         id: 'tv',
         label: 'TV',
-        description: 'Where to find series while the TV tab is being built.',
+        description: 'Track series progress, find a show to binge, and keep up with upcoming episodes.',
         steps: tvSteps
     },
     archive: {

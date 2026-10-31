@@ -5,10 +5,12 @@ import { ContentDocType } from '../database/schemas/content.schema';
 import { SettingsDocType } from '../database/schemas/settings.schema';
 import { RegionService } from './region.service';
 import { SearchHistoryDocType } from '../database/schemas/search-history.schema';
+import { migrateTvProgressCounts, TvProgressDocType } from '../database/schemas/tv-progress.schema';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { PosterCacheService } from './poster-cache.service';
 import { FranchiseCollectionSummary } from '../models/franchise.model';
+import { APP_VERSION } from '../constants/app-version';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
@@ -115,6 +117,7 @@ export interface CinescopeBackupPayload {
     settings: SettingsDocType | null;
     content: ContentDocType[];
     searchHistory: SearchHistoryDocType[];
+    tvProgress?: TvProgressDocType[] | undefined;
 }
 
 export interface BackupInspectionResult {
@@ -130,6 +133,7 @@ export interface BackupInspectionResult {
     favoritePeopleCount: number;
     historyCount: number;
     hasSettings: boolean;
+    tvProgressCount?: number | undefined;
     error?: string | undefined;
 }
 
@@ -180,6 +184,7 @@ export interface BackupImportResult {
     inboxCount: number;
     favoritePeopleCount: number;
     historyCount: number;
+    tvProgressCount?: number | undefined;
 }
 
 @Injectable({
@@ -471,7 +476,7 @@ export class StorageService {
             await this.removeMedia(tmdbId, mediaType);
             return 'none';
         } else {
-            await this.removeMedia(tmdbId, mediaType);
+            await this.removeFromWatched(tmdbId, mediaType);
             return 'none';
         }
     }
@@ -515,7 +520,6 @@ export class StorageService {
                 }
                 return docData;
             });
-            return true;
         } else if (effectivePayload) {
             const now = new Date().toISOString();
             await this.dbService.db.content.upsert({
@@ -527,9 +531,104 @@ export class StorageService {
                 watchedAt: now,
                 payload: effectivePayload
             });
-            return true;
+        } else {
+            return false;
         }
-        return false;
+
+        if (mediaType === 'tv') {
+            await this.markTvProgressWatched(tmdbId, effectivePayload ?? {});
+        }
+        return true;
+    }
+
+    public async removeFromWatched(tmdbId: number, mediaType: 'movie' | 'tv'): Promise<void> {
+        this.initReactiveStreams();
+        const docId = this.generateId(tmdbId, mediaType);
+        const contentDoc = await this.dbService.db.content.findOne(docId).exec();
+        if (contentDoc) {
+            await contentDoc.remove();
+        }
+
+        if (mediaType === 'tv') {
+            const progressDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
+            if (progressDoc) {
+                await progressDoc.remove();
+            }
+        }
+    }
+
+    private async markTvProgressWatched(tmdbId: number, payload: TmdbPayload): Promise<void> {
+        const existingDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
+        const existing = existingDoc?.toJSON() as TvProgressDocType | undefined;
+        const seasons = Array.isArray(payload['seasons'])
+            ? payload['seasons'] as { season_number?: unknown; episode_count?: unknown }[]
+            : [];
+        const seasonEpisodeCounts = seasons
+            .filter((season) =>
+                typeof season.season_number === 'number' &&
+                Number.isInteger(season.season_number) &&
+                season.season_number > 0 &&
+                typeof season.episode_count === 'number' &&
+                Number.isInteger(season.episode_count) &&
+                season.episode_count > 0
+            )
+            .map((season) => ({
+                seasonNumber: season.season_number as number,
+                episodeCount: season.episode_count as number
+            }))
+            .sort((a, b) => a.seasonNumber - b.seasonNumber);
+        const knownEpisodeKeys = seasonEpisodeCounts.flatMap(({ seasonNumber, episodeCount }) =>
+            Array.from({ length: episodeCount }, (_, index) => `s${seasonNumber}e${index + 1}`)
+        );
+        const specialEpisodes = (existing?.watchedEpisodes ?? []).filter((key) => /^s0e\d+$/i.test(key));
+        const regularEpisodeTotal = seasonEpisodeCounts.reduce((count, season) => count + season.episodeCount, 0);
+        const totalEpisodes = regularEpisodeTotal || (
+            typeof payload['number_of_episodes'] === 'number'
+                ? payload['number_of_episodes']
+                : existing?.totalEpisodes || 0
+        );
+        const isMarkedComplete = seasonEpisodeCounts.length === 0;
+        const watchedEpisodes = isMarkedComplete
+            ? specialEpisodes
+            : [...specialEpisodes, ...knownEpisodeKeys];
+        const lastEpisode = knownEpisodeKeys.length > 0
+            ? /^s(\d+)e(\d+)$/i.exec(knownEpisodeKeys[knownEpisodeKeys.length - 1])
+            : null;
+        const progress: TvProgressDocType = {
+            id: `tv_${tmdbId}`,
+            tmdbId,
+            seriesTitle: String(payload['name'] || payload['title'] || existing?.seriesTitle || `Series #${tmdbId}`),
+            totalSeasons: typeof payload['number_of_seasons'] === 'number'
+                ? payload['number_of_seasons']
+                : seasonEpisodeCounts.length || existing?.totalSeasons || 1,
+            totalEpisodes,
+            watchedEpisodesCount: isMarkedComplete ? totalEpisodes : knownEpisodeKeys.length,
+            watchedEpisodes,
+            seasonEpisodeCounts,
+            updatedAt: Date.now()
+        };
+        if (isMarkedComplete) {
+            progress.isMarkedComplete = true;
+            progress.unwatchedEpisodes = [];
+        }
+        if (lastEpisode) {
+            progress.lastWatchedSeason = Number(lastEpisode[1]);
+            progress.lastWatchedEpisode = Number(lastEpisode[2]);
+        }
+        for (const field of ['poster_path', 'backdrop_path'] as const) {
+            const value = payload[field] || existing?.[field === 'poster_path' ? 'posterPath' : 'backdropPath'];
+            if (typeof value === 'string') {
+                if (field === 'poster_path') progress.posterPath = value;
+                else progress.backdropPath = value;
+            }
+        }
+        if (typeof payload['status'] === 'string') progress.status = payload['status'];
+        if (existing?.nextAirDate) progress.nextAirDate = existing.nextAirDate;
+        if (existing?.nextAirSeason !== undefined) progress.nextAirSeason = existing.nextAirSeason;
+        if (existing?.nextAirEpisode !== undefined) progress.nextAirEpisode = existing.nextAirEpisode;
+        if (existing?.nextAirEpisodeTitle) progress.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
+
+        await this.dbService.db.tvProgress.upsert(progress);
     }
 
     public async removeMedia(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): Promise<void> {
@@ -963,14 +1062,15 @@ export class StorageService {
         if (!creditIds || creditIds.length === 0) {
             return { watched: 0, total: 0, percent: 0 };
         }
+        const uniqueCreditIds = new Set(creditIds);
         const watchedKeys = this.watchedMediaKeys();
         let watched = 0;
-        for (const cid of creditIds) {
+        for (const cid of uniqueCreditIds) {
             if (watchedKeys.has(cid)) {
                 watched++;
             }
         }
-        const total = creditIds.length;
+        const total = uniqueCreditIds.size;
         const percent = total > 0 ? Math.min(100, Math.round((watched / total) * 100)) : 0;
         return { watched, total, percent };
     }
@@ -987,12 +1087,11 @@ export class StorageService {
             selector: { id: { $in: docIds } }
         }).exec();
 
-        const promises: Promise<unknown>[] = docs
-            .filter((doc) => {
+        const releasedDocs = docs.filter((doc) => {
                 const d = doc.toJSON() as ContentDocType;
                 return checkMediaReleaseStatus(d.payload as TmdbPayload | undefined).isReleased;
-            })
-            .map((doc) =>
+            });
+        const promises: Promise<unknown>[] = releasedDocs.map((doc) =>
                 doc.incrementalModify((docData: ContentDocType): ContentDocType => {
                     docData.lists = ['watched'];
                     docData.watchedAt = new Date().toISOString();
@@ -1001,6 +1100,12 @@ export class StorageService {
             );
 
         await Promise.all(promises);
+        if (mediaType === 'tv') {
+            for (const doc of releasedDocs) {
+                const item = doc.toJSON() as ContentDocType;
+                await this.markTvProgressWatched(item.tmdbId, item.payload as TmdbPayload);
+            }
+        }
     }
 
     public async bulkRemoveMedia(tmdbIds: number[], mediaType: 'movie' | 'tv'): Promise<void> {
@@ -1013,6 +1118,14 @@ export class StorageService {
 
         const promises: Promise<unknown>[] = docs.map((doc) => doc.remove());
         await Promise.all(promises);
+        if (mediaType === 'tv') {
+            await Promise.all(tmdbIds.map(async (tmdbId) => {
+                const progressDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
+                if (progressDoc) {
+                    await progressDoc.remove();
+                }
+            }));
+        }
     }
 
     public async clearWatchlist(): Promise<number> {
@@ -1029,7 +1142,16 @@ export class StorageService {
         const docs = await this.dbService.db.content.find({
             selector: { lists: { $in: ['watched'] } }
         }).exec();
-        await Promise.all(docs.map((doc) => doc.remove()));
+        await Promise.all(docs.map(async (doc) => {
+            const data = doc.toJSON() as ContentDocType;
+            await doc.remove();
+            if (data.mediaType === 'tv') {
+                const progressDoc = await this.dbService.db.tvProgress.findOne(`tv_${data.tmdbId}`).exec();
+                if (progressDoc) {
+                    await progressDoc.remove();
+                }
+            }
+        }));
         return docs.length;
     }
 
@@ -1072,35 +1194,47 @@ export class StorageService {
         }
 
         // 1. Inspect Modern CineScope Format
-        if (Array.isArray(parsed.content)) {
+        const isModern =
+            Array.isArray(parsed.content) ||
+            Array.isArray(parsed.tvProgress) ||
+            parsed.version === 1 ||
+            Boolean(parsed.settings && typeof parsed.settings === 'object') ||
+            Array.isArray(parsed.searchHistory);
+
+        if (isModern && !parsed.data) {
             let watchlistCount = 0;
             let watchedCount = 0;
             let inboxCount = 0;
             let favoritePeopleCount = 0;
 
-            for (const item of parsed.content) {
-                if (!item || typeof item !== 'object') continue;
-                const tmdbId = Number(item.tmdbId ?? item.id);
-                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+            if (Array.isArray(parsed.content)) {
+                for (const item of parsed.content) {
+                    if (!item || typeof item !== 'object') continue;
+                    const tmdbId = Number(item.tmdbId ?? item.id);
+                    if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
 
-                const lists = Array.isArray(item.lists) ? item.lists : [];
-                if (item.mediaType === 'person' && lists.includes('favorite')) {
-                    favoritePeopleCount++;
-                } else if (lists.includes('inbox')) {
-                    inboxCount++;
-                } else if (lists.includes('watched')) {
-                    watchedCount++;
-                } else if (lists.includes('watchlist')) {
-                    watchlistCount++;
+                    const lists = Array.isArray(item.lists) ? item.lists : [];
+                    if (item.mediaType === 'person' && lists.includes('favorite')) {
+                        favoritePeopleCount++;
+                    } else if (lists.includes('inbox')) {
+                        inboxCount++;
+                    } else if (lists.includes('watched')) {
+                        watchedCount++;
+                    } else if (lists.includes('watchlist')) {
+                        watchlistCount++;
+                    }
                 }
             }
 
-            const totalTitles = parsed.content.length;
+            const totalTitles = Array.isArray(parsed.content) ? parsed.content.length : 0;
             const historyCount = Array.isArray(parsed.searchHistory) ? parsed.searchHistory.length : 0;
             const hasSettings = Boolean(parsed.settings && typeof parsed.settings === 'object');
+            const tvProgressCount = Array.isArray(parsed.tvProgress)
+                ? parsed.tvProgress.filter((p) => p && typeof p === 'object' && typeof p.id === 'string' && typeof p.tmdbId === 'number').length
+                : 0;
 
             return {
-                isValid: totalTitles > 0 || historyCount > 0 || hasSettings,
+                isValid: totalTitles > 0 || historyCount > 0 || hasSettings || tvProgressCount > 0,
                 format: 'modern',
                 version: parsed.version ?? 1,
                 appVersion: parsed.appVersion,
@@ -1111,7 +1245,8 @@ export class StorageService {
                 inboxCount,
                 favoritePeopleCount,
                 historyCount,
-                hasSettings
+                hasSettings,
+                tvProgressCount
             };
         }
 
@@ -1155,15 +1290,16 @@ export class StorageService {
 
     public async exportBackupJson(): Promise<string> {
         this.initReactiveStreams();
-        const [settingsDoc, contentDocs, historyDocs] = await Promise.all([
+        const [settingsDoc, contentDocs, historyDocs, tvProgressDocs] = await Promise.all([
             this.dbService.db.settings.findOne('user_preferences').exec(),
             this.dbService.db.content.find().exec(),
-            this.dbService.db.searchHistory.find().exec()
+            this.dbService.db.searchHistory.find().exec(),
+            this.dbService.db.tvProgress.find().exec()
         ]);
 
         const payload: CinescopeBackupPayload = {
             version: 1,
-            appVersion: '1.2.0',
+            appVersion: APP_VERSION,
             app: 'CineScope',
             exportedAt: new Date().toISOString(),
             settings: settingsDoc ? (settingsDoc.toJSON() as SettingsDocType) : null,
@@ -1178,6 +1314,14 @@ export class StorageService {
             }),
             searchHistory: historyDocs.map((d) => {
                 const json = d.toJSON() as SearchHistoryDocType;
+                const clean = { ...json };
+                delete (clean as Record<string, unknown>)['_rev'];
+                delete (clean as Record<string, unknown>)['_deleted'];
+                delete (clean as Record<string, unknown>)['_meta'];
+                return clean;
+            }),
+            tvProgress: tvProgressDocs.map((d) => {
+                const json = d.toJSON() as TvProgressDocType;
                 const clean = { ...json };
                 delete (clean as Record<string, unknown>)['_rev'];
                 delete (clean as Record<string, unknown>)['_deleted'];
@@ -1343,13 +1487,33 @@ export class StorageService {
             }
         }
 
+        // 5. Restore TV Progress (if present) in chunks
+        let tvProgressCount = 0;
+        if (Array.isArray(parsed.tvProgress)) {
+            const validProgress: TvProgressDocType[] = [];
+            for (const p of parsed.tvProgress) {
+                if (p && typeof p.id === 'string' && typeof p.tmdbId === 'number' && Array.isArray(p.watchedEpisodes)) {
+                    validProgress.push(migrateTvProgressCounts(p));
+                }
+            }
+            if (validProgress.length > 0) {
+                const CHUNK_SIZE = 100;
+                for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
+                    const chunk = validProgress.slice(i, i + CHUNK_SIZE);
+                    await this.dbService.db.tvProgress.bulkUpsert(chunk);
+                }
+                tvProgressCount = validProgress.length;
+            }
+        }
+
         return {
             contentCount: docsToUpsert.length,
             watchlistCount,
             watchedCount,
             inboxCount,
             favoritePeopleCount,
-            historyCount
+            historyCount,
+            tvProgressCount
         };
     }
 
@@ -1433,7 +1597,7 @@ export class StorageService {
         return current;
     }
 
-    private generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
+    public generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
         return `${mediaType}_${tmdbId}`;
     }
 }

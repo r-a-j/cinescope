@@ -64,6 +64,16 @@
       <section class="detail-section seasons-hub-section">
         <div class="section-header-row">
           <h3 class="section-heading">SEASONS & EPISODES ({{ seasons().length }})</h3>
+          @if (seriesId() && episodes().length > 0) {
+            <button
+              type="button"
+              class="season-watched-toggle-btn"
+              [class.is-watched]="isCurrentSeasonWatched()"
+              (click)="onToggleSeasonWatched($event)">
+              <ion-icon [name]="isCurrentSeasonWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+              <span>{{ isCurrentSeasonWatched() ? 'Season Watched' : 'Mark Season' }}</span>
+            </button>
+          }
         </div>
 
         <!-- Horizontal Season Selector Cards with Season Poster Thumbnail -->
@@ -112,7 +122,12 @@
             @for (ep of episodes(); track ep.id) {
               <div class="episode-card" [class.is-finale]="ep.episode_type === 'finale'">
                 <div class="episode-top-row">
-                  <div class="episode-still-wrapper">
+                  <div
+                    class="episode-still-wrapper"
+                    tabindex="0"
+                    role="button"
+                    (click)="openEpisodeLookup(ep.episode_number)"
+                    (keyup.enter)="openEpisodeLookup(ep.episode_number)">
                     <img
                       [src]="resolveStill(ep.still_path)"
                       [alt]="ep.name"
@@ -129,10 +144,29 @@
 
                   <div class="episode-info">
                     <div class="episode-title-row">
-                      <h4 class="episode-name">{{ ep.name }}</h4>
-                      @if (ep.vote_average > 0) {
-                        <span class="episode-rating">★ {{ ep.vote_average.toFixed(1) }}</span>
-                      }
+                      <h4
+                        class="episode-name"
+                        tabindex="0"
+                        role="button"
+                        (click)="openEpisodeLookup(ep.episode_number)"
+                        (keyup.enter)="openEpisodeLookup(ep.episode_number)">
+                        {{ ep.name }}
+                      </h4>
+                      <div class="episode-actions-right">
+                        @if (ep.vote_average > 0) {
+                          <span class="episode-rating">★ {{ ep.vote_average.toFixed(1) }}</span>
+                        }
+                        @if (seriesId()) {
+                          <button
+                            type="button"
+                            class="ep-watched-btn"
+                            [class.is-watched]="isEpisodeWatched(ep.season_number, ep.episode_number)"
+                            [attr.aria-label]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'Mark unwatched' : 'Mark watched'"
+                            (click)="onToggleEpisodeWatched($event, ep)">
+                            <ion-icon [name]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                          </button>
+                        }
+                      </div>
                     </div>
 
                     <div class="episode-submeta">

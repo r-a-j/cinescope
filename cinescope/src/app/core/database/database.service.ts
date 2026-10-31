@@ -12,6 +12,7 @@ import { sha256 } from 'js-sha256';
 import { contentSchema, ContentDocType, contentMigrationStrategies } from './schemas/content.schema';
 import { settingsSchema, SettingsDocType, settingsMigrationStrategies } from './schemas/settings.schema';
 import { searchHistorySchema, SearchHistoryDocType, searchHistoryMigrationStrategies } from './schemas/search-history.schema';
+import { tvProgressSchema, TvProgressDocType, tvProgressMigrationStrategies } from './schemas/tv-progress.schema';
 
 // 1. Core Plugins
 if (isDevMode()) {
@@ -26,6 +27,7 @@ export interface CinescopeCollections {
     content: RxCollection<ContentDocType>;
     settings: RxCollection<SettingsDocType>;
     searchHistory: RxCollection<SearchHistoryDocType>;
+    tvProgress: RxCollection<TvProgressDocType>;
 }
 
 export type CinescopeDatabase = RxDatabase<CinescopeCollections>;
@@ -77,6 +79,10 @@ export class DatabaseService {
                     searchHistory: {
                         schema: searchHistorySchema,
                         migrationStrategies: searchHistoryMigrationStrategies
+                    },
+                    tvProgress: {
+                        schema: tvProgressSchema,
+                        migrationStrategies: tvProgressMigrationStrategies
                     }
                 });
 

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { AppTourService } from './app-tour.service';
+import { APP_TOURS } from '../constants/app-tour.constants';
 import { DatabaseService } from '../database/database.service';
 import { migrateSettingsTourFlag } from '../database/schemas/settings.schema';
 import { TrendingStore } from '../store/trending.store';
@@ -67,6 +68,19 @@ describe('AppTourService', () => {
             ]
         });
         service = TestBed.inject(AppTourService);
+    });
+
+    it('describes the TV tutorial as a functional tracker', () => {
+        const descriptions = [
+            APP_TOURS.tv.description,
+            ...APP_TOURS.tv.steps.map(step => step.description),
+            ...APP_TOURS.app.steps.filter(step => step.route === '/tabs/tv').map(step => step.description)
+        ];
+
+        expect(descriptions.join(' ').toLowerCase()).not.toContain('being built');
+        expect(descriptions.join(' ').toLowerCase()).not.toContain('not available yet');
+        expect(descriptions.join(' ')).toContain('mark episodes watched');
+        expect(descriptions.join(' ')).toContain('Binge Sizer');
     });
 
     it('waits for Discover content to load before starting the first-run tutorial', async () => {
