@@ -2,7 +2,7 @@ import { inject, DestroyRef, computed } from '@angular/core';
 import { patchState, signalStore, withMethods, withState, withComputed } from '@ngrx/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, pipe, switchMap, tap, catchError, of, forkJoin, map, Observable } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { TmdbSearchService, TmdbMultiSearchResultDto } from '../services/tmdb-search.service';
 import { TmdbCollectionListItemDto } from '../dtos/collections/collection-list-item.dto';
@@ -12,38 +12,7 @@ import { TmdbTvService } from '../services/tmdb-tv.service';
 import { SmartSearchService, SemanticIntentSection } from '../services/smart-search.service';
 import { DatabaseService } from '../database/database.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
-
-function generateSearchTitleVariations(query: string): string[] {
-    const variations = new Set<string>();
-    const trimmed = query.trim();
-    if (!trimmed) return [];
-
-    // Double consonant: e.g. "thama" -> "thamma"
-    const doubledMatch = trimmed.match(/^(.*[aeiou])([bcdfghjklmnprstvwz])([aeiou]+)$/i);
-    if (doubledMatch && doubledMatch[1] && doubledMatch[2] && doubledMatch[3]) {
-        variations.add(`${doubledMatch[1]}${doubledMatch[2]}${doubledMatch[2]}${doubledMatch[3]}`);
-    }
-
-    // Single consonant: e.g. "thamma" -> "thama"
-    const singleMatch = trimmed.replace(/([bcdfghjklmnprstvwz])\1/gi, '$1');
-    if (singleMatch !== trimmed) {
-        variations.add(singleMatch);
-    }
-
-    // Indian vowel transliteration: "munjya" <-> "munjiya"
-    if (/jya/i.test(trimmed)) {
-        variations.add(trimmed.replace(/jya/gi, 'jiya'));
-    } else if (/jiya/i.test(trimmed)) {
-        variations.add(trimmed.replace(/jiya/gi, 'jya'));
-    }
-
-    // Common numerals: "part 2" <-> "part ii"
-    if (/\b2\b/.test(trimmed)) variations.add(trimmed.replace(/\b2\b/g, 'ii'));
-    if (/\bii\b/i.test(trimmed)) variations.add(trimmed.replace(/\bii\b/gi, '2'));
-
-    variations.delete(trimmed);
-    return Array.from(variations);
-}
+import { generateSearchTitleVariations } from '../utils/search-fuzzy.util';
 
 function getMinimumReleaseDate(query: string): string | null {
     const explicitRange = query.match(/\b(?:from|since)\s+(19\d{2}|20\d{2})\s+(?:onwards?|forward|and\s+(?:up|later)|or\s+(?:later|newer))\b/i);
@@ -69,6 +38,7 @@ export type SearchFilter = 'all' | 'movie' | 'tv' | 'collection' | 'person';
 interface SearchState {
     query: string;
     cleanQuery: string;
+    correctedQuery: string | null;
     sortIntent: 'latest' | 'oldest' | 'rating' | null;
     activeFilter: SearchFilter;
     results: TmdbMultiSearchResultDto[];
@@ -92,6 +62,7 @@ interface SearchState {
 const initialState: SearchState = {
     query: '',
     cleanQuery: '',
+    correctedQuery: null,
     sortIntent: null,
     activeFilter: 'all',
     results: [],
@@ -298,10 +269,11 @@ export const SearchStore = signalStore(
                     debounceTime(350),
                     distinctUntilChanged(),
                     tap((query) => {
-                        patchState(store, { query, page: 1, error: null });
+                        patchState(store, { query, page: 1, error: null, correctedQuery: null });
                         if (!query.trim()) {
                             patchState(store, {
                                 results: [], collectionResults: [], isLoading: false, isSearchingCollections: false, hasMore: false,
+                                correctedQuery: null,
                                 isSmartSearching: false, showSmartUI: false, smartResults: [],
                                 smartSearchError: null, lastSmartQuery: null, smartSearchRetryTimer: 0
                             });
@@ -371,19 +343,76 @@ export const SearchStore = signalStore(
                         return searchService.searchMulti(cleanQuery, 1).pipe(
                             switchMap((res) => {
                                 const items = res.results || [];
-                                // If 0 items returned from exact query, attempt phonetic transliteration variation
-                                if (items.length === 0 && cleanQuery.length >= 3) {
-                                    const variations = generateSearchTitleVariations(cleanQuery);
-                                    if (variations.length > 0 && variations[0]) {
-                                        return searchService.searchMulti(variations[0], 1).pipe(
-                                            catchError(() => of(res))
-                                        );
-                                    }
+                                if (items.length > 0 || cleanQuery.length < 3) {
+                                    return of({ res, matchedQuery: null as string | null });
                                 }
-                                return of(res);
+
+                                // Stage 1: Algorithmic typo & phonetic variations (dropped vowels, swaps, Hinglish, German)
+                                const variations = generateSearchTitleVariations(cleanQuery).slice(0, 4);
+                                const trySpellService = (): Observable<{ res: typeof res; matchedQuery: string | null }> => {
+                                    if (typeof searchService.getSpellingSuggestion !== 'function') {
+                                        return of({ res, matchedQuery: null as string | null });
+                                    }
+                                    return searchService.getSpellingSuggestion(cleanQuery).pipe(
+                                        switchMap((suggestion) => {
+                                            if (!suggestion || suggestion.toLowerCase() === cleanQuery.toLowerCase()) {
+                                                return of({ res, matchedQuery: null as string | null });
+                                            }
+                                            return searchService.searchMulti(suggestion, 1).pipe(
+                                                map((sugRes) => ({
+                                                    res: (sugRes.results?.length ?? 0) > 0 ? sugRes : res,
+                                                    matchedQuery: (sugRes.results?.length ?? 0) > 0 ? suggestion : null
+                                                })),
+                                                catchError(() => of({ res, matchedQuery: null as string | null }))
+                                            );
+                                        }),
+                                        catchError(() => of({ res, matchedQuery: null as string | null }))
+                                    );
+                                };
+
+                                if (variations.length === 0) {
+                                    return trySpellService();
+                                }
+
+                                const candidateCalls = variations.map((variant) =>
+                                    searchService.searchMulti(variant, 1).pipe(
+                                        map((vRes) => ({ variant, vRes })),
+                                        catchError(() => of({ variant, vRes: res }))
+                                    )
+                                );
+
+                                return forkJoin(candidateCalls).pipe(
+                                    switchMap((outcomes) => {
+                                        const hit = outcomes.find((o) => (o.vRes.results?.length ?? 0) > 0);
+                                        if (hit) {
+                                            return of({ res: hit.vRes, matchedQuery: hit.variant });
+                                        }
+                                        // Stage 2: Public zero-key spellcheck suggestion fallback (Wikipedia / Datamuse)
+                                        return trySpellService();
+                                    })
+                                );
                             }),
                             tap({
-                                next: (res) => {
+                                next: ({ res, matchedQuery }) => {
+                                    if (matchedQuery) {
+                                        patchState(store, {
+                                            correctedQuery: matchedQuery,
+                                            cleanQuery: matchedQuery
+                                        });
+
+                                        // Also heal collection search if initial typo returned 0 collections
+                                        if (store.collectionResults().length === 0) {
+                                            searchService.searchCollections(matchedQuery, 1).pipe(
+                                                catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
+                                            ).subscribe((colRes) => {
+                                                if (store.query() !== query) return;
+                                                if ((colRes.results?.length ?? 0) > 0) {
+                                                    patchState(store, { collectionResults: colRes.results });
+                                                }
+                                            });
+                                        }
+                                    }
+
                                     let finalResults = res.results || [];
 
                                     // If user specified an explicit year, boost matching release year to the top

@@ -1,30 +1,33 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild, computed } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, ViewChild, computed, signal } from '@angular/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
   IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
-  IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
-  IonSpinner, IonButton, NavController
+  IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
+  IonSpinner, NavController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
-  timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
+  timeOutline, closeCircle, closeOutline, searchOutline, filmOutline, tvOutline,
   personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
-  layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
+  layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline, arrowForwardOutline, trashOutline
 } from 'ionicons/icons';
 import { SearchStore, SearchFilter } from '../../core/store/search.store';
 import { TmdbMultiSearchResultDto } from '../../core/services/tmdb-search.service';
-import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+import { DEFAULT_POSTER_PLACEHOLDER, resolveMediaImageUrl } from '../../core/constants/api.constants';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FranchiseAggregatorService } from '../../core/services/franchise-aggregator.service';
+import { PosterCacheService } from '../../core/services/poster-cache.service';
 import { BookmarkState } from '../../shared/components/poster-card/poster-card.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { FranchiseCollectionSummary } from '../../core/models/franchise.model';
 import { TmdbCollectionListItemDto } from '../../core/dtos/collections/collection-list-item.dto';
 import { ContentDocType } from '../../core/database/schemas/content.schema';
 import { AppTourService } from '../../core/services/app-tour.service';
+import { isFuzzyTitleMatch } from '../../core/utils/search-fuzzy.util';
 
 @Component({
   selector: 'app-search',
@@ -34,8 +37,8 @@ import { AppTourService } from '../../core/services/app-tour.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonContent, IonHeader, IonToolbar, IonSearchbar, IonButtons, IonBackButton,
-    IonList, IonItem, IonLabel, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
-    IonSpinner, IonButton, CommonModule, FormsModule
+    IonIcon, IonInfiniteScroll, IonInfiniteScrollContent,
+    IonSpinner, CommonModule, FormsModule, EmptyStateComponent
   ]
 })
 export class SearchPage implements OnInit {
@@ -43,12 +46,15 @@ export class SearchPage implements OnInit {
   public franchiseAggregator = inject(FranchiseAggregatorService);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
+  private posterCache = inject(PosterCacheService);
   private navCtrl = inject(NavController);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private tour = inject(AppTourService);
 
   @ViewChild(IonSearchbar) searchbar!: IonSearchbar;
+
+  public readonly loadedUrls = signal<Record<string, boolean>>({});
 
   public readonly filterOptions: { id: SearchFilter; label: string; icon: string }[] = [
     { id: 'all', label: 'All', icon: 'layers-outline' },
@@ -61,6 +67,7 @@ export class SearchPage implements OnInit {
   public readonly matchingUserFranchises = computed<FranchiseCollectionSummary[]>(() => {
     const rawQuery = this.store.query().trim().toLowerCase();
     if (!rawQuery) return [];
+    const corrected = this.store.correctedQuery()?.trim().toLowerCase();
     const stemQuery = rawQuery
       .replace(/\b(saga|franchise|collection|series|universe)\b/gi, '')
       .replace(/\s+/g, ' ')
@@ -69,10 +76,14 @@ export class SearchPage implements OnInit {
     const all = this.franchiseAggregator.activeUserFranchises();
     return all.filter((f) => {
       const nameLower = f.name.toLowerCase();
-      if (nameLower.includes(rawQuery) || (stemQuery.length >= 2 && nameLower.includes(stemQuery))) {
+      if (
+        nameLower.includes(rawQuery) ||
+        (stemQuery.length >= 2 && isFuzzyTitleMatch(stemQuery, nameLower)) ||
+        (corrected && isFuzzyTitleMatch(corrected, nameLower))
+      ) {
         return true;
       }
-      if (f.siblingFranchises?.some((s) => s.name.toLowerCase().includes(stemQuery))) {
+      if (f.siblingFranchises?.some((s) => isFuzzyTitleMatch(stemQuery, s.name))) {
         return true;
       }
       return false;
@@ -82,6 +93,7 @@ export class SearchPage implements OnInit {
   public readonly matchingLibraryMedia = computed(() => {
     const rawQuery = this.store.query().trim().toLowerCase();
     if (!rawQuery || rawQuery.length < 2) return [];
+    const corrected = this.store.correctedQuery()?.trim().toLowerCase();
 
     const watchlist = this.storageService.watchlistItems();
     const watched = this.storageService.watchedItems();
@@ -106,7 +118,10 @@ export class SearchPage implements OnInit {
       const title = String(payload?.['title'] || payload?.['name'] || '').trim();
       if (!title) continue;
 
-      if (title.toLowerCase().includes(rawQuery)) {
+      if (
+        isFuzzyTitleMatch(rawQuery, title) ||
+        (corrected && isFuzzyTitleMatch(corrected, title))
+      ) {
         seen.add(key);
         const rawPath = (payload?.['poster_path'] || payload?.['posterUrl']) as string | undefined;
         const rawDate = String(payload?.['release_date'] || payload?.['first_air_date'] || '');
@@ -125,6 +140,30 @@ export class SearchPage implements OnInit {
     }
     return matched.slice(0, 8);
   });
+
+  public isImageLoaded(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const warm = typeof this.posterCache.isWarm === 'function' && this.posterCache.isWarm(url);
+    return Boolean(this.loadedUrls()[url]) || warm;
+  }
+
+  public onImageLoad(event: Event, url: string | null | undefined): void {
+    if (!url) return;
+    const img = event.target as HTMLImageElement | null;
+    if (typeof this.posterCache.markLoaded === 'function') {
+      this.posterCache.markLoaded(url, img ?? undefined);
+    }
+    this.loadedUrls.update((prev) => (prev[url] ? prev : { ...prev, [url]: true }));
+  }
+
+  public onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    if (img.src !== DEFAULT_POSTER_PLACEHOLDER) {
+      img.src = DEFAULT_POSTER_PLACEHOLDER;
+    }
+    this.loadedUrls.update((prev) => ({ ...prev, [DEFAULT_POSTER_PLACEHOLDER]: true, [img.src]: true }));
+  }
 
   public onLibraryMediaClick(item: ContentDocType): void {
     const query = this.store.query();
@@ -163,9 +202,9 @@ export class SearchPage implements OnInit {
 
   constructor() {
     addIcons({
-      timeOutline, closeCircle, searchOutline, filmOutline, tvOutline,
+      timeOutline, closeCircle, closeOutline, searchOutline, filmOutline, tvOutline,
       personOutline, sparkles, sparklesOutline, alertCircle, bookmark, bookmarkOutline, checkmarkCircle,
-      layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline
+      layersOutline, albumsOutline, chevronForwardOutline, ribbonOutline, arrowForwardOutline, trashOutline
     });
   }
 

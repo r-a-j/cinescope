@@ -3,14 +3,15 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-searchbar data-tour="search-input"
-      placeholder="Search movies, tv, franchises, people..." 
+    <ion-searchbar
+      data-tour="search-input"
+      placeholder="Search movies, series, franchises, people..."
       [value]="store.query()"
       (ionInput)="onSearchChange($event)"
       (ionSearch)="onSearchSubmit()"
       (ionClear)="clearSearch()"
       animated="true"
-      debounce="0" 
+      debounce="0"
       class="custom-searchbar">
     </ion-searchbar>
   </ion-toolbar>
@@ -34,8 +35,20 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content color="background">
-  <!-- Smart Search AI Banner (Floating: Only shown when no results are found OR when smart search is active/ready) -->
+<ion-content color="background" class="search-content">
+  <!-- Auto-Corrected Typo Callout Banner (Pre-AI Fuzzy / Phonetic Resolution) -->
+  @if (store.correctedQuery() && !store.showSmartUI() && !store.isLoading()) {
+    <div class="autocorrect-banner" role="status">
+      <ion-icon name="sparkles-outline" class="autocorrect-icon"></ion-icon>
+      <div class="autocorrect-text">
+        <span>Showing results for </span>
+        <strong>{{ store.correctedQuery() }}</strong>
+        <span class="autocorrect-orig"> &bull; Searched for "{{ store.query() }}"</span>
+      </div>
+    </div>
+  }
+
+  <!-- Smart Search AI Banner -->
   @if (store.query() && store.query().length >= 4 && (
     store.isSmartSearching() ||
     store.showSmartUI() ||
@@ -54,34 +67,50 @@
       <!-- Quota Lock State: Active Countdown -->
       @else if (store.smartSearchRetryTimer() > 0) {
         <div class="banner-content error" tabindex="0">
-          <ion-icon name="time-outline" color="warning"></ion-icon>
+          <ion-icon name="time-outline"></ion-icon>
           <span>Quota Exceeded. Try again in {{ store.smartSearchRetryTimer() }}s...</span>
         </div>
       }
 
       <!-- Error State: API failed for the exactly matched current query -->
       @else if (store.smartSearchError() && store.lastSmartQuery() === store.query()) {
-        <div class="banner-content error" tabindex="0" (click)="triggerSmartSearch()" (keyup.enter)="triggerSmartSearch()">
-          <ion-icon name="alert-circle" color="danger"></ion-icon>
+        <div
+          class="banner-content error"
+          tabindex="0"
+          role="button"
+          (click)="triggerSmartSearch()"
+          (keyup.enter)="triggerSmartSearch()">
+          <ion-icon name="alert-circle"></ion-icon>
           <span>{{ store.smartSearchError() }} Tap to retry.</span>
         </div>
       }
 
       <!-- Success / Toggle State: Results match the exactly matched current query -->
       @else if (store.lastSmartQuery() === store.query() && store.smartResults().length > 0) {
-        <div class="banner-content ready" tabindex="0" (click)="store.toggleSmartSearch()" (keyup.enter)="store.toggleSmartSearch()">
-          <ion-icon [name]="store.showSmartUI() ? 'close-circle' : 'sparkles'" color="primary"></ion-icon>
+        <div
+          class="banner-content ready"
+          tabindex="0"
+          role="button"
+          (click)="store.toggleSmartSearch()"
+          (keyup.enter)="store.toggleSmartSearch()">
+          <ion-icon [name]="store.showSmartUI() ? 'close-circle' : 'sparkles'"></ion-icon>
           <span>
-            {{ store.showSmartUI() ? 'Close Smart Results' : 'Smart advanced results ready [Tap to View]' }}
+            {{ store.showSmartUI() ? 'Close Smart Results' : 'Smart AI Curation Ready • Tap to View' }}
           </span>
         </div>
       }
 
       <!-- AI Search Action / CTA: Query has changed or hasn't been searched yet -->
       @else {
-        <div class="banner-content ready" tabindex="0" (click)="triggerSmartSearch()" (keyup.enter)="triggerSmartSearch()">
-          <ion-icon name="sparkles" color="primary"></ion-icon>
-          <span>AI Deep Search: Tap to analyze query</span>
+        <div
+          class="banner-content ready"
+          tabindex="0"
+          role="button"
+          (click)="triggerSmartSearch()"
+          (keyup.enter)="triggerSmartSearch()">
+          <ion-icon name="sparkles"></ion-icon>
+          <span>AI Deep Search: Tap to analyze natural-language query</span>
+          <ion-icon name="arrow-forward-outline" class="banner-arrow"></ion-icon>
         </div>
       }
     </div>
@@ -90,8 +119,8 @@
   <!-- Loading State (Initial) -->
   @if (store.isLoading() && store.results().length === 0 && !store.collectionResults().length) {
     <div class="status-container">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Searching universe...</p>
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Searching the cinema universe...</p>
     </div>
   }
 
@@ -99,30 +128,52 @@
   @if (!store.query() && store.recentSearches().length > 0) {
     <div class="recent-searches">
       <div class="recent-header">
-        <h3>Recent Searches</h3>
-        <ion-button fill="clear" size="small" (click)="clearHistory()">Clear</ion-button>
+        <div class="recent-titles">
+          <span class="recent-kicker">
+            <span class="kicker-bar"></span>
+            QUICK ACCESS
+          </span>
+          <h3>RECENT SEARCHES</h3>
+        </div>
+        <button type="button" class="clear-history-btn" (click)="clearHistory()">
+          <ion-icon name="trash-outline"></ion-icon>
+          <span>Clear All</span>
+        </button>
       </div>
-      <ion-list lines="none" class="transparent-list">
+
+      <div class="recent-list">
         @for (term of store.recentSearches(); track term) {
-          <ion-item button (click)="applyRecentSearch(term)">
-            <ion-icon name="time-outline" slot="start" color="medium"></ion-icon>
-            <ion-label>{{ term }}</ion-label>
-            <ion-button fill="clear" slot="end" (click)="removeRecentSearch(term, $event)">
-              <ion-icon name="close-circle" color="medium"></ion-icon>
-            </ion-button>
-          </ion-item>
+          <div
+            class="recent-item"
+            tabindex="0"
+            role="button"
+            (click)="applyRecentSearch(term)"
+            (keyup.enter)="applyRecentSearch(term)">
+            <div class="recent-icon-wrap">
+              <ion-icon name="time-outline"></ion-icon>
+            </div>
+            <span class="recent-term">{{ term }}</span>
+            <button
+              type="button"
+              class="remove-recent-btn"
+              aria-label="Remove recent search"
+              (click)="removeRecentSearch(term, $event)">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
+          </div>
         }
-      </ion-list>
+      </div>
     </div>
   }
 
   <!-- Initial Blank State -->
   @if (!store.query() && store.recentSearches().length === 0) {
-    <div class="status-container empty-state">
-      <ion-icon name="search-outline"></ion-icon>
-      <h3>What to watch next?</h3>
-      <p>Find movies, TV shows, franchises, and your favorite actors.</p>
-    </div>
+    <app-empty-state
+      icon="search-outline"
+      kicker="OMNI-SEARCH ENGINE"
+      title="WHAT TO WATCH NEXT?"
+      description="Search across movies, TV series, complete film franchises, and actors—with built-in typo tolerance and AI vibe curation."
+    ></app-empty-state>
   }
 
   <!-- FRANCHISES VIEW (When Franchises filter is active) -->
@@ -132,14 +183,26 @@
       @if (matchingUserFranchises().length > 0) {
         <div class="section-block">
           <div class="section-header">
+            <span class="accent-bar"></span>
             <ion-icon name="ribbon-outline"></ion-icon>
             <h4>IN YOUR LIBRARY</h4>
           </div>
           <div class="franchise-list">
             @for (f of matchingUserFranchises(); track f.id) {
-              <div class="franchise-card in-library" tabindex="0" (click)="onCollectionClick(f)" (keyup.enter)="onCollectionClick(f)">
-                <div class="cover-wrapper">
-                  <img [src]="resolveImage(f.poster_path)" [alt]="f.name" loading="lazy">
+              <div
+                class="franchise-card in-library"
+                tabindex="0"
+                role="button"
+                (click)="onCollectionClick(f)"
+                (keyup.enter)="onCollectionClick(f)">
+                <div class="cover-wrapper" [class.is-loaded]="isImageLoaded(resolveImage(f.poster_path))">
+                  <img
+                    [src]="resolveImage(f.poster_path)"
+                    [alt]="f.name"
+                    [class.is-loaded]="isImageLoaded(resolveImage(f.poster_path))"
+                    loading="lazy"
+                    (load)="onImageLoad($event, resolveImage(f.poster_path))"
+                    (error)="onImageError($event)">
                   <span class="type-badge" [class.is-universe]="f.isUniverse">
                     {{ f.isUniverse ? 'UNIVERSE' : 'FRANCHISE' }}
                   </span>
@@ -169,14 +232,26 @@
       @if (store.collectionResults().length > 0) {
         <div class="section-block">
           <div class="section-header">
+            <span class="accent-bar"></span>
             <ion-icon name="albums-outline"></ion-icon>
             <h4>TMDB FRANCHISE COLLECTIONS</h4>
           </div>
           <div class="franchise-list">
             @for (col of store.collectionResults(); track col.id) {
-              <div class="franchise-card" tabindex="0" (click)="onCollectionClick(col)" (keyup.enter)="onCollectionClick(col)">
-                <div class="cover-wrapper">
-                  <img [src]="resolveImage(col.poster_path)" [alt]="col.name" loading="lazy">
+              <div
+                class="franchise-card"
+                tabindex="0"
+                role="button"
+                (click)="onCollectionClick(col)"
+                (keyup.enter)="onCollectionClick(col)">
+                <div class="cover-wrapper" [class.is-loaded]="isImageLoaded(resolveImage(col.poster_path))">
+                  <img
+                    [src]="resolveImage(col.poster_path)"
+                    [alt]="col.name"
+                    [class.is-loaded]="isImageLoaded(resolveImage(col.poster_path))"
+                    loading="lazy"
+                    (load)="onImageLoad($event, resolveImage(col.poster_path))"
+                    (error)="onImageError($event)">
                   <span class="type-badge">COLLECTION</span>
                 </div>
                 <div class="meta-wrapper">
@@ -184,7 +259,7 @@
                   @if (col.overview) {
                     <p class="overview-snippet">{{ col.overview }}</p>
                   }
-                  <span class="view-cta">View Collection &rarr;</span>
+                  <span class="view-cta">Explore Collection &rarr;</span>
                 </div>
                 <div class="action-arrow">
                   <ion-icon name="chevron-forward-outline"></ion-icon>
@@ -197,11 +272,17 @@
 
       <!-- Empty Franchises Search -->
       @if (matchingUserFranchises().length === 0 && store.collectionResults().length === 0 && !store.isLoading() && !store.isSearchingCollections()) {
-        <div class="status-container empty-state">
-          <ion-icon name="albums-outline"></ion-icon>
-          <h3>NO FRANCHISES FOUND</h3>
-          <p>We couldn't find any franchise collections matching "{{ store.query() }}".</p>
-        </div>
+        <app-empty-state
+          [compact]="true"
+          icon="albums-outline"
+          kicker="FRANCHISE SEARCH"
+          title="NO FRANCHISES FOUND"
+          [description]="'We couldn\'t find any franchise collections matching &quot;' + store.query() + '&quot;.'"
+          actionLabel="View All Categories"
+          actionIcon="layers-outline"
+          actionVariant="secondary"
+          (actionClick)="setFilter('all')"
+        ></app-empty-state>
       }
     </div>
   }
@@ -211,14 +292,25 @@
     <!-- Franchise Spotlight Banner (In 'All' tab if match exists) -->
     @if (store.activeFilter() === 'all' && store.query() && !store.showSmartUI()) {
       @if (matchingUserFranchises().length > 0) {
-        <div class="franchise-spotlight" tabindex="0" (click)="onCollectionClick(matchingUserFranchises()[0])" (keyup.enter)="onCollectionClick(matchingUserFranchises()[0])">
+        <div
+          class="franchise-spotlight"
+          tabindex="0"
+          role="button"
+          (click)="onCollectionClick(matchingUserFranchises()[0])"
+          (keyup.enter)="onCollectionClick(matchingUserFranchises()[0])">
           <div class="spotlight-tag">
             <ion-icon name="ribbon-outline"></ion-icon>
             <span>IN YOUR LIBRARY &bull; FRANCHISE SPOTLIGHT</span>
           </div>
           <div class="spotlight-body">
-            <div class="spotlight-cover">
-              <img [src]="resolveImage(matchingUserFranchises()[0].poster_path)" [alt]="matchingUserFranchises()[0].name" loading="lazy">
+            <div class="spotlight-cover" [class.is-loaded]="isImageLoaded(resolveImage(matchingUserFranchises()[0].poster_path))">
+              <img
+                [src]="resolveImage(matchingUserFranchises()[0].poster_path)"
+                [alt]="matchingUserFranchises()[0].name"
+                [class.is-loaded]="isImageLoaded(resolveImage(matchingUserFranchises()[0].poster_path))"
+                loading="lazy"
+                (load)="onImageLoad($event, resolveImage(matchingUserFranchises()[0].poster_path))"
+                (error)="onImageError($event)">
             </div>
             <div class="spotlight-details">
               <h4>{{ matchingUserFranchises()[0].name }}</h4>
@@ -231,14 +323,25 @@
           </div>
         </div>
       } @else if (store.topCollectionSpotlight()) {
-        <div class="franchise-spotlight" tabindex="0" (click)="onCollectionClick(store.topCollectionSpotlight()!)" (keyup.enter)="onCollectionClick(store.topCollectionSpotlight()!)">
+        <div
+          class="franchise-spotlight"
+          tabindex="0"
+          role="button"
+          (click)="onCollectionClick(store.topCollectionSpotlight()!)"
+          (keyup.enter)="onCollectionClick(store.topCollectionSpotlight()!)">
           <div class="spotlight-tag">
             <ion-icon name="albums-outline"></ion-icon>
             <span>FRANCHISE COLLECTION SPOTLIGHT</span>
           </div>
           <div class="spotlight-body">
-            <div class="spotlight-cover">
-              <img [src]="resolveImage(store.topCollectionSpotlight()!.poster_path)" [alt]="store.topCollectionSpotlight()!.name" loading="lazy">
+            <div class="spotlight-cover" [class.is-loaded]="isImageLoaded(resolveImage(store.topCollectionSpotlight()!.poster_path))">
+              <img
+                [src]="resolveImage(store.topCollectionSpotlight()!.poster_path)"
+                [alt]="store.topCollectionSpotlight()!.name"
+                [class.is-loaded]="isImageLoaded(resolveImage(store.topCollectionSpotlight()!.poster_path))"
+                loading="lazy"
+                (load)="onImageLoad($event, resolveImage(store.topCollectionSpotlight()!.poster_path))"
+                (error)="onImageError($event)">
             </div>
             <div class="spotlight-details">
               <h4>{{ store.topCollectionSpotlight()!.name }}</h4>
@@ -250,18 +353,30 @@
       }
     }
 
-    <!-- In Your Library Shelf (Local-First RxDB items matching query) -->
+    <!-- In Your Library Shelf (Local-First RxDB items matching query with fuzzy tolerance) -->
     @if (store.activeFilter() === 'all' && matchingLibraryMedia().length > 0 && !store.showSmartUI()) {
       <div class="library-search-shelf">
         <div class="shelf-header">
+          <span class="accent-bar"></span>
           <ion-icon name="bookmark"></ion-icon>
           <h4>IN YOUR LIBRARY ({{ matchingLibraryMedia().length }})</h4>
         </div>
         <div class="library-items-row">
           @for (lm of matchingLibraryMedia(); track lm.id) {
-            <div class="library-item-card" tabindex="0" (click)="onLibraryMediaClick(lm.doc)" (keyup.enter)="onLibraryMediaClick(lm.doc)">
-              <div class="poster-box">
-                <img [src]="lm.posterUrl" [alt]="lm.title" loading="lazy">
+            <div
+              class="library-item-card"
+              tabindex="0"
+              role="button"
+              (click)="onLibraryMediaClick(lm.doc)"
+              (keyup.enter)="onLibraryMediaClick(lm.doc)">
+              <div class="poster-box" [class.is-loaded]="isImageLoaded(lm.posterUrl)">
+                <img
+                  [src]="lm.posterUrl"
+                  [alt]="lm.title"
+                  [class.is-loaded]="isImageLoaded(lm.posterUrl)"
+                  loading="lazy"
+                  (load)="onImageLoad($event, lm.posterUrl)"
+                  (error)="onImageError($event)">
                 <span class="status-chip" [class.is-watched]="lm.status === 'watched'">
                   {{ lm.status === 'watched' ? 'WATCHED' : 'WATCHLIST' }}
                 </span>
@@ -278,11 +393,16 @@
 
     <!-- No Results Found -->
     @if (store.query() && store.filteredResults().length === 0 && matchingLibraryMedia().length === 0 && !store.isLoading() && !store.showSmartUI()) {
-      <div class="status-container empty-state">
-        <ion-icon name="film-outline"></ion-icon>
-        <h3>NO RESULTS FOUND</h3>
-        <p>We couldn't find anything matching "{{store.query()}}".</p>
-      </div>
+      <app-empty-state
+        [compact]="true"
+        icon="film-outline"
+        kicker="SEARCH RESULTS"
+        title="NO DIRECT MATCHES FOUND"
+        [description]="'We couldn\'t find exact or fuzzy matches for &quot;' + store.query() + '&quot;. Try AI Deep Search to analyze natural-language descriptions.'"
+        actionLabel="Run AI Deep Search"
+        actionIcon="sparkles"
+        (actionClick)="triggerSmartSearch()"
+      ></app-empty-state>
     }
 
     <!-- Standard CSS Grid Content -->
@@ -291,9 +411,20 @@
         @for (item of store.filteredResults(); track item.id) {
           @switch (item.media_type) {
             @case ('movie') {
-              <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                <div class="poster-container">
-                  <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
+              <div
+                class="grid-card movie-card"
+                tabindex="0"
+                role="button"
+                (click)="onResultClick(item)"
+                (keyup.enter)="onResultClick(item)">
+                <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))">
+                  <img
+                    [src]="resolveImage(item.poster_path)"
+                    [alt]="item.title"
+                    [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))"
+                    loading="lazy"
+                    (load)="onImageLoad($event, resolveImage(item.poster_path))"
+                    (error)="onImageError($event)">
                   <button
                     type="button"
                     class="quick-bookmark-btn"
@@ -312,9 +443,20 @@
               </div>
             }
             @case ('tv') {
-              <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                <div class="poster-container">
-                  <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
+              <div
+                class="grid-card tv-card"
+                tabindex="0"
+                role="button"
+                (click)="onResultClick(item)"
+                (keyup.enter)="onResultClick(item)">
+                <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))">
+                  <img
+                    [src]="resolveImage(item.poster_path)"
+                    [alt]="item.name"
+                    [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))"
+                    loading="lazy"
+                    (load)="onImageLoad($event, resolveImage(item.poster_path))"
+                    (error)="onImageError($event)">
                   <button
                     type="button"
                     class="quick-bookmark-btn"
@@ -333,9 +475,20 @@
               </div>
             }
             @case ('person') {
-              <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                <div class="poster-container">
-                  <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
+              <div
+                class="grid-card person-card"
+                tabindex="0"
+                role="button"
+                (click)="onResultClick(item)"
+                (keyup.enter)="onResultClick(item)">
+                <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.profile_path))">
+                  <img
+                    [src]="resolveImage(item.profile_path)"
+                    [alt]="item.name"
+                    [class.is-loaded]="isImageLoaded(resolveImage(item.profile_path))"
+                    loading="lazy"
+                    (load)="onImageLoad($event, resolveImage(item.profile_path))"
+                    (error)="onImageError($event)">
                   <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
                 </div>
                 <div class="content-info">
@@ -353,73 +506,111 @@
     @if (store.showSmartUI() && store.smartResultGroups().length > 0) {
       <div class="smart-categories">
         @for (group of store.smartResultGroups(); track group.title) {
-          <h3 class="smart-category-title">{{ group.title }}</h3>
-          <div class="search-grid smart-grid">
-            @for (item of group.items; track item.id) {
-              @switch (item.media_type) {
-                @case ('movie') {
-                  <div class="grid-card movie-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                    <div class="poster-container">
-                      <img [src]="resolveImage(item.poster_path)" [alt]="item.title" loading="lazy">
-                      <button
-                        type="button"
-                        class="quick-bookmark-btn"
-                        [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                        [class.is-watched]="getBookmarkState(item) === 'watched'"
-                        (click)="onQuickBookmark(item, $event)"
-                        aria-label="Toggle Bookmark">
-                        <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                      </button>
-                      <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+          <div class="smart-category-block">
+            <div class="smart-category-header">
+              <span class="accent-bar"></span>
+              <h3 class="smart-category-title">{{ group.title }}</h3>
+            </div>
+            <div class="search-grid smart-grid">
+              @for (item of group.items; track item.id) {
+                @switch (item.media_type) {
+                  @case ('movie') {
+                    <div
+                      class="grid-card movie-card"
+                      tabindex="0"
+                      role="button"
+                      (click)="onResultClick(item)"
+                      (keyup.enter)="onResultClick(item)">
+                      <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))">
+                        <img
+                          [src]="resolveImage(item.poster_path)"
+                          [alt]="item.title"
+                          [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))"
+                          loading="lazy"
+                          (load)="onImageLoad($event, resolveImage(item.poster_path))"
+                          (error)="onImageError($event)">
+                        <button
+                          type="button"
+                          class="quick-bookmark-btn"
+                          [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                          [class.is-watched]="getBookmarkState(item) === 'watched'"
+                          (click)="onQuickBookmark(item, $event)"
+                          aria-label="Toggle Bookmark">
+                          <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                        </button>
+                        <div class="badge movie-badge"><ion-icon name="film-outline"></ion-icon></div>
+                      </div>
+                      <div class="content-info">
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+                      </div>
                     </div>
-                    <div class="content-info">
-                      <h4>{{ item.title }}</h4>
-                      <p>{{ (item.release_date | date:'yyyy') || 'TBA' }}</p>
+                  }
+                  @case ('tv') {
+                    <div
+                      class="grid-card tv-card"
+                      tabindex="0"
+                      role="button"
+                      (click)="onResultClick(item)"
+                      (keyup.enter)="onResultClick(item)">
+                      <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))">
+                        <img
+                          [src]="resolveImage(item.poster_path)"
+                          [alt]="item.name"
+                          [class.is-loaded]="isImageLoaded(resolveImage(item.poster_path))"
+                          loading="lazy"
+                          (load)="onImageLoad($event, resolveImage(item.poster_path))"
+                          (error)="onImageError($event)">
+                        <button
+                          type="button"
+                          class="quick-bookmark-btn"
+                          [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
+                          [class.is-watched]="getBookmarkState(item) === 'watched'"
+                          (click)="onQuickBookmark(item, $event)"
+                          aria-label="Toggle Bookmark">
+                          <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
+                        </button>
+                        <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+                      </div>
+                      <div class="content-info">
+                        <h4>{{ item.name }}</h4>
+                        <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
+                      </div>
                     </div>
-                  </div>
-                }
-                @case ('tv') {
-                  <div class="grid-card tv-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                    <div class="poster-container">
-                      <img [src]="resolveImage(item.poster_path)" [alt]="item.name" loading="lazy">
-                      <button
-                        type="button"
-                        class="quick-bookmark-btn"
-                        [class.is-watchlist]="getBookmarkState(item) === 'watchlist'"
-                        [class.is-watched]="getBookmarkState(item) === 'watched'"
-                        (click)="onQuickBookmark(item, $event)"
-                        aria-label="Toggle Bookmark">
-                        <ion-icon [name]="getBookmarkState(item) === 'watched' ? 'checkmark-circle' : (getBookmarkState(item) === 'watchlist' ? 'bookmark' : 'bookmark-outline')"></ion-icon>
-                      </button>
-                      <div class="badge tv-badge"><ion-icon name="tv-outline"></ion-icon></div>
+                  }
+                  @case ('person') {
+                    <div
+                      class="grid-card person-card"
+                      tabindex="0"
+                      role="button"
+                      (click)="onResultClick(item)"
+                      (keyup.enter)="onResultClick(item)">
+                      <div class="poster-container" [class.is-loaded]="isImageLoaded(resolveImage(item.profile_path))">
+                        <img
+                          [src]="resolveImage(item.profile_path)"
+                          [alt]="item.name"
+                          [class.is-loaded]="isImageLoaded(resolveImage(item.profile_path))"
+                          loading="lazy"
+                          (load)="onImageLoad($event, resolveImage(item.profile_path))"
+                          (error)="onImageError($event)">
+                        <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
+                      </div>
+                      <div class="content-info">
+                        <h4>{{ item.name }}</h4>
+                        <p>{{ item.known_for_department || 'Person' }}</p>
+                      </div>
                     </div>
-                    <div class="content-info">
-                      <h4>{{ item.name }}</h4>
-                      <p>{{ (item.first_air_date | date:'yyyy') || 'TBA' }}</p>
-                    </div>
-                  </div>
-                }
-                @case ('person') {
-                  <div class="grid-card person-card" tabindex="0" (click)="onResultClick(item)" (keyup.enter)="onResultClick(item)">
-                    <div class="poster-container">
-                      <img [src]="resolveImage(item.profile_path)" [alt]="item.name" loading="lazy">
-                      <div class="badge person-badge"><ion-icon name="person-outline"></ion-icon></div>
-                    </div>
-                    <div class="content-info">
-                      <h4>{{ item.name }}</h4>
-                      <p>{{ item.known_for_department || 'Person' }}</p>
-                    </div>
-                  </div>
+                  }
                 }
               }
-            }
+            </div>
           </div>
         }
       </div>
     }
 
     <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!store.hasMore() || store.showSmartUI()">
-      <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more data..."></ion-infinite-scroll-content>
+      <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more titles..."></ion-infinite-scroll-content>
     </ion-infinite-scroll>
   }
 </ion-content>
