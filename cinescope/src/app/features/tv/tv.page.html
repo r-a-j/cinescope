@@ -73,7 +73,7 @@
             <div class="hero-meta-kicker">
               <span class="live-pulse-dot"></span>
               <span class="kicker-text">
-                {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : 'UP NEXT IN QUEUE') }}
+                {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE')) }}
               </span>
               @if (hero.status) {
                 <span class="status-pill">{{ hero.status }}</span>
@@ -90,27 +90,35 @@
             </h2>
 
             @if (!hero.isCompleted) {
-              <div
-                class="next-ep-banner"
-                tabindex="0"
-                role="button"
-                (click)="openEpisodeGuide(hero)"
-                (keyup.enter)="openEpisodeGuide(hero)">
-                <div class="next-ep-badge">
-                  <ion-icon name="play-outline"></ion-icon>
-                  <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
+              @if (hero.upNextSeason && hero.upNextEpisode) {
+                <div
+                  class="next-ep-banner"
+                  tabindex="0"
+                  role="button"
+                  (click)="openEpisodeGuide(hero)"
+                  (keyup.enter)="openEpisodeGuide(hero)">
+                  <div class="next-ep-badge">
+                    <ion-icon name="play-outline"></ion-icon>
+                    <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
+                  </div>
+                  @if (hero.upNextTitle) {
+                    <span class="next-ep-title">{{ hero.upNextTitle }}</span>
+                  }
                 </div>
-                @if (hero.upNextTitle) {
-                  <span class="next-ep-title">{{ hero.upNextTitle }}</span>
-                }
-              </div>
+              } @else {
+                <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
+              }
             }
 
             <!-- Progress Meter -->
             <div class="hero-progress-block">
               <div class="progress-labels">
                 <span class="ep-count-label">
-                  <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalEpisodes || '?' }}</strong> episodes watched
+                  @if (hero.isCompleted && hero.totalEpisodes === 0) {
+                    All episodes marked watched
+                  } @else {
+                    <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalEpisodes || '?' }}</strong> episodes watched
+                  }
                 </span>
                 <span class="pct-pill">{{ hero.percentage }}%</span>
               </div>
@@ -121,7 +129,7 @@
 
             <!-- Hero Action Buttons -->
             <div class="hero-actions">
-              @if (!hero.isCompleted) {
+              @if (!hero.isCompleted && hero.upNextSeason && hero.upNextEpisode) {
                 <button
                   type="button"
                   class="action-btn-primary"
@@ -213,7 +221,7 @@
                 <div class="queue-meta">
                   <span class="queue-name">{{ card.title }}</span>
                   <span class="queue-sub">
-                    {{ card.isCompleted ? 'Done' : (card.isUnstarted ? 'Start' : 'S' + card.upNextSeason + ' E' + card.upNextEpisode) }}
+                    {{ card.isCompleted ? 'Done' : (card.isUnstarted ? 'Start' : (card.upNextSeason && card.upNextEpisode ? 'S' + card.upNextSeason + ' E' + card.upNextEpisode : 'Up Next unavailable')) }}
                     • {{ card.percentage }}%
                   </span>
                 </div>
@@ -312,9 +320,13 @@
                   <span class="card-status-badge unstarted">
                     Start S1
                   </span>
-                } @else {
+                } @else if (card.upNextSeason && card.upNextEpisode) {
                   <span class="card-status-badge in-progress">
                     S{{ card.upNextSeason }} E{{ card.upNextEpisode }}
+                  </span>
+                } @else {
+                  <span class="card-status-badge in-progress">
+                    Up Next unavailable
                   </span>
                 }
 
@@ -328,7 +340,11 @@
                 <div class="card-sub-info">
                   <span>{{ card.totalSeasons }} {{ card.totalSeasons === 1 ? 'Season' : 'Seasons' }}</span>
                   <span>•</span>
-                  <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                  @if (card.isCompleted && card.totalEpisodes === 0) {
+                    <span>All episodes marked watched</span>
+                  } @else {
+                    <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                  }
                 </div>
               </div>
             </div>

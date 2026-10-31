@@ -67,7 +67,7 @@ export class TvProgressService {
     public readonly currentlyWatching = computed<TvProgressDocType[]>(() => {
         return this.allProgress().filter((p) => {
             const hasEpisodes = p.totalEpisodes > 0;
-            return p.watchedEpisodesCount > 0 && (!hasEpisodes || p.watchedEpisodesCount < p.totalEpisodes);
+            return p.watchedEpisodesCount > 0 && !this.isProgressComplete(p) && (!hasEpisodes || p.watchedEpisodesCount < p.totalEpisodes);
         }).sort((a, b) => (b.lastWatchedAt ?? b.updatedAt) - (a.lastWatchedAt ?? a.updatedAt));
     });
 
@@ -76,7 +76,7 @@ export class TvProgressService {
      */
     public readonly completedSeries = computed<TvProgressDocType[]>(() => {
         return this.allProgress().filter((p) => {
-            return p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes;
+            return this.isProgressComplete(p);
         }).sort((a, b) => (b.lastWatchedAt ?? b.updatedAt) - (a.lastWatchedAt ?? a.updatedAt));
     });
 
@@ -91,7 +91,7 @@ export class TvProgressService {
 
         for (const doc of watchlist) {
             const progress = progressMap.get(doc.tmdbId);
-            if (!progress || progress.watchedEpisodesCount === 0) {
+            if (!progress || (progress.watchedEpisodesCount === 0 && !progress.isMarkedComplete)) {
                 const payload = (doc.payload ?? {}) as Partial<TmdbTvDetailDto>;
                 const displayTitle = payload.name || (payload['title'] as string | undefined) || `Series #${doc.tmdbId}`;
                 results.push({
@@ -235,6 +235,20 @@ export class TvProgressService {
         };
     }
 
+    private countRegularEpisodes(episodeKeys: string[]): number {
+        return episodeKeys.filter((key) => {
+            const episode = this.parseEpisodeKey(key);
+            return episode !== null && episode.season > 0;
+        }).length;
+    }
+
+    private isProgressComplete(progress: TvProgressDocType): boolean {
+        if (progress.isMarkedComplete) {
+            return (progress.unwatchedEpisodes?.length ?? 0) === 0;
+        }
+        return progress.totalEpisodes > 0 && progress.watchedEpisodesCount >= progress.totalEpisodes;
+    }
+
     public getSeriesProgress(tmdbId: number): TvProgressDocType | undefined {
         return this.progressByTmdbId().get(tmdbId);
     }
@@ -247,6 +261,9 @@ export class TvProgressService {
             return watched;
         }
         const key = this.getEpisodeKey(seasonNumber, episodeNumber);
+        if (seasonNumber > 0 && progress.isMarkedComplete) {
+            return !(progress.unwatchedEpisodes ?? []).includes(key);
+        }
         return progress.watchedEpisodes.includes(key);
     }
 
@@ -257,7 +274,7 @@ export class TvProgressService {
             return this.storage.watchedItems().some((w) => w.mediaType === 'tv' && w.tmdbId === tmdbId);
         }
         for (let ep = 1; ep <= episodeCount; ep++) {
-            if (!progress.watchedEpisodes.includes(this.getEpisodeKey(seasonNumber, ep))) {
+            if (!this.isEpisodeWatched(tmdbId, seasonNumber, ep)) {
                 return false;
             }
         }
@@ -277,20 +294,32 @@ export class TvProgressService {
         const watchedSet = new Set<string>(existing?.watchedEpisodes ?? []);
         watchedSet.add(epKey);
         const watchedList = Array.from(watchedSet);
+        const unwatchedEpisodes = new Set(existing?.unwatchedEpisodes ?? []);
+        if (existing?.isMarkedComplete && seasonNumber > 0) {
+            unwatchedEpisodes.delete(epKey);
+        }
+        const regularWatchedCount = existing?.isMarkedComplete
+            ? Math.max(0, (existing.totalEpisodes || 0) - unwatchedEpisodes.size)
+            : this.countRegularEpisodes(watchedList);
 
         const doc: TvProgressDocType = {
             id: `tv_${tmdbId}`,
             tmdbId,
             seriesTitle: seriesMeta?.title || existing?.seriesTitle || `Series #${tmdbId}`,
             totalSeasons: seriesMeta?.totalSeasons ?? existing?.totalSeasons ?? 1,
-            totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? watchedList.length,
-            watchedEpisodesCount: watchedList.length,
+            totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? 0,
+            watchedEpisodesCount: regularWatchedCount,
             lastWatchedSeason: seasonNumber,
             lastWatchedEpisode: episodeNumber,
             lastWatchedAt: Date.now(),
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
+        if (existing?.isMarkedComplete) {
+            doc.isMarkedComplete = true;
+            doc.unwatchedEpisodes = Array.from(unwatchedEpisodes);
+        }
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         const poster = seriesMeta?.posterPath || existing?.posterPath;
         if (poster) doc.posterPath = poster;
@@ -308,6 +337,7 @@ export class TvProgressService {
         if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
         if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -328,6 +358,9 @@ export class TvProgressService {
         let poster = existing?.posterPath || seriesMeta?.posterPath;
         let backdrop = existing?.backdropPath || seriesMeta?.backdropPath;
         let status = existing?.status || seriesMeta?.status;
+        let isMarkedComplete = existing?.isMarkedComplete ?? false;
+        const unwatchedEpisodes = new Set(existing?.unwatchedEpisodes ?? []);
+        let seasonEpisodeCounts = existing?.seasonEpisodeCounts ?? [];
 
         if (!existing) {
             // Check if series is in user's Watched list without a granular progress doc
@@ -355,25 +388,38 @@ export class TvProgressService {
                         watchedSet.add(this.getEpisodeKey(s.season_number, ep));
                     }
                 }
+                seasonEpisodeCounts = availableSeasons
+                    .filter((season) => season.season_number > 0 && season.episode_count > 0)
+                    .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
             } else {
-                const maxS = Math.max(seasonNumber, totalSeasons);
-                const epPerSeason = totalEpisodes > 0 ? Math.ceil(totalEpisodes / maxS) : Math.max(episodeNumber, 10);
-                for (let s = 1; s <= maxS; s++) {
-                    const count = (s === seasonNumber) ? Math.max(episodeNumber, epPerSeason) : epPerSeason;
-                    for (let ep = 1; ep <= count; ep++) {
-                        watchedSet.add(this.getEpisodeKey(s, ep));
-                    }
-                }
+                isMarkedComplete = true;
             }
         } else {
             watchedSet = new Set<string>(existing.watchedEpisodes);
         }
 
-        const epKey = this.getEpisodeKey(seasonNumber, episodeNumber);
-        if (!watchedSet.has(epKey)) return;
+        if (seasons?.length) {
+            const refreshedCounts = seasons
+                .filter((season) => season.season_number > 0 && season.episode_count > 0)
+                .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
+            if (refreshedCounts.length > 0) seasonEpisodeCounts = refreshedCounts;
+        }
+        if (seasonEpisodeCounts.length > 0) {
+            totalEpisodes = seasonEpisodeCounts.reduce((total, season) => total + season.episodeCount, 0);
+        }
 
-        watchedSet.delete(epKey);
+        const epKey = this.getEpisodeKey(seasonNumber, episodeNumber);
+        if (isMarkedComplete && seasonNumber > 0) {
+            unwatchedEpisodes.add(epKey);
+        } else if (watchedSet.has(epKey)) {
+            watchedSet.delete(epKey);
+        } else {
+            return;
+        }
         const watchedList = Array.from(watchedSet);
+        const regularWatchedCount = isMarkedComplete
+            ? Math.max(0, totalEpisodes - unwatchedEpisodes.size)
+            : this.countRegularEpisodes(watchedList);
 
         // Find the next most recent watched episode
         let nextLastSeason: number | undefined;
@@ -386,20 +432,21 @@ export class TvProgressService {
             nextLastEpisode = last.episode;
         }
 
-        if (totalEpisodes <= 0) {
-            totalEpisodes = watchedList.length + 1;
-        }
-
         const doc: TvProgressDocType = {
             id: `tv_${tmdbId}`,
             tmdbId,
             seriesTitle: title || `Series #${tmdbId}`,
             totalSeasons,
             totalEpisodes,
-            watchedEpisodesCount: watchedList.length,
+            watchedEpisodesCount: regularWatchedCount,
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
+        if (isMarkedComplete) {
+            doc.isMarkedComplete = true;
+            doc.unwatchedEpisodes = Array.from(unwatchedEpisodes);
+        }
+        if (seasonEpisodeCounts.length > 0) doc.seasonEpisodeCounts = seasonEpisodeCounts;
 
         if (poster) doc.posterPath = poster;
         if (backdrop) doc.backdropPath = backdrop;
@@ -410,6 +457,7 @@ export class TvProgressService {
         if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
         if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -445,19 +493,36 @@ export class TvProgressService {
         }
 
         const watchedList = Array.from(watchedSet);
+        const unwatchedEpisodes = new Set(existing?.unwatchedEpisodes ?? []);
+        if (existing?.isMarkedComplete && seasonNumber > 0) {
+            for (let ep = 1; ep <= episodeCount; ep++) {
+                unwatchedEpisodes.delete(this.getEpisodeKey(seasonNumber, ep));
+            }
+        }
+        const regularWatchedCount = existing?.isMarkedComplete
+            ? Math.max(0, (existing.totalEpisodes || 0) - unwatchedEpisodes.size)
+            : this.countRegularEpisodes(watchedList);
         const doc: TvProgressDocType = {
             id: `tv_${tmdbId}`,
             tmdbId,
             seriesTitle: seriesMeta?.title || existing?.seriesTitle || `Series #${tmdbId}`,
             totalSeasons: seriesMeta?.totalSeasons ?? existing?.totalSeasons ?? seasonNumber,
-            totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? watchedList.length,
-            watchedEpisodesCount: watchedList.length,
+            totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? 0,
+            watchedEpisodesCount: regularWatchedCount,
             lastWatchedSeason: seasonNumber,
             lastWatchedEpisode: episodeCount,
             lastWatchedAt: Date.now(),
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
+        if (existing?.isMarkedComplete) {
+            doc.isMarkedComplete = true;
+            doc.unwatchedEpisodes = Array.from(unwatchedEpisodes);
+        }
+        const seasonEpisodeCounts = existing?.seasonEpisodeCounts ?? [
+            { seasonNumber, episodeCount }
+        ];
+        if (seasonEpisodeCounts.length > 0) doc.seasonEpisodeCounts = seasonEpisodeCounts;
 
         const poster = seriesMeta?.posterPath || existing?.posterPath;
         if (poster) doc.posterPath = poster;
@@ -467,6 +532,7 @@ export class TvProgressService {
 
         const status = seriesMeta?.status || existing?.status;
         if (status) doc.status = status;
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -487,6 +553,9 @@ export class TvProgressService {
         let poster = existing?.posterPath || seriesMeta?.posterPath;
         let backdrop = existing?.backdropPath || seriesMeta?.backdropPath;
         let status = existing?.status || seriesMeta?.status;
+        let isMarkedComplete = existing?.isMarkedComplete ?? false;
+        const unwatchedEpisodes = new Set(existing?.unwatchedEpisodes ?? []);
+        let seasonEpisodeCounts = existing?.seasonEpisodeCounts ?? [];
 
         if (!existing) {
             const watchedItem = this.storage.watchedItems().find((w) => w.mediaType === 'tv' && w.tmdbId === tmdbId);
@@ -513,25 +582,38 @@ export class TvProgressService {
                         watchedSet.add(this.getEpisodeKey(s.season_number, ep));
                     }
                 }
+                seasonEpisodeCounts = availableSeasons
+                    .filter((season) => season.season_number > 0 && season.episode_count > 0)
+                    .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
             } else {
-                const maxS = Math.max(seasonNumber, totalSeasons);
-                const epPerSeason = totalEpisodes > 0 ? Math.ceil(totalEpisodes / maxS) : Math.max(episodeCount, 10);
-                for (let s = 1; s <= maxS; s++) {
-                    const count = (s === seasonNumber) ? episodeCount : epPerSeason;
-                    for (let ep = 1; ep <= count; ep++) {
-                        watchedSet.add(this.getEpisodeKey(s, ep));
-                    }
-                }
+                isMarkedComplete = true;
             }
         } else {
             watchedSet = new Set<string>(existing.watchedEpisodes);
         }
 
+        if (seasons?.length) {
+            const refreshedCounts = seasons
+                .filter((season) => season.season_number > 0 && season.episode_count > 0)
+                .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
+            if (refreshedCounts.length > 0) seasonEpisodeCounts = refreshedCounts;
+        }
+        if (seasonEpisodeCounts.length > 0) {
+            totalEpisodes = seasonEpisodeCounts.reduce((total, season) => total + season.episodeCount, 0);
+        }
+
         for (let ep = 1; ep <= episodeCount; ep++) {
-            watchedSet.delete(this.getEpisodeKey(seasonNumber, ep));
+            const key = this.getEpisodeKey(seasonNumber, ep);
+            watchedSet.delete(key);
+            if (isMarkedComplete && seasonNumber > 0) {
+                unwatchedEpisodes.add(key);
+            }
         }
 
         const watchedList = Array.from(watchedSet);
+        const regularWatchedCount = isMarkedComplete
+            ? Math.max(0, totalEpisodes - unwatchedEpisodes.size)
+            : this.countRegularEpisodes(watchedList);
 
         // Find highest remaining episode
         let nextLastSeason: number | undefined;
@@ -544,20 +626,21 @@ export class TvProgressService {
             nextLastEpisode = last.episode;
         }
 
-        if (totalEpisodes <= 0) {
-            totalEpisodes = watchedList.length + episodeCount;
-        }
-
         const doc: TvProgressDocType = {
             id: `tv_${tmdbId}`,
             tmdbId,
             seriesTitle: title || `Series #${tmdbId}`,
             totalSeasons,
             totalEpisodes,
-            watchedEpisodesCount: watchedList.length,
+            watchedEpisodesCount: regularWatchedCount,
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
         };
+        if (isMarkedComplete) {
+            doc.isMarkedComplete = true;
+            doc.unwatchedEpisodes = Array.from(unwatchedEpisodes);
+        }
+        if (seasonEpisodeCounts.length > 0) doc.seasonEpisodeCounts = seasonEpisodeCounts;
 
         if (poster) doc.posterPath = poster;
         if (backdrop) doc.backdropPath = backdrop;
@@ -568,6 +651,7 @@ export class TvProgressService {
         if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
         if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -598,17 +682,22 @@ export class TvProgressService {
         }
 
         const watchedList = Array.from(watchedSet);
+        const regularWatchedCount = this.countRegularEpisodes(watchedList);
+        const seasonEpisodeCounts = seasons
+            .filter((season) => season.season_number > 0 && season.episode_count > 0)
+            .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
         const doc: TvProgressDocType = {
             id: `tv_${tmdbId}`,
             tmdbId,
             seriesTitle: seriesMeta?.title || existing?.seriesTitle || `Series #${tmdbId}`,
             totalSeasons: seriesMeta?.totalSeasons ?? existing?.totalSeasons ?? maxSeason,
             totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? totalEpCount,
-            watchedEpisodesCount: watchedList.length,
+            watchedEpisodesCount: regularWatchedCount,
             lastWatchedSeason: maxSeason,
             lastWatchedEpisode: maxEpisode,
             lastWatchedAt: Date.now(),
             watchedEpisodes: watchedList,
+            seasonEpisodeCounts,
             updatedAt: Date.now()
         };
 
@@ -620,6 +709,7 @@ export class TvProgressService {
 
         const status = seriesMeta?.status || existing?.status;
         if (status) doc.status = status;
+        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -643,6 +733,7 @@ export class TvProgressService {
         if (existing.posterPath) doc.posterPath = existing.posterPath;
         if (existing.backdropPath) doc.backdropPath = existing.backdropPath;
         if (existing.status) doc.status = existing.status;
+        if (existing.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
     }
@@ -652,19 +743,61 @@ export class TvProgressService {
         const existing = this.getSeriesProgress(detail.id);
         const seasons = detail.seasons?.filter((s) => s.season_number > 0) ?? [];
         const totalSeasons = seasons.length || detail.number_of_seasons || 1;
-        const totalEpisodes = detail.number_of_episodes || seasons.reduce((acc, s) => acc + s.episode_count, 0);
+        const seasonEpisodeCounts = seasons
+            .filter((season) => season.episode_count > 0)
+            .map((season) => ({ seasonNumber: season.season_number, episodeCount: season.episode_count }));
+        const regularEpisodeTotal = seasonEpisodeCounts.reduce((total, season) => total + season.episodeCount, 0);
+        const totalEpisodes = regularEpisodeTotal || detail.number_of_episodes;
 
         const nextEp = detail.next_episode_to_air;
+        const orderedRegularKeys = seasons
+            .slice()
+            .sort((a, b) => a.season_number - b.season_number)
+            .flatMap((season) => Array.from(
+                { length: season.episode_count },
+                (_, index) => this.getEpisodeKey(season.season_number, index + 1)
+            ));
+        let watchedEpisodes = existing?.watchedEpisodes ?? [];
+        let watchedEpisodesCount = existing?.watchedEpisodesCount ?? 0;
+        let isMarkedComplete = existing?.isMarkedComplete ?? false;
+        let unwatchedEpisodes = existing?.unwatchedEpisodes ?? [];
+        if (isMarkedComplete) {
+            const exceptions = new Set(unwatchedEpisodes);
+            const specialEpisodes = watchedEpisodes.filter((key) => this.parseEpisodeKey(key)?.season === 0);
+            if (existing?.totalEpisodes && totalEpisodes > existing.totalEpisodes) {
+                watchedEpisodes = [
+                    ...specialEpisodes,
+                    ...orderedRegularKeys.slice(0, existing.totalEpisodes).filter((key) => !exceptions.has(key))
+                ];
+                watchedEpisodesCount = this.countRegularEpisodes(watchedEpisodes);
+                isMarkedComplete = false;
+                unwatchedEpisodes = [];
+            } else if (orderedRegularKeys.length > 0) {
+                watchedEpisodes = [
+                    ...specialEpisodes,
+                    ...orderedRegularKeys.filter((key) => !exceptions.has(key))
+                ];
+                watchedEpisodesCount = Math.max(0, orderedRegularKeys.length - exceptions.size);
+            } else {
+                watchedEpisodesCount = Math.max(0, totalEpisodes - exceptions.size);
+            }
+        }
+
         const doc: TvProgressDocType = {
             id: `tv_${detail.id}`,
             tmdbId: detail.id,
             seriesTitle: detail.name,
             totalSeasons,
             totalEpisodes,
-            watchedEpisodesCount: existing?.watchedEpisodesCount ?? 0,
-            watchedEpisodes: existing?.watchedEpisodes ?? [],
+            watchedEpisodesCount,
+            watchedEpisodes,
+            seasonEpisodeCounts,
             updatedAt: Date.now()
         };
+        if (isMarkedComplete) {
+            doc.isMarkedComplete = true;
+            doc.unwatchedEpisodes = unwatchedEpisodes;
+        }
 
         const poster = detail.poster_path ?? existing?.posterPath;
         if (poster) doc.posterPath = poster;
@@ -696,6 +829,7 @@ export class TvProgressService {
     ): { seasonNumber: number; episodeNumber: number } | null {
         const progress = this.getSeriesProgress(tmdbId);
         const watchedSet = new Set<string>(progress?.watchedEpisodes ?? []);
+        const unwatchedSet = new Set<string>(progress?.unwatchedEpisodes ?? []);
 
         let effectiveSeasons = seasons;
         if (!effectiveSeasons || effectiveSeasons.length === 0) {
@@ -706,12 +840,26 @@ export class TvProgressService {
             }
         }
 
-        const validSeasons = (effectiveSeasons ?? []).filter((s) => s.season_number > 0);
-        if (validSeasons.length > 0) {
-            for (const s of validSeasons) {
+        const validSeasons = (effectiveSeasons ?? [])
+            .filter((s) => s.season_number > 0 && s.episode_count > 0)
+            .sort((a, b) => a.season_number - b.season_number);
+        const seasonCounts = validSeasons.length > 0
+            ? validSeasons
+            : (progress?.seasonEpisodeCounts ?? [])
+                .filter((season) => season.seasonNumber > 0 && season.episodeCount > 0)
+                .sort((a, b) => a.seasonNumber - b.seasonNumber)
+                .map((season) => ({
+                    season_number: season.seasonNumber,
+                    episode_count: season.episodeCount
+                }));
+        if (seasonCounts.length > 0) {
+            for (const s of seasonCounts) {
                 for (let ep = 1; ep <= s.episode_count; ep++) {
                     const key = this.getEpisodeKey(s.season_number, ep);
-                    if (!watchedSet.has(key)) {
+                    const isWatched = progress?.isMarkedComplete
+                        ? !unwatchedSet.has(key)
+                        : watchedSet.has(key);
+                    if (!isWatched) {
                         return { seasonNumber: s.season_number, episodeNumber: ep };
                     }
                 }
@@ -720,14 +868,6 @@ export class TvProgressService {
             return null;
         }
 
-        // Fallback when season breakdown is unknown
-        if (progress?.lastWatchedSeason !== undefined && progress.lastWatchedSeason > 0 && progress?.lastWatchedEpisode !== undefined) {
-            return {
-                seasonNumber: progress.lastWatchedSeason,
-                episodeNumber: progress.lastWatchedEpisode + 1
-            };
-        }
-
-        return { seasonNumber: 1, episodeNumber: 1 };
+        return null;
     }
 }

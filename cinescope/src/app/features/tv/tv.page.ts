@@ -150,9 +150,13 @@ export class TvPage {
     // 1. Add all series with active progress records
     for (const p of this.tvProgress.allProgress()) {
       seenIds.add(p.tmdbId);
-      const isCompleted = p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes;
-      const isUnstarted = p.watchedEpisodesCount === 0;
-      const pct = p.totalEpisodes > 0
+      const isCompleted = p.isMarkedComplete
+        ? (p.unwatchedEpisodes?.length ?? 0) === 0
+        : p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes;
+      const isUnstarted = p.watchedEpisodesCount === 0 && !p.isMarkedComplete;
+      const pct = isCompleted
+        ? 100
+        : p.totalEpisodes > 0
         ? Math.min(100, Math.round((p.watchedEpisodesCount / p.totalEpisodes) * 100))
         : 0;
 
@@ -160,8 +164,8 @@ export class TvPage {
       let upNextEpisode: number | undefined;
       if (!isCompleted) {
         const nextEp = this.tvProgress.getUpNextEpisode(p.tmdbId);
-        upNextSeason = nextEp?.seasonNumber ?? (p.lastWatchedSeason && p.lastWatchedSeason > 0 ? p.lastWatchedSeason : 1);
-        upNextEpisode = nextEp?.episodeNumber ?? ((p.lastWatchedEpisode ?? 0) + 1);
+        upNextSeason = nextEp?.seasonNumber;
+        upNextEpisode = nextEp?.episodeNumber;
       }
 
       cards.push({
@@ -186,6 +190,7 @@ export class TvPage {
     for (const w of this.tvProgress.watchlistReadyToStart()) {
       if (seenIds.has(w.tmdbId)) continue;
       seenIds.add(w.tmdbId);
+      const upNext = this.tvProgress.getUpNextEpisode(w.tmdbId);
 
       cards.push({
         id: w.tmdbId,
@@ -198,8 +203,8 @@ export class TvPage {
         percentage: 0,
         isCompleted: false,
         isUnstarted: true,
-        upNextSeason: 1,
-        upNextEpisode: 1,
+        upNextSeason: upNext?.seasonNumber,
+        upNextEpisode: upNext?.episodeNumber,
         upNextTitle: undefined
       });
     }
@@ -307,7 +312,16 @@ export class TvPage {
     effect(() => {
       const cards = this.allDisplayCards();
       const needsHealing = cards
-        .filter((c) => !c.posterUrl || c.posterUrl.includes('placeholder') || c.totalEpisodes === 0)
+        .filter((c) => {
+          const cachedDoc = this.storage.getCachedDoc(c.id, 'tv');
+          const payload = cachedDoc?.payload as { seasons?: { season_number: number; episode_count: number }[] } | undefined;
+          const cachedBreakdown = payload?.seasons?.some(
+            (season) => season.season_number > 0 && season.episode_count > 0
+          ) ?? false;
+          const progressBreakdown = this.tvProgress.getSeriesProgress(c.id)?.seasonEpisodeCounts?.length ?? 0;
+          const hasSeasonBreakdown = cachedBreakdown || progressBreakdown > 0;
+          return !c.posterUrl || c.posterUrl.includes('placeholder') || c.totalEpisodes === 0 || !hasSeasonBreakdown;
+        })
         .slice(0, 10)
         .map((c) => ({ tmdbId: c.id, mediaType: 'tv' as const }));
 
@@ -431,19 +445,23 @@ export class TvPage {
   public async onPullRefresh(event: RefresherCustomEvent): Promise<void> {
     this.isRefreshing.set(true);
     try {
-      const active = this.tvProgress.currentlyWatching().slice(0, 5);
-      await Promise.allSettled(
-        active.map(async (p) => {
-          try {
-            const detail = await firstValueFrom(this.tmdbTv.getTvShowDetails(p.tmdbId));
-            if (detail) {
-              await this.tvProgress.syncSeriesMeta(detail);
-            }
-          } catch {
-            // Skip offline or failed single fetches
+      const tracked = [...this.tvProgress.currentlyWatching(), ...this.tvProgress.completedSeries()];
+      const uniqueSeries = Array.from(new Map(tracked.map((series) => [series.tmdbId, series])).values());
+
+      for (let index = 0; index < uniqueSeries.length; index += 3) {
+        const batch = uniqueSeries.slice(index, index + 3);
+        const results = await Promise.allSettled(batch.map(async (series) => {
+          const detail = await firstValueFrom(this.tmdbTv.getTvShowDetails(series.tmdbId));
+          if (detail) {
+            await this.tvProgress.syncSeriesMeta(detail);
           }
-        })
-      );
+        }));
+        results.forEach((result, batchIndex) => {
+          if (result.status === 'rejected') {
+            console.warn(`[TvPage] Failed to refresh TV metadata for ${batch[batchIndex].tmdbId}:`, result.reason);
+          }
+        });
+      }
     } finally {
       this.isRefreshing.set(false);
       event.target.complete();

@@ -30,13 +30,18 @@ describe('TvPage', () => {
     airRadar: mockAirRadar,
     currentlyWatching: mockCurrentlyWatching,
     completedSeries: mockCompletedSeries,
+    getSeriesProgress: jasmine.createSpy('getSeriesProgress').and.callFake(
+      (tmdbId: number) => mockAllProgress().find((progress) => progress.tmdbId === tmdbId)
+    ),
+    syncSeriesMeta: jasmine.createSpy('syncSeriesMeta').and.returnValue(Promise.resolve()),
     markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve()),
     getUpNextEpisode: jasmine.createSpy('getUpNextEpisode').and.returnValue({ seasonNumber: 1, episodeNumber: 1 })
   };
 
   const mockStorageService = {
     watchlistItems: signal([]),
-    watchedItems: mockWatchedItems
+    watchedItems: mockWatchedItems,
+    getCachedDoc: jasmine.createSpy('getCachedDoc').and.returnValue(null)
   };
 
   const mockTmdbTvService = {
@@ -185,6 +190,88 @@ describe('TvPage', () => {
       jasmine.objectContaining({ title: 'Breaking Bad' })
     );
     expect(mockToastService.presentSuccess).toHaveBeenCalled();
+  });
+
+  it('does not present a guessed next episode when season metadata is unavailable', () => {
+    mockTvProgressService.getUpNextEpisode.and.returnValue(null);
+    mockAllProgress.set([
+      {
+        id: 'tv_1396',
+        tmdbId: 1396,
+        seriesTitle: 'Breaking Bad',
+        totalSeasons: 1,
+        totalEpisodes: 7,
+        watchedEpisodesCount: 3,
+        lastWatchedSeason: 1,
+        lastWatchedEpisode: 6,
+        watchedEpisodes: ['s1e4', 's1e5', 's1e6'],
+        posterPath: '/breaking-bad.jpg',
+        updatedAt: Date.now()
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    const card = component.allDisplayCards()[0];
+    expect(card.upNextSeason).toBeUndefined();
+    expect(card.upNextEpisode).toBeUndefined();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Episode guide unavailable');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('S1 E7');
+  });
+
+  it('shows completion when a Watched marker has no known episode total', () => {
+    mockTvProgressService.getUpNextEpisode.and.returnValue(null);
+    mockAllProgress.set([
+      {
+        id: 'tv_1396',
+        tmdbId: 1396,
+        seriesTitle: 'Breaking Bad',
+        totalSeasons: 0,
+        totalEpisodes: 0,
+        watchedEpisodesCount: 0,
+        watchedEpisodes: [],
+        isMarkedComplete: true,
+        unwatchedEpisodes: [],
+        updatedAt: Date.now()
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    const card = component.allDisplayCards()[0];
+    expect(card.isCompleted).toBeTrue();
+    expect(card.percentage).toBe(100);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('All episodes marked watched');
+  });
+
+  it('refreshes completed series so newly aired episodes can appear', async () => {
+    mockTmdbTvService.getTvShowDetails.and.returnValue(of({
+      id: 1396,
+      name: 'Breaking Bad',
+      number_of_seasons: 5,
+      number_of_episodes: 63,
+      seasons: []
+    } as never));
+    mockCompletedSeries.set([
+      {
+        id: 'tv_1396',
+        tmdbId: 1396,
+        seriesTitle: 'Breaking Bad',
+        totalSeasons: 5,
+        totalEpisodes: 62,
+        watchedEpisodesCount: 62,
+        watchedEpisodes: [],
+        updatedAt: Date.now()
+      }
+    ]);
+    const complete = jasmine.createSpy('complete');
+    const event = { target: { complete } } as unknown as Parameters<TvPage['onPullRefresh']>[0];
+
+    await component.onPullRefresh(event);
+
+    expect(mockTmdbTvService.getTvShowDetails).toHaveBeenCalledWith(1396);
+    expect(mockTvProgressService.syncSeriesMeta).toHaveBeenCalled();
+    expect(complete).toHaveBeenCalled();
   });
 
   it('should allow switching the hero series', () => {

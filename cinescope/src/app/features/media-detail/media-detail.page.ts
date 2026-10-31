@@ -1162,7 +1162,7 @@ export class MediaDetailPage implements OnInit {
     const itemTitle = this.title();
 
     if (current === 'watched') {
-      await this.storage.removeMedia(id, type);
+      await this.storage.removeFromWatched(id, type);
       await this.toast.presentWarning(`Removed "${itemTitle}" from Watched`, 1800);
     } else {
       const payload = this.buildStoragePayload();
