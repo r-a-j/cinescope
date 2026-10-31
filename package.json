@@ -42,5 +42,6 @@
       "tinypool": "^2.1.2",
       "handlebars": "^4.7.10"
     }
-  }
+  },
+  "version": "2.0.0"
 }
