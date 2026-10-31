@@ -15,6 +15,8 @@
             [title]="item.title"
             [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
             [priority]="idx < 4"
+            [tmdbId]="getNumericTmdbId(item)"
+            [mediaType]="getMediaType(item)"
             [showBookmark]="item.mediaType !== 'person'"
             [bookmarkState]="getItemBookmarkState(item)"
             (cardClick)="onCardClick(item)"
