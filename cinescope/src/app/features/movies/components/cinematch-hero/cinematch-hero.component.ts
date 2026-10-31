@@ -37,6 +37,7 @@ import { TmdbMoviesService } from '../../../../core/services/tmdb-movies.service
 import { StorageService } from '../../../../core/services/storage.service';
 import { TimeContextService, TimeOfDayContext } from '../../../../core/services/time-context.service';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
 import {
   CineMatchMood,
@@ -59,7 +60,7 @@ import {
 @Component({
   selector: 'app-cinematch-hero',
   standalone: true,
-  imports: [CommonModule, IonIcon],
+  imports: [CommonModule, IonIcon, EmptyStateComponent],
   templateUrl: './cinematch-hero.component.html',
   styleUrls: ['./cinematch-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

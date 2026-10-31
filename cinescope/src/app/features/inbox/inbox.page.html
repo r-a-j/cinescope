@@ -59,23 +59,22 @@
   </div>
 </ion-toolbar>
 
-<ion-content data-tour="inbox-queue" color="background" [scrollY]="viewMode() === 'list'">
-  <div class="inbox-container" [class.list-mode-active]="viewMode() === 'list' && cards().length > 0">
+<ion-content data-tour="inbox-queue" color="background" [scrollY]="viewMode() === 'list' || cards().length === 0">
+  <div
+    class="inbox-container"
+    [class.list-mode-active]="viewMode() === 'list' && cards().length > 0"
+    [class.empty-mode-active]="cards().length === 0">
     @if (cards().length === 0) {
-      <div class="empty-inbox">
-        <div class="empty-icon-wrap">
-          <ion-icon name="mail-open-outline"></ion-icon>
-        </div>
-        <h2>INBOX IS CLEAR</h2>
-        <p>No items pending review. Import recommendation text, notes, or screenshots to queue movies and series for one-swipe triage.</p>
-
-        <div class="empty-actions">
-          <button type="button" class="primary-import-btn" (click)="openImportModal()">
-            <ion-icon name="sparkles-outline"></ion-icon>
-            Import Text or Screenshot
-          </button>
-        </div>
-      </div>
+      <app-empty-state
+        class="empty-inbox"
+        icon="mail-open-outline"
+        kicker="RECOMMENDATION QUEUE"
+        title="INBOX IS CLEAR"
+        description="No items pending review. Import recommendation text, notes, or screenshots to queue movies and series for one-swipe triage."
+        actionLabel="Import Text or Screenshot"
+        actionIcon="sparkles-outline"
+        (actionClick)="openImportModal()"
+      ></app-empty-state>
     } @else if (viewMode() === 'deck') {
       <!-- Interactive Card Deck View -->
       <div class="deck-wrapper">

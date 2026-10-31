@@ -6,53 +6,17 @@
   </ion-refresher>
 
   @if (!hasAnyTvContent()) {
-    <!-- Empty / Onboarding State -->
-    <div class="tv-empty-container">
-      <div class="tv-empty-hero">
-        <div class="tv-empty-icon-ring">
-          <ion-icon name="tv-outline"></ion-icon>
-        </div>
-        <span class="tv-empty-kicker">EPISODIC COMMAND CENTER</span>
-        <h1 class="tv-empty-title">TRACK TV SEASONS & EPISODES</h1>
-        <p class="tv-empty-description">
-          Follow series across seasons, log each episode with one tap, and never lose your place again. Add shows to your Watchlist to start tracking.
-        </p>
-        <button type="button" class="tv-cta-btn" (click)="navigateToDiscover()">
-          <ion-icon name="sparkles"></ion-icon>
-          <span>Explore Trending TV Series</span>
-        </button>
-      </div>
-
-      <div class="tv-feature-trio">
-        <div class="feature-item">
-          <div class="feature-icon">
-            <ion-icon name="play-outline"></ion-icon>
-          </div>
-          <div class="feature-text">
-            <h4>Up Next Hero</h4>
-            <p>Instantly see and mark the next episode to watch.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon">
-            <ion-icon name="calendar-outline"></ion-icon>
-          </div>
-          <div class="feature-text">
-            <h4>Weekly Air Radar</h4>
-            <p>Know exactly when new episodes of your shows air.</p>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-icon">
-            <ion-icon name="hourglass-outline"></ion-icon>
-          </div>
-          <div class="feature-text">
-            <h4>Binge Sizer</h4>
-            <p>Find short limited series or multi-season sagas to binge.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Unified Empty / Onboarding State -->
+    <app-empty-state
+      class="tv-empty-container"
+      icon="tv-outline"
+      kicker="EPISODIC COMMAND CENTER"
+      title="TRACK TV SEASONS & EPISODES"
+      description="Follow series across seasons, log each episode with one tap, and never lose your place again. Add shows to your Watchlist to start tracking."
+      actionLabel="Explore Trending TV Series"
+      actionIcon="sparkles"
+      (actionClick)="navigateToDiscover()"
+    ></app-empty-state>
   } @else {
     <div class="tv-hub-container">
       <!-- 1. Hero Showcase Command Center -->
@@ -295,61 +259,75 @@
         </div>
 
         <!-- Series Grid -->
-        <div class="tv-series-grid">
-          @for (card of filteredCards(); track card.id) {
-            <div
-              class="tv-card"
-              tabindex="0"
-              role="button"
-              (click)="openShowDetail(card.id)"
-              (keyup.enter)="openShowDetail(card.id)">
-              <div class="tv-poster-wrap">
-                <img
-                  [src]="card.posterUrl"
-                  [alt]="card.title"
-                  loading="lazy"
-                  class="tv-poster"
-                  (error)="onImageError($event, card.id)" />
+        @if (filteredCards().length === 0) {
+          <app-empty-state
+            [compact]="true"
+            icon="tv-outline"
+            kicker="BINGE SIZER"
+            title="NO SERIES MATCH THIS FILTER"
+            description="None of your tracked or watchlisted shows match this binge length."
+            actionLabel="Show All Series"
+            actionIcon="albums-outline"
+            actionVariant="secondary"
+            (actionClick)="setFilter('all')"
+          ></app-empty-state>
+        } @else {
+          <div class="tv-series-grid">
+            @for (card of filteredCards(); track card.id) {
+              <div
+                class="tv-card"
+                tabindex="0"
+                role="button"
+                (click)="openShowDetail(card.id)"
+                (keyup.enter)="openShowDetail(card.id)">
+                <div class="tv-poster-wrap">
+                  <img
+                    [src]="card.posterUrl"
+                    [alt]="card.title"
+                    loading="lazy"
+                    class="tv-poster"
+                    (error)="onImageError($event, card.id)" />
 
-                @if (card.isCompleted) {
-                  <span class="card-status-badge completed">
-                    <ion-icon name="checkmark-circle"></ion-icon>
-                    Done
-                  </span>
-                } @else if (card.isUnstarted) {
-                  <span class="card-status-badge unstarted">
-                    Start S1
-                  </span>
-                } @else if (card.upNextSeason && card.upNextEpisode) {
-                  <span class="card-status-badge in-progress">
-                    S{{ card.upNextSeason }} E{{ card.upNextEpisode }}
-                  </span>
-                } @else {
-                  <span class="card-status-badge in-progress">
-                    Up Next unavailable
-                  </span>
-                }
-
-                <div class="card-progress-bar">
-                  <div class="card-progress-fill" [style.width.%]="card.percentage"></div>
-                </div>
-              </div>
-
-              <div class="tv-card-info">
-                <h4 class="card-title">{{ card.title }}</h4>
-                <div class="card-sub-info">
-                  <span>{{ card.totalSeasons }} {{ card.totalSeasons === 1 ? 'Season' : 'Seasons' }}</span>
-                  <span>•</span>
-                  @if (card.isCompleted && card.totalEpisodes === 0) {
-                    <span>All episodes marked watched</span>
+                  @if (card.isCompleted) {
+                    <span class="card-status-badge completed">
+                      <ion-icon name="checkmark-circle"></ion-icon>
+                      Done
+                    </span>
+                  } @else if (card.isUnstarted) {
+                    <span class="card-status-badge unstarted">
+                      Start S1
+                    </span>
+                  } @else if (card.upNextSeason && card.upNextEpisode) {
+                    <span class="card-status-badge in-progress">
+                      S{{ card.upNextSeason }} E{{ card.upNextEpisode }}
+                    </span>
                   } @else {
-                    <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                    <span class="card-status-badge in-progress">
+                      Up Next unavailable
+                    </span>
                   }
+
+                  <div class="card-progress-bar">
+                    <div class="card-progress-fill" [style.width.%]="card.percentage"></div>
+                  </div>
+                </div>
+
+                <div class="tv-card-info">
+                  <h4 class="card-title">{{ card.title }}</h4>
+                  <div class="card-sub-info">
+                    <span>{{ card.totalSeasons }} {{ card.totalSeasons === 1 ? 'Season' : 'Seasons' }}</span>
+                    <span>•</span>
+                    @if (card.isCompleted && card.totalEpisodes === 0) {
+                      <span>All episodes marked watched</span>
+                    } @else {
+                      <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                    }
+                  </div>
                 </div>
               </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        }
       </section>
     </div>
   }

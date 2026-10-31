@@ -92,7 +92,7 @@ describe('TvPage', () => {
   it('should render empty state when no TV content is tracked or watchlisted', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.tv-empty-container')).toBeTruthy();
-    expect(compiled.querySelector('.tv-empty-title')?.textContent).toContain('TRACK TV SEASONS');
+    expect(compiled.querySelector('.empty-title')?.textContent).toContain('TRACK TV SEASONS');
   });
 
   it('should navigate to Discover when clicking CTA in empty state', () => {

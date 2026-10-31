@@ -1,7 +1,7 @@
 <app-header></app-header>
 
     <ion-toolbar class="archive-toolbar">
-      <ion-segment data-tour="archive-filters" [value]="activeTab()" (ionChange)="onTabChange($event)">
+      <ion-segment data-tour="archive-filters" [scrollable]="true" [value]="activeTab()" (ionChange)="onTabChange($event)">
         <ion-segment-button value="watchlist">
           <ion-label>WATCHLIST</ion-label>
         </ion-segment-button>
@@ -83,16 +83,30 @@
         <!-- Keep-Alive Watchlist Pane -->
         <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watchlist'">
           @if (filteredWatchlist().length === 0) {
-            <div class="empty-archive">
-              <ion-icon name="bookmark-outline"></ion-icon>
-              @if (storage.watchlistItems().length > 0) {
-                <h2>NO {{ currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} IN WATCHLIST</h2>
-                <p>Try switching to "All" or add more {{ currentMediaFilter() === 'movie' ? 'movies' : 'series' }} from Discover.</p>
-              } @else {
-                <h2>YOUR WATCHLIST IS EMPTY</h2>
-                <p>Explore trending movies and series on CineScope and tap the bookmark icon to save titles for later.</p>
-              }
-            </div>
+            @if (storage.watchlistItems().length > 0) {
+              <app-empty-state
+                class="empty-archive"
+                icon="bookmark-outline"
+                kicker="FILTERED VIEW"
+                [title]="'NO ' + (currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS') + ' IN WATCHLIST'"
+                [description]="'Try switching to All or add more ' + (currentMediaFilter() === 'movie' ? 'movies' : 'series') + ' from Discover.'"
+                actionLabel="Show All Watchlist"
+                actionIcon="albums-outline"
+                actionVariant="secondary"
+                (actionClick)="setMediaFilter('all')"
+              ></app-empty-state>
+            } @else {
+              <app-empty-state
+                class="empty-archive"
+                icon="bookmark-outline"
+                kicker="YOUR LIBRARY"
+                title="YOUR WATCHLIST IS EMPTY"
+                description="Explore trending movies and series on CineScope and tap the bookmark icon to save titles for later."
+                actionLabel="Explore on Discover"
+                actionIcon="sparkles"
+                (actionClick)="goToDiscover()"
+              ></app-empty-state>
+            }
           } @else {
             <div
               class="archive-grid"
@@ -123,16 +137,30 @@
         <!-- Keep-Alive Watched Pane -->
         <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'watched'">
           @if (filteredWatched().length === 0) {
-            <div class="empty-archive">
-              <ion-icon name="checkmark-done-circle-outline"></ion-icon>
-              @if (storage.watchedItems().length > 0) {
-                <h2>NO {{ currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS' }} MARKED AS WATCHED</h2>
-                <p>Try switching to "All" or mark your finished {{ currentMediaFilter() === 'movie' ? 'movies' : 'series' }} as watched.</p>
-              } @else {
-                <h2>NO WATCHED TITLES YET</h2>
-                <p>Keep track of everything you have watched by cycling the bookmark icon to the red checkmark.</p>
-              }
-            </div>
+            @if (storage.watchedItems().length > 0) {
+              <app-empty-state
+                class="empty-archive"
+                icon="checkmark-done-circle-outline"
+                kicker="FILTERED VIEW"
+                [title]="'NO ' + (currentMediaFilter() === 'movie' ? 'MOVIES' : 'TV SHOWS') + ' MARKED AS WATCHED'"
+                [description]="'Try switching to All or mark your finished ' + (currentMediaFilter() === 'movie' ? 'movies' : 'series') + ' as watched.'"
+                actionLabel="Show All Watched"
+                actionIcon="albums-outline"
+                actionVariant="secondary"
+                (actionClick)="setMediaFilter('all')"
+              ></app-empty-state>
+            } @else {
+              <app-empty-state
+                class="empty-archive"
+                icon="checkmark-done-circle-outline"
+                kicker="WATCH HISTORY"
+                title="NO WATCHED TITLES YET"
+                description="Keep track of everything you have watched by cycling the bookmark icon to the red checkmark."
+                actionLabel="Explore on Discover"
+                actionIcon="sparkles"
+                (actionClick)="goToDiscover()"
+              ></app-empty-state>
+            }
           } @else {
             <div
               class="archive-grid"
@@ -163,24 +191,28 @@
         <!-- Keep-Alive Franchises Pane -->
         <div class="archive-pane" data-tour="archive-franchise-library" [class.pane-hidden]="activeTab() !== 'franchises'">
           @if (userFranchises().length === 0) {
-            <div class="empty-archive">
-              <ion-icon name="albums-outline"></ion-icon>
-              <h2>NO FRANCHISES TRACKED YET</h2>
-              <p>Add movies from film sagas (like John Wick, Avengers, or Dhoom) to your library, or search for any franchise to track your watch order and completion.</p>
-              <button type="button" class="discover-franchises-btn" (click)="goToDiscoverFranchises()">
-                <ion-icon name="search-outline"></ion-icon>
-                <span>Search Franchises & Universes</span>
-              </button>
-            </div>
+            <app-empty-state
+              class="empty-archive"
+              icon="albums-outline"
+              kicker="SAGA TRACKER"
+              title="NO FRANCHISES TRACKED YET"
+              description="Add movies from film sagas (like John Wick, Avengers, or Dhoom) to your library, or search for any franchise to track your watch order and completion."
+              actionLabel="Search Franchises & Universes"
+              actionIcon="search-outline"
+              (actionClick)="goToDiscoverFranchises()"
+            ></app-empty-state>
           } @else if (filteredFranchises().length === 0) {
-            <div class="empty-archive">
-              <ion-icon name="trophy-outline"></ion-icon>
-              <h2>NO MATCHING SAGAS</h2>
-              <p>No franchises match this filter yet. Switch back to "All" to view your tracked sagas.</p>
-              <button type="button" class="discover-franchises-btn" (click)="setFranchiseFilter('all')">
-                <span>Show All Sagas</span>
-              </button>
-            </div>
+            <app-empty-state
+              class="empty-archive"
+              icon="trophy-outline"
+              kicker="FILTERED VIEW"
+              title="NO MATCHING SAGAS"
+              description="No franchises match this filter yet. Switch back to All to view your tracked sagas."
+              actionLabel="Show All Sagas"
+              actionIcon="albums-outline"
+              actionVariant="secondary"
+              (actionClick)="setFranchiseFilter('all')"
+            ></app-empty-state>
           } @else {
             <div
               class="franchise-archive-grid"
@@ -306,11 +338,16 @@
         <!-- Keep-Alive Favorite People Pane -->
         <div class="archive-pane" [class.pane-hidden]="activeTab() !== 'people'">
           @if (favoritePeopleCards().length === 0) {
-            <div class="empty-archive">
-              <ion-icon name="heart-outline"></ion-icon>
-              <h2>NO FAVORITE ARTISTS YET</h2>
-              <p>Explore actors and directors on CineScope, tap the heart icon on their profile, and track your filmography progress here.</p>
-            </div>
+            <app-empty-state
+              class="empty-archive"
+              icon="heart-outline"
+              kicker="FILMOGRAPHY TRACKER"
+              title="NO FAVORITE ARTISTS YET"
+              description="Explore actors and directors on CineScope, tap the heart icon on their profile, and track your filmography progress here."
+              actionLabel="Search Artists"
+              actionIcon="search-outline"
+              (actionClick)="goToSearchPeople()"
+            ></app-empty-state>
           } @else {
             <div
               class="people-grid"

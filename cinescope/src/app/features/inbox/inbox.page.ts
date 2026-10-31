@@ -44,6 +44,7 @@ import {
   checkmarkCircleOutline
 } from 'ionicons/icons';
 import { HeaderComponent } from '../../shared/components/header/header.component';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { StorageService } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ExtractionService, ExtractedTitleItem } from '../../core/services/extraction.service';
@@ -82,7 +83,8 @@ export interface SelectedImageItem {
     IonIcon,
     IonModal,
     IonSpinner,
-    HeaderComponent
+    HeaderComponent,
+    EmptyStateComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './inbox.page.html',

@@ -28,6 +28,7 @@ import {
   hourglassOutline
 } from 'ionicons/icons';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import { EmptyStateComponent } from 'src/app/shared/components/empty-state/empty-state.component';
 import { EpisodeDetailModalComponent } from 'src/app/shared/components/episode-detail-modal/episode-detail-modal.component';
 import { TvProgressService, AirRadarItem } from 'src/app/core/services/tv-progress.service';
 import { StorageService } from 'src/app/core/services/storage.service';
@@ -79,6 +80,7 @@ export interface TvGridCardVm {
     IonRefresherContent,
     IonIcon,
     HeaderComponent,
+    EmptyStateComponent,
     EpisodeDetailModalComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
