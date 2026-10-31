@@ -10,6 +10,7 @@ import { BookmarkState } from '../../shared/components/poster-card/poster-card.c
 import { resolveMediaImageUrl } from '../constants/api.constants';
 import { PosterCacheService } from './poster-cache.service';
 import { FranchiseCollectionSummary } from '../models/franchise.model';
+import { APP_VERSION } from '../constants/app-version';
 
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
@@ -1181,7 +1182,7 @@ export class StorageService {
 
         const payload: CinescopeBackupPayload = {
             version: 1,
-            appVersion: '1.2.0',
+            appVersion: APP_VERSION,
             app: 'CineScope',
             exportedAt: new Date().toISOString(),
             settings: settingsDoc ? (settingsDoc.toJSON() as SettingsDocType) : null,

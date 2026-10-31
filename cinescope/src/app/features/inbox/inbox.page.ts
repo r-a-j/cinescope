@@ -511,7 +511,6 @@ export class InboxPage {
 
     try {
       const allExtracted: ExtractedTitleItem[] = [];
-      const totalScreenshots = this.selectedImages().length;
       let failedScreenshots = 0;
 
       if (mode === 'text') {

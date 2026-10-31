@@ -45,6 +45,24 @@ function generateSearchTitleVariations(query: string): string[] {
     return Array.from(variations);
 }
 
+function getMinimumReleaseDate(query: string): string | null {
+    const explicitRange = query.match(/\b(?:from|since)\s+(19\d{2}|20\d{2})\s+(?:onwards?|forward|and\s+(?:up|later)|or\s+(?:later|newer))\b/i);
+    const sinceYear = query.match(/\bsince\s+(19\d{2}|20\d{2})\b/i);
+    const suffixedYear = query.match(/\b(19\d{2}|20\d{2})\s*(?:\+|onwards?|and\s+(?:up|later)|or\s+(?:later|newer))\b/i);
+    const afterYear = query.match(/\bafter\s+(19\d{2}|20\d{2})\b/i);
+    const minimumYear = explicitRange?.[1] ?? sinceYear?.[1] ?? suffixedYear?.[1];
+
+    if (minimumYear) {
+        return `${minimumYear}-01-01`;
+    }
+
+    if (afterYear?.[1]) {
+        return `${Number(afterYear[1]) + 1}-01-01`;
+    }
+
+    return null;
+}
+
 export type CategorizedSearchResult = TmdbMultiSearchResultDto & { smart_category?: string };
 export type SearchFilter = 'all' | 'movie' | 'tv' | 'collection' | 'person';
 
@@ -444,6 +462,7 @@ export const SearchStore = signalStore(
                 try {
                     const suggestionRes = await firstValueFrom(smartSearchService.getSmartSuggestions(currentQuery));
                     const sections: SemanticIntentSection[] = suggestionRes.sections || [];
+                    const minimumReleaseDate = getMinimumReleaseDate(currentQuery);
 
                     if (sections.length === 0) {
                         patchState(store, {
@@ -463,6 +482,12 @@ export const SearchStore = signalStore(
                                 sort_by: section.parameters.sort_by || 'popularity.desc',
                                 page: 1
                             };
+
+                            if (minimumReleaseDate) {
+                                discoverParams[section.action === 'discover_movies'
+                                    ? 'primary_release_date.gte'
+                                    : 'first_air_date.gte'] = minimumReleaseDate;
+                            }
 
                             // Resolve 'person_name' to TMDB Actor ID invisibly
                             if (section.parameters.person_name) {
@@ -526,15 +551,22 @@ export const SearchStore = signalStore(
 
                     // Flatten the array of arrays because Discover returns multiple items per section
                     const populatedEntities = (await Promise.all(fetches)).flat() as CategorizedSearchResult[];
+                    const constrainedEntities = minimumReleaseDate
+                        ? populatedEntities.filter((item) => {
+                            if (item.media_type === 'person') return false;
+                            const releaseDate = item.media_type === 'movie' ? item.release_date : item.first_air_date;
+                            return Boolean(releaseDate && releaseDate >= minimumReleaseDate);
+                        })
+                        : populatedEntities;
 
                     patchState(store, {
-                        smartResults: populatedEntities,
+                        smartResults: constrainedEntities,
                         isSmartSearching: false,
-                        showSmartUI: populatedEntities.length > 0
+                        showSmartUI: constrainedEntities.length > 0
                     });
 
                     // Hydrate missing AI images too!
-                    hydrateMissingImages(populatedEntities);
+                    hydrateMissingImages(constrainedEntities);
 
                 } catch (error: unknown) {
                     console.error('[Store - Smart Search] Gemini Backend Request Failed:', error);

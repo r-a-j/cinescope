@@ -31,6 +31,7 @@ import { SearchStore } from 'src/app/core/store/search.store';
 import { MoviesPreferencesService } from 'src/app/core/services/movies-preferences.service';
 import { AppTourService } from 'src/app/core/services/app-tour.service';
 import { APP_TOUR_CATEGORIES, AppTourId } from 'src/app/core/constants/app-tour.constants';
+import { APP_VERSION } from 'src/app/core/constants/app-version';
 
 interface NativeBackupPlugin {
     saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
@@ -69,7 +70,7 @@ export class SettingsPage implements OnInit {
     public regionService = inject(RegionService);
     public tutorialCategories = APP_TOUR_CATEGORIES;
 
-        public appVersion = signal<string>('1.2.0');
+    public appVersion = signal<string>(APP_VERSION);
     // Region selector state
     public isRegionModalOpen = signal<boolean>(false);
     public availableRegions = signal<TmdbWatchRegionDto[]>([]);
@@ -222,7 +223,7 @@ export class SettingsPage implements OnInit {
                 this.appVersion.set(info.version);
             }
         } catch {
-            this.appVersion.set('1.2.0');
+            this.appVersion.set(APP_VERSION);
         }
     }
 

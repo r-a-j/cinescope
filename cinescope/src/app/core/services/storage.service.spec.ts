@@ -3,6 +3,7 @@ import { StorageService } from './storage.service';
 import { DatabaseService } from '../database/database.service';
 import { PosterCacheService } from './poster-cache.service';
 import { RegionService } from './region.service';
+import { APP_VERSION } from '../constants/app-version';
 
 describe('StorageService - Backup & Restore', () => {
     let service: StorageService;
@@ -80,6 +81,12 @@ describe('StorageService - Backup & Restore', () => {
 
     it('should be created', () => {
         expect(service).toBeTruthy();
+    });
+
+    it('exports the current frontend package version in backup metadata', async () => {
+        const backup = JSON.parse(await service.exportBackupJson()) as { appVersion: string };
+
+        expect(backup.appVersion).toBe(APP_VERSION);
     });
 
     it('should inspect modern backup containing content and tvProgress', () => {

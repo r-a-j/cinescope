@@ -208,30 +208,25 @@ export class ExtractionService {
     if (candidates.length === 0) return null;
 
     const normalizedTarget = title.trim().toLowerCase();
+    const compatibleCandidates = candidates.filter((candidate) => {
+      if (hint.mediaType && candidate.media_type !== hint.mediaType) return false;
 
-    // 1. Check exact title match + optional year/type match
-    for (const c of candidates) {
-      const cTitle = (c.media_type === 'tv' ? c.name : c.title)?.trim().toLowerCase();
-      const isExactTitle = cTitle === normalizedTarget;
-
-      const dateStr = c.media_type === 'tv' ? c.first_air_date : c.release_date;
-      const cYear = dateStr && dateStr.length >= 4 ? parseInt(dateStr.slice(0, 4), 10) : undefined;
-      const isYearMatch = !hint.year || (cYear !== undefined && Math.abs(cYear - hint.year) <= 1);
-      const isTypeMatch = !hint.mediaType || c.media_type === hint.mediaType;
-
-      if (isExactTitle && isYearMatch && isTypeMatch) {
-        return c;
+      if (hint.year !== undefined) {
+        const date = candidate.media_type === 'tv' ? candidate.first_air_date : candidate.release_date;
+        const candidateYear = date ? Number.parseInt(date.slice(0, 4), 10) : undefined;
+        if (candidateYear !== hint.year) return false;
       }
-    }
 
-    // 2. Check title contains or type match
-    if (hint.mediaType) {
-      const typeCandidate = candidates.find((c) => c.media_type === hint.mediaType);
-      if (typeCandidate) return typeCandidate;
-    }
+      return true;
+    });
+    if (compatibleCandidates.length === 0) return null;
 
-    // 3. Fallback to top result from TMDB relevance ranking
-    return candidates[0] || null;
+    return compatibleCandidates.find((candidate) => {
+      const candidateTitle = (candidate.media_type === 'tv' ? candidate.name : candidate.title)
+        ?.trim()
+        .toLowerCase();
+      return candidateTitle === normalizedTarget;
+    }) || compatibleCandidates[0];
   }
 
   private generateSyntheticId(title: string): number {
