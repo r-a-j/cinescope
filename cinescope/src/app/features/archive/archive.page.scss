@@ -394,63 +394,56 @@
         }
       }
 
-      .person-avatar-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        flex: 0 0 66px;
-        width: 66px;
-        min-width: 66px;
-        max-width: 66px;
+      .person-portrait-frame {
+        position: relative;
+        flex: 0 0 78px;
+        width: 78px;
+        min-width: 78px;
+        height: 114px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #141418;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
         box-sizing: border-box;
 
-        .person-avatar-ring {
-          position: relative;
-          width: 64px;
-          height: 64px;
-          border-radius: 50%;
-          padding: 2px;
-          box-sizing: border-box;
-          background: linear-gradient(135deg, rgba(229, 9, 20, 0.65) 0%, rgba(245, 197, 24, 0.5) 100%);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-
-          &.is-director {
-            background: linear-gradient(135deg, rgba(245, 197, 24, 0.75) 0%, rgba(217, 119, 6, 0.55) 100%);
-          }
-
-          img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: top center;
-            background: #141418;
-            display: block;
-          }
+        &.is-director {
+          border-color: rgba(245, 197, 24, 0.35);
+          box-shadow: 0 4px 14px rgba(245, 197, 24, 0.12);
         }
 
-        .person-dept-pill {
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: top center;
+          display: block;
+          background: #141418;
+        }
+
+        .person-dept-tag {
+          position: absolute;
+          bottom: 5px;
+          left: 5px;
+          right: 5px;
+          text-align: center;
           font-size: 7.5px;
           font-weight: 800;
           letter-spacing: 0.08em;
-          padding: 2px 6px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: rgba(255, 255, 255, 0.85);
-          text-align: center;
+          padding: 2px 4px;
+          border-radius: 4px;
+          background: rgba(10, 10, 14, 0.85);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: rgba(255, 255, 255, 0.92);
           line-height: 1.2;
           white-space: nowrap;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          box-sizing: border-box;
 
           &.is-director {
-            background: rgba(245, 197, 24, 0.15);
-            border-color: rgba(245, 197, 24, 0.35);
-            color: #f5c518;
+            background: rgba(245, 197, 24, 0.92);
+            color: #0c0c12;
+            border-color: rgba(245, 197, 24, 0.5);
           }
         }
       }

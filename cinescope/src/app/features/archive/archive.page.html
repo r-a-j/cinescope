@@ -431,15 +431,13 @@
                   tabindex="0"
                   role="button"
                   (keyup.enter)="onOpenPersonDetail(person)">
-                  <div class="person-avatar-col">
-                    <div class="person-avatar-ring" [class.is-director]="person.isDirector">
-                      <img
-                        [src]="person.profileUrl"
-                        [alt]="person.name"
-                        loading="lazy"
-                        (error)="onPersonAvatarError($event)" />
-                    </div>
-                    <span class="person-dept-pill" [class.is-director]="person.isDirector">
+                  <div class="person-portrait-frame" [class.is-director]="person.isDirector">
+                    <img
+                      [src]="person.profileUrl"
+                      [alt]="person.name"
+                      loading="lazy"
+                      (error)="onPersonAvatarError($event)" />
+                    <span class="person-dept-tag" [class.is-director]="person.isDirector">
                       {{ person.departmentBadge }}
                     </span>
                   </div>
