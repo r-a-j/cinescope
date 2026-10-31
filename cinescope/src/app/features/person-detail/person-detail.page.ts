@@ -53,7 +53,7 @@ interface NativeGalleryPlugin {
 const NativeGallery = registerPlugin<NativeGalleryPlugin>('NativeGallery');
 
 import { TmdbPeopleService } from '../../core/services/tmdb-people.service';
-import { StorageService } from '../../core/services/storage.service';
+import { StorageService, extractPersonCreditMetadata } from '../../core/services/storage.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { resolveMediaImageUrl } from '../../core/constants/api.constants';
@@ -633,13 +633,16 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   public async toggleFavorite(): Promise<void> {
     const id = this.personId();
     if (!id) return;
-    const creditIds = this.collectCreditIds();
+    const extracted = extractPersonCreditMetadata(this.rawCombinedCredits());
+    const creditIds = extracted.creditIds.length > 0 ? extracted.creditIds : this.collectCreditIds();
     const isNowFav = await this.storage.toggleFavoritePerson({
       id,
       name: this.name(),
       profilePath: this.person()?.profile_path ?? null,
       department: this.department(),
-      creditIds
+      creditIds,
+      topCredits: extracted.topCredits,
+      knownForTitles: extracted.knownForTitles
     });
     if (isNowFav) {
       await this.toast.presentSuccess(`Added ${this.name()} to Favorites`, 1800);
@@ -726,11 +729,17 @@ export class PersonDetailPage implements OnInit, OnDestroy {
         this.activeCreditTab.set('crew');
       }
 
-      // If person is already favorited, keep cached filmography credit IDs updated
+      // If person is already favorited, keep cached filmography credit IDs and top credits updated
       if (this.storage.isPersonFavorite(id)) {
-        const creditIds = this.collectCreditIds();
+        const extracted = extractPersonCreditMetadata(this.rawCombinedCredits());
+        const creditIds = extracted.creditIds.length > 0 ? extracted.creditIds : this.collectCreditIds();
         if (creditIds.length > 0) {
-          void this.storage.updateFavoritePersonCredits(id, creditIds);
+          void this.storage.updateFavoritePersonCredits(id, creditIds, {
+            topCredits: extracted.topCredits,
+            knownForTitles: extracted.knownForTitles,
+            department: res.known_for_department || undefined,
+            profilePath: res.profile_path
+          });
         }
       }
     } catch (err) {

@@ -29,22 +29,37 @@ import {
     eyeOffOutline,
     eyeOutline,
     newspaperOutline,
-    timeOutline
+    timeOutline,
+    heart,
+    heartOutline,
+    arrowForwardOutline,
+    videocamOutline,
+    filmOutline,
+    peopleOutline
 } from 'ionicons/icons';
+import { firstValueFrom } from 'rxjs';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { HeroBannerComponent } from 'src/app/shared/components/hero-banner/hero-banner.component';
 import { SwimlaneComponent } from 'src/app/shared/components/swimlane/swimlane.component';
+import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { TrendingStore } from '../../core/store/trending.store';
 import { FeedService } from '../../core/services/feed.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { AppTourService } from '../../core/services/app-tour.service';
 import { PosterCacheService } from '../../core/services/poster-cache.service';
+import { StorageService, extractPersonCreditMetadata } from '../../core/services/storage.service';
+import { TmdbPeopleService } from '../../core/services/tmdb-people.service';
+import { ToastService } from '../../core/services/toast.service';
+import { resolveMediaImageUrl } from '../../core/constants/api.constants';
+import { TmdbPersonCombinedCreditsResponseDto } from '../../core/dtos/people/person-combined-credits.dto';
 import {
     DiscoverPreferencesService,
     DiscoverLanguageCode,
     DISCOVER_LANGUAGE_OPTIONS
 } from '../../core/services/discover-preferences.service';
 import { CollectionQueryContext } from '../../core/services/collection-loader.service';
+
+export type ActorsHubCategory = 'all' | 'favorites' | 'indian' | 'global' | 'world' | 'directors';
 
 @Component({
     selector: 'app-discover',
@@ -77,10 +92,15 @@ export class DiscoverPage implements OnInit, AfterViewInit {
     public store = inject(TrendingStore);
     public feedService = inject(FeedService);
     public discoverPrefs = inject(DiscoverPreferencesService);
+    public storage = inject(StorageService);
+    private peopleService = inject(TmdbPeopleService);
+    private toast = inject(ToastService);
     private posterCache = inject(PosterCacheService);
     private router = inject(Router);
     private navService = inject(NavigationService);
     private tour = inject(AppTourService);
+
+    public actorsCategoryFilter = signal<ActorsHubCategory>('all');
 
     private loadedNewsImages = signal<Set<string>>(new Set());
     private failedNewsImages = signal<Set<string>>(new Set());
@@ -147,8 +167,124 @@ export class DiscoverPage implements OnInit, AfterViewInit {
         }
     };
     public readonly trendingActorsContext: CollectionQueryContext = { type: 'trending_people' };
+    public readonly indianActorsContext: CollectionQueryContext = { type: 'indian_people' };
     public readonly popularActorsContext: CollectionQueryContext = { type: 'popular_people' };
+    public readonly worldActorsContext: CollectionQueryContext = { type: 'world_people' };
+    public readonly visionaryDirectorsContext: CollectionQueryContext = { type: 'director_people' };
     public readonly breakoutActorsContext: CollectionQueryContext = { type: 'breakout_people' };
+
+    public readonly favoriteActorsSwimlane = computed<SwimlaneItem[]>(() => {
+        return this.storage.favoritePeople().map((doc) => {
+            const p = (doc.payload ?? {}) as Record<string, unknown>;
+            const rawPath = (p['profile_path'] || p['posterUrl']) as string | undefined;
+            const knownFor = String(p['known_for_titles'] || p['known_for_department'] || 'Artist');
+            return {
+                id: doc.tmdbId,
+                mediaType: 'person' as const,
+                title: String(p['name'] || `Artist #${doc.tmdbId}`),
+                subtitle: knownFor,
+                posterUrl: resolveMediaImageUrl(rawPath, 'w500'),
+                bookmarkState: 'none',
+                payload: p
+            };
+        });
+    });
+
+    public readonly favoriteStarsMoviesContext = computed<CollectionQueryContext>(() => {
+        const topFavIds = this.storage.favoritePeople().slice(0, 5).map((d) => d.tmdbId).filter(Boolean);
+        return {
+            type: 'discover_movies',
+            movieParams: {
+                with_people: topFavIds.join('|'),
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': 30
+            }
+        };
+    });
+
+    public readonly spotlightCandidatePool = computed<SwimlaneItem[]>(() => {
+        const cat = this.actorsCategoryFilter();
+        const favs = this.favoriteActorsSwimlane();
+        const indian = this.store.indianActors();
+        const trending = this.store.trendingActors();
+        const popular = this.store.popularActors();
+        const world = this.store.worldActors();
+        const directors = this.store.visionaryDirectors();
+
+        let sourceList: SwimlaneItem[] = [];
+        if (cat === 'favorites') {
+            sourceList = favs;
+        } else if (cat === 'indian') {
+            sourceList = indian;
+        } else if (cat === 'global') {
+            sourceList = [...trending, ...popular];
+        } else if (cat === 'world') {
+            sourceList = world;
+        } else if (cat === 'directors') {
+            sourceList = directors;
+        } else {
+            sourceList = [
+                ...favs,
+                ...indian.slice(0, 8),
+                ...trending.slice(0, 8),
+                ...world.slice(0, 6),
+                ...directors.slice(0, 6)
+            ];
+        }
+
+        const deduped = new Map<number, SwimlaneItem>();
+        for (const item of sourceList) {
+            const numId = Number(item.id);
+            if (numId > 0 && !deduped.has(numId)) {
+                deduped.set(numId, item);
+            }
+        }
+        return [...deduped.values()].slice(0, 20);
+    });
+
+    public readonly activeSpotlightStar = computed<SwimlaneItem | null>(() => {
+        const pool = this.spotlightCandidatePool();
+        const currentId = this.store.spotlightStarId();
+        if (currentId) {
+            const found = pool.find((p) => Number(p.id) === currentId);
+            if (found) return found;
+        }
+        return pool[0] ?? null;
+    });
+
+    public readonly activeSpotlightProgress = computed<{ watched: number; total: number; percent: number } | null>(() => {
+        const star = this.activeSpotlightStar();
+        if (!star) return null;
+        const favDoc = this.storage.favoritePeople().find((d) => d.tmdbId === Number(star.id));
+        if (!favDoc) return null;
+        const p = (favDoc.payload ?? {}) as Record<string, unknown>;
+        const creditIds = Array.isArray(p['credit_ids']) ? (p['credit_ids'] as string[]) : [];
+        if (creditIds.length === 0) return null;
+        return this.storage.getPersonProgress(creditIds);
+    });
+
+    public readonly spotlightCriticsContext = computed<CollectionQueryContext>(() => {
+        const star = this.activeSpotlightStar();
+        return {
+            type: 'discover_movies',
+            movieParams: {
+                with_people: String(star?.id || ''),
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': 25
+            }
+        };
+    });
+
+    public readonly spotlightPopularContext = computed<CollectionQueryContext>(() => {
+        const star = this.activeSpotlightStar();
+        return {
+            type: 'discover_movies',
+            movieParams: {
+                with_people: String(star?.id || ''),
+                sort_by: 'popularity.desc'
+            }
+        };
+    });
 
     constructor() {
         addIcons({
@@ -162,7 +298,13 @@ export class DiscoverPage implements OnInit, AfterViewInit {
             eyeOffOutline,
             eyeOutline,
             newspaperOutline,
-            timeOutline
+            timeOutline,
+            heart,
+            heartOutline,
+            arrowForwardOutline,
+            videocamOutline,
+            filmOutline,
+            peopleOutline
         });
 
         effect(() => {
@@ -209,6 +351,91 @@ export class DiscoverPage implements OnInit, AfterViewInit {
 
     public openDiscoverPreferences(): void {
         void this.router.navigate(['/settings'], { queryParams: { section: 'discover' } });
+    }
+
+    public setActorsCategory(category: ActorsHubCategory): void {
+        this.actorsCategoryFilter.set(category);
+        const pool = this.spotlightCandidatePool();
+        const currentId = this.store.spotlightStarId();
+        if (pool.length > 0 && (!currentId || !pool.some((p) => Number(p.id) === currentId))) {
+            void this.store.selectSpotlightStar(Number(pool[0].id));
+        }
+        // Reset horizontal scroll of avatar strip to start so the first star is never clipped
+        const strip = document.querySelector('.spotlight-avatars-strip');
+        if (strip) {
+            strip.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    }
+
+    public onSelectSpotlightStar(item: SwimlaneItem, event?: Event): void {
+        const id = Number(item.id);
+        if (id > 0 && id !== this.store.spotlightStarId()) {
+            void this.store.selectSpotlightStar(id);
+        }
+        if (event?.currentTarget instanceof HTMLElement) {
+            event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+
+    public openSpotlightStarProfile(item: SwimlaneItem): void {
+        void this.router.navigate(['/person', item.id], {
+            state: {
+                preview: {
+                    id: Number(item.id),
+                    name: item.title,
+                    profileUrl: item.posterUrl,
+                    knownForDepartment: item.subtitle
+                }
+            }
+        });
+    }
+
+    public isSpotlightStarFavorite(item: SwimlaneItem): boolean {
+        return this.storage.isPersonFavorite(Number(item.id));
+    }
+
+    public async toggleSpotlightStarFavorite(event: Event, item: SwimlaneItem): Promise<void> {
+        event.stopPropagation();
+        const personId = Number(item.id);
+        if (!personId) return;
+        const rawProfilePath = (item.payload?.['profile_path'] as string | null | undefined) ?? item.posterUrl ?? null;
+        const rawDept = String(item.payload?.['known_for_department'] || 'Acting');
+        const isNowFav = await this.storage.toggleFavoritePerson({
+            id: personId,
+            name: item.title,
+            profilePath: rawProfilePath,
+            department: rawDept,
+            knownForTitles: item.subtitle || ''
+        });
+
+        if (isNowFav) {
+            await this.toast.presentSuccess(`Added ${item.title} to Favorite Artists`, 1800);
+            void this.store.refreshFavoriteStarMovies();
+            try {
+                const details = await firstValueFrom(this.peopleService.getPersonDetails(personId, 'combined_credits'));
+                if (this.storage.isPersonFavorite(personId)) {
+                    const combined = (details?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+                    const extracted = extractPersonCreditMetadata(combined);
+                    if (extracted.creditIds.length > 0) {
+                        await this.storage.updateFavoritePersonCredits(personId, extracted.creditIds, {
+                            topCredits: extracted.topCredits,
+                            knownForTitles: extracted.knownForTitles,
+                            department: details.known_for_department || undefined,
+                            profilePath: details.profile_path
+                        });
+                    }
+                }
+            } catch {
+                // Silent fallback if offline
+            }
+        } else {
+            await this.toast.presentWarning(`Removed ${item.title} from Favorite Artists`, 1800);
+            void this.store.refreshFavoriteStarMovies();
+        }
+    }
+
+    public openArchivePeopleTab(): void {
+        void this.router.navigate(['/tabs', 'archive'], { queryParams: { tab: 'people' } });
     }
 
     public async onQuickToggleLanguage(code: DiscoverLanguageCode): Promise<void> {

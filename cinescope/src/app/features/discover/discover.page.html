@@ -23,28 +23,6 @@
 
     @case ('for-you') {
     <div class="fade-in tab-section-pad">
-        <div class="taste-summary-bar">
-            <div class="taste-summary-left">
-                <ion-icon name="sparkles-outline" class="taste-icon"></ion-icon>
-                <div class="taste-summary-text">
-                    <span class="taste-kicker">PERSONALIZED FOR YOU</span>
-                    <span class="taste-sub">{{ discoverPrefs.summarySubtitle() }}</span>
-                </div>
-            </div>
-            <div class="taste-actions-group">
-                <button
-                    type="button"
-                    class="taste-filter-pill"
-                    [class.active]="discoverPrefs.hideWatchedInDiscover()"
-                    [attr.aria-pressed]="discoverPrefs.hideWatchedInDiscover()"
-                    title="Hide Watched Titles"
-                    (click)="onQuickToggleHideWatched()">
-                    <ion-icon [name]="discoverPrefs.hideWatchedInDiscover() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                    <span>{{ discoverPrefs.hideWatchedInDiscover() ? 'Watched Hidden' : 'Hide Watched' }}</span>
-                </button>
-            </div>
-        </div>
-
         @if (store.isForYouLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -274,7 +252,70 @@
     }
 
     @case ('actors') {
-    <div class="fade-in tab-section-pad">
+    <div class="fade-in tab-section-pad actors-hub-container">
+        <!-- Industry & Category Filter Bar -->
+        <div class="actors-category-bar">
+            <div class="actors-category-chips">
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'all'"
+                    (click)="setActorsCategory('all')">
+                    <span>All Hub</span>
+                </button>
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'favorites'"
+                    (click)="setActorsCategory('favorites')">
+                    <ion-icon name="heart"></ion-icon>
+                    <span>Your Favorites</span>
+                    @if (favoriteActorsSwimlane().length > 0) {
+                    <span class="chip-count">{{ favoriteActorsSwimlane().length }}</span>
+                    }
+                </button>
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'indian'"
+                    (click)="setActorsCategory('indian')">
+                    <span>Indian &amp; Bollywood</span>
+                </button>
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'global'"
+                    (click)="setActorsCategory('global')">
+                    <span>Global &amp; Hollywood</span>
+                </button>
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'world'"
+                    (click)="setActorsCategory('world')">
+                    <span>Asian &amp; World</span>
+                </button>
+                <button
+                    type="button"
+                    class="actors-cat-chip"
+                    [class.active]="actorsCategoryFilter() === 'directors'"
+                    (click)="setActorsCategory('directors')">
+                    <ion-icon name="videocam-outline"></ion-icon>
+                    <span>Directors &amp; Auteurs</span>
+                </button>
+            </div>
+
+            @if (favoriteActorsSwimlane().length > 0) {
+            <button
+                type="button"
+                class="actors-archive-link-btn"
+                (click)="openArchivePeopleTab()">
+                <span>Artist Tracker</span>
+                <ion-icon name="arrow-forward-outline"></ion-icon>
+            </button>
+            }
+        </div>
+
         @if (store.isActorsLoading()) {
         <div class="skeleton-swimlane">
             <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
@@ -284,20 +325,191 @@
             </div>
         </div>
         } @else {
+        @if (actorsCategoryFilter() === 'favorites' && favoriteActorsSwimlane().length === 0) {
+        <div class="actors-empty-favorites-card">
+            <div class="empty-fav-icon">
+                <ion-icon name="heart-outline"></ion-icon>
+            </div>
+            <div class="empty-fav-body">
+                <h3>No Favorite Artists Saved Yet</h3>
+                <p>Tap the heart icon on any actor or director portrait below to track their filmography completion in Archive and unlock personalized marathon rows here.</p>
+                <button type="button" class="empty-fav-cta" (click)="setActorsCategory('all')">
+                    Explore All Stars
+                </button>
+            </div>
+        </div>
+        }
+
         <div class="tab-lanes-stack">
+            <!-- Interactive Star Marathon Spotlight Stage -->
+            @if (spotlightCandidatePool().length > 0 && activeSpotlightStar(); as activeStar) {
+            <section class="star-spotlight-stage">
+                <div class="spotlight-stage-header">
+                    <div class="spotlight-title-wrap">
+                        <span class="spotlight-kicker">INTERACTIVE FILMOGRAPHY MARATHON</span>
+                        <h3 class="spotlight-heading">TAP ANY STAR TO EXPLORE THEIR BEST WORK</h3>
+                    </div>
+                </div>
+
+                <!-- Circular Star Selector Strip -->
+                <div class="spotlight-avatars-strip">
+                    @for (person of spotlightCandidatePool(); track person.id) {
+                    <button
+                        type="button"
+                        class="spotlight-avatar-chip"
+                        [class.active]="activeStar.id === person.id"
+                        (click)="onSelectSpotlightStar(person, $event)">
+                        <div class="avatar-ring-wrap">
+                            <img
+                                [src]="person.posterUrl || 'assets/placeholders/placeholder.webp'"
+                                [alt]="person.title"
+                                loading="lazy" />
+                            @if (isSpotlightStarFavorite(person)) {
+                            <span class="avatar-fav-badge">
+                                <ion-icon name="heart"></ion-icon>
+                            </span>
+                            }
+                        </div>
+                        <span class="avatar-chip-name">{{ person.title }}</span>
+                    </button>
+                    }
+                </div>
+
+                <!-- Selected Star Dossier Banner -->
+                <div
+                    class="spotlight-dossier-card"
+                    tabindex="0"
+                    role="button"
+                    (click)="openSpotlightStarProfile(activeStar)"
+                    (keyup.enter)="openSpotlightStarProfile(activeStar)">
+                    <img
+                        [src]="activeStar.posterUrl || 'assets/placeholders/placeholder.webp'"
+                        [alt]="activeStar.title"
+                        class="dossier-portrait" />
+                    <div class="dossier-info">
+                        <div class="dossier-badges-row">
+                            <span class="dossier-role-pill">
+                                {{ (activeStar.payload?.['known_for_department'] === 'Directing') ? 'DIRECTOR' : 'STAR SPOTLIGHT' }}
+                            </span>
+                            @if (activeSpotlightProgress(); as prog) {
+                            <span class="dossier-progress-pill">
+                                {{ prog.watched }}/{{ prog.total }} Watched ({{ prog.percent }}%)
+                            </span>
+                            }
+                        </div>
+                        <h4 class="dossier-name">{{ activeStar.title }}</h4>
+                        @if (activeStar.subtitle) {
+                        <p class="dossier-known-for">Known for: {{ activeStar.subtitle }}</p>
+                        }
+                    </div>
+                    <div class="dossier-actions">
+                        <button
+                            type="button"
+                            class="dossier-fav-btn"
+                            [class.is-fav]="isSpotlightStarFavorite(activeStar)"
+                            [attr.aria-label]="isSpotlightStarFavorite(activeStar) ? 'Remove from Favorites' : 'Add to Favorites'"
+                            (click)="toggleSpotlightStarFavorite($event, activeStar)">
+                            <ion-icon [name]="isSpotlightStarFavorite(activeStar) ? 'heart' : 'heart-outline'"></ion-icon>
+                        </button>
+                        <button
+                            type="button"
+                            class="dossier-profile-btn"
+                            (click)="openSpotlightStarProfile(activeStar); $event.stopPropagation()">
+                            <span>Profile</span>
+                            <ion-icon name="arrow-forward-outline"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+
+                @if (store.isSpotlightStarLoading()) {
+                <div class="skeleton-swimlane spotlight-skeleton">
+                    <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+                    <div class="skeleton-cards-row">
+                        <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                        <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                    </div>
+                </div>
+                } @else {
+                <div class="spotlight-lanes-wrap">
+                    @if (store.spotlightStarCriticalMovies().length > 0) {
+                    <app-swimlane
+                        title="CRITICS' CHOICE & HIGHEST RATED"
+                        [items]="store.spotlightStarCriticalMovies()"
+                        [queryContext]="spotlightCriticsContext()">
+                    </app-swimlane>
+                    }
+                    @if (store.spotlightStarPopularMovies().length > 0) {
+                    <app-swimlane
+                        title="POPULAR BLOCKBUSTERS & HITS"
+                        [items]="store.spotlightStarPopularMovies()"
+                        [queryContext]="spotlightPopularContext()">
+                    </app-swimlane>
+                    }
+                </div>
+                }
+            </section>
+            }
+
+            <!-- Your Favorite Artists & Unwatched Gems -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'favorites') && favoriteActorsSwimlane().length > 0) {
+            <app-swimlane
+                title="YOUR FAVORITE ARTISTS"
+                [items]="favoriteActorsSwimlane()">
+            </app-swimlane>
+            @if (store.favoriteStarMovies().length > 0) {
+            <app-swimlane
+                title="UNWATCHED GEMS FROM YOUR FAVORITE STARS"
+                [items]="store.favoriteStarMovies()"
+                [queryContext]="favoriteStarsMoviesContext()">
+            </app-swimlane>
+            }
+            }
+
+            <!-- Indian & Bollywood Stars -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'indian') && store.indianActors().length > 0) {
+            <app-swimlane
+                title="BOLLYWOOD & INDIAN CINEMA STARS"
+                [items]="store.indianActors()"
+                [queryContext]="indianActorsContext">
+            </app-swimlane>
+            }
+
+            <!-- Trending & Global Stars -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'global') && store.trendingActors().length > 0) {
             <app-swimlane
                 title="TRENDING STARS THIS WEEK"
                 [items]="store.trendingActors()"
                 [queryContext]="trendingActorsContext">
             </app-swimlane>
-            @if (store.popularActors().length > 0) {
+            }
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'global') && store.popularActors().length > 0) {
             <app-swimlane
                 title="POPULAR GLOBAL ICONS"
                 [items]="store.popularActors()"
                 [queryContext]="popularActorsContext">
             </app-swimlane>
             }
-            @if (store.breakoutActors().length > 0) {
+
+            <!-- World & Asian Stars -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'world') && store.worldActors().length > 0) {
+            <app-swimlane
+                title="K-DRAMA, ANIME & WORLD CINEMA STARS"
+                [items]="store.worldActors()"
+                [queryContext]="worldActorsContext">
+            </app-swimlane>
+            }
+
+            <!-- Visionary Directors -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'directors') && store.visionaryDirectors().length > 0) {
+            <app-swimlane
+                title="VISIONARY DIRECTORS & AUTEURS"
+                [items]="store.visionaryDirectors()"
+                [queryContext]="visionaryDirectorsContext">
+            </app-swimlane>
+            }
+
+            <!-- Breakout & Fan Favorites -->
+            @if ((actorsCategoryFilter() === 'all' || actorsCategoryFilter() === 'global') && store.breakoutActors().length > 0) {
             <app-swimlane
                 title="BREAKOUT & FAN FAVORITES"
                 [items]="store.breakoutActors()"

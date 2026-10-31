@@ -319,6 +319,75 @@ export class CollectionLoaderService {
       return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
     }
 
+    if (context?.type === 'indian_people' || context?.type === 'world_people' || context?.type === 'director_people') {
+      const isIndian = context.type === 'indian_people';
+      const isDirectors = context.type === 'director_people';
+      const discoverRes = await firstValueFrom(
+        this.discoverService.discoverMovies(
+          isIndian
+            ? { with_origin_country: 'IN', sort_by: 'popularity.desc', 'vote_count.gte': 30, page }
+            : isDirectors
+              ? { sort_by: 'vote_average.desc', 'vote_count.gte': 1200, page }
+              : { with_original_language: 'ko|ja|es|fr', sort_by: 'popularity.desc', 'vote_count.gte': 80, page }
+        )
+      );
+      const sampleMovies = (discoverRes.results || []).slice(0, 5);
+      const creditsList = await Promise.all(
+        sampleMovies.map((m) =>
+          firstValueFrom(this.moviesService.getMovieCredits(m.id))
+            .then((credits) => ({ movieTitle: m.title, credits }))
+            .catch(() => null)
+        )
+      );
+      const peopleMap = new Map<number, SwimlaneItem>();
+      for (const entry of creditsList) {
+        if (!entry?.credits) continue;
+        if (isDirectors) {
+          for (const crew of entry.credits.crew || []) {
+            if (crew.job === 'Director' && crew.profile_path && !peopleMap.has(crew.id)) {
+              peopleMap.set(crew.id, {
+                id: crew.id,
+                mediaType: 'person',
+                title: crew.name,
+                subtitle: entry.movieTitle,
+                posterUrl: resolveMediaImageUrl(crew.profile_path, 'w500'),
+                bookmarkState: 'none',
+                payload: {
+                  id: crew.id,
+                  name: crew.name,
+                  profile_path: crew.profile_path,
+                  known_for_department: 'Directing'
+                }
+              });
+            }
+          }
+        } else {
+          for (const cast of (entry.credits.cast || []).slice(0, 5)) {
+            if (cast.profile_path && !peopleMap.has(cast.id)) {
+              peopleMap.set(cast.id, {
+                id: cast.id,
+                mediaType: 'person',
+                title: cast.name,
+                subtitle: entry.movieTitle,
+                posterUrl: resolveMediaImageUrl(cast.profile_path, 'w500'),
+                bookmarkState: 'none',
+                payload: {
+                  id: cast.id,
+                  name: cast.name,
+                  profile_path: cast.profile_path,
+                  known_for_department: cast.known_for_department || 'Acting'
+                }
+              });
+            }
+          }
+        }
+      }
+      return {
+        items: [...peopleMap.values()],
+        hasMore: discoverRes.page < discoverRes.total_pages
+      };
+    }
+
     // Person Filmography Discover
     if (context?.type === 'person_credits' && context.id) {
       const sortBy = getDiscoverSortBy(sortMode, 'popularity.desc');

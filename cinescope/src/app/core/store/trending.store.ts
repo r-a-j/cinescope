@@ -67,10 +67,18 @@ interface TrendingState {
     topRatedTvShows: SwimlaneItem[];
     topRatedIndianMovies: SwimlaneItem[];
     isTopRatedLoading: boolean;
-    // Actors
+    // Actors & Creators Hub
     trendingActors: SwimlaneItem[];
+    indianActors: SwimlaneItem[];
     popularActors: SwimlaneItem[];
+    worldActors: SwimlaneItem[];
+    visionaryDirectors: SwimlaneItem[];
     breakoutActors: SwimlaneItem[];
+    favoriteStarMovies: SwimlaneItem[];
+    spotlightStarId: number | null;
+    spotlightStarCriticalMovies: SwimlaneItem[];
+    spotlightStarPopularMovies: SwimlaneItem[];
+    isSpotlightStarLoading: boolean;
     isActorsLoading: boolean;
 
     hasLoadedTrendingData: boolean;
@@ -108,8 +116,16 @@ const initialState: TrendingState = {
     topRatedIndianMovies: [],
     isTopRatedLoading: false,
     trendingActors: [],
+    indianActors: [],
     popularActors: [],
+    worldActors: [],
+    visionaryDirectors: [],
     breakoutActors: [],
+    favoriteStarMovies: [],
+    spotlightStarId: null,
+    spotlightStarCriticalMovies: [],
+    spotlightStarPopularMovies: [],
+    isSpotlightStarLoading: false,
     isActorsLoading: false,
 
     hasLoadedTrendingData: false,
@@ -1193,26 +1209,394 @@ export const TrendingStore = signalStore(
             }
         },
 
+        async selectSpotlightStar(personId: number): Promise<void> {
+            if (!personId || Number.isNaN(personId)) return;
+            patchState(store, {
+                spotlightStarId: personId,
+                isSpotlightStarLoading: true
+            });
+
+            try {
+                // Determine whether person is primarily a director or an actor to avoid irrelevant cameo/soundtrack matches
+                const allPool = [
+                    ...store.trendingActors(),
+                    ...store.indianActors(),
+                    ...store.worldActors(),
+                    ...store.visionaryDirectors()
+                ];
+                const matchedPerson = allPool.find((p) => Number(p.id) === personId);
+                const isDirector = matchedPerson?.payload?.['known_for_department'] === 'Directing';
+
+                const primaryParam = isDirector
+                    ? { with_crew: String(personId) }
+                    : { with_cast: String(personId) };
+
+                let [criticsRes, popularRes] = await Promise.all([
+                    firstValueFrom(
+                        discoverService.discoverMovies({
+                            ...primaryParam,
+                            sort_by: 'vote_average.desc',
+                            'vote_count.gte': 25
+                        })
+                    ),
+                    firstValueFrom(
+                        discoverService.discoverMovies({
+                            ...primaryParam,
+                            sort_by: 'popularity.desc'
+                        })
+                    )
+                ]);
+
+                // Fallback to with_people only if with_cast/with_crew returned no results
+                if ((criticsRes.results || []).length === 0 && (popularRes.results || []).length === 0) {
+                    [criticsRes, popularRes] = await Promise.all([
+                        firstValueFrom(
+                            discoverService.discoverMovies({
+                                with_people: String(personId),
+                                sort_by: 'vote_average.desc',
+                                'vote_count.gte': 20
+                            })
+                        ),
+                        firstValueFrom(
+                            discoverService.discoverMovies({
+                                with_people: String(personId),
+                                sort_by: 'popularity.desc'
+                            })
+                        )
+                    ]);
+                }
+
+                const criticsItems = filterWatched(mapMoviesToSwimlane(criticsRes.results || []));
+                const criticsIds = new Set(criticsItems.slice(0, 6).map((m) => m.id));
+                const popularRaw = filterWatched(mapMoviesToSwimlane(popularRes.results || []));
+                const popularDeduped = popularRaw.filter((m) => !criticsIds.has(m.id));
+
+                if (store.spotlightStarId() === personId) {
+                    patchState(store, {
+                        spotlightStarCriticalMovies: criticsItems.length >= 3 ? criticsItems : popularRaw,
+                        spotlightStarPopularMovies: popularDeduped.length >= 4 ? popularDeduped : popularRaw,
+                        isSpotlightStarLoading: false
+                    });
+                }
+            } catch (err) {
+                console.warn('Failed to load spotlight star filmography', err);
+                if (store.spotlightStarId() === personId) {
+                    patchState(store, { isSpotlightStarLoading: false });
+                }
+            }
+        },
+
+        async refreshFavoriteStarMovies(): Promise<void> {
+            const favDocs = storage.favoritePeople();
+            if (favDocs.length === 0) {
+                patchState(store, { favoriteStarMovies: [] });
+                return;
+            }
+            const topFavIds = favDocs.slice(0, 5).map((d) => d.tmdbId).filter(Boolean);
+            if (topFavIds.length === 0) return;
+
+            try {
+                const res = await firstValueFrom(
+                    discoverService.discoverMovies({
+                        with_people: topFavIds.join('|'),
+                        sort_by: 'vote_average.desc',
+                        'vote_count.gte': 30
+                    })
+                );
+                // Always filter out already watched titles for the "Unwatched Gems" row
+                const unwatched = mapMoviesToSwimlane(res.results || []).filter(
+                    (item) => storage.getBookmarkState(item.id, 'movie') !== 'watched'
+                );
+                patchState(store, { favoriteStarMovies: unwatched });
+            } catch (err) {
+                console.warn('Failed to refresh favorite star movies', err);
+            }
+        },
+
         async loadActorsData(force = false): Promise<void> {
-            if (!force && (store.trendingActors().length > 0 || store.isActorsLoading())) return;
+            if (!force && (store.trendingActors().length > 0 || store.isActorsLoading())) {
+                void this.refreshFavoriteStarMovies();
+                return;
+            }
             patchState(store, { isActorsLoading: true });
             try {
-                const [trendingRes, popularPage1, popularPage2] = await Promise.all([
+                const prefLangs = discoverPrefs.preferredLanguages();
+                const indianLangCodes = ['hi', 'ta', 'te', 'ml', 'kn', 'pa', 'mr', 'bn', 'gu'];
+                const userIndianLangs = prefLangs.filter((l) => indianLangCodes.includes(l));
+                const indianLangQuery = userIndianLangs.length > 0 ? userIndianLangs.join('|') : 'hi|ta|te|ml';
+
+                const worldLangCodes = prefLangs.filter((l) => !indianLangCodes.includes(l) && l !== 'en');
+                const worldLangQuery = worldLangCodes.length > 0 ? worldLangCodes.join('|') : 'ko|ja|es|fr';
+
+                const [
+                    trendingRes,
+                    popularPage1,
+                    popularPage2,
+                    indianPopularMoviesRes,
+                    indianAcclaimedMoviesRes,
+                    worldMoviesRes
+                ] = await Promise.all([
                     firstValueFrom(trendingService.getTrendingPeople('week')),
                     firstValueFrom(peopleService.getPopularPeople('en-US', 1)),
-                    firstValueFrom(peopleService.getPopularPeople('en-US', 2))
+                    firstValueFrom(peopleService.getPopularPeople('en-US', 2)),
+                    firstValueFrom(
+                        discoverService.discoverMovies({
+                            with_original_language: indianLangQuery,
+                            sort_by: 'popularity.desc',
+                            'vote_count.gte': 35
+                        })
+                    ),
+                    firstValueFrom(
+                        discoverService.discoverMovies({
+                            with_origin_country: 'IN',
+                            with_original_language: indianLangQuery,
+                            sort_by: 'vote_average.desc',
+                            'vote_count.gte': 80
+                        })
+                    ),
+                    firstValueFrom(
+                        discoverService.discoverMovies({
+                            with_original_language: worldLangQuery,
+                            sort_by: 'popularity.desc',
+                            'vote_count.gte': 90
+                        })
+                    )
                 ]);
+
+                // Extract real Indian Stars & Directors from top Indian movies with strict language validation
+                const indianLangSet = new Set(['hi', 'ta', 'te', 'ml', 'kn', 'pa', 'mr', 'bn', 'gu', 'or', 'as', 'ur']);
+                const indianMovieSamples = [
+                    ...(indianPopularMoviesRes.results || []),
+                    ...(indianAcclaimedMoviesRes.results || [])
+                ].filter((m) => m.original_language && indianLangSet.has(m.original_language));
+                const uniqueIndianMovieMap = new Map<number, TmdbMovieListItemDto>();
+                for (const m of indianMovieSamples) {
+                    if (m.id && !uniqueIndianMovieMap.has(m.id)) {
+                        uniqueIndianMovieMap.set(m.id, m);
+                    }
+                }
+                const indianMoviesToInspect = [...uniqueIndianMovieMap.values()].slice(0, 6);
+
+                const worldMoviesToInspect = (worldMoviesRes.results || []).slice(0, 5);
+
+                const [indianCreditsList, worldCreditsList] = await Promise.all([
+                    Promise.all(
+                        indianMoviesToInspect.map((m) =>
+                            firstValueFrom(moviesService.getMovieCredits(m.id)).then((credits) => ({
+                                movieTitle: m.title,
+                                credits
+                            })).catch(() => null)
+                        )
+                    ),
+                    Promise.all(
+                        worldMoviesToInspect.map((m) =>
+                            firstValueFrom(moviesService.getMovieCredits(m.id)).then((credits) => ({
+                                movieTitle: m.title,
+                                credits
+                            })).catch(() => null)
+                        )
+                    )
+                ]);
+
+                const indianActorsMap = new Map<number, { item: SwimlaneItem; titles: Set<string>; score: number }>();
+                const worldActorsMap = new Map<number, { item: SwimlaneItem; titles: Set<string>; score: number }>();
+                const directorsMap = new Map<number, { item: SwimlaneItem; titles: Set<string>; score: number }>();
+
+                // Seed directors from trending & popular people first
+                for (const p of [...(trendingRes.results || []), ...(popularPage1.results || []), ...(popularPage2.results || [])]) {
+                    if (p.profile_path && /directing/i.test(p.known_for_department || '')) {
+                        const knownTitles = (p.known_for ?? [])
+                            .map((k) => ('title' in k ? k.title : k.name))
+                            .filter((t): t is string => Boolean(t))
+                            .slice(0, 2);
+                        directorsMap.set(p.id, {
+                            item: {
+                                id: p.id,
+                                mediaType: 'person',
+                                title: p.name,
+                                subtitle: knownTitles.join(', ') || 'Directing',
+                                posterUrl: resolveMediaImageUrl(p.profile_path, 'w500'),
+                                bookmarkState: 'none',
+                                payload: {
+                                    ...p,
+                                    known_for_department: 'Directing'
+                                }
+                            },
+                            titles: new Set(knownTitles),
+                            score: (p.popularity || 10) + 25
+                        });
+                    }
+                }
+
+                // Process Indian movie credits -> Indian Stars & Directors
+                for (const entry of indianCreditsList) {
+                    if (!entry?.credits) continue;
+                    const { movieTitle, credits } = entry;
+                    for (const castMember of (credits.cast || []).slice(0, 5)) {
+                        if (!castMember.profile_path || !castMember.id) continue;
+                        const existing = indianActorsMap.get(castMember.id);
+                        if (existing) {
+                            existing.titles.add(movieTitle);
+                            existing.score += (castMember.popularity || 5) + 15;
+                            existing.item.subtitle = [...existing.titles].slice(0, 2).join(', ');
+                        } else {
+                            indianActorsMap.set(castMember.id, {
+                                item: {
+                                    id: castMember.id,
+                                    mediaType: 'person',
+                                    title: castMember.name,
+                                    subtitle: movieTitle,
+                                    posterUrl: resolveMediaImageUrl(castMember.profile_path, 'w500'),
+                                    bookmarkState: 'none',
+                                    payload: {
+                                        id: castMember.id,
+                                        name: castMember.name,
+                                        profile_path: castMember.profile_path,
+                                        known_for_department: castMember.known_for_department || 'Acting',
+                                        popularity: castMember.popularity
+                                    }
+                                },
+                                titles: new Set([movieTitle]),
+                                score: (castMember.popularity || 5) + Math.max(0, 10 - (castMember.order || 0))
+                            });
+                        }
+                    }
+
+                    for (const crewMember of credits.crew || []) {
+                        if (crewMember.job !== 'Director' || !crewMember.profile_path || !crewMember.id) continue;
+                        const existing = directorsMap.get(crewMember.id);
+                        if (existing) {
+                            existing.titles.add(movieTitle);
+                            existing.score += (crewMember.popularity || 5) + 12;
+                            existing.item.subtitle = [...existing.titles].slice(0, 2).join(', ');
+                        } else {
+                            directorsMap.set(crewMember.id, {
+                                item: {
+                                    id: crewMember.id,
+                                    mediaType: 'person',
+                                    title: crewMember.name,
+                                    subtitle: movieTitle,
+                                    posterUrl: resolveMediaImageUrl(crewMember.profile_path, 'w500'),
+                                    bookmarkState: 'none',
+                                    payload: {
+                                        id: crewMember.id,
+                                        name: crewMember.name,
+                                        profile_path: crewMember.profile_path,
+                                        known_for_department: 'Directing',
+                                        popularity: crewMember.popularity
+                                    }
+                                },
+                                titles: new Set([movieTitle]),
+                                score: (crewMember.popularity || 5) + 12
+                            });
+                        }
+                    }
+                }
+
+                // Process World/Asian movie credits -> World Stars & Directors
+                for (const entry of worldCreditsList) {
+                    if (!entry?.credits) continue;
+                    const { movieTitle, credits } = entry;
+                    for (const castMember of (credits.cast || []).slice(0, 4)) {
+                        if (!castMember.profile_path || !castMember.id) continue;
+                        const existing = worldActorsMap.get(castMember.id);
+                        if (existing) {
+                            existing.titles.add(movieTitle);
+                            existing.score += (castMember.popularity || 5) + 15;
+                            existing.item.subtitle = [...existing.titles].slice(0, 2).join(', ');
+                        } else {
+                            worldActorsMap.set(castMember.id, {
+                                item: {
+                                    id: castMember.id,
+                                    mediaType: 'person',
+                                    title: castMember.name,
+                                    subtitle: movieTitle,
+                                    posterUrl: resolveMediaImageUrl(castMember.profile_path, 'w500'),
+                                    bookmarkState: 'none',
+                                    payload: {
+                                        id: castMember.id,
+                                        name: castMember.name,
+                                        profile_path: castMember.profile_path,
+                                        known_for_department: castMember.known_for_department || 'Acting',
+                                        popularity: castMember.popularity
+                                    }
+                                },
+                                titles: new Set([movieTitle]),
+                                score: (castMember.popularity || 5) + Math.max(0, 10 - (castMember.order || 0))
+                            });
+                        }
+                    }
+
+                    for (const crewMember of credits.crew || []) {
+                        if (crewMember.job !== 'Director' || !crewMember.profile_path || !crewMember.id) continue;
+                        const existing = directorsMap.get(crewMember.id);
+                        if (existing) {
+                            existing.titles.add(movieTitle);
+                            existing.score += (crewMember.popularity || 5) + 12;
+                            existing.item.subtitle = [...existing.titles].slice(0, 2).join(', ');
+                        } else {
+                            directorsMap.set(crewMember.id, {
+                                item: {
+                                    id: crewMember.id,
+                                    mediaType: 'person',
+                                    title: crewMember.name,
+                                    subtitle: movieTitle,
+                                    posterUrl: resolveMediaImageUrl(crewMember.profile_path, 'w500'),
+                                    bookmarkState: 'none',
+                                    payload: {
+                                        id: crewMember.id,
+                                        name: crewMember.name,
+                                        profile_path: crewMember.profile_path,
+                                        known_for_department: 'Directing',
+                                        popularity: crewMember.popularity
+                                    }
+                                },
+                                titles: new Set([movieTitle]),
+                                score: (crewMember.popularity || 5) + 10
+                            });
+                        }
+                    }
+                }
+
                 const trendingIds = new Set((trendingRes.results || []).map((p) => p.id));
                 const filteredPopular = (popularPage1.results || []).filter((p) => !trendingIds.has(p.id));
 
+                const trendingActors = mapPeopleToSwimlane(trendingRes.results || []);
+                const indianActors = [...indianActorsMap.values()]
+                    .sort((a, b) => b.score - a.score)
+                    .map((e) => e.item);
+                const popularActors = mapPeopleToSwimlane(
+                    filteredPopular.length >= 6 ? filteredPopular : (popularPage1.results || [])
+                );
+                const worldActors = [...worldActorsMap.values()]
+                    .sort((a, b) => b.score - a.score)
+                    .map((e) => e.item);
+                const visionaryDirectors = [...directorsMap.values()]
+                    .sort((a, b) => b.score - a.score)
+                    .map((e) => e.item);
+                const breakoutActors = mapPeopleToSwimlane(popularPage2.results || []);
+
                 patchState(store, {
-                    trendingActors: mapPeopleToSwimlane(trendingRes.results || []),
-                    popularActors: mapPeopleToSwimlane(
-                        filteredPopular.length >= 6 ? filteredPopular : (popularPage1.results || [])
-                    ),
-                    breakoutActors: mapPeopleToSwimlane(popularPage2.results || []),
+                    trendingActors,
+                    indianActors,
+                    popularActors,
+                    worldActors,
+                    visionaryDirectors,
+                    breakoutActors,
                     isActorsLoading: false
                 });
+
+                void this.refreshFavoriteStarMovies();
+
+                // Auto-select initial spotlight star if none is active
+                if (!store.spotlightStarId()) {
+                    const favFirst = storage.favoritePeople()[0]?.tmdbId;
+                    const fallbackFirst = Number(indianActors[0]?.id || trendingActors[0]?.id || popularActors[0]?.id || 0);
+                    const initialStarId = favFirst || fallbackFirst;
+                    if (initialStarId > 0) {
+                        void this.selectSpotlightStar(initialStarId);
+                    }
+                }
             } catch (error) {
                 console.error('Failed to load Trending Actors', error);
                 patchState(store, { isActorsLoading: false });
