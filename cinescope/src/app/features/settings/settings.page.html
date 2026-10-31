@@ -437,7 +437,7 @@
         </ion-item>
         <ion-item lines="none">
             <ion-label>Version</ion-label>
-            <ion-note slot="end">{{ appVersion() }}</ion-note>
+            <ion-note slot="end">v{{ appVersion() }}</ion-note>
         </ion-item>
     </ion-list>
 
@@ -454,6 +454,7 @@
             <ion-button fill="clear" size="small" color="medium"
                 (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy</ion-button>
         </div>
+        <p class="app-version-footer">CineScope v{{ appVersion() }}</p>
     </div>
 
 </ion-content>

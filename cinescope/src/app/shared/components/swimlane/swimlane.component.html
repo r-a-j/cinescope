@@ -13,23 +13,41 @@
 
 <div class="swimlane-scroll-container">
     @for (item of items(); track item.id; let idx = $index) {
-    <div class="swimlane-item">
-        <app-poster-card
-            [title]="item.title"
-            [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
-            [priority]="idx < 4"
-            [tmdbId]="getNumericTmdbId(item)"
-            [mediaType]="getMediaType(item)"
-            [showBookmark]="item.mediaType !== 'person'"
-            [bookmarkState]="getItemBookmarkState(item)"
-            (cardClick)="onCardClick(item)"
-            (bookmarkToggle)="onToggleBookmark(item)">
-        </app-poster-card>
+    <div class="swimlane-item" [class.is-person-item]="item.mediaType === 'person'">
+        <div class="swimlane-card-stage">
+            <app-poster-card
+                [title]="item.title"
+                [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
+                [priority]="idx < 4"
+                [tmdbId]="getNumericTmdbId(item)"
+                [mediaType]="getMediaType(item)"
+                [showBookmark]="item.mediaType !== 'person'"
+                [bookmarkState]="getItemBookmarkState(item)"
+                (cardClick)="onCardClick(item)"
+                (bookmarkToggle)="onToggleBookmark(item)">
+            </app-poster-card>
+
+            @if (item.mediaType === 'person') {
+            <button
+                type="button"
+                class="person-fav-btn"
+                [class.is-fav]="isPersonFavorite(item)"
+                [attr.aria-label]="isPersonFavorite(item) ? 'Remove from Favorite Artists' : 'Add to Favorite Artists'"
+                (click)="onTogglePersonFavorite($event, item)">
+                <ion-icon [name]="isPersonFavorite(item) ? 'heart' : 'heart-outline'"></ion-icon>
+            </button>
+            <span
+                class="person-dept-pill"
+                [class.is-director]="getPersonDepartmentLabel(item) === 'DIRECTOR'">
+                {{ getPersonDepartmentLabel(item) }}
+            </span>
+            }
+        </div>
         @if (item.mediaType === 'person' || item.subtitle) {
         <div class="swimlane-item-caption" tabindex="0" (click)="onCardClick(item)" (keyup.enter)="onCardClick(item)">
             <div class="swimlane-item-name">{{ item.title }}</div>
             @if (item.subtitle) {
-            <div class="swimlane-item-sub">{{ item.mediaType === 'person' ? 'Known for: ' + item.subtitle : item.subtitle }}</div>
+            <div class="swimlane-item-sub">{{ item.mediaType === 'person' ? item.subtitle : item.subtitle }}</div>
             }
         </div>
         }

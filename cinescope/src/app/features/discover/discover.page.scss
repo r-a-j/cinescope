@@ -665,3 +665,415 @@ ion-segment-button {
         color: rgba(229, 9, 20, 0.65);
     }
 }
+
+// ==========================================
+// 🌟 ACTORS & CREATORS HUB
+// ==========================================
+
+.actors-category-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 16px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.actors-category-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.actors-cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    ion-icon {
+        font-size: 0.85rem;
+        color: #ff3b5c;
+    }
+
+    .chip-count {
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: rgba(229, 9, 20, 0.25);
+        color: #ffffff;
+    }
+
+    &.active {
+        background: linear-gradient(135deg, rgba(229, 9, 20, 0.9), rgba(185, 10, 25, 0.95));
+        border-color: rgba(255, 90, 105, 0.65);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(229, 9, 20, 0.35);
+
+        ion-icon {
+            color: #ffffff;
+        }
+
+        .chip-count {
+            background: rgba(0, 0, 0, 0.32);
+            color: #f5c518;
+        }
+    }
+}
+
+.actors-archive-link-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(245, 197, 24, 0.1);
+    border: 1px solid rgba(245, 197, 24, 0.32);
+    color: #f5c518;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 0.8rem;
+    }
+}
+
+.actors-empty-favorites-card {
+    margin: 4px 16px 20px;
+    padding: 18px 16px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(229, 9, 20, 0.08), rgba(15, 15, 22, 0.9));
+    border: 1px solid rgba(229, 9, 20, 0.25);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+
+    .empty-fav-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(229, 9, 20, 0.16);
+        border: 1px solid rgba(229, 9, 20, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ff3b5c;
+        flex-shrink: 0;
+
+        ion-icon {
+            font-size: 1.3rem;
+        }
+    }
+
+    .empty-fav-body {
+        h3 {
+            margin: 0 0 4px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        p {
+            margin: 0 0 12px;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.68);
+        }
+    }
+
+    .empty-fav-cta {
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(245, 197, 24, 0.45);
+        background: rgba(245, 197, 24, 0.14);
+        color: #f5c518;
+        font-size: 0.74rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+}
+
+.star-spotlight-stage {
+    margin: 0 12px 10px;
+    padding: 16px 0 12px;
+    border-radius: 18px;
+    background: linear-gradient(165deg, rgba(24, 24, 34, 0.85) 0%, rgba(10, 10, 15, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.spotlight-stage-header {
+    padding: 0 16px 12px;
+}
+
+.spotlight-kicker {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #f5c518;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.spotlight-heading {
+    margin: 0;
+    font-family: var(--font-display, 'Bebas Neue', sans-serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+}
+
+.spotlight-avatars-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 4px 16px 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 16px;
+    scroll-snap-type: x proximity;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.spotlight-avatar-chip {
+    flex: 0 0 72px;
+    width: 72px;
+    min-width: 72px;
+    scroll-snap-align: start;
+    background: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.68);
+    transition: transform 0.16s ease, color 0.16s ease;
+
+    .avatar-ring-wrap {
+        position: relative;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        padding: 2px;
+        background: rgba(255, 255, 255, 0.14);
+        transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+        img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #16161e;
+            display: block;
+        }
+    }
+
+    .avatar-fav-badge {
+        position: absolute;
+        right: -2px;
+        bottom: -2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #e50914;
+        border: 2px solid #0c0c12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+
+        ion-icon {
+            font-size: 9px;
+        }
+    }
+
+    .avatar-chip-name {
+        width: 100%;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &.active {
+        color: #ffffff;
+
+        .avatar-ring-wrap {
+            background: linear-gradient(135deg, #e50914, #f5c518);
+            box-shadow: 0 0 14px rgba(229, 9, 20, 0.48);
+            transform: scale(1.05);
+        }
+
+        .avatar-chip-name {
+            color: #f5c518;
+            font-weight: 800;
+        }
+    }
+}
+
+.spotlight-dossier-card {
+    margin: 0 14px 16px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease;
+
+    &:active {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(245, 197, 24, 0.4);
+    }
+
+    .dossier-portrait {
+        width: 52px;
+        height: 68px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #14141c;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        flex-shrink: 0;
+    }
+
+    .dossier-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .dossier-badges-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 3px;
+    }
+
+    .dossier-role-pill {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(229, 9, 20, 0.2);
+        border: 1px solid rgba(229, 9, 20, 0.45);
+        color: #ff4d6a;
+    }
+
+    .dossier-progress-pill {
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(245, 197, 24, 0.14);
+        border: 1px solid rgba(245, 197, 24, 0.35);
+        color: #f5c518;
+    }
+
+    .dossier-name {
+        margin: 0;
+        font-size: 0.96rem;
+        font-weight: 800;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dossier-known-for {
+        margin: 2px 0 0;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.58);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dossier-actions {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-shrink: 0;
+    }
+
+    .dossier-fav-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.82);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        ion-icon {
+            font-size: 16px;
+        }
+
+        &.is-fav {
+            background: rgba(229, 9, 20, 0.22);
+            border-color: rgba(229, 9, 20, 0.65);
+            color: #ff3b5c;
+        }
+    }
+
+    .dossier-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+
+        ion-icon {
+            font-size: 0.78rem;
+            color: #f5c518;
+        }
+    }
+}
+
+.spotlight-lanes-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}

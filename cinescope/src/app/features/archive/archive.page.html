@@ -78,6 +78,62 @@
       </div>
     }
 
+    @if (activeTab() === 'people' && favoritePeopleCards().length > 0) {
+      <div class="filter-bar people-filter-bar">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="peopleFilter() === 'all'"
+          (click)="setPeopleFilter('all')">
+          All <span>{{ peopleCounts().all }}</span>
+        </button>
+        @if (peopleCounts().actors > 0 && peopleCounts().directors > 0) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="peopleFilter() === 'actors'"
+            (click)="setPeopleFilter('actors')">
+            Actors <span>{{ peopleCounts().actors }}</span>
+          </button>
+        }
+        @if (peopleCounts().directors > 0) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="peopleFilter() === 'directors'"
+            (click)="setPeopleFilter('directors')">
+            Directors <span>{{ peopleCounts().directors }}</span>
+          </button>
+        }
+        @if (peopleCounts().inProgress > 0) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="peopleFilter() === 'in_progress'"
+            (click)="setPeopleFilter('in_progress')">
+            In Progress <span>{{ peopleCounts().inProgress }}</span>
+          </button>
+        }
+        @if (peopleCounts().milestones > 0) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="peopleFilter() === 'milestones'"
+            (click)="setPeopleFilter('milestones')">
+            Superfan <span>{{ peopleCounts().milestones }}</span>
+          </button>
+        }
+
+        <button
+          type="button"
+          class="filter-chip people-sort-chip"
+          (click)="cyclePeopleSort()">
+          <ion-icon name="swap-vertical-outline"></ion-icon>
+          {{ peopleSortLabel() }}
+        </button>
+      </div>
+    }
+
     <ion-content color="background">
       <div class="archive-panes-wrapper" data-tour="archive-library">
         <!-- Keep-Alive Watchlist Pane -->
@@ -343,44 +399,131 @@
               icon="heart-outline"
               kicker="FILMOGRAPHY TRACKER"
               title="NO FAVORITE ARTISTS YET"
-              description="Explore actors and directors on CineScope, tap the heart icon on their profile, and track your filmography progress here."
+              description="Explore actors and directors on CineScope, tap the heart icon on their profile or card, and track your filmography completion here."
               actionLabel="Search Artists"
               actionIcon="search-outline"
               (actionClick)="goToSearchPeople()"
             ></app-empty-state>
+          } @else if (filteredPeopleCards().length === 0) {
+            <app-empty-state
+              class="empty-archive"
+              icon="trophy-outline"
+              kicker="FILTERED VIEW"
+              title="NO MATCHING ARTISTS"
+              description="No favorite artists match this filter yet. Switch back to All to view your tracked actors and directors."
+              actionLabel="Show All Artists"
+              actionIcon="albums-outline"
+              actionVariant="secondary"
+              (actionClick)="setPeopleFilter('all')"
+            ></app-empty-state>
           } @else {
             <div
-              class="people-grid"
+              class="people-archive-grid"
               [class.fade-phase-a]="fadePhase() === 'a'"
               [class.fade-phase-b]="fadePhase() === 'b'">
-              @for (person of favoritePeopleCards(); track person.id; let idx = $index) {
+              @for (person of filteredPeopleCards(); track person.id; let idx = $index) {
                 <div
-                  class="person-card"
+                  class="person-archive-card"
+                  [class.is-director-card]="person.isDirector"
+                  [class.is-completed-card]="person.percent >= 100 && person.total > 0"
                   [style.--enter-delay]="(idx < 12 ? idx * 16 : 0) + 'ms'"
                   (click)="onOpenPersonDetail(person)"
                   tabindex="0"
                   role="button"
                   (keyup.enter)="onOpenPersonDetail(person)">
-                  <div class="person-card-avatar-wrap">
+                  <div class="person-portrait-frame" [class.is-director]="person.isDirector">
                     <img
                       [src]="person.profileUrl"
                       [alt]="person.name"
-                      class="person-avatar"
-                      loading="lazy" />
+                      loading="lazy"
+                      (error)="onPersonAvatarError($event)" />
+                    <span class="person-dept-tag" [class.is-director]="person.isDirector">
+                      {{ person.departmentBadge }}
+                    </span>
                   </div>
 
-                  <div class="person-card-info">
-                    <span class="person-card-name">{{ person.name }}</span>
-                    <span class="person-card-dept">{{ person.department }}</span>
+                  <div class="card-body">
+                    <div class="card-header-row">
+                      <div class="person-title-group">
+                        <span class="person-card-name">{{ person.name }}</span>
+                        @if (person.rankBadge) {
+                          <span
+                            class="person-rank-pill"
+                            [class.is-completionist]="person.rankBadge === 'COMPLETIONIST'"
+                            [class.is-superfan]="person.rankBadge === 'SUPERFAN'">
+                            {{ person.rankBadge }}
+                          </span>
+                        }
+                      </div>
+                      <button
+                        type="button"
+                        class="untrack-btn"
+                        [attr.aria-label]="'Remove ' + person.name + ' from Favorites'"
+                        title="Remove from Favorite Artists"
+                        (click)="onRemoveFavoritePerson($event, person)">
+                        <ion-icon name="heart"></ion-icon>
+                      </button>
+                    </div>
 
-                    <div class="person-progress-block">
-                      <div class="person-progress-bar">
-                        <div class="person-progress-fill" [style.width.%]="person.percent"></div>
+                    @if (person.knownForSubtitle) {
+                      <div class="person-known-for-line">
+                        Known for: {{ person.knownForSubtitle }}
                       </div>
-                      <div class="person-progress-meta">
-                        <span class="progress-counts">{{ person.watched }}/{{ person.total }} watched</span>
-                        <span class="progress-pct">{{ person.percent }}%</span>
+                    }
+
+                    <div class="progress-block">
+                      <div class="progress-meta">
+                        @if (person.isHydrating && person.total === 0) {
+                          <span class="counts-label syncing-label">Syncing filmography...</span>
+                          <span class="pct-label">—</span>
+                        } @else {
+                          <span class="counts-label">
+                            <strong>{{ person.watched }}</strong> of <strong>{{ person.total }}</strong> watched
+                            @if (person.watchlist > 0) {
+                              <span class="upcoming-inline">+{{ person.watchlist }} saved</span>
+                            }
+                          </span>
+                          <span
+                            class="pct-label"
+                            [class.completed-pct]="person.percent >= 100 && person.total > 0">
+                            {{ person.percent }}%
+                          </span>
+                        }
                       </div>
+                      <div class="progress-track">
+                        <div
+                          class="progress-fill"
+                          [class.completed-fill]="person.percent >= 100 && person.total > 0"
+                          [class.director-fill]="person.isDirector && person.percent < 100"
+                          [class.syncing-fill]="person.isHydrating && person.total === 0"
+                          [style.width.%]="person.isHydrating && person.total === 0 ? 45 : person.percent">
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card-footer-row">
+                      @if (person.percent >= 100 && person.total > 0) {
+                        <div class="next-step-pill completed-pill">
+                          <ion-icon name="checkmark-circle"></ion-icon>
+                          <span>Complete Filmography Watched</span>
+                        </div>
+                      } @else if (person.upNextCredit; as upNext) {
+                        <button
+                          type="button"
+                          class="next-step-pill resume-pill"
+                          (click)="onOpenPersonUpNext($event, person)">
+                          <ion-icon name="play-circle-outline"></ion-icon>
+                          <span class="next-text">
+                            <strong>{{ person.watched > 0 ? 'Up Next:' : 'Start:' }}</strong> {{ upNext.title }}{{ upNext.vote_average ? ' (★ ' + upNext.vote_average + ')' : '' }}
+                          </span>
+                          <ion-icon name="chevron-forward-outline" class="next-arrow"></ion-icon>
+                        </button>
+                      } @else {
+                        <div class="next-step-pill open-pill">
+                          <span>Explore Filmography</span>
+                          <ion-icon name="chevron-forward-outline" class="next-arrow"></ion-icon>
+                        </div>
+                      }
                     </div>
                   </div>
                 </div>

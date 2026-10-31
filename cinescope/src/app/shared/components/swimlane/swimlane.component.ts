@@ -1,15 +1,18 @@
 import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { chevronForwardOutline } from 'ionicons/icons';
+import { chevronForwardOutline, heart, heartOutline } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../poster-card/poster-card.component';
 import { SwimlaneItem } from '../../models/swimlane-item.interface';
-import { StorageService } from '../../../core/services/storage.service';
+import { StorageService, extractPersonCreditMetadata } from '../../../core/services/storage.service';
+import { TmdbPeopleService } from '../../../core/services/tmdb-people.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
 import { CollectionQueryContext } from '../../../core/services/collection-loader.service';
+import { TmdbPersonCombinedCreditsResponseDto } from '../../../core/dtos/people/person-combined-credits.dto';
 
 @Component({
     selector: 'app-swimlane',
@@ -21,6 +24,7 @@ import { CollectionQueryContext } from '../../../core/services/collection-loader
 })
 export class SwimlaneComponent {
     private storageService = inject(StorageService);
+    private peopleService = inject(TmdbPeopleService);
     private toastService = inject(ToastService);
     private router = inject(Router);
 
@@ -29,7 +33,7 @@ export class SwimlaneComponent {
     public queryContext = input<CollectionQueryContext>();
 
     constructor() {
-        addIcons({ chevronForwardOutline });
+        addIcons({ chevronForwardOutline, heart, heartOutline });
     }
 
     public openViewAll(): void {
@@ -74,6 +78,66 @@ export class SwimlaneComponent {
 
     public getMediaType(item: SwimlaneItem): 'movie' | 'tv' | undefined {
         return item.mediaType === 'movie' || item.mediaType === 'tv' ? item.mediaType : undefined;
+    }
+
+    public isPersonFavorite(item: SwimlaneItem): boolean {
+        if (item.mediaType !== 'person') return false;
+        const id = Number(item.id);
+        return Number.isFinite(id) && id > 0 ? this.storageService.isPersonFavorite(id) : false;
+    }
+
+    public getPersonDepartmentLabel(item: SwimlaneItem): string {
+        if (item.mediaType !== 'person') return '';
+        const rawDept = String(item.payload?.['known_for_department'] || '').trim();
+        if (/directing/i.test(rawDept)) return 'DIRECTOR';
+        if (/writing/i.test(rawDept)) return 'WRITER';
+        if (/production/i.test(rawDept)) return 'PRODUCER';
+        return 'ACTOR';
+    }
+
+    public async onTogglePersonFavorite(event: Event, item: SwimlaneItem): Promise<void> {
+        event.stopPropagation();
+        if (item.mediaType !== 'person') return;
+        const personId = Number(item.id);
+        if (!Number.isFinite(personId) || personId <= 0) return;
+
+        const rawProfilePath = (item.payload?.['profile_path'] as string | null | undefined) ?? item.posterUrl ?? null;
+        const rawDept = String(item.payload?.['known_for_department'] || 'Acting');
+        const isNowFav = await this.storageService.toggleFavoritePerson({
+            id: personId,
+            name: item.title,
+            profilePath: rawProfilePath,
+            department: rawDept,
+            knownForTitles: item.subtitle || ''
+        });
+
+        if (isNowFav) {
+            await this.toastService.presentSuccess(`Added ${item.title} to Favorite Artists`, 1800);
+            void this.hydrateFavoritePersonInBackground(personId);
+        } else {
+            await this.toastService.presentWarning(`Removed ${item.title} from Favorite Artists`, 1800);
+        }
+    }
+
+    private async hydrateFavoritePersonInBackground(personId: number): Promise<void> {
+        try {
+            const details = await firstValueFrom(
+                this.peopleService.getPersonDetails(personId, 'combined_credits')
+            );
+            if (!this.storageService.isPersonFavorite(personId)) return;
+            const combined = (details?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+            const extracted = extractPersonCreditMetadata(combined);
+            if (extracted.creditIds.length > 0) {
+                await this.storageService.updateFavoritePersonCredits(personId, extracted.creditIds, {
+                    topCredits: extracted.topCredits,
+                    knownForTitles: extracted.knownForTitles,
+                    department: details.known_for_department || undefined,
+                    profilePath: details.profile_path
+                });
+            }
+        } catch (err) {
+            console.warn('[SwimlaneComponent] Background person credit hydration failed:', err);
+        }
     }
 
     public onCardClick(item: SwimlaneItem): void {

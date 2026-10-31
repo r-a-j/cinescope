@@ -15,9 +15,121 @@ import { APP_VERSION } from '../constants/app-version';
 // Enterprise strict type for generic JSON objects (replaces 'any')
 export type TmdbPayload = Record<string, unknown>;
 
+export interface PersonTopCreditSummary {
+    id: number;
+    mediaType: 'movie' | 'tv';
+    title: string;
+    poster_path?: string | null | undefined;
+    backdrop_path?: string | null | undefined;
+    vote_average?: number | undefined;
+    release_date?: string | undefined;
+    roleLabel?: string | undefined;
+}
+
 export interface MediaReleaseCheckResult {
     isReleased: boolean;
     releaseLabel: string;
+}
+
+/**
+ * Deterministically extracts `creditIds`, `topCredits` (for "Up Next" artist marathon tracking),
+ * and `knownForTitles` from a TMDB `combined_credits` payload without talk-show / archive noise.
+ */
+export function extractPersonCreditMetadata(
+    combinedCredits?: { cast?: unknown[]; crew?: unknown[] } | null
+): {
+    creditIds: string[];
+    topCredits: PersonTopCreditSummary[];
+    knownForTitles: string;
+} {
+    if (!combinedCredits) {
+        return { creditIds: [], topCredits: [], knownForTitles: '' };
+    }
+    const rawCast = Array.isArray(combinedCredits.cast)
+        ? (combinedCredits.cast as Record<string, unknown>[])
+        : [];
+    const rawCrew = Array.isArray(combinedCredits.crew)
+        ? (combinedCredits.crew as Record<string, unknown>[])
+        : [];
+    const allRaw = [...rawCast, ...rawCrew];
+
+    const creditIdSet = new Set<string>();
+    const candidateMap = new Map<
+        string,
+        {
+            summary: PersonTopCreditSummary;
+            score: number;
+            isTalkOrSelf: boolean;
+        }
+    >();
+
+    for (const item of allRaw) {
+        const id = Number(item['id']);
+        const mediaType = item['media_type'] === 'tv' ? 'tv' : item['media_type'] === 'movie' ? 'movie' : null;
+        if (!id || !mediaType) continue;
+
+        const key = `${mediaType}_${id}`;
+        creditIdSet.add(key);
+
+        const posterPath = (item['poster_path'] as string | null | undefined) ?? null;
+        if (!posterPath) continue;
+
+        const releaseCheck = checkMediaReleaseStatus(item);
+        if (!releaseCheck.isReleased) continue;
+
+        const title = String(item['title'] || item['name'] || '').trim();
+        if (!title) continue;
+
+        const genreIds = Array.isArray(item['genre_ids']) ? (item['genre_ids'] as number[]) : [];
+        const character = String(item['character'] || '').trim();
+        const job = String(item['job'] || '').trim();
+        const isTalkOrNewsGenre = genreIds.includes(10767) || genreIds.includes(10763) || genreIds.includes(10764);
+        const isSelfRole = /\b(self|himself|herself|archive footage|uncredited|guest)\b/i.test(character);
+        const isTalkOrSelf = isTalkOrNewsGenre || isSelfRole;
+
+        const voteCount = Number(item['vote_count'] || 0);
+        const popularity = Number(item['popularity'] || 1);
+        const voteAvg = Number(item['vote_average'] || 0);
+        const score = Math.max(1, voteCount) * Math.max(1, popularity) * (voteAvg >= 7 ? 1.25 : 1);
+
+        const existing = candidateMap.get(key);
+        if (!existing || score > existing.score || (existing.isTalkOrSelf && !isTalkOrSelf)) {
+            candidateMap.set(key, {
+                summary: {
+                    id,
+                    mediaType,
+                    title,
+                    poster_path: posterPath,
+                    backdrop_path: (item['backdrop_path'] as string | null | undefined) ?? null,
+                    vote_average: voteAvg > 0 ? Number(voteAvg.toFixed(1)) : undefined,
+                    release_date: String(item['release_date'] || item['first_air_date'] || ''),
+                    roleLabel: character ? `as ${character}` : (job || undefined)
+                },
+                score,
+                isTalkOrSelf
+            });
+        }
+    }
+
+    const allCandidates = [...candidateMap.values()];
+    const narrativeCandidates = allCandidates.filter((c) => !c.isTalkOrSelf);
+    const pool = narrativeCandidates.length >= 3 ? narrativeCandidates : allCandidates;
+
+    const sortedTop = pool
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 25)
+        .map((c) => c.summary);
+
+    const knownForTitles = sortedTop
+        .slice(0, 3)
+        .map((c) => c.title)
+        .join(' • ');
+
+    return {
+        creditIds: Array.from(creditIdSet),
+        topCredits: sortedTop,
+        knownForTitles
+    };
 }
 
 /**
@@ -1012,6 +1124,8 @@ export class StorageService {
         profilePath?: string | null;
         department?: string;
         creditIds?: string[];
+        topCredits?: PersonTopCreditSummary[];
+        knownForTitles?: string;
     }): Promise<boolean> {
         this.initReactiveStreams();
         const isFav = this.isPersonFavorite(person.id);
@@ -1033,7 +1147,9 @@ export class StorageService {
                     name: person.name,
                     profile_path: person.profilePath ?? null,
                     known_for_department: person.department ?? 'Artist',
-                    credit_ids: person.creditIds ?? []
+                    credit_ids: person.creditIds ?? [],
+                    top_credits: person.topCredits ?? [],
+                    known_for_titles: person.knownForTitles ?? ''
                 }
             });
             return true;
@@ -1044,35 +1160,65 @@ export class StorageService {
         await this.removeMedia(personId, 'person');
     }
 
-    public async updateFavoritePersonCredits(personId: number, creditIds: string[]): Promise<void> {
+    public async updateFavoritePersonCredits(
+        personId: number,
+        creditIds: string[],
+        extra?: {
+            topCredits?: PersonTopCreditSummary[] | undefined;
+            knownForTitles?: string | undefined;
+            department?: string | undefined;
+            profilePath?: string | null | undefined;
+        }
+    ): Promise<void> {
         this.initReactiveStreams();
         const docId = this.generateId(personId, 'person');
         const doc = await this.dbService.db.content.findOne(docId).exec();
         if (doc) {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
-                const payload = (docData.payload ?? {}) as Record<string, unknown>;
+                const payload = { ...((docData.payload ?? {}) as Record<string, unknown>) };
                 payload['credit_ids'] = creditIds;
+                if (extra?.topCredits && extra.topCredits.length > 0) {
+                    payload['top_credits'] = extra.topCredits;
+                }
+                if (extra?.knownForTitles) {
+                    payload['known_for_titles'] = extra.knownForTitles;
+                }
+                if (extra?.department) {
+                    payload['known_for_department'] = extra.department;
+                }
+                if (extra?.profilePath) {
+                    payload['profile_path'] = extra.profilePath;
+                }
                 docData.payload = payload;
                 return docData;
             });
         }
     }
 
-    public getPersonProgress(creditIds?: string[]): { watched: number; total: number; percent: number } {
+    public getPersonProgress(creditIds?: string[]): {
+        watched: number;
+        watchlist: number;
+        total: number;
+        percent: number;
+    } {
         if (!creditIds || creditIds.length === 0) {
-            return { watched: 0, total: 0, percent: 0 };
+            return { watched: 0, watchlist: 0, total: 0, percent: 0 };
         }
         const uniqueCreditIds = new Set(creditIds);
-        const watchedKeys = this.watchedMediaKeys();
+        const stateMap = this.bookmarkStateMap();
         let watched = 0;
+        let watchlist = 0;
         for (const cid of uniqueCreditIds) {
-            if (watchedKeys.has(cid)) {
+            const st = stateMap[cid];
+            if (st === 'watched') {
                 watched++;
+            } else if (st === 'watchlist') {
+                watchlist++;
             }
         }
         const total = uniqueCreditIds.size;
         const percent = total > 0 ? Math.min(100, Math.round((watched / total) * 100)) : 0;
-        return { watched, total, percent };
+        return { watched, watchlist, total, percent };
     }
 
     // ==========================================
