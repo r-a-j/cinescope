@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, of, switchMap } from 'rxjs';
 
 import { BaseMediaService } from './base-media.service';
 import { TmdbCollectionListItemDto } from '../dtos/collections/collection-list-item.dto';
@@ -321,6 +321,54 @@ Pay close attention to the difference between first_air_date_year and year in th
                 } catch (_e) {
                     return null;
                 }
+            })
+        );
+    }
+
+    /**
+     * Queries public, zero-key, CORS-enabled spellcheck & entity suggestion APIs
+     * (Wikipedia CirrusSearch suggestion + Datamuse spellcheck) to resolve complex typos
+     * in English, Hinglish/Hindi, German, and actor/movie names without consuming AI quota.
+     */
+    getSpellingSuggestion(query: string): Observable<string | null> {
+        const clean = query.trim();
+        if (!clean || clean.length < 3) {
+            return of(null);
+        }
+
+        interface WikiSearchResponse {
+            query?: {
+                searchinfo?: {
+                    suggestion?: string;
+                };
+            };
+        }
+
+        const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(clean)}&srinfo=suggestion&srprop=&srlimit=1&format=json&origin=*`;
+
+        return this.http.get<WikiSearchResponse>(wikiUrl).pipe(
+            map((res) => {
+                const suggestion = res?.query?.searchinfo?.suggestion?.trim();
+                if (suggestion && suggestion.toLowerCase() !== clean.toLowerCase()) {
+                    // Strip HTML tags if any
+                    return suggestion.replace(/<[^>]*>/g, '').trim();
+                }
+                return null;
+            }),
+            catchError(() => of(null)),
+            switchMap((wikiSuggestion) => {
+                if (wikiSuggestion) {
+                    return of(wikiSuggestion);
+                }
+                // Fallback to Datamuse spellcheck for single/multi-word English vocabulary typos
+                const datamuseUrl = `https://api.datamuse.com/words?sp=${encodeURIComponent(clean)}&max=1`;
+                return this.http.get<{ word?: string }[]>(datamuseUrl).pipe(
+                    map((list) => {
+                        const top = Array.isArray(list) && list[0]?.word ? list[0].word.trim() : null;
+                        return top && top.toLowerCase() !== clean.toLowerCase() ? top : null;
+                    }),
+                    catchError(() => of(null))
+                );
             })
         );
     }

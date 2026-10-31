@@ -43,6 +43,7 @@ describe('SearchStore Smart Search', () => {
         searchPerson: jasmine.Spy;
         searchKeywords: jasmine.Spy;
         getWikidataImage: jasmine.Spy;
+        getSpellingSuggestion: jasmine.Spy;
     };
     let discoverService: {
         discoverMovies: jasmine.Spy;
@@ -59,7 +60,8 @@ describe('SearchStore Smart Search', () => {
             searchCollections: jasmine.createSpy('searchCollections').and.returnValue(of(emptyResponse)),
             searchPerson: jasmine.createSpy('searchPerson').and.returnValue(of(emptyResponse)),
             searchKeywords: jasmine.createSpy('searchKeywords').and.returnValue(of(emptyResponse)),
-            getWikidataImage: jasmine.createSpy('getWikidataImage').and.returnValue(of(null))
+            getWikidataImage: jasmine.createSpy('getWikidataImage').and.returnValue(of(null)),
+            getSpellingSuggestion: jasmine.createSpy('getSpellingSuggestion').and.returnValue(of(null))
         };
         discoverService = {
             discoverMovies: jasmine.createSpy('discoverMovies').and.returnValue(of({
@@ -140,5 +142,31 @@ describe('SearchStore Smart Search', () => {
 
         expect(completed).toBeTrue();
         expect(store.smartResults().map(movie => 'title' in movie ? movie.title : movie.name)).toEqual(['Inception']);
+    }));
+
+    it('auto-corrects dropped-vowel typos ("crwlers" -> "crawlers") before requiring AI search', fakeAsync(() => {
+        const emptyResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
+        const crawlersMovie = {
+            ...recentMovie,
+            id: 660120,
+            title: 'Crawlers',
+            original_title: 'Crawlers',
+            media_type: 'movie' as const
+        };
+        searchService.searchMulti.and.callFake((q: string) => {
+            if (q === 'crawlers') {
+                return of({ page: 1, results: [crawlersMovie], total_pages: 1, total_results: 1 });
+            }
+            return of(emptyResponse);
+        });
+
+        store.searchQuery('crwlers');
+        tick(350);
+        flushMicrotasks();
+
+        expect(store.correctedQuery()).toBe('crawlers');
+        expect(store.results().length).toBe(1);
+        const firstResult = store.results()[0];
+        expect(firstResult && 'title' in firstResult ? firstResult.title : '').toBe('Crawlers');
     }));
 });
