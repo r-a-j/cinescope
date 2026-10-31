@@ -199,7 +199,7 @@ describe('EpisodeDetailModalComponent', () => {
     expect(component.currentEpisodeNumber()).toBe(4);
   }));
 
-  it('should close modal and navigate to full series page', () => {
+  it('should close modal and navigate to full series page', async () => {
     spyOn(router, 'navigate');
     let dismissed = false;
     component.didDismiss.subscribe(() => {
@@ -207,20 +207,20 @@ describe('EpisodeDetailModalComponent', () => {
     });
 
     componentRef.setInput('seriesId', 95396);
-    component.openFullSeriesPage();
+    await component.openFullSeriesPage();
 
     expect(dismissed).toBeTrue();
     expect(router.navigate).toHaveBeenCalledWith(['/media', 'tv', 95396]);
   });
 
-  it('should close modal and navigate to person details on openPerson', () => {
+  it('should close modal and navigate to person details on openPerson', async () => {
     spyOn(router, 'navigate');
     let dismissed = false;
     component.didDismiss.subscribe(() => {
       dismissed = true;
     });
 
-    component.openPerson({ id: 12345 });
+    await component.openPerson({ id: 12345 });
 
     expect(dismissed).toBeTrue();
     expect(router.navigate).toHaveBeenCalledWith(['/person', 12345]);

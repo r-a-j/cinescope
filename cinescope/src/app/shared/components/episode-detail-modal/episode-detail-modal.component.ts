@@ -6,7 +6,8 @@ import {
   signal,
   computed,
   inject,
-  effect
+  effect,
+  viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -70,6 +71,8 @@ export class EpisodeDetailModalComponent {
   private readonly toast = inject(ToastService);
   private readonly posterCache = inject(PosterCacheService);
   private readonly router = inject(Router);
+
+  public readonly ionModal = viewChild(IonModal);
 
   // Inputs
   public readonly isOpen = input<boolean>(false);
@@ -334,7 +337,19 @@ export class EpisodeDetailModalComponent {
     }
   }
 
-  public closeModal(): void {
+  public onModalDidDismiss(): void {
+    this.didDismiss.emit();
+  }
+
+  public async closeModal(): Promise<void> {
+    const modal = this.ionModal();
+    if (modal && typeof modal.dismiss === 'function') {
+      try {
+        await modal.dismiss();
+      } catch {
+        // Modal may already be dismissed or in progress
+      }
+    }
     this.didDismiss.emit();
   }
 
@@ -393,17 +408,18 @@ export class EpisodeDetailModalComponent {
     void this.loadEpisode(sId, this.currentSeasonNumber(), nextEp);
   }
 
-  public openFullSeriesPage(): void {
+  public async openFullSeriesPage(): Promise<void> {
     const id = this.seriesId();
-    this.closeModal();
-    if (id) {
-      void this.router.navigate(['/media', 'tv', id]);
-    }
+    if (!id) return;
+
+    await this.closeModal();
+    void this.router.navigate(['/media', 'tv', id]);
   }
 
-  public openPerson(person: { id: number }): void {
+  public async openPerson(person: { id: number }): Promise<void> {
     if (!person?.id) return;
-    this.closeModal();
+
+    await this.closeModal();
     void this.router.navigate(['/person', person.id]);
   }
 
