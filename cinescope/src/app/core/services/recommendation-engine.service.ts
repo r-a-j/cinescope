@@ -129,7 +129,7 @@ export class RecommendationEngineService {
 
     const maxGenreWeight = Math.max(1, ...Object.values(profile.genreWeights));
     let genreAffinitySum = 0;
-    let matchedGenreLabels: string[] = [];
+    const matchedGenreLabels: string[] = [];
 
     for (const gId of genreIds) {
       const w = profile.genreWeights[gId] || 0;
@@ -147,7 +147,11 @@ export class RecommendationEngineService {
     // Bonus if item matches one of the user's top Genre-Pair intersections
     let matchedPairLabel: string | null = null;
     for (const pair of profile.topGenrePairs) {
-      if (genreIds.includes(pair.genreIds[0]) && genreIds.includes(pair.genreIds[1])) {
+      if (
+        pair.mediaType === mediaType &&
+        genreIds.includes(pair.genreIds[0]) &&
+        genreIds.includes(pair.genreIds[1])
+      ) {
         matchedPairLabel = pair.label;
         break;
       }
@@ -209,6 +213,7 @@ export class RecommendationEngineService {
     if (matchedPairLabel) {
       const seedMatch = profile.topSeeds.find(
         (s) =>
+          s.mediaType === mediaType &&
           s.genreIds.includes(genreIds[0]) &&
           (genreIds.length < 2 || s.genreIds.includes(genreIds[1]))
       );
