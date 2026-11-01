@@ -689,18 +689,28 @@ export class StorageService {
                 episodeCount: season.episode_count as number
             }))
             .sort((a, b) => a.seasonNumber - b.seasonNumber);
-        const knownEpisodeKeys = seasonEpisodeCounts.flatMap(({ seasonNumber, episodeCount }) =>
+        const releasedSeasonEpisodeCounts = seasonEpisodeCounts.filter(({ seasonNumber }) => {
+            const sObj = seasons.find((s) => (s as { season_number?: unknown }).season_number === seasonNumber) as { air_date?: string } | undefined;
+            if (sObj?.air_date) {
+                const releaseCheck = checkMediaReleaseStatus({ release_date: sObj.air_date });
+                return releaseCheck.isReleased;
+            }
+            return true;
+        });
+        const knownEpisodeKeys = releasedSeasonEpisodeCounts.flatMap(({ seasonNumber, episodeCount }) =>
             Array.from({ length: episodeCount }, (_, index) => `s${seasonNumber}e${index + 1}`)
         );
         const specialEpisodes = (existing?.watchedEpisodes ?? []).filter((key) => /^s0e\d+$/i.test(key));
         const regularEpisodeTotal = seasonEpisodeCounts.reduce((count, season) => count + season.episodeCount, 0);
+        const totalReleasedEpisodes = releasedSeasonEpisodeCounts.reduce((count, season) => count + season.episodeCount, 0);
         const totalEpisodes = regularEpisodeTotal || (
             typeof payload['number_of_episodes'] === 'number'
                 ? payload['number_of_episodes']
                 : existing?.totalEpisodes || 0
         );
-        const isMarkedComplete = seasonEpisodeCounts.length === 0;
-        const watchedEpisodes = isMarkedComplete
+        const hasUnreleasedSeasons = totalEpisodes > totalReleasedEpisodes;
+        const isMarkedComplete = seasonEpisodeCounts.length === 0 || !hasUnreleasedSeasons;
+        const watchedEpisodes = isMarkedComplete && seasonEpisodeCounts.length === 0
             ? specialEpisodes
             : [...specialEpisodes, ...knownEpisodeKeys];
         const lastEpisode = knownEpisodeKeys.length > 0
@@ -714,12 +724,13 @@ export class StorageService {
                 ? payload['number_of_seasons']
                 : seasonEpisodeCounts.length || existing?.totalSeasons || 1,
             totalEpisodes,
-            watchedEpisodesCount: isMarkedComplete ? totalEpisodes : knownEpisodeKeys.length,
+            totalReleasedEpisodes,
+            watchedEpisodesCount: knownEpisodeKeys.length || (isMarkedComplete ? totalEpisodes : 0),
             watchedEpisodes,
             seasonEpisodeCounts,
             updatedAt: Date.now()
         };
-        if (isMarkedComplete) {
+        if (isMarkedComplete && !hasUnreleasedSeasons) {
             progress.isMarkedComplete = true;
             progress.unwatchedEpisodes = [];
         }
