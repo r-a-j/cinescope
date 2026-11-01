@@ -220,7 +220,7 @@ describe('StorageService - Backup & Restore', () => {
 
     it('exports tvProgress records including totalReleasedEpisodes and nextSeason details', async () => {
         const mockProgressDoc = {
-            toJSON: () => ({
+            toJSON: (): Record<string, unknown> => ({
                 id: 'tv_99999',
                 tmdbId: 99999,
                 seriesTitle: 'Matka King',

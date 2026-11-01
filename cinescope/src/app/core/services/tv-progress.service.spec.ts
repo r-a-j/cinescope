@@ -1,8 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import {
     TvProgressService,
-    checkEpisodeReleaseStatus,
-    MarkEpisodeResult
+    checkEpisodeReleaseStatus
 } from './tv-progress.service';
 import { DatabaseService } from '../database/database.service';
 import { StorageService } from './storage.service';
