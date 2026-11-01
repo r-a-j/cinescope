@@ -188,6 +188,11 @@
           box-shadow: 0 0 10px rgba(245, 197, 24, 0.85);
         }
 
+        &.is-caught-up {
+          background: #60a5fa;
+          box-shadow: 0 0 10px rgba(96, 165, 250, 0.85);
+        }
+
         &.is-completed {
           background: #10b981;
           box-shadow: 0 0 10px rgba(16, 185, 129, 0.85);
@@ -203,6 +208,10 @@
 
         &.is-unstarted {
           color: #f5c518;
+        }
+
+        &.is-caught-up {
+          color: #60a5fa;
         }
 
         &.is-completed {
@@ -313,6 +322,24 @@
       }
     }
 
+    .caught-up-callout {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.32);
+      color: #60a5fa;
+      font-size: 11.5px;
+      font-weight: 700;
+      width: fit-content;
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+
     .hero-progress-block {
       display: flex;
       flex-direction: column;
@@ -371,6 +398,69 @@
           &.is-completed {
             background: linear-gradient(90deg, #059669 0%, #34d399 100%);
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+          }
+        }
+      }
+    }
+
+    .upcoming-season-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.88) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.34);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+      .upcoming-icon-wrap {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(96, 165, 250, 0.16);
+        border: 1px solid rgba(96, 165, 250, 0.38);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #60a5fa;
+        flex-shrink: 0;
+
+        ion-icon {
+          font-size: 19px;
+        }
+      }
+
+      .upcoming-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .upcoming-kicker {
+          font-size: 9.5px;
+          font-weight: 800;
+          letter-spacing: 0.8px;
+          color: #93c5fd;
+          text-transform: uppercase;
+        }
+
+        .upcoming-headline {
+          font-size: 13px;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+
+          strong {
+            font-weight: 700;
+            color: #ffffff;
+          }
+
+          .upcoming-date {
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 11.5px;
           }
         }
       }
@@ -900,6 +990,11 @@
 
           &.completed {
             background: rgba(16, 185, 129, 0.92);
+            color: #ffffff;
+          }
+
+          &.caught-up {
+            background: rgba(37, 99, 235, 0.92);
             color: #ffffff;
           }
 

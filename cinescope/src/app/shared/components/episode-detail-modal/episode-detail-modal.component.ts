@@ -43,7 +43,7 @@ import {
 } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
 import { TmdbTvEpisodesService } from '../../../core/services/tmdb-tv-episodes.service';
-import { TvProgressService } from '../../../core/services/tv-progress.service';
+import { TvProgressService, checkEpisodeReleaseStatus } from '../../../core/services/tv-progress.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { PosterCacheService } from '../../../core/services/poster-cache.service';
 import { DEFAULT_POSTER_PLACEHOLDER, resolveMediaImageUrl } from '../../../core/constants/api.constants';
@@ -108,6 +108,16 @@ export class EpisodeDetailModalComponent {
     const id = this.seriesId();
     if (!id) return false;
     return this.tvProgress.isEpisodeWatched(id, this.currentSeasonNumber(), this.currentEpisodeNumber());
+  });
+
+  public readonly isReleased = computed<boolean>(() => {
+    const airDate = this.detail()?.air_date;
+    return checkEpisodeReleaseStatus(airDate).isReleased;
+  });
+
+  public readonly releaseStatus = computed(() => {
+    const airDate = this.detail()?.air_date;
+    return checkEpisodeReleaseStatus(airDate);
   });
 
   public readonly episodeCode = computed<string>(() => {
@@ -432,10 +442,23 @@ export class EpisodeDetailModalComponent {
     const season = this.currentSeasonNumber();
     const ep = this.currentEpisodeNumber();
     const title = this.seriesTitle() || this.detail()?.name || 'Show';
+    const airDate = this.detail()?.air_date;
 
-    const nowWatched = await this.tvProgress.toggleEpisode(id, season, ep, {
-      title
-    });
+    const isCurrentlyWatched = this.tvProgress.isEpisodeWatched(id, season, ep);
+    if (!isCurrentlyWatched) {
+      const releaseCheck = checkEpisodeReleaseStatus(airDate);
+      if (!releaseCheck.isReleased) {
+        await this.toast.presentWarning(
+          `Cannot mark S${season} E${ep} as watched — airs on ${releaseCheck.releaseLabel || 'a future date'}`,
+          2600
+        );
+        return;
+      }
+    }
+
+    const nowWatched = airDate
+      ? await this.tvProgress.toggleEpisode(id, season, ep, { title }, undefined, airDate)
+      : await this.tvProgress.toggleEpisode(id, season, ep, { title });
 
     this.watchedToggle.emit({
       seasonNumber: season,

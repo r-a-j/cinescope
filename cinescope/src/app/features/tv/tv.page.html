@@ -65,12 +65,14 @@
                   <span
                     class="live-pulse-dot"
                     [class.is-completed]="hero.isCompleted"
+                    [class.is-caught-up]="hero.isCaughtUp"
                     [class.is-unstarted]="hero.isUnstarted"></span>
                   <span
                     class="kicker-text"
                     [class.is-completed]="hero.isCompleted"
+                    [class.is-caught-up]="hero.isCaughtUp"
                     [class.is-unstarted]="hero.isUnstarted">
-                    {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE')) }}
+                    {{ hero.isCompleted ? 'COMPLETED SERIES' : (hero.isCaughtUp ? 'ALL RELEASED EPISODES WATCHED' : (hero.isUnstarted ? 'READY TO START' : (hero.upNextSeason && hero.upNextEpisode ? 'UP NEXT IN QUEUE' : 'EPISODE DATA UNAVAILABLE'))) }}
                   </span>
                   @if (hero.status) {
                     <span class="status-pill">{{ hero.status }}</span>
@@ -86,33 +88,36 @@
                   {{ hero.title }}
                 </h2>
 
-                @if (!hero.isCompleted) {
-                  @if (hero.upNextSeason && hero.upNextEpisode) {
-                    <div
-                      class="next-ep-banner"
-                      tabindex="0"
-                      role="button"
-                      (click)="openEpisodeGuide(hero)"
-                      (keyup.enter)="openEpisodeGuide(hero)">
-                      <div class="next-ep-badge">
-                        <ion-icon name="play-outline"></ion-icon>
-                        <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
-                      </div>
-                      @if (hero.upNextTitle) {
-                        <span class="next-ep-title">{{ hero.upNextTitle }}</span>
-                      } @else {
-                        <span class="next-ep-title">Inspect Episode</span>
-                      }
-                      <ion-icon name="chevron-forward-outline" class="next-ep-arrow"></ion-icon>
-                    </div>
-                  } @else {
-                    <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
-                  }
-                } @else {
+                @if (hero.isCompleted) {
                   <div class="completed-callout">
                     <ion-icon name="checkmark-circle"></ion-icon>
                     <span>Series Completed</span>
                   </div>
+                } @else if (hero.isCaughtUp) {
+                  <div class="caught-up-callout">
+                    <ion-icon name="checkmark-done-outline"></ion-icon>
+                    <span>Season Finale Watched • You're All Caught Up</span>
+                  </div>
+                } @else if (hero.upNextSeason && hero.upNextEpisode) {
+                  <div
+                    class="next-ep-banner"
+                    tabindex="0"
+                    role="button"
+                    (click)="openEpisodeGuide(hero)"
+                    (keyup.enter)="openEpisodeGuide(hero)">
+                    <div class="next-ep-badge">
+                      <ion-icon name="play-outline"></ion-icon>
+                      <span>S{{ hero.upNextSeason }} • E{{ hero.upNextEpisode }}</span>
+                    </div>
+                    @if (hero.upNextTitle) {
+                      <span class="next-ep-title">{{ hero.upNextTitle }}</span>
+                    } @else {
+                      <span class="next-ep-title">Inspect Episode</span>
+                    }
+                    <ion-icon name="chevron-forward-outline" class="next-ep-arrow"></ion-icon>
+                  </div>
+                } @else {
+                  <p class="next-ep-unavailable">Episode guide unavailable. Refresh to load season details.</p>
                 }
               </div>
             </div>
@@ -124,22 +129,42 @@
                   @if (hero.isCompleted && hero.totalEpisodes === 0) {
                     All episodes marked watched
                   } @else {
-                    <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalEpisodes || '?' }}</strong> episodes watched
+                    <strong>{{ hero.watchedEpisodesCount }}</strong> of <strong>{{ hero.totalReleasedEpisodes || hero.totalEpisodes || '?' }}</strong> episodes watched
                   }
                 </span>
-                <span class="pct-pill" [class.is-completed]="hero.isCompleted">{{ hero.percentage }}%</span>
+                <span class="pct-pill" [class.is-completed]="hero.isCompleted || hero.isCaughtUp">{{ hero.percentage }}%</span>
               </div>
               <div class="progress-track">
                 <div
                   class="progress-fill"
-                  [class.is-completed]="hero.isCompleted"
+                  [class.is-completed]="hero.isCompleted || hero.isCaughtUp"
                   [style.width.%]="hero.percentage"></div>
               </div>
             </div>
 
+            <!-- Upcoming Next Season Spotlight (when user reaches season finale) -->
+            @if (hero.isCaughtUp && (hero.nextSeasonNumber || hero.nextSeasonAirDate)) {
+              <div class="upcoming-season-card">
+                <div class="upcoming-icon-wrap">
+                  <ion-icon name="calendar-outline"></ion-icon>
+                </div>
+                <div class="upcoming-details">
+                  <span class="upcoming-kicker">NEXT SEASON UPCOMING</span>
+                  <div class="upcoming-headline">
+                    <strong>Season {{ hero.nextSeasonNumber || 'Next' }}</strong>
+                    @if (hero.nextSeasonAirDate) {
+                      <span class="upcoming-date">• Premieres {{ hero.nextSeasonAirDate }}</span>
+                    } @else {
+                      <span class="upcoming-date">• Release Date TBA</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Hero Action Buttons -->
             <div class="hero-actions">
-              @if (!hero.isCompleted && hero.upNextSeason && hero.upNextEpisode) {
+              @if (!hero.isCompleted && !hero.isCaughtUp && hero.upNextSeason && hero.upNextEpisode) {
                 <button
                   type="button"
                   class="action-btn-primary"
@@ -362,6 +387,11 @@
                       <ion-icon name="checkmark-circle"></ion-icon>
                       Done
                     </span>
+                  } @else if (card.isCaughtUp) {
+                    <span class="card-status-badge caught-up">
+                      <ion-icon name="checkmark-done-outline"></ion-icon>
+                      Caught Up
+                    </span>
                   } @else if (card.isUnstarted) {
                     <span class="card-status-badge unstarted">
                       Start S1
@@ -379,7 +409,7 @@
                   <div class="card-progress-bar">
                     <div
                       class="card-progress-fill"
-                      [class.is-completed]="card.isCompleted"
+                      [class.is-completed]="card.isCompleted || card.isCaughtUp"
                       [style.width.%]="card.percentage"></div>
                   </div>
                 </div>
@@ -392,7 +422,7 @@
                     @if (card.isCompleted && card.totalEpisodes === 0) {
                       <span>All episodes marked watched</span>
                     } @else {
-                      <span>{{ card.watchedEpisodesCount }}/{{ card.totalEpisodes || '?' }} eps</span>
+                      <span>{{ card.watchedEpisodesCount }}/{{ card.totalReleasedEpisodes || card.totalEpisodes || '?' }} eps</span>
                     }
                   </div>
                 </div>

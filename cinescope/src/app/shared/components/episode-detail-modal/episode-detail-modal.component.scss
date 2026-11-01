@@ -607,6 +607,17 @@
       border: 1px solid rgba(16, 185, 129, 0.42);
       box-shadow: none;
     }
+
+    &.is-unreleased {
+      background: rgba(30, 41, 59, 0.6);
+      color: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+      box-shadow: none;
+
+      ion-icon {
+        color: #93c5fd;
+      }
+    }
   }
 
   .stepper-row {

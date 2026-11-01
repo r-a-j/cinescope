@@ -208,14 +208,61 @@ describe('StorageService - Backup & Restore', () => {
         service.watchedItems.set([watchedItem(1, 'movie'), watchedItem(1, 'tv')]);
 
         expect(service.getPersonProgress(['movie_1', 'movie_1', 'tv_1', 'movie_2']))
-            .toEqual({ watched: 2, total: 3, percent: 67 });
-        expect(service.getPersonProgress([])).toEqual({ watched: 0, total: 0, percent: 0 });
+            .toEqual({ watched: 2, watchlist: 0, total: 3, percent: 67 });
+        expect(service.getPersonProgress([])).toEqual({ watched: 0, watchlist: 0, total: 0, percent: 0 });
     });
 
     it('exports the current frontend package version in backup metadata', async () => {
         const backup = JSON.parse(await service.exportBackupJson()) as { appVersion: string };
 
         expect(backup.appVersion).toBe(APP_VERSION);
+    });
+
+    it('exports tvProgress records including totalReleasedEpisodes and nextSeason details', async () => {
+        const mockProgressDoc = {
+            toJSON: () => ({
+                id: 'tv_99999',
+                tmdbId: 99999,
+                seriesTitle: 'Matka King',
+                totalSeasons: 2,
+                totalEpisodes: 14,
+                totalReleasedEpisodes: 8,
+                nextSeasonNumber: 2,
+                nextSeasonAirDate: '2027-01-01',
+                nextSeasonTitle: 'Season 2',
+                watchedEpisodesCount: 8,
+                watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+                updatedAt: 1730000000000,
+                _rev: '1-abc',
+                _deleted: false,
+                _meta: { lwt: 123 }
+            })
+        };
+
+        const createQueryMock = (docs: unknown = []): { exec: jasmine.Spy; $: { subscribe: () => { unsubscribe: () => void } } } => ({
+            exec: jasmine.createSpy('exec').and.returnValue(Promise.resolve(docs)),
+            $: {
+                subscribe: (): { unsubscribe: () => void } => ({
+                    unsubscribe: jasmine.createSpy('unsubscribe')
+                })
+            }
+        });
+
+        mockTvProgressFind.and.returnValue(createQueryMock([mockProgressDoc]));
+
+        const rawJson = await service.exportBackupJson();
+        const backup = JSON.parse(rawJson);
+
+        expect(backup.tvProgress).toBeDefined();
+        expect(backup.tvProgress.length).toBe(1);
+        const item = backup.tvProgress[0];
+        expect(item.id).toBe('tv_99999');
+        expect(item.totalReleasedEpisodes).toBe(8);
+        expect(item.nextSeasonNumber).toBe(2);
+        expect(item.nextSeasonAirDate).toBe('2027-01-01');
+        expect(item.nextSeasonTitle).toBe('Season 2');
+        expect(item._rev).toBeUndefined();
+        expect(item._meta).toBeUndefined();
     });
 
     it('should inspect modern backup containing content and tvProgress', () => {
@@ -340,5 +387,44 @@ describe('StorageService - Backup & Restore', () => {
         expect(tvChunk[0].id).toBe('tv_1396');
         expect(tvChunk[0].tmdbId).toBe(1396);
         expect(tvChunk[0].watchedEpisodesCount).toBe(2);
+        expect(tvChunk[0].totalReleasedEpisodes).toBe(62);
+    });
+
+    it('should import backup JSON restoring modern v2 tvProgress with unreleased episodes metadata', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-01T12:00:00Z',
+            content: [],
+            tvProgress: [
+                {
+                    id: 'tv_99999',
+                    tmdbId: 99999,
+                    seriesTitle: 'Matka King',
+                    totalSeasons: 2,
+                    totalEpisodes: 14,
+                    totalReleasedEpisodes: 8,
+                    nextSeasonNumber: 2,
+                    nextSeasonAirDate: '2027-01-01',
+                    nextSeasonTitle: 'Season 2',
+                    watchedEpisodesCount: 8,
+                    watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+                    updatedAt: 1730000000000
+                }
+            ]
+        };
+
+        const importResult = await service.importBackupJson(JSON.stringify(payload));
+
+        expect(mockTvProgressBulkUpsert).toHaveBeenCalled();
+        expect(importResult.tvProgressCount).toBe(1);
+
+        const tvChunk = mockTvProgressBulkUpsert.calls.mostRecent().args[0];
+        expect(tvChunk.length).toBe(1);
+        expect(tvChunk[0].id).toBe('tv_99999');
+        expect(tvChunk[0].totalReleasedEpisodes).toBe(8);
+        expect(tvChunk[0].nextSeasonNumber).toBe(2);
+        expect(tvChunk[0].nextSeasonAirDate).toBe('2027-01-01');
+        expect(tvChunk[0].nextSeasonTitle).toBe('Season 2');
+        expect(tvChunk[0].watchedEpisodesCount).toBe(8);
     });
 });

@@ -62,13 +62,18 @@ export interface TvGridCardVm {
   backdropUrl?: string | undefined;
   totalSeasons: number;
   totalEpisodes: number;
+  totalReleasedEpisodes?: number | undefined;
   watchedEpisodesCount: number;
   percentage: number;
   isCompleted: boolean;
+  isCaughtUp?: boolean | undefined;
   isUnstarted: boolean;
   upNextSeason?: number | undefined;
   upNextEpisode?: number | undefined;
   upNextTitle?: string | undefined;
+  nextSeasonNumber?: number | undefined;
+  nextSeasonAirDate?: string | undefined;
+  nextSeasonTitle?: string | undefined;
   status?: string | undefined;
 }
 
@@ -156,19 +161,24 @@ export class TvPage {
     // 1. Add all series with active progress records
     for (const p of this.tvProgress.allProgress()) {
       seenIds.add(p.tmdbId);
+      const effectiveReleased = p.totalReleasedEpisodes !== undefined && p.totalReleasedEpisodes > 0
+        ? p.totalReleasedEpisodes
+        : p.totalEpisodes;
       const isCompleted = p.isMarkedComplete
         ? (p.unwatchedEpisodes?.length ?? 0) === 0
-        : p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes;
+        : p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes && !p.nextSeasonNumber;
+      const isCaughtUp = !isCompleted && effectiveReleased > 0 && p.watchedEpisodesCount >= effectiveReleased;
       const isUnstarted = p.watchedEpisodesCount === 0 && !p.isMarkedComplete;
-      const pct = isCompleted
+      const pctDenom = effectiveReleased > 0 ? effectiveReleased : p.totalEpisodes;
+      const pct = isCompleted || isCaughtUp
         ? 100
-        : p.totalEpisodes > 0
-        ? Math.min(100, Math.round((p.watchedEpisodesCount / p.totalEpisodes) * 100))
+        : pctDenom > 0
+        ? Math.min(100, Math.round((p.watchedEpisodesCount / pctDenom) * 100))
         : 0;
 
       let upNextSeason: number | undefined;
       let upNextEpisode: number | undefined;
-      if (!isCompleted) {
+      if (!isCompleted && !isCaughtUp) {
         const nextEp = this.tvProgress.getUpNextEpisode(p.tmdbId);
         upNextSeason = nextEp?.seasonNumber;
         upNextEpisode = nextEp?.episodeNumber;
@@ -181,13 +191,18 @@ export class TvPage {
         backdropUrl: p.backdropPath ? resolveMediaImageUrl(p.backdropPath, 'w780') : undefined,
         totalSeasons: p.totalSeasons,
         totalEpisodes: p.totalEpisodes,
+        totalReleasedEpisodes: effectiveReleased,
         watchedEpisodesCount: p.watchedEpisodesCount,
         percentage: pct,
         isCompleted,
+        isCaughtUp,
         isUnstarted,
         upNextSeason,
         upNextEpisode,
         upNextTitle: p.lastWatchedEpisodeTitle,
+        nextSeasonNumber: p.nextSeasonNumber,
+        nextSeasonAirDate: p.nextSeasonAirDate,
+        nextSeasonTitle: p.nextSeasonTitle,
         status: p.status
       });
     }
@@ -433,12 +448,20 @@ export class TvPage {
     const season = card.upNextSeason ?? 1;
     const episode = card.upNextEpisode ?? 1;
 
-    await this.tvProgress.markEpisodeWatched(card.id, season, episode, {
+    const result = await this.tvProgress.markEpisodeWatched(card.id, season, episode, {
       title: card.title,
       totalSeasons: card.totalSeasons,
       totalEpisodes: card.totalEpisodes,
       status: card.status
     });
+
+    if (result && !result.success && result.reason === 'unreleased') {
+      void this.toast.presentWarning(
+        `Cannot mark S${season} E${episode} as watched — airs on ${result.releaseDate || 'a future date'}`,
+        3000
+      );
+      return;
+    }
 
     void this.toast.presentSuccess(`Marked S${season} E${episode} watched for ${card.title}`, 2200);
   }

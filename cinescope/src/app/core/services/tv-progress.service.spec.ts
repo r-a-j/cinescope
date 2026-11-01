@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { TvProgressService } from './tv-progress.service';
+import {
+    TvProgressService,
+    checkEpisodeReleaseStatus,
+    MarkEpisodeResult
+} from './tv-progress.service';
 import { DatabaseService } from '../database/database.service';
 import { StorageService } from './storage.service';
 import { signal } from '@angular/core';
@@ -19,7 +23,7 @@ describe('TV progress schema migration', () => {
         };
         const migrated = migrateTvProgressCounts(oldDoc);
 
-        expect(tvProgressSchemaLiteral.version).toBe(1);
+        expect(tvProgressSchemaLiteral.version).toBe(2);
         expect(migrated['watchedEpisodesCount']).toBe(3);
         expect(migrated['watchedEpisodes']).toEqual(oldDoc.watchedEpisodes);
     });
@@ -33,6 +37,28 @@ describe('TV progress schema migration', () => {
         });
 
         expect(migrated.watchedEpisodesCount).toBe(2);
+        expect(migrated.totalReleasedEpisodes).toBe(3);
+    });
+
+    it('defaults totalReleasedEpisodes to totalEpisodes during migration if missing', () => {
+        const migrated = migrateTvProgressCounts({
+            id: 'tv_1',
+            totalEpisodes: 10,
+            watchedEpisodes: ['s1e1']
+        });
+
+        expect(migrated.totalReleasedEpisodes).toBe(10);
+    });
+
+    it('preserves existing totalReleasedEpisodes during migration', () => {
+        const migrated = migrateTvProgressCounts({
+            id: 'tv_2',
+            totalEpisodes: 14,
+            totalReleasedEpisodes: 8,
+            watchedEpisodes: ['s1e1']
+        });
+
+        expect(migrated.totalReleasedEpisodes).toBe(8);
     });
 });
 
@@ -536,5 +562,221 @@ describe('TvProgressService', () => {
         expect(radar[0].seriesTitle).toBe('Upcoming Show');
         expect(radar[0].seasonNumber).toBe(1);
         expect(radar[0].episodeNumber).toBe(1);
+    });
+
+    describe('Release status guard rails & unreleased episode handling', () => {
+        it('identifies episode release status correctly across past, today, tomorrow, and future years', () => {
+            const today = '2026-11-01';
+            // Past
+            expect(checkEpisodeReleaseStatus('2024-05-10', null, null, today).isReleased).toBeTrue();
+            // Today
+            expect(checkEpisodeReleaseStatus('2026-11-01', null, null, today).isReleased).toBeTrue();
+            // Tomorrow
+            const tomorrow = checkEpisodeReleaseStatus('2026-11-02', null, null, today);
+            expect(tomorrow.isReleased).toBeFalse();
+            expect(tomorrow.releaseLabel).toBe('2026-11-02');
+            // Future Year 2027
+            const future = checkEpisodeReleaseStatus('2027-04-15', null, null, today);
+            expect(future.isReleased).toBeFalse();
+            expect(future.releaseLabel).toBe('2027-04-15');
+            // Year-only 2027
+            const futureYear = checkEpisodeReleaseStatus('2027', null, null, today);
+            expect(futureYear.isReleased).toBeFalse();
+            expect(futureYear.releaseLabel).toBe('2027');
+            // TBA / empty air date for in-production or upcoming series
+            const tba = checkEpisodeReleaseStatus(null, '2027', 'In Production', today);
+            expect(tba.isReleased).toBeFalse();
+            expect(tba.releaseLabel).toBe('2027');
+            // Missing air date on ended series defaults to released
+            const ended = checkEpisodeReleaseStatus(null, '1995-01-01', 'Ended', today);
+            expect(ended.isReleased).toBeTrue();
+        });
+
+        it('blocks marking future/unreleased episode as watched and does not upsert to db', async () => {
+            const result = await service.markEpisodeWatched(555, 2, 1, {
+                title: 'Matka King',
+                totalSeasons: 2,
+                totalEpisodes: 14
+            }, '2027-01-15');
+
+            expect(result.success).toBeFalse();
+            expect(result.reason).toBe('unreleased');
+            expect(result.releaseDate).toBe('2027-01-15');
+            expect(mockUpsert).not.toHaveBeenCalled();
+        });
+
+        it('allows marking released episode as watched', async () => {
+            const result = await service.markEpisodeWatched(555, 1, 8, {
+                title: 'Matka King',
+                totalSeasons: 2,
+                totalEpisodes: 14
+            }, '2026-10-15');
+
+            expect(result.success).toBeTrue();
+            expect(mockUpsert).toHaveBeenCalled();
+        });
+
+        it('syncs multi-season series with unreleased season, setting totalReleasedEpisodes and upcoming season meta', async () => {
+            await service.syncSeriesMeta({
+                adult: false,
+                backdrop_path: '/backdrop.jpg',
+                created_by: [],
+                episode_run_time: [45],
+                first_air_date: '2026-09-01',
+                genres: [],
+                homepage: '',
+                id: 555,
+                in_production: true,
+                languages: ['hi'],
+                last_air_date: '2026-10-20',
+                name: 'Matka King',
+                networks: [],
+                number_of_episodes: 14,
+                number_of_seasons: 2,
+                origin_country: ['IN'],
+                original_language: 'hi',
+                original_name: 'Matka King',
+                overview: 'A thrilling drama',
+                popularity: 45.2,
+                poster_path: '/poster.jpg',
+                production_companies: [],
+                production_countries: [],
+                seasons: [
+                    {
+                        air_date: '2026-09-01',
+                        episode_count: 8,
+                        id: 101,
+                        name: 'Season 1',
+                        overview: '',
+                        poster_path: null,
+                        season_number: 1,
+                        vote_average: 8.5
+                    },
+                    {
+                        air_date: '2027-01-15',
+                        episode_count: 6,
+                        id: 102,
+                        name: 'Season 2',
+                        overview: '',
+                        poster_path: null,
+                        season_number: 2,
+                        vote_average: 0
+                    }
+                ],
+                spoken_languages: [],
+                status: 'Returning Series',
+                tagline: '',
+                type: 'Scripted',
+                vote_average: 8.5,
+                vote_count: 120,
+                last_episode_to_air: {
+                    id: 1008,
+                    name: 'Season 1 Finale',
+                    overview: '',
+                    vote_average: 8.7,
+                    vote_count: 50,
+                    air_date: '2026-10-20',
+                    episode_number: 8,
+                    season_number: 1,
+                    production_code: 'MK-108',
+                    runtime: 45,
+                    show_id: 555,
+                    still_path: null
+                },
+                next_episode_to_air: {
+                    id: 2001,
+                    name: 'Season 2 Premiere',
+                    overview: '',
+                    vote_average: 0,
+                    vote_count: 0,
+                    air_date: '2027-01-15',
+                    episode_number: 1,
+                    season_number: 2,
+                    production_code: 'MK-201',
+                    runtime: 45,
+                    show_id: 555,
+                    still_path: null
+                }
+            });
+
+            expect(mockUpsert).toHaveBeenCalled();
+            const doc = mockUpsert.calls.mostRecent().args[0] as TvProgressDocType;
+            expect(doc.totalEpisodes).toBe(14);
+            expect(doc.totalReleasedEpisodes).toBe(8);
+            expect(doc.nextSeasonNumber).toBe(2);
+            expect(doc.nextSeasonAirDate).toBe('2027-01-15');
+        });
+
+        it('does not return an unreleased future episode in getUpNextEpisode when all released episodes are watched', () => {
+            service.allProgress.set([
+                {
+                    id: 'tv_555',
+                    tmdbId: 555,
+                    seriesTitle: 'Matka King',
+                    totalSeasons: 2,
+                    totalEpisodes: 14,
+                    totalReleasedEpisodes: 8,
+                    watchedEpisodesCount: 8,
+                    watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+                    seasonEpisodeCounts: [
+                        { seasonNumber: 1, episodeCount: 8 },
+                        { seasonNumber: 2, episodeCount: 6 }
+                    ],
+                    nextSeasonNumber: 2,
+                    nextSeasonAirDate: '2027-01-15',
+                    nextAirDate: '2027-01-15',
+                    nextAirSeason: 2,
+                    nextAirEpisode: 1,
+                    updatedAt: Date.now()
+                }
+            ]);
+
+            const seasons = [
+                { id: 1, season_number: 1, episode_count: 8, name: 'S1', air_date: '2026-09-01', overview: '', poster_path: null, vote_average: 8.5 },
+                { id: 2, season_number: 2, episode_count: 6, name: 'S2', air_date: '2027-01-15', overview: '', poster_path: null, vote_average: 0 }
+            ];
+
+            const upNext = service.getUpNextEpisode(555, seasons);
+            // S2 E1 is in 2027, so it must NOT be returned as an Up Next episode to watch today!
+            expect(upNext).toBeNull();
+        });
+
+        it('returns regular Up Next episode if the next episode is already released', () => {
+            service.allProgress.set([
+                {
+                    id: 'tv_555',
+                    tmdbId: 555,
+                    seriesTitle: 'Matka King',
+                    totalSeasons: 2,
+                    totalEpisodes: 14,
+                    totalReleasedEpisodes: 8,
+                    watchedEpisodesCount: 7,
+                    watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7'],
+                    seasonEpisodeCounts: [
+                        { seasonNumber: 1, episodeCount: 8 },
+                        { seasonNumber: 2, episodeCount: 6 }
+                    ],
+                    updatedAt: Date.now()
+                }
+            ]);
+
+            const seasons = [
+                { id: 1, season_number: 1, episode_count: 8, name: 'S1', air_date: '2026-09-01', overview: '', poster_path: null, vote_average: 8.5 },
+                { id: 2, season_number: 2, episode_count: 6, name: 'S2', air_date: '2027-01-15', overview: '', poster_path: null, vote_average: 0 }
+            ];
+
+            const upNext = service.getUpNextEpisode(555, seasons);
+            expect(upNext).toEqual({ seasonNumber: 1, episodeNumber: 8 });
+        });
+
+        it('guards markSeasonWatched so unreleased seasons are not marked', async () => {
+            const result = await service.markSeasonWatched(555, 2, 6, {
+                title: 'Matka King'
+            }, '2027-01-15');
+
+            expect(result.success).toBeFalse();
+            expect(result.reason).toBe('unreleased');
+            expect(mockUpsert).not.toHaveBeenCalled();
+        });
     });
 });
