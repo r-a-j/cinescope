@@ -1,8 +1,97 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DatabaseService } from '../database/database.service';
-import { StorageService } from './storage.service';
+import { StorageService, getLocalTodayIso } from './storage.service';
 import { TvProgressDocType } from '../database/schemas/tv-progress.schema';
 import { TmdbTvSeasonBaseDto, TmdbTvDetailDto } from '../dtos/tv/tv-detail.dto';
+
+export interface EpisodeReleaseStatus {
+    isReleased: boolean;
+    airDate?: string | null | undefined;
+    releaseLabel?: string | undefined;
+}
+
+export interface MarkEpisodeResult {
+    success: boolean;
+    reason?: 'unreleased' | 'not_found' | undefined;
+    releaseDate?: string | undefined;
+}
+
+export function checkEpisodeReleaseStatus(
+    airDate?: string | null,
+    seasonAirDate?: string | null,
+    seriesStatus?: string | null,
+    referenceDateIso?: string
+): EpisodeReleaseStatus {
+    const todayIso = referenceDateIso || getLocalTodayIso();
+    const currentYear = parseInt(todayIso.slice(0, 4), 10);
+    const currentYearMonth = todayIso.slice(0, 7);
+
+    if (airDate && airDate.trim()) {
+        const cleanDate = airDate.trim();
+        // 1. Full YYYY-MM-DD
+        const fullDateMatch = cleanDate.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (fullDateMatch && fullDateMatch[1]) {
+            const datePart = fullDateMatch[1];
+            if (datePart > todayIso) {
+                return { isReleased: false, airDate: datePart, releaseLabel: datePart };
+            }
+            return { isReleased: true, airDate: datePart, releaseLabel: datePart };
+        }
+
+        // 2. YYYY-MM
+        const ymMatch = cleanDate.match(/^(\d{4}-\d{2})$/);
+        if (ymMatch && ymMatch[1]) {
+            const ymPart = ymMatch[1];
+            if (ymPart > currentYearMonth) {
+                return { isReleased: false, airDate: ymPart, releaseLabel: ymPart };
+            }
+            return { isReleased: true, airDate: ymPart, releaseLabel: ymPart };
+        }
+
+        // 3. YYYY
+        const yMatch = cleanDate.match(/^(\d{4})$/);
+        if (yMatch && yMatch[1]) {
+            const yearNum = parseInt(yMatch[1], 10);
+            if (yearNum > currentYear) {
+                return { isReleased: false, airDate: yMatch[1], releaseLabel: yMatch[1] };
+            }
+            return { isReleased: true, airDate: yMatch[1], releaseLabel: yMatch[1] };
+        }
+
+        return { isReleased: false, airDate: cleanDate, releaseLabel: cleanDate };
+    }
+
+    // If no episode airDate, check seasonAirDate
+    if (seasonAirDate && seasonAirDate.trim()) {
+        const cleanSeasonDate = seasonAirDate.trim();
+        const fullDateMatch = cleanSeasonDate.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (fullDateMatch && fullDateMatch[1]) {
+            if (fullDateMatch[1] > todayIso) {
+                return { isReleased: false, airDate: fullDateMatch[1], releaseLabel: fullDateMatch[1] };
+            }
+            return { isReleased: true, airDate: fullDateMatch[1], releaseLabel: fullDateMatch[1] };
+        }
+        const yMatch = cleanSeasonDate.match(/^(\d{4})/);
+        if (yMatch && yMatch[1]) {
+            const yearNum = parseInt(yMatch[1], 10);
+            if (yearNum > currentYear) {
+                return { isReleased: false, airDate: yMatch[1], releaseLabel: yMatch[1] };
+            }
+        }
+    }
+
+    const cleanStatus = (seriesStatus || '').toLowerCase();
+    if (cleanStatus === 'ended' || cleanStatus === 'canceled') {
+        return { isReleased: true, airDate: null, releaseLabel: '' };
+    }
+
+    if (cleanStatus === 'in production' || cleanStatus === 'planned' || cleanStatus === 'pilot' || cleanStatus === 'rumored' || (seasonAirDate && seasonAirDate.trim())) {
+        return { isReleased: false, airDate: seasonAirDate || null, releaseLabel: seasonAirDate || 'TBA' };
+    }
+
+    // Default to released if no contrary future signals exist
+    return { isReleased: true, airDate: null, releaseLabel: '' };
+}
 
 export interface UpNextEpisodeInfo {
     seasonNumber: number;
@@ -246,6 +335,9 @@ export class TvProgressService {
         if (progress.isMarkedComplete) {
             return (progress.unwatchedEpisodes?.length ?? 0) === 0;
         }
+        if (progress.nextSeasonNumber || (progress.totalReleasedEpisodes !== undefined && progress.totalEpisodes > progress.totalReleasedEpisodes)) {
+            return false;
+        }
         return progress.totalEpisodes > 0 && progress.watchedEpisodesCount >= progress.totalEpisodes;
     }
 
@@ -285,10 +377,56 @@ export class TvProgressService {
         tmdbId: number,
         seasonNumber: number,
         episodeNumber: number,
-        seriesMeta?: TvSeriesProgressMeta
-    ): Promise<void> {
+        seriesMeta?: TvSeriesProgressMeta,
+        episodeAirDate?: string | null
+    ): Promise<MarkEpisodeResult> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
+
+        // Determine effective episodeAirDate & seasonAirDate if not explicitly provided
+        let effectiveAirDate = episodeAirDate;
+        let seasonAirDate: string | null | undefined;
+        if (!effectiveAirDate) {
+            if (existing?.nextAirSeason === seasonNumber && existing?.nextAirEpisode === episodeNumber) {
+                effectiveAirDate = existing.nextAirDate;
+            } else if (existing?.nextSeasonNumber && seasonNumber >= existing.nextSeasonNumber) {
+                effectiveAirDate = existing.nextSeasonAirDate;
+                seasonAirDate = existing.nextSeasonAirDate;
+            } else {
+                const cachedDoc = this.storage.getCachedDoc(tmdbId, 'tv');
+                const payload = cachedDoc?.payload as Partial<TmdbTvDetailDto> | undefined;
+                if (payload) {
+                    if (
+                        payload.next_episode_to_air &&
+                        payload.next_episode_to_air.season_number === seasonNumber &&
+                        payload.next_episode_to_air.episode_number === episodeNumber
+                    ) {
+                        effectiveAirDate = payload.next_episode_to_air.air_date;
+                    }
+                    if (Array.isArray(payload.seasons)) {
+                        const sObj = payload.seasons.find((s) => s.season_number === seasonNumber);
+                        if (sObj?.air_date) {
+                            seasonAirDate = sObj.air_date;
+                        }
+                    }
+                }
+            }
+        }
+
+        const releaseCheck = checkEpisodeReleaseStatus(
+            effectiveAirDate,
+            seasonAirDate,
+            seriesMeta?.status || existing?.status
+        );
+
+        if (!releaseCheck.isReleased) {
+            return {
+                success: false,
+                reason: 'unreleased',
+                releaseDate: releaseCheck.releaseLabel
+            };
+        }
+
         const epKey = this.getEpisodeKey(seasonNumber, episodeNumber);
 
         const watchedSet = new Set<string>(existing?.watchedEpisodes ?? []);
@@ -320,6 +458,10 @@ export class TvProgressService {
             doc.unwatchedEpisodes = Array.from(unwatchedEpisodes);
         }
         if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
+        if (existing?.totalReleasedEpisodes !== undefined) doc.totalReleasedEpisodes = existing.totalReleasedEpisodes;
+        if (existing?.nextSeasonNumber !== undefined) doc.nextSeasonNumber = existing.nextSeasonNumber;
+        if (existing?.nextSeasonAirDate) doc.nextSeasonAirDate = existing.nextSeasonAirDate;
+        if (existing?.nextSeasonTitle) doc.nextSeasonTitle = existing.nextSeasonTitle;
 
         const poster = seriesMeta?.posterPath || existing?.posterPath;
         if (poster) doc.posterPath = poster;
@@ -337,9 +479,9 @@ export class TvProgressService {
         if (existing?.nextAirSeason !== undefined) doc.nextAirSeason = existing.nextAirSeason;
         if (existing?.nextAirEpisode !== undefined) doc.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) doc.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
-        if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
+        return { success: true };
     }
 
     public async unmarkEpisodeWatched(
@@ -467,29 +609,81 @@ export class TvProgressService {
         seasonNumber: number,
         episodeNumber: number,
         seriesMeta?: TvSeriesProgressMeta,
-        seasons?: TmdbTvSeasonBaseDto[]
+        seasons?: TmdbTvSeasonBaseDto[],
+        episodeAirDate?: string | null
     ): Promise<boolean> {
         const isWatched = this.isEpisodeWatched(tmdbId, seasonNumber, episodeNumber);
         if (isWatched) {
             await this.unmarkEpisodeWatched(tmdbId, seasonNumber, episodeNumber, seriesMeta, seasons);
             return false;
         }
-        await this.markEpisodeWatched(tmdbId, seasonNumber, episodeNumber, seriesMeta);
-        return true;
+        const result = await this.markEpisodeWatched(tmdbId, seasonNumber, episodeNumber, seriesMeta, episodeAirDate);
+        return result.success;
     }
 
     public async markSeasonWatched(
         tmdbId: number,
         seasonNumber: number,
         episodeCount: number,
-        seriesMeta?: TvSeriesProgressMeta
-    ): Promise<void> {
+        seriesMeta?: TvSeriesProgressMeta,
+        seasonAirDate?: string | null,
+        episodes?: { episode_number: number; air_date?: string | null }[]
+    ): Promise<MarkEpisodeResult> {
         this.initReactiveStream();
         const existing = this.getSeriesProgress(tmdbId);
+
+        let effectiveSeasonAirDate = seasonAirDate;
+        if (!effectiveSeasonAirDate) {
+            if (existing?.nextSeasonNumber && seasonNumber >= existing.nextSeasonNumber) {
+                effectiveSeasonAirDate = existing.nextSeasonAirDate;
+            } else {
+                const cachedDoc = this.storage.getCachedDoc(tmdbId, 'tv');
+                const payload = cachedDoc?.payload as Partial<TmdbTvDetailDto> | undefined;
+                if (payload && Array.isArray(payload.seasons)) {
+                    const sObj = payload.seasons.find((s) => s.season_number === seasonNumber);
+                    if (sObj?.air_date) effectiveSeasonAirDate = sObj.air_date;
+                }
+            }
+        }
+
+        const seasonCheck = checkEpisodeReleaseStatus(
+            effectiveSeasonAirDate,
+            effectiveSeasonAirDate,
+            seriesMeta?.status || existing?.status
+        );
+        if (!seasonCheck.isReleased) {
+            return {
+                success: false,
+                reason: 'unreleased',
+                releaseDate: seasonCheck.releaseLabel
+            };
+        }
+
         const watchedSet = new Set<string>(existing?.watchedEpisodes ?? []);
 
-        for (let ep = 1; ep <= episodeCount; ep++) {
-            watchedSet.add(this.getEpisodeKey(seasonNumber, ep));
+        let maxEpisodeMarked = 0;
+        if (episodes && episodes.length > 0) {
+            let markedAny = false;
+            for (const ep of episodes) {
+                const epCheck = checkEpisodeReleaseStatus(ep.air_date, effectiveSeasonAirDate, seriesMeta?.status || existing?.status);
+                if (epCheck.isReleased) {
+                    watchedSet.add(this.getEpisodeKey(seasonNumber, ep.episode_number));
+                    markedAny = true;
+                    if (ep.episode_number > maxEpisodeMarked) maxEpisodeMarked = ep.episode_number;
+                }
+            }
+            if (!markedAny) {
+                return {
+                    success: false,
+                    reason: 'unreleased',
+                    releaseDate: seasonCheck.releaseLabel
+                };
+            }
+        } else {
+            for (let ep = 1; ep <= episodeCount; ep++) {
+                watchedSet.add(this.getEpisodeKey(seasonNumber, ep));
+            }
+            maxEpisodeMarked = episodeCount;
         }
 
         const watchedList = Array.from(watchedSet);
@@ -510,7 +704,7 @@ export class TvProgressService {
             totalEpisodes: seriesMeta?.totalEpisodes ?? existing?.totalEpisodes ?? 0,
             watchedEpisodesCount: regularWatchedCount,
             lastWatchedSeason: seasonNumber,
-            lastWatchedEpisode: episodeCount,
+            lastWatchedEpisode: maxEpisodeMarked || episodeCount,
             lastWatchedAt: Date.now(),
             watchedEpisodes: watchedList,
             updatedAt: Date.now()
@@ -523,6 +717,10 @@ export class TvProgressService {
             { seasonNumber, episodeCount }
         ];
         if (seasonEpisodeCounts.length > 0) doc.seasonEpisodeCounts = seasonEpisodeCounts;
+        if (existing?.totalReleasedEpisodes !== undefined) doc.totalReleasedEpisodes = existing.totalReleasedEpisodes;
+        if (existing?.nextSeasonNumber !== undefined) doc.nextSeasonNumber = existing.nextSeasonNumber;
+        if (existing?.nextSeasonAirDate) doc.nextSeasonAirDate = existing.nextSeasonAirDate;
+        if (existing?.nextSeasonTitle) doc.nextSeasonTitle = existing.nextSeasonTitle;
 
         const poster = seriesMeta?.posterPath || existing?.posterPath;
         if (poster) doc.posterPath = poster;
@@ -535,6 +733,7 @@ export class TvProgressService {
         if (existing?.seasonEpisodeCounts) doc.seasonEpisodeCounts = existing.seasonEpisodeCounts;
 
         await this.dbService.db.tvProgress.upsert(doc);
+        return { success: true };
     }
 
     public async unmarkSeasonWatched(
@@ -757,6 +956,78 @@ export class TvProgressService {
                 { length: season.episode_count },
                 (_, index) => this.getEpisodeKey(season.season_number, index + 1)
             ));
+
+        // Calculate totalReleasedEpisodes and upcoming season info
+        let totalReleasedEpisodes = 0;
+        let nextSeasonNumber: number | undefined;
+        let nextSeasonAirDate: string | undefined;
+        let nextSeasonTitle: string | undefined;
+
+        const isShowEnded = detail.status === 'Ended' || detail.status === 'Canceled';
+        const sortedSeasons = seasons.slice().sort((a, b) => a.season_number - b.season_number);
+
+        if (isShowEnded) {
+            totalReleasedEpisodes = totalEpisodes;
+        } else if (detail.last_episode_to_air) {
+            const lastEp = detail.last_episode_to_air;
+            for (const s of sortedSeasons) {
+                if (s.season_number < lastEp.season_number) {
+                    totalReleasedEpisodes += s.episode_count;
+                } else if (s.season_number === lastEp.season_number) {
+                    totalReleasedEpisodes += Math.min(s.episode_count, lastEp.episode_number);
+                }
+            }
+            if (detail.next_episode_to_air) {
+                const nextAir = detail.next_episode_to_air;
+                if (nextAir.season_number > lastEp.season_number) {
+                    nextSeasonNumber = nextAir.season_number;
+                    nextSeasonAirDate = nextAir.air_date ?? undefined;
+                    nextSeasonTitle = nextAir.name ?? undefined;
+                }
+            }
+        } else {
+            for (const s of sortedSeasons) {
+                const releaseCheck = checkEpisodeReleaseStatus(s.air_date, s.air_date, detail.status);
+                if (releaseCheck.isReleased) {
+                    totalReleasedEpisodes += s.episode_count;
+                } else if (!nextSeasonNumber) {
+                    nextSeasonNumber = s.season_number;
+                    nextSeasonAirDate = s.air_date ?? undefined;
+                    nextSeasonTitle = s.name ?? undefined;
+                }
+            }
+        }
+
+        if (!nextSeasonNumber && detail.next_episode_to_air) {
+            const nextAir = detail.next_episode_to_air;
+            const maxReleasedSeason = sortedSeasons
+                .filter((s) => checkEpisodeReleaseStatus(s.air_date, s.air_date, detail.status).isReleased)
+                .pop()?.season_number ?? 1;
+            if (nextAir.season_number > maxReleasedSeason) {
+                nextSeasonNumber = nextAir.season_number;
+                nextSeasonAirDate = nextAir.air_date ?? undefined;
+                nextSeasonTitle = nextAir.name ?? undefined;
+            }
+        }
+
+        if (!nextSeasonNumber) {
+            for (const s of sortedSeasons) {
+                const releaseCheck = checkEpisodeReleaseStatus(s.air_date, s.air_date, detail.status);
+                if (!releaseCheck.isReleased) {
+                    nextSeasonNumber = s.season_number;
+                    nextSeasonAirDate = s.air_date ?? undefined;
+                    nextSeasonTitle = s.name ?? undefined;
+                    break;
+                }
+            }
+        }
+
+        if (totalReleasedEpisodes === 0 && regularEpisodeTotal > 0 && !nextSeasonNumber && isShowEnded) {
+            totalReleasedEpisodes = totalEpisodes;
+        } else if (totalReleasedEpisodes === 0 && !nextSeasonNumber && !detail.in_production) {
+            totalReleasedEpisodes = totalEpisodes;
+        }
+
         let watchedEpisodes = existing?.watchedEpisodes ?? [];
         let watchedEpisodesCount = existing?.watchedEpisodesCount ?? 0;
         let isMarkedComplete = existing?.isMarkedComplete ?? false;
@@ -794,6 +1065,10 @@ export class TvProgressService {
             seasonEpisodeCounts,
             updatedAt: Date.now()
         };
+        if (totalReleasedEpisodes !== undefined) doc.totalReleasedEpisodes = totalReleasedEpisodes;
+        if (nextSeasonNumber !== undefined) doc.nextSeasonNumber = nextSeasonNumber;
+        if (nextSeasonAirDate) doc.nextSeasonAirDate = nextSeasonAirDate;
+        if (nextSeasonTitle) doc.nextSeasonTitle = nextSeasonTitle;
         if (isMarkedComplete) {
             doc.isMarkedComplete = true;
             doc.unwatchedEpisodes = unwatchedEpisodes;
@@ -854,12 +1129,33 @@ export class TvProgressService {
                 }));
         if (seasonCounts.length > 0) {
             for (const s of seasonCounts) {
+                const seasonObj = (effectiveSeasons ?? []).find((es) => es.season_number === s.season_number);
+                if (seasonObj?.air_date) {
+                    const seasonCheck = checkEpisodeReleaseStatus(seasonObj.air_date);
+                    if (!seasonCheck.isReleased) {
+                        continue;
+                    }
+                }
+                if (progress?.nextSeasonNumber && s.season_number >= progress.nextSeasonNumber) {
+                    continue;
+                }
+
                 for (let ep = 1; ep <= s.episode_count; ep++) {
                     const key = this.getEpisodeKey(s.season_number, ep);
                     const isWatched = progress?.isMarkedComplete
                         ? !unwatchedSet.has(key)
                         : watchedSet.has(key);
                     if (!isWatched) {
+                        if (
+                            progress?.nextAirSeason === s.season_number &&
+                            progress?.nextAirEpisode === ep &&
+                            progress.nextAirDate
+                        ) {
+                            const nextCheck = checkEpisodeReleaseStatus(progress.nextAirDate);
+                            if (!nextCheck.isReleased) {
+                                return null;
+                            }
+                        }
                         return { seasonNumber: s.season_number, episodeNumber: ep };
                     }
                 }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonSpinner, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline } from 'ionicons/icons';
+import { checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline, timeOutline } from 'ionicons/icons';
 import { TmdbTvEpisodeBaseDto, TmdbTvSeasonBaseDto } from '../../../../core/dtos/tv/tv-detail.dto';
 import {
   TmdbTvSeasonDetailDto,
@@ -12,7 +12,7 @@ import {
   TmdbTvSeasonGuestStarDto
 } from '../../../../core/dtos/tv-seasons/tv-season-detail.dto';
 import { DEFAULT_POSTER_PLACEHOLDER, resolveMediaImageUrl } from '../../../../core/constants/api.constants';
-import { TvProgressService } from '../../../../core/services/tv-progress.service';
+import { TvProgressService, checkEpisodeReleaseStatus } from '../../../../core/services/tv-progress.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PosterCacheService } from '../../../../core/services/poster-cache.service';
 
@@ -56,7 +56,7 @@ export class TvSeasonsHubComponent {
   public failedGuestIds = signal<Record<number, boolean>>({});
 
   constructor() {
-    addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline });
+    addIcons({ checkmarkCircle, checkmarkCircleOutline, checkmarkDoneOutline, playOutline, tvOutline, timeOutline });
   }
 
   public isImageLoaded(url: string | null | undefined): boolean {
@@ -103,10 +103,26 @@ export class TvSeasonsHubComponent {
     return this.tvProgress.isEpisodeWatched(id, seasonNumber, episodeNumber);
   }
 
+  public isEpisodeReleased(airDate?: string | null): boolean {
+    return checkEpisodeReleaseStatus(airDate, undefined, this.showStatus() ?? undefined).isReleased;
+  }
+
   public async onToggleEpisodeWatched(event: Event, ep: TmdbTvSeasonEpisodeDto): Promise<void> {
     event.stopPropagation();
     const id = this.seriesId();
     if (!id) return;
+
+    const isCurrentlyWatched = this.tvProgress.isEpisodeWatched(id, ep.season_number, ep.episode_number);
+    if (!isCurrentlyWatched) {
+      const releaseCheck = checkEpisodeReleaseStatus(ep.air_date, undefined, this.showStatus() ?? undefined);
+      if (!releaseCheck.isReleased) {
+        void this.toast.presentWarning(
+          `Cannot mark S${ep.season_number} E${ep.episode_number} as watched — airs on ${releaseCheck.releaseLabel || 'a future date'}`,
+          2600
+        );
+        return;
+      }
+    }
 
     const nowWatched = await this.tvProgress.toggleEpisode(
       id,
@@ -121,7 +137,8 @@ export class TvSeasonsHubComponent {
         status: this.showStatus() ?? undefined,
         episodeTitle: ep.name
       },
-      this.seasons()
+      this.seasons(),
+      ep.air_date
     );
 
     if (nowWatched) {
@@ -161,14 +178,41 @@ export class TvSeasonsHubComponent {
       );
       void this.toast.presentInfo(`Unmarked Season ${sNum}`, 1800);
     } else {
-      await this.tvProgress.markSeasonWatched(id, sNum, count, {
-        title: this.seriesTitle(),
-        posterPath: this.posterPath() ?? undefined,
-        backdropPath: this.backdropPath() ?? undefined,
-        totalSeasons: this.totalSeasons(),
-        totalEpisodes: this.totalEpisodes(),
-        status: this.showStatus() ?? undefined
-      });
+      const seasonObj = this.seasons().find((s) => s.season_number === sNum);
+      const seasonAirDate = seasonObj?.air_date;
+      const seasonCheck = checkEpisodeReleaseStatus(seasonAirDate, seasonAirDate, this.showStatus() ?? undefined);
+      if (!seasonCheck.isReleased) {
+        void this.toast.presentWarning(
+          `Cannot mark Season ${sNum} as watched — airs on ${seasonCheck.releaseLabel || 'a future date'}`,
+          2600
+        );
+        return;
+      }
+
+      const result = await this.tvProgress.markSeasonWatched(
+        id,
+        sNum,
+        count,
+        {
+          title: this.seriesTitle(),
+          posterPath: this.posterPath() ?? undefined,
+          backdropPath: this.backdropPath() ?? undefined,
+          totalSeasons: this.totalSeasons(),
+          totalEpisodes: this.totalEpisodes(),
+          status: this.showStatus() ?? undefined
+        },
+        seasonAirDate,
+        this.episodes()
+      );
+
+      if (!result.success && result.reason === 'unreleased') {
+        void this.toast.presentWarning(
+          `Cannot mark Season ${sNum} as watched — airs on ${result.releaseDate || 'a future date'}`,
+          2600
+        );
+        return;
+      }
+
       void this.toast.presentSuccess(`Marked Season ${sNum} watched (${count} eps)`, 1800);
     }
   }

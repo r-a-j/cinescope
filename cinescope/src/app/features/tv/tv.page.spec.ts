@@ -34,7 +34,7 @@ describe('TvPage', () => {
       (tmdbId: number) => mockAllProgress().find((progress) => progress.tmdbId === tmdbId)
     ),
     syncSeriesMeta: jasmine.createSpy('syncSeriesMeta').and.returnValue(Promise.resolve()),
-    markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve()),
+    markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve({ success: true })),
     getUpNextEpisode: jasmine.createSpy('getUpNextEpisode').and.returnValue({ seasonNumber: 1, episodeNumber: 1 })
   };
 
@@ -49,7 +49,8 @@ describe('TvPage', () => {
   };
 
   const mockToastService = {
-    presentSuccess: jasmine.createSpy('presentSuccess').and.returnValue(Promise.resolve())
+    presentSuccess: jasmine.createSpy('presentSuccess').and.returnValue(Promise.resolve()),
+    presentWarning: jasmine.createSpy('presentWarning').and.returnValue(Promise.resolve())
   };
 
   const mockMediaMetadataService = {
@@ -66,6 +67,9 @@ describe('TvPage', () => {
     mockCurrentlyWatching.set([]);
     mockCompletedSeries.set([]);
     mockWatchedItems.set([]);
+    mockTvProgressService.markEpisodeWatched.and.returnValue(Promise.resolve({ success: true }));
+    mockToastService.presentSuccess.calls.reset();
+    mockToastService.presentWarning.calls.reset();
 
     await TestBed.configureTestingModule({
       imports: [TvPage],
@@ -461,5 +465,71 @@ describe('TvPage', () => {
 
     component.onImageLoad(loadEvent, testUrl);
     expect(component.isImageLoaded(testUrl)).toBeTrue();
+  });
+
+  it('calculates progress based on totalReleasedEpisodes and marks series as caught-up when season finale is watched', () => {
+    mockAllProgress.set([
+      {
+        id: 'tv_555',
+        tmdbId: 555,
+        seriesTitle: 'Matka King',
+        totalSeasons: 2,
+        totalEpisodes: 14,
+        totalReleasedEpisodes: 8,
+        watchedEpisodesCount: 8,
+        watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+        nextSeasonNumber: 2,
+        nextSeasonAirDate: '2027-01-15',
+        updatedAt: Date.now()
+      }
+    ]);
+    fixture.detectChanges();
+
+    const hero = component.heroSeries();
+    expect(hero).toBeTruthy();
+    expect(hero?.totalReleasedEpisodes).toBe(8);
+    expect(hero?.watchedEpisodesCount).toBe(8);
+    expect(hero?.percentage).toBe(100);
+    expect(hero?.isCaughtUp).toBeTrue();
+    expect(hero?.isCompleted).toBeFalse();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const progressLabel = compiled.querySelector('.ep-count-label');
+    expect(progressLabel?.textContent).toContain('8 of 8 episodes watched');
+
+    const upcomingSeasonCard = compiled.querySelector('.upcoming-season-card');
+    expect(upcomingSeasonCard).toBeTruthy();
+    expect(upcomingSeasonCard?.textContent).toContain('Season 2');
+    expect(upcomingSeasonCard?.textContent).toContain('Premieres 2027-01-15');
+  });
+
+  it('presents warning toast when attempting to mark an unreleased episode watched', async () => {
+    mockTvProgressService.markEpisodeWatched.and.returnValue(Promise.resolve({
+      success: false,
+      reason: 'unreleased',
+      releaseDate: '2027-01-15'
+    }));
+
+    const card = {
+      id: 555,
+      title: 'Matka King',
+      posterUrl: '/poster.jpg',
+      totalSeasons: 2,
+      totalEpisodes: 14,
+      totalReleasedEpisodes: 8,
+      watchedEpisodesCount: 8,
+      percentage: 100,
+      isCompleted: false,
+      isUnstarted: false,
+      upNextSeason: 2,
+      upNextEpisode: 1
+    };
+
+    const dummyEvent = { stopPropagation: jasmine.createSpy('stopPropagation') } as unknown as Event;
+    await component.onMarkNextEpisodeWatched(dummyEvent, card);
+
+    expect(mockToastService.presentWarning).toHaveBeenCalled();
+    const warningMsg = mockToastService.presentWarning.calls.mostRecent().args[0];
+    expect(warningMsg).toContain('Cannot mark S2 E1 as watched — airs on 2027-01-15');
   });
 });

@@ -162,14 +162,24 @@
 
             <!-- Cinema Control Bar: Primary Watch Toggle + Sleek Episode Stepper -->
             <div class="command-center">
-              <button
-                type="button"
-                class="btn-watched-action"
-                [class.is-watched]="isWatched()"
-                (click)="toggleWatched()">
-                <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
-                <span>{{ isWatched() ? 'Watched • Tap to Undo' : 'Mark S' + currentSeasonNumber() + ' E' + currentEpisodeNumber() + ' Watched' }}</span>
-              </button>
+              @if (!isReleased() && !isWatched()) {
+                <button
+                  type="button"
+                  class="btn-watched-action is-unreleased"
+                  (click)="toggleWatched()">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <span>Upcoming • Airs {{ releaseStatus().releaseLabel || 'in the future' }}</span>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn-watched-action"
+                  [class.is-watched]="isWatched()"
+                  (click)="toggleWatched()">
+                  <ion-icon [name]="isWatched() ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                  <span>{{ isWatched() ? 'Watched • Tap to Undo' : 'Mark S' + currentSeasonNumber() + ' E' + currentEpisodeNumber() + ' Watched' }}</span>
+                </button>
+              }
 
               <div class="stepper-row">
                 <button

@@ -170,9 +170,10 @@
                         type="button"
                         class="ep-watched-btn"
                         [class.is-watched]="isEpisodeWatched(ep.season_number, ep.episode_number)"
-                        [attr.aria-label]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'Mark unwatched' : 'Mark watched'"
+                        [class.is-unreleased]="!isEpisodeReleased(ep.air_date) && !isEpisodeWatched(ep.season_number, ep.episode_number)"
+                        [attr.aria-label]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'Mark unwatched' : (!isEpisodeReleased(ep.air_date) ? 'Unreleased episode' : 'Mark watched')"
                         (click)="onToggleEpisodeWatched($event, ep)">
-                        <ion-icon [name]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'checkmark-circle' : 'checkmark-circle-outline'"></ion-icon>
+                        <ion-icon [name]="isEpisodeWatched(ep.season_number, ep.episode_number) ? 'checkmark-circle' : (!isEpisodeReleased(ep.air_date) ? 'time-outline' : 'checkmark-circle-outline')"></ion-icon>
                       </button>
                     }
                   </div>

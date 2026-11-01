@@ -3,7 +3,7 @@ import { ExtractDocumentTypeFromTypedRxJsonSchema, toTypedRxJsonSchema, RxJsonSc
 export const tvProgressSchemaLiteral = {
     title: 'tv progress schema',
     description: 'Tracks user progress for TV series, seasons, and episodes with 1-doc-per-series architecture',
-    version: 1,
+    version: 2,
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -92,6 +92,18 @@ export const tvProgressSchemaLiteral = {
         nextAirEpisodeTitle: {
             type: 'string'
         },
+        totalReleasedEpisodes: {
+            type: 'number'
+        },
+        nextSeasonNumber: {
+            type: 'number'
+        },
+        nextSeasonAirDate: {
+            type: 'string'
+        },
+        nextSeasonTitle: {
+            type: 'string'
+        },
         updatedAt: {
             type: 'number',
             multipleOf: 1,
@@ -112,11 +124,17 @@ interface TvProgressMigrationInput {
     isMarkedComplete?: unknown;
     totalEpisodes?: unknown;
     unwatchedEpisodes?: unknown;
+    totalReleasedEpisodes?: unknown;
 }
 
 export const migrateTvProgressCounts = <T extends TvProgressMigrationInput>(
     oldDoc: T
-): T & { watchedEpisodesCount: number } => {
+): T & { watchedEpisodesCount: number; totalReleasedEpisodes: number } => {
+    const rawReleased = (oldDoc as Record<string, unknown>)['totalReleasedEpisodes'];
+    const totalReleasedEpisodes = typeof rawReleased === 'number'
+        ? rawReleased
+        : (typeof oldDoc.totalEpisodes === 'number' ? oldDoc.totalEpisodes : 0);
+
     if (oldDoc.isMarkedComplete === true) {
         const exceptions = Array.isArray(oldDoc.unwatchedEpisodes)
             ? new Set(oldDoc.unwatchedEpisodes.filter(
@@ -126,7 +144,8 @@ export const migrateTvProgressCounts = <T extends TvProgressMigrationInput>(
         const totalEpisodes = typeof oldDoc.totalEpisodes === 'number' ? oldDoc.totalEpisodes : 0;
         return {
             ...oldDoc,
-            watchedEpisodesCount: Math.max(0, totalEpisodes - exceptions.size)
+            watchedEpisodesCount: Math.max(0, totalEpisodes - exceptions.size),
+            totalReleasedEpisodes
         };
     }
 
@@ -136,10 +155,12 @@ export const migrateTvProgressCounts = <T extends TvProgressMigrationInput>(
     const regularEpisodes = new Set(episodes.filter((episode) => /^s[1-9]\d*e[1-9]\d*$/i.test(episode)));
     return {
         ...oldDoc,
-        watchedEpisodesCount: regularEpisodes.size
+        watchedEpisodesCount: regularEpisodes.size,
+        totalReleasedEpisodes
     };
 };
 
 export const tvProgressMigrationStrategies: MigrationStrategies = {
-    1: (oldDoc: Record<string, unknown>) => migrateTvProgressCounts(oldDoc)
+    1: (oldDoc: Record<string, unknown>) => migrateTvProgressCounts(oldDoc),
+    2: (oldDoc: Record<string, unknown>) => migrateTvProgressCounts(oldDoc)
 };

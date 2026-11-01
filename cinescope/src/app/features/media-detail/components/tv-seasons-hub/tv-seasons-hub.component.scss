@@ -294,6 +294,11 @@
     color: #10b981;
   }
 
+  &.is-unreleased {
+    color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
   &:active {
     transform: scale(0.9);
   }
