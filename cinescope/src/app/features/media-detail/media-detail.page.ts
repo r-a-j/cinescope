@@ -50,6 +50,7 @@ import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { TmdbTvSeasonsService } from '../../core/services/tmdb-tv-seasons.service';
 import { TmdbDiscoverService } from '../../core/services/tmdb-discover.service';
 import { DiscoverPreferencesService } from '../../core/services/discover-preferences.service';
+import { RecommendationEngineService } from '../../core/services/recommendation-engine.service';
 import { CollectionQueryContext } from '../../core/services/collection-loader.service';
 import { MediaMetadataService } from '../../core/services/media-metadata.service';
 import { StorageService, TmdbPayload } from '../../core/services/storage.service';
@@ -199,6 +200,7 @@ export class MediaDetailPage implements OnInit {
   private tvSeasonsService = inject(TmdbTvSeasonsService);
   private discoverService = inject(TmdbDiscoverService);
   private discoverPrefs = inject(DiscoverPreferencesService);
+  private recEngine = inject(RecommendationEngineService, { optional: true });
   public storage = inject(StorageService);
   private toast = inject(ToastService);
   private navService = inject(NavigationService);
@@ -1352,7 +1354,7 @@ export class MediaDetailPage implements OnInit {
     const watchedKeys = this.storage.watchedMediaKeys();
     const seen = new Set<string | number>();
 
-    return items.filter((item) => {
+    const filtered = items.filter((item) => {
       if (Number(item.id) === currentId) return false;
       if (excludeIds?.has(item.id)) return false;
       if (seen.has(item.id)) return false;
@@ -1360,6 +1362,14 @@ export class MediaDetailPage implements OnInit {
       seen.add(item.id);
       return true;
     });
+
+    if (this.recEngine) {
+      return this.recEngine.rankSwimlaneItems(filtered, {
+        hideWatched,
+        attachMatchSubtitle: true
+      });
+    }
+    return filtered;
   }
 
   private async hydrateSmartRecommendationFallback(

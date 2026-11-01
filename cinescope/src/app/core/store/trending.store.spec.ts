@@ -1,3 +1,5 @@
+import { RecommendationEngineService } from '../services/recommendation-engine.service';
+import { TasteProfileService } from '../services/taste-profile.service';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { TrendingStore } from './trending.store';
@@ -30,7 +32,7 @@ describe('TrendingStore', () => {
                 TrendingStore,
                 { provide: TmdbTrendingService, useValue: trendingService },
                 { provide: TmdbDiscoverService, useValue: {} },
-                { provide: TmdbMoviesService, useValue: { getNowPlayingMovies: jasmine.createSpy().and.returnValue(observable) } },
+                { provide: RecommendationEngineService, useValue: null }, { provide: TasteProfileService, useValue: null }, { provide: TmdbMoviesService, useValue: { getNowPlayingMovies: jasmine.createSpy().and.returnValue(observable) } },
                 { provide: TmdbTvService, useValue: { getTvOnTheAir: jasmine.createSpy().and.returnValue(observable) } },
                 { provide: TmdbPeopleService, useValue: {} }
             ]

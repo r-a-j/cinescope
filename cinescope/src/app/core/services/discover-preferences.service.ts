@@ -6,6 +6,7 @@ import { TmdbGenresService } from './tmdb-genres.service';
 import { TmdbLanguageDto } from '../dtos/configuration/language.dto';
 import { TmdbDiscoverMovieParamsDto } from '../dtos/discover/discover-movie-params.dto';
 import { TmdbDiscoverTvParamsDto } from '../dtos/discover/discover-tv-params.dto';
+import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 
 export type DiscoverLanguageCode = string;
 
@@ -493,9 +494,11 @@ export const DISCOVER_TABS_CATALOG: readonly DiscoverTabMeta[] = [
 export interface AiTasteCachedLane {
   id: string;
   title: string;
+  subtitle?: string;
   mediaType: 'movie' | 'tv';
   movieParams?: TmdbDiscoverMovieParamsDto;
   tvParams?: TmdbDiscoverTvParamsDto;
+  curatedItems?: SwimlaneItem[];
 }
 
 export interface AiTasteCachePayload {
@@ -537,7 +540,7 @@ export const DEFAULT_DISCOVER_PREFERENCES: DiscoverPreferencesState = {
 const STORAGE_KEY_DISCOVER_PREFS = 'cinescope_discover_preferences';
 const STORAGE_KEY_TMDB_LANGUAGES_LEGACY = 'cinescope_tmdb_languages_catalog_v1';
 const STORAGE_KEY_TMDB_LANGUAGES = 'cinescope_tmdb_languages_catalog_v2';
-const STORAGE_KEY_AI_TASTE_CACHE = 'cinescope_ai_taste_cache_v1';
+const STORAGE_KEY_AI_TASTE_CACHE = 'cinescope_ai_taste_cache_v2';
 const CATALOG_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 @Injectable({
