@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DatabaseService } from '../database/database.service';
 import { StorageService, getLocalTodayIso } from './storage.service';
+import { TvReleaseIntelService } from './tv-release-intel.service';
 import { TvProgressDocType } from '../database/schemas/tv-progress.schema';
 import { TmdbTvSeasonBaseDto, TmdbTvDetailDto } from '../dtos/tv/tv-detail.dto';
 
@@ -123,6 +124,36 @@ export interface AirRadarItem {
     daysUntil: number; // 0 = today, -1 = aired yesterday, positive = upcoming
 }
 
+export interface UpcomingSeasonItem {
+    tmdbId: number;
+    seriesTitle: string;
+    posterPath?: string | undefined;
+    backdropPath?: string | undefined;
+    seasonNumber: number;
+    episodeNumber?: number | undefined;
+    seasonAirDate?: string | undefined;
+    seasonTitle?: string | undefined;
+    daysUntil?: number | null | undefined;
+    status?: string | undefined;
+    isCaughtUp: boolean;
+    plannedReleaseYear?: number | null | undefined;
+    plannedReleaseWindow?: string | undefined;
+    releaseStatus?: string | undefined;
+}
+
+export function getCalendarDayDiff(dateStr: string): number | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+    if (!match) return null;
+    const y = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10) - 1;
+    const d = parseInt(match[3], 10);
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetUtc = Date.UTC(y, m, d);
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    return Math.round((targetUtc - todayUtc) / oneDayMs);
+}
+
 export interface WatchlistReadySeries {
     tmdbId: number;
     title: string;
@@ -138,6 +169,7 @@ export interface WatchlistReadySeries {
 export class TvProgressService {
     private readonly dbService = inject(DatabaseService);
     private readonly storage = inject(StorageService);
+    public readonly releaseIntel = inject(TvReleaseIntelService);
 
     public readonly allProgress = signal<TvProgressDocType[]>([]);
     private streamsInitialized = false;
@@ -205,19 +237,6 @@ export class TvProgressService {
         const items: AirRadarItem[] = [];
         const seenTmdbIds = new Set<number>();
 
-        const getCalendarDayDiff = (dateStr: string): number | null => {
-            const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
-            if (!match) return null;
-            const y = parseInt(match[1], 10);
-            const m = parseInt(match[2], 10) - 1;
-            const d = parseInt(match[3], 10);
-            const now = new Date();
-            const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-            const targetUtc = Date.UTC(y, m, d);
-            const oneDayMs = 24 * 60 * 60 * 1000;
-            return Math.round((targetUtc - todayUtc) / oneDayMs);
-        };
-
         // 1. Check actively tracked series
         for (const p of this.allProgress()) {
             if (p.nextAirDate && p.nextAirSeason && p.nextAirEpisode) {
@@ -236,6 +255,26 @@ export class TvProgressService {
                         episodeNumber: p.nextAirEpisode,
                         episodeTitle: p.nextAirEpisodeTitle,
                         airDate: p.nextAirDate,
+                        daysUntil
+                    });
+                }
+            } else if (p.nextSeasonAirDate && p.nextSeasonNumber) {
+                // Next season premiere without explicit nextAirEpisode
+                const daysUntil = getCalendarDayDiff(p.nextSeasonAirDate);
+                if (daysUntil !== null && daysUntil >= -1 && daysUntil <= 7) {
+                    if (this.isEpisodeWatched(p.tmdbId, p.nextSeasonNumber, 1)) {
+                        continue;
+                    }
+                    seenTmdbIds.add(p.tmdbId);
+                    items.push({
+                        tmdbId: p.tmdbId,
+                        seriesTitle: p.seriesTitle,
+                        posterPath: p.posterPath,
+                        backdropPath: p.backdropPath,
+                        seasonNumber: p.nextSeasonNumber,
+                        episodeNumber: 1,
+                        episodeTitle: p.nextSeasonTitle || `Season ${p.nextSeasonNumber} Premiere`,
+                        airDate: p.nextSeasonAirDate,
                         daysUntil
                     });
                 }
@@ -272,6 +311,152 @@ export class TvProgressService {
 
         return items.sort((a, b) => a.daysUntil - b.daysUntil);
     });
+
+    /**
+     * Upcoming unreleased seasons across tracked library and watchlist series.
+     * Criteria: Must be less than a month (<= 31 days) to release date from today.
+     * Enriched with verified release intelligence from Gemini when available.
+     */
+    public readonly upcomingSeasons = computed<UpcomingSeasonItem[]>(() => {
+        const items: UpcomingSeasonItem[] = [];
+        const seenTmdbIds = new Set<number>();
+        const verifiedIntel = this.releaseIntel.intelMap();
+
+        // 1. Check actively tracked series in allProgress
+        for (const p of this.allProgress()) {
+            const isCaughtUp = this.isAwaitingNextSeason(p);
+            const intel = verifiedIntel.get(p.tmdbId);
+
+            let nextSeasonNum = p.nextSeasonNumber;
+            let nextSeasonDate = intel?.releaseDate || p.nextSeasonAirDate;
+            let nextSeasonTitle = p.nextSeasonTitle;
+            const nextEpNum = p.nextAirEpisode;
+
+            if (!nextSeasonNum && p.nextAirSeason && (!p.lastWatchedSeason || p.nextAirSeason > p.lastWatchedSeason)) {
+                nextSeasonNum = p.nextAirSeason;
+                nextSeasonDate = intel?.releaseDate || p.nextAirDate;
+                nextSeasonTitle = p.nextAirEpisodeTitle;
+            }
+
+            if (!nextSeasonNum && isCaughtUp) {
+                nextSeasonNum = (p.lastWatchedSeason ?? p.totalSeasons) + 1;
+            }
+
+            if (nextSeasonNum) {
+                const releaseCheck = nextSeasonDate ? checkEpisodeReleaseStatus(nextSeasonDate) : { isReleased: false };
+                if (!releaseCheck.isReleased) {
+                    const daysUntil = nextSeasonDate ? getCalendarDayDiff(nextSeasonDate) : null;
+                    // Filter: Must be less than a month (<= 31 days) to release date from today
+                    if (daysUntil !== null && daysUntil >= 0 && daysUntil <= 31) {
+                        seenTmdbIds.add(p.tmdbId);
+                        items.push({
+                            tmdbId: p.tmdbId,
+                            seriesTitle: p.seriesTitle,
+                            posterPath: p.posterPath,
+                            backdropPath: p.backdropPath,
+                            seasonNumber: nextSeasonNum,
+                            episodeNumber: nextEpNum ?? 1,
+                            seasonAirDate: nextSeasonDate,
+                            seasonTitle: nextSeasonTitle,
+                            daysUntil,
+                            status: p.status,
+                            isCaughtUp,
+                            plannedReleaseYear: intel?.releaseYear ?? null,
+                            plannedReleaseWindow: intel?.releaseWindow,
+                            releaseStatus: intel?.releaseStatus
+                        });
+                    }
+                }
+            }
+        }
+
+        // 2. Check watchlist series with cached or verified upcoming season metadata
+        for (const doc of this.storage.watchlistItems()) {
+            if (doc.mediaType !== 'tv' || seenTmdbIds.has(doc.tmdbId)) continue;
+            const intel = verifiedIntel.get(doc.tmdbId);
+            const payload = (doc.payload ?? {}) as Partial<TmdbTvDetailDto>;
+            const nextEp = payload.next_episode_to_air;
+            const effectiveAirDate = intel?.releaseDate || nextEp?.air_date;
+
+            if (effectiveAirDate) {
+                const releaseCheck = checkEpisodeReleaseStatus(effectiveAirDate);
+                if (!releaseCheck.isReleased) {
+                    const daysUntil = getCalendarDayDiff(effectiveAirDate);
+                    // Filter: Must be less than a month (<= 31 days) to release date from today
+                    if (daysUntil !== null && daysUntil >= 0 && daysUntil <= 31) {
+                        seenTmdbIds.add(doc.tmdbId);
+                        const displayTitle = payload.name || (payload['title'] as string | undefined) || `Series #${doc.tmdbId}`;
+                        items.push({
+                            tmdbId: doc.tmdbId,
+                            seriesTitle: String(displayTitle),
+                            posterPath: payload.poster_path ?? undefined,
+                            backdropPath: payload.backdrop_path ?? undefined,
+                            seasonNumber: nextEp?.season_number ?? 1,
+                            episodeNumber: nextEp?.episode_number ?? 1,
+                            seasonAirDate: effectiveAirDate,
+                            seasonTitle: nextEp?.name,
+                            daysUntil,
+                            status: payload.status,
+                            isCaughtUp: false,
+                            plannedReleaseYear: intel?.releaseYear ?? null,
+                            plannedReleaseWindow: intel?.releaseWindow,
+                            releaseStatus: intel?.releaseStatus
+                        });
+                    }
+                }
+            }
+        }
+
+        // Sort: daysUntil ascending (soonest first)
+        return items.sort((a, b) => {
+            const daysA = a.daysUntil ?? 999;
+            const daysB = b.daysUntil ?? 999;
+            if (daysA !== daysB) return daysA - daysB;
+            return a.seriesTitle.localeCompare(b.seriesTitle);
+        });
+    });
+
+    /**
+     * Triggers the 12-hour background verification of release dates for Watchlist and caught-up TV series via Gemini.
+     * Enforces strict 12-hour cooldown so redundant AI calls are never made within 12 hours.
+     */
+    public async triggerReleaseVerification(forceRefresh = false): Promise<void> {
+        const candidates: { tmdbId: number; title: string; seasonNumber: number; currentAirDate?: string | null }[] = [];
+        const seenIds = new Set<number>();
+
+        // 1. Caught-up series awaiting next season
+        for (const p of this.allProgress()) {
+            if (this.isAwaitingNextSeason(p) || p.nextSeasonNumber) {
+                seenIds.add(p.tmdbId);
+                candidates.push({
+                    tmdbId: p.tmdbId,
+                    title: p.seriesTitle,
+                    seasonNumber: p.nextSeasonNumber || ((p.lastWatchedSeason ?? p.totalSeasons) + 1),
+                    currentAirDate: p.nextSeasonAirDate || p.nextAirDate || null
+                });
+            }
+        }
+
+        // 2. Watchlist TV series
+        for (const doc of this.storage.watchlistItems()) {
+            if (doc.mediaType === 'tv' && !seenIds.has(doc.tmdbId)) {
+                seenIds.add(doc.tmdbId);
+                const payload = (doc.payload ?? {}) as Partial<TmdbTvDetailDto>;
+                const displayTitle = String(payload.name || (payload['title'] as string | undefined) || `Series #${doc.tmdbId}`);
+                const nextEp = payload.next_episode_to_air;
+                candidates.push({
+                    tmdbId: doc.tmdbId,
+                    title: displayTitle,
+                    seasonNumber: nextEp?.season_number ?? 1,
+                    currentAirDate: nextEp?.air_date || null
+                });
+            }
+        }
+
+        if (candidates.length > 0) {
+            await this.releaseIntel.verifyReleaseDates(candidates, forceRefresh);
+        }
+    }
 
     constructor() {
         this.initReactiveStream();
@@ -331,14 +516,109 @@ export class TvProgressService {
         }).length;
     }
 
-    private isProgressComplete(progress: TvProgressDocType): boolean {
+    /**
+     * Checks if a TV progress record has any released, unwatched episodes currently available to watch.
+     */
+    public hasUnwatchedReleasedEpisodes(progress: TvProgressDocType): boolean {
+        // If marked complete with no unwatched exceptions, user explicitly completed the entire series
+        if (progress.isMarkedComplete) {
+            return (progress.unwatchedEpisodes?.length ?? 0) > 0;
+        }
+
+        // If user hasn't watched anything yet, but released episodes exist
+        if (progress.watchedEpisodesCount === 0) {
+            const released = progress.totalReleasedEpisodes ?? progress.totalEpisodes;
+            return released > 0;
+        }
+
+        // Check if there is an announced next episode whose air date has arrived (<= today) and is unwatched
+        if (
+            progress.nextAirDate &&
+            progress.nextAirSeason &&
+            progress.nextAirEpisode &&
+            checkEpisodeReleaseStatus(progress.nextAirDate).isReleased
+        ) {
+            if (!this.isEpisodeWatched(progress.tmdbId, progress.nextAirSeason, progress.nextAirEpisode)) {
+                return true;
+            }
+        }
+
+        // Check if next season premiere has arrived (<= today)
+        const hasAiredNextSeason = Boolean(
+            progress.nextSeasonAirDate &&
+            checkEpisodeReleaseStatus(progress.nextSeasonAirDate).isReleased
+        );
+
+        const effectiveReleased = progress.totalReleasedEpisodes !== undefined && progress.totalReleasedEpisodes > 0
+            ? progress.totalReleasedEpisodes
+            : progress.totalEpisodes;
+
+        // If next season has aired but totalReleasedEpisodes was not yet incremented, it has unwatched released episodes
+        if (hasAiredNextSeason && progress.totalEpisodes > effectiveReleased) {
+            return true;
+        }
+
+        return effectiveReleased > 0 && progress.watchedEpisodesCount < effectiveReleased;
+    }
+
+    /**
+     * Checks if TV progress is complete (either full series complete or current season completed awaiting next season).
+     */
+    public isProgressComplete(progress: TvProgressDocType): boolean {
         if (progress.isMarkedComplete) {
             return (progress.unwatchedEpisodes?.length ?? 0) === 0;
         }
-        if (progress.nextSeasonNumber || (progress.totalReleasedEpisodes !== undefined && progress.totalEpisodes > progress.totalReleasedEpisodes)) {
+
+        // If there are released episodes currently available and unwatched, it is in progress
+        if (this.hasUnwatchedReleasedEpisodes(progress)) {
             return false;
         }
-        return progress.totalEpisodes > 0 && progress.watchedEpisodesCount >= progress.totalEpisodes;
+
+        if (progress.watchedEpisodesCount === 0) {
+            return false;
+        }
+
+        const effectiveReleased = progress.totalReleasedEpisodes !== undefined && progress.totalReleasedEpisodes > 0
+            ? progress.totalReleasedEpisodes
+            : progress.totalEpisodes;
+
+        return effectiveReleased > 0 && progress.watchedEpisodesCount >= effectiveReleased;
+    }
+
+    /**
+     * Checks if a completed series is awaiting an unreleased future season or episode (Season Complete / Caught Up).
+     */
+    public isAwaitingNextSeason(progress: TvProgressDocType): boolean {
+        if (!this.isProgressComplete(progress)) {
+            return false;
+        }
+
+        const isEnded = progress.status === 'Ended' || progress.status === 'Canceled';
+        if (isEnded) {
+            return false;
+        }
+
+        if (progress.nextSeasonNumber) {
+            const releaseCheck = progress.nextSeasonAirDate
+                ? checkEpisodeReleaseStatus(progress.nextSeasonAirDate)
+                : { isReleased: false };
+            if (!releaseCheck.isReleased) {
+                return true;
+            }
+        }
+
+        if (progress.nextAirDate) {
+            const releaseCheck = checkEpisodeReleaseStatus(progress.nextAirDate);
+            if (!releaseCheck.isReleased) {
+                return true;
+            }
+        }
+
+        if (progress.totalReleasedEpisodes !== undefined && progress.totalEpisodes > progress.totalReleasedEpisodes) {
+            return true;
+        }
+
+        return false;
     }
 
     public getSeriesProgress(tmdbId: number): TvProgressDocType | undefined {
@@ -1137,7 +1417,14 @@ export class TvProgressService {
                     }
                 }
                 if (progress?.nextSeasonNumber && s.season_number >= progress.nextSeasonNumber) {
-                    continue;
+                    const seasonCheck = checkEpisodeReleaseStatus(
+                        seasonObj?.air_date || progress.nextSeasonAirDate,
+                        progress.nextSeasonAirDate,
+                        progress.status
+                    );
+                    if (!seasonCheck.isReleased) {
+                        continue;
+                    }
                 }
 
                 for (let ep = 1; ep <= s.episode_count; ep++) {
@@ -1153,6 +1440,15 @@ export class TvProgressService {
                         ) {
                             const nextCheck = checkEpisodeReleaseStatus(progress.nextAirDate);
                             if (!nextCheck.isReleased) {
+                                return null;
+                            }
+                        } else if (
+                            progress?.nextSeasonNumber === s.season_number &&
+                            ep === 1 &&
+                            progress.nextSeasonAirDate
+                        ) {
+                            const seasonCheck = checkEpisodeReleaseStatus(progress.nextSeasonAirDate);
+                            if (!seasonCheck.isReleased) {
                                 return null;
                             }
                         }

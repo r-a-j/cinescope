@@ -5,6 +5,7 @@ import {
 } from './tv-progress.service';
 import { DatabaseService } from '../database/database.service';
 import { StorageService } from './storage.service';
+import { TvReleaseIntelService } from './tv-release-intel.service';
 import { signal } from '@angular/core';
 import { ContentDocType } from '../database/schemas/content.schema';
 import {
@@ -95,11 +96,18 @@ describe('TvProgressService', () => {
             getCachedDoc: jasmine.createSpy('getCachedDoc').and.returnValue(null)
         };
 
+        const mockReleaseIntelService = {
+            intelMap: signal(new Map()),
+            getIntelForSeries: jasmine.createSpy('getIntelForSeries').and.returnValue(undefined),
+            verifyReleaseDates: jasmine.createSpy('verifyReleaseDates').and.returnValue(Promise.resolve(new Map()))
+        };
+
         TestBed.configureTestingModule({
             providers: [
                 TvProgressService,
                 { provide: DatabaseService, useValue: mockDatabaseService },
-                { provide: StorageService, useValue: mockStorageService }
+                { provide: StorageService, useValue: mockStorageService },
+                { provide: TvReleaseIntelService, useValue: mockReleaseIntelService }
             ]
         });
 
@@ -776,6 +784,193 @@ describe('TvProgressService', () => {
             expect(result.success).toBeFalse();
             expect(result.reason).toBe('unreleased');
             expect(mockUpsert).not.toHaveBeenCalled();
+        });
+
+        it('keeps series in completedSeries when a season is completed and next season is not released yet', () => {
+            const seasonCompletedDoc: TvProgressDocType = {
+                id: 'tv_555',
+                tmdbId: 555,
+                seriesTitle: 'Matka King',
+                totalSeasons: 2,
+                totalEpisodes: 14,
+                totalReleasedEpisodes: 8,
+                watchedEpisodesCount: 8,
+                watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+                seasonEpisodeCounts: [
+                    { seasonNumber: 1, episodeCount: 8 },
+                    { seasonNumber: 2, episodeCount: 6 }
+                ],
+                nextSeasonNumber: 2,
+                nextSeasonAirDate: '2027-01-15',
+                nextAirDate: '2027-01-15',
+                nextAirSeason: 2,
+                nextAirEpisode: 1,
+                status: 'Returning Series',
+                updatedAt: Date.now()
+            };
+
+            service.allProgress.set([seasonCompletedDoc]);
+
+            // 1. Must be recognized as complete and awaiting next season
+            expect(service.isProgressComplete(seasonCompletedDoc)).toBeTrue();
+            expect(service.isAwaitingNextSeason(seasonCompletedDoc)).toBeTrue();
+            expect(service.hasUnwatchedReleasedEpisodes(seasonCompletedDoc)).toBeFalse();
+
+            // 2. Must be kept with completed TV series, NOT in currentlyWatching
+            expect(service.completedSeries().length).toBe(1);
+            expect(service.completedSeries()[0].seriesTitle).toBe('Matka King');
+            expect(service.currentlyWatching().length).toBe(0);
+
+            // 3. For upcoming seasons, must be less than a month (<= 31 days) from today
+            // 2027-01-15 is > 1 month away, so it does not clutter the < 1 month swimlane
+            expect(service.upcomingSeasons().length).toBe(0);
+
+            // 4. When release date is within a month (e.g. in 15 days), it appears in upcoming seasons!
+            const now = new Date();
+            const in15Days = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+            const y = in15Days.getFullYear();
+            const m = String(in15Days.getMonth() + 1).padStart(2, '0');
+            const d = String(in15Days.getDate()).padStart(2, '0');
+            const airDate15Days = `${y}-${m}-${d}`;
+
+            service.allProgress.set([{
+                ...seasonCompletedDoc,
+                nextSeasonAirDate: airDate15Days
+            }]);
+
+            const upcomingWithinMonth = service.upcomingSeasons();
+            expect(upcomingWithinMonth.length).toBe(1);
+            expect(upcomingWithinMonth[0].tmdbId).toBe(555);
+            expect(upcomingWithinMonth[0].seasonNumber).toBe(2);
+            expect(upcomingWithinMonth[0].seasonAirDate).toBe(airDate15Days);
+            expect(upcomingWithinMonth[0].daysUntil).toBe(15);
+            expect(upcomingWithinMonth[0].isCaughtUp).toBeTrue();
+        });
+
+        it('automatically transitions series back to currentlyWatching as soon as 1st episode of new season is released', () => {
+            const seasons = [
+                { id: 1, season_number: 1, episode_count: 8, name: 'S1', air_date: '2026-09-01', overview: '', poster_path: null, vote_average: 8.5 },
+                { id: 2, season_number: 2, episode_count: 6, name: 'S2', air_date: '2026-11-01', overview: '', poster_path: null, vote_average: 8.0 }
+            ];
+
+            // Season 2 Episode 1 just released (air date <= today)!
+            const s2ReleasedDoc: TvProgressDocType = {
+                id: 'tv_555',
+                tmdbId: 555,
+                seriesTitle: 'Matka King',
+                totalSeasons: 2,
+                totalEpisodes: 14,
+                totalReleasedEpisodes: 9, // S1 (8) + S2E1 (1)
+                watchedEpisodesCount: 8, // User only watched S1
+                watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8'],
+                seasonEpisodeCounts: [
+                    { seasonNumber: 1, episodeCount: 8 },
+                    { seasonNumber: 2, episodeCount: 6 }
+                ],
+                nextAirSeason: 2,
+                nextAirEpisode: 2, // Next to air is S2E2
+                nextAirDate: '2026-11-08',
+                status: 'Returning Series',
+                updatedAt: Date.now()
+            };
+
+            service.allProgress.set([s2ReleasedDoc]);
+
+            // 1. Must now recognize that released unwatched episodes exist
+            expect(service.hasUnwatchedReleasedEpisodes(s2ReleasedDoc)).toBeTrue();
+            expect(service.isProgressComplete(s2ReleasedDoc)).toBeFalse();
+
+            // 2. Automatically moves back into currentlyWatching, leaves completedSeries
+            expect(service.currentlyWatching().length).toBe(1);
+            expect(service.currentlyWatching()[0].seriesTitle).toBe('Matka King');
+            expect(service.completedSeries().length).toBe(0);
+
+            // 3. Up Next points directly to Season 2 Episode 1!
+            const upNext = service.getUpNextEpisode(555, seasons);
+            expect(upNext).toEqual({ seasonNumber: 2, episodeNumber: 1 });
+        });
+
+        it('includes upcoming season premiere in airRadar when air date is in the weekly window', () => {
+            const now = new Date();
+            const inTwoDays = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+            const y = inTwoDays.getFullYear();
+            const m = String(inTwoDays.getMonth() + 1).padStart(2, '0');
+            const d = String(inTwoDays.getDate()).padStart(2, '0');
+            const airDateStr = `${y}-${m}-${d}`;
+
+            service.allProgress.set([
+                {
+                    id: 'tv_777',
+                    tmdbId: 777,
+                    seriesTitle: 'Severance',
+                    totalSeasons: 2,
+                    totalEpisodes: 18,
+                    totalReleasedEpisodes: 9,
+                    watchedEpisodesCount: 9,
+                    watchedEpisodes: ['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8', 's1e9'],
+                    nextSeasonNumber: 2,
+                    nextSeasonAirDate: airDateStr,
+                    nextSeasonTitle: 'Season 2 Premiere',
+                    updatedAt: Date.now()
+                }
+            ]);
+
+            const radar = service.airRadar();
+            expect(radar.length).toBe(1);
+            expect(radar[0].tmdbId).toBe(777);
+            expect(radar[0].seriesTitle).toBe('Severance');
+            expect(radar[0].seasonNumber).toBe(2);
+            expect(radar[0].episodeNumber).toBe(1);
+            expect(radar[0].daysUntil).toBe(2);
+        });
+
+        it('enriches upcoming seasons with Gemini verified release dates and planned years', () => {
+            const now = new Date();
+            const in20Days = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
+            const y = in20Days.getFullYear();
+            const m = String(in20Days.getMonth() + 1).padStart(2, '0');
+            const d = String(in20Days.getDate()).padStart(2, '0');
+            const verifiedDateStr = `${y}-${m}-${d}`;
+
+            // Stale or missing date in local TMDB doc
+            service.allProgress.set([
+                {
+                    id: 'tv_888',
+                    tmdbId: 888,
+                    seriesTitle: 'Mirzapur',
+                    totalSeasons: 3,
+                    totalEpisodes: 30,
+                    totalReleasedEpisodes: 30,
+                    watchedEpisodesCount: 30,
+                    watchedEpisodes: ['s3e10'],
+                    nextSeasonNumber: 4,
+                    status: 'Returning Series',
+                    updatedAt: Date.now()
+                }
+            ]);
+
+            // Gemini verifies the exact release date within 20 days
+            const verifiedMap = new Map();
+            verifiedMap.set(888, {
+                tmdbId: 888,
+                seriesTitle: 'Mirzapur',
+                seasonNumber: 4,
+                releaseStatus: 'confirmed',
+                releaseDate: verifiedDateStr,
+                releaseYear: 2026,
+                releaseWindow: 'Nov 2026',
+                confidence: 'high',
+                notes: 'Prime Video announcement'
+            });
+            service.releaseIntel.intelMap.set(verifiedMap);
+
+            const upcoming = service.upcomingSeasons();
+            expect(upcoming.length).toBe(1);
+            expect(upcoming[0].tmdbId).toBe(888);
+            expect(upcoming[0].seasonAirDate).toBe(verifiedDateStr);
+            expect(upcoming[0].daysUntil).toBe(20);
+            expect(upcoming[0].plannedReleaseYear).toBe(2026);
+            expect(upcoming[0].plannedReleaseWindow).toBe('Nov 2026');
         });
     });
 });

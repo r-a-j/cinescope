@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { TvPage } from './tv.page';
-import { TvProgressService, AirRadarItem, WatchlistReadySeries } from '../../core/services/tv-progress.service';
+import { TvProgressService, AirRadarItem, WatchlistReadySeries, UpcomingSeasonItem } from '../../core/services/tv-progress.service';
 import { StorageService } from '../../core/services/storage.service';
 import { TmdbTvService } from '../../core/services/tmdb-tv.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -19,6 +19,7 @@ describe('TvPage', () => {
   const mockAllProgress = signal<TvProgressDocType[]>([]);
   const mockWatchlistReady = signal<WatchlistReadySeries[]>([]);
   const mockAirRadar = signal<AirRadarItem[]>([]);
+  const mockUpcomingSeasons = signal<UpcomingSeasonItem[]>([]);
   const mockCurrentlyWatching = signal<TvProgressDocType[]>([]);
   const mockCompletedSeries = signal<TvProgressDocType[]>([]);
 
@@ -28,14 +29,32 @@ describe('TvPage', () => {
     allProgress: mockAllProgress,
     watchlistReadyToStart: mockWatchlistReady,
     airRadar: mockAirRadar,
+    upcomingSeasons: mockUpcomingSeasons,
     currentlyWatching: mockCurrentlyWatching,
     completedSeries: mockCompletedSeries,
+    isProgressComplete: jasmine.createSpy('isProgressComplete').and.callFake(
+      (p: TvProgressDocType) => Boolean(
+        p.isMarkedComplete ||
+        (p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes) ||
+        (p.totalReleasedEpisodes !== undefined && p.totalReleasedEpisodes > 0 && p.watchedEpisodesCount >= p.totalReleasedEpisodes)
+      )
+    ),
+    isAwaitingNextSeason: jasmine.createSpy('isAwaitingNextSeason').and.callFake(
+      (p: TvProgressDocType) => Boolean(
+        p.nextSeasonNumber ||
+        (p.totalReleasedEpisodes !== undefined && p.totalEpisodes > p.totalReleasedEpisodes)
+      )
+    ),
     getSeriesProgress: jasmine.createSpy('getSeriesProgress').and.callFake(
       (tmdbId: number) => mockAllProgress().find((progress) => progress.tmdbId === tmdbId)
     ),
     syncSeriesMeta: jasmine.createSpy('syncSeriesMeta').and.returnValue(Promise.resolve()),
     markEpisodeWatched: jasmine.createSpy('markEpisodeWatched').and.returnValue(Promise.resolve({ success: true })),
-    getUpNextEpisode: jasmine.createSpy('getUpNextEpisode').and.returnValue({ seasonNumber: 1, episodeNumber: 1 })
+    getUpNextEpisode: jasmine.createSpy('getUpNextEpisode').and.returnValue({ seasonNumber: 1, episodeNumber: 1 }),
+    releaseIntel: {
+      getIntelForSeries: jasmine.createSpy('getIntelForSeries').and.returnValue(undefined)
+    },
+    triggerReleaseVerification: jasmine.createSpy('triggerReleaseVerification').and.returnValue(Promise.resolve())
   };
 
   const mockStorageService = {
@@ -491,7 +510,7 @@ describe('TvPage', () => {
     expect(hero?.watchedEpisodesCount).toBe(8);
     expect(hero?.percentage).toBe(100);
     expect(hero?.isCaughtUp).toBeTrue();
-    expect(hero?.isCompleted).toBeFalse();
+    expect(hero?.isCompleted).toBeTrue();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const progressLabel = compiled.querySelector('.ep-count-label');
@@ -531,5 +550,83 @@ describe('TvPage', () => {
     expect(mockToastService.presentWarning).toHaveBeenCalled();
     const warningMsg = mockToastService.presentWarning.calls.mostRecent().args[0];
     expect(warningMsg).toContain('Cannot mark S2 E1 as watched — airs on 2027-01-15');
+  });
+
+  it('should render Upcoming Seasons strip when upcoming seasons exist', () => {
+    mockAllProgress.set([
+      {
+        id: 'tv_101',
+        tmdbId: 101,
+        seriesTitle: 'Severance',
+        totalSeasons: 2,
+        totalEpisodes: 19,
+        watchedEpisodesCount: 9,
+        watchedEpisodes: ['s1e1'],
+        updatedAt: Date.now()
+      }
+    ]);
+    mockUpcomingSeasons.set([
+      {
+        tmdbId: 101,
+        seriesTitle: 'Severance',
+        posterPath: '/severance.jpg',
+        seasonNumber: 2,
+        episodeNumber: 1,
+        seasonAirDate: '2027-01-15',
+        daysUntil: 74,
+        isCaughtUp: true
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const upcomingSection = compiled.querySelector('.upcoming-seasons-section');
+    expect(upcomingSection).toBeTruthy();
+    expect(upcomingSection?.textContent).toContain('UPCOMING SEASONS');
+    expect(upcomingSection?.textContent).toContain('Severance');
+    expect(upcomingSection?.textContent).toContain('Season 2');
+    expect(upcomingSection?.textContent).toContain('Premieres 2027-01-15');
+    expect(upcomingSection?.textContent).toContain('In 74 days');
+  });
+
+  it('sorts cards into tiers placing active in-progress shows first and completed shows at the bottom', () => {
+    mockAllProgress.set([
+      {
+        id: 'tv_1',
+        tmdbId: 1,
+        seriesTitle: 'Completed Show',
+        totalSeasons: 1,
+        totalEpisodes: 8,
+        totalReleasedEpisodes: 8,
+        watchedEpisodesCount: 8,
+        watchedEpisodes: ['s1e1'],
+        updatedAt: 2000,
+        lastWatchedAt: 2000
+      },
+      {
+        id: 'tv_2',
+        tmdbId: 2,
+        seriesTitle: 'Active Watching Show',
+        totalSeasons: 2,
+        totalEpisodes: 16,
+        totalReleasedEpisodes: 16,
+        watchedEpisodesCount: 3,
+        watchedEpisodes: ['s1e1', 's1e2', 's1e3'],
+        updatedAt: 1000,
+        lastWatchedAt: 1000
+      }
+    ]);
+
+    fixture.detectChanges();
+
+    const cards = component.allDisplayCards();
+    expect(cards.length).toBe(2);
+    // Active watching show must be first!
+    expect(cards[0].id).toBe(2);
+    expect(cards[0].title).toBe('Active Watching Show');
+    // Completed show must go to the bottom!
+    expect(cards[1].id).toBe(1);
+    expect(cards[1].title).toBe('Completed Show');
   });
 });

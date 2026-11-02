@@ -75,6 +75,10 @@ export interface TvGridCardVm {
   nextSeasonAirDate?: string | undefined;
   nextSeasonTitle?: string | undefined;
   status?: string | undefined;
+  lastWatchedAt?: number | undefined;
+  updatedAt?: number | undefined;
+  plannedReleaseYear?: number | null | undefined;
+  plannedReleaseWindow?: string | undefined;
 }
 
 @Component({
@@ -164,10 +168,8 @@ export class TvPage {
       const effectiveReleased = p.totalReleasedEpisodes !== undefined && p.totalReleasedEpisodes > 0
         ? p.totalReleasedEpisodes
         : p.totalEpisodes;
-      const isCompleted = p.isMarkedComplete
-        ? (p.unwatchedEpisodes?.length ?? 0) === 0
-        : p.totalEpisodes > 0 && p.watchedEpisodesCount >= p.totalEpisodes && !p.nextSeasonNumber;
-      const isCaughtUp = !isCompleted && effectiveReleased > 0 && p.watchedEpisodesCount >= effectiveReleased;
+      const isCompleted = this.tvProgress.isProgressComplete(p);
+      const isCaughtUp = this.tvProgress.isAwaitingNextSeason(p);
       const isUnstarted = p.watchedEpisodesCount === 0 && !p.isMarkedComplete;
       const pctDenom = effectiveReleased > 0 ? effectiveReleased : p.totalEpisodes;
       const pct = isCompleted || isCaughtUp
@@ -183,6 +185,11 @@ export class TvPage {
         upNextSeason = nextEp?.seasonNumber;
         upNextEpisode = nextEp?.episodeNumber;
       }
+
+      const intel = this.tvProgress.releaseIntel.getIntelForSeries(p.tmdbId);
+      const nextSeasonAirDate = intel?.releaseDate || p.nextSeasonAirDate;
+      const plannedReleaseYear = intel?.releaseYear ?? null;
+      const plannedReleaseWindow = intel?.releaseWindow;
 
       cards.push({
         id: p.tmdbId,
@@ -201,9 +208,13 @@ export class TvPage {
         upNextEpisode,
         upNextTitle: p.lastWatchedEpisodeTitle,
         nextSeasonNumber: p.nextSeasonNumber,
-        nextSeasonAirDate: p.nextSeasonAirDate,
+        nextSeasonAirDate,
         nextSeasonTitle: p.nextSeasonTitle,
-        status: p.status
+        status: p.status,
+        lastWatchedAt: p.lastWatchedAt,
+        updatedAt: p.updatedAt,
+        plannedReleaseYear,
+        plannedReleaseWindow
       });
     }
 
@@ -212,6 +223,7 @@ export class TvPage {
       if (seenIds.has(w.tmdbId)) continue;
       seenIds.add(w.tmdbId);
       const upNext = this.tvProgress.getUpNextEpisode(w.tmdbId);
+      const intel = this.tvProgress.releaseIntel.getIntelForSeries(w.tmdbId);
 
       cards.push({
         id: w.tmdbId,
@@ -226,7 +238,9 @@ export class TvPage {
         isUnstarted: true,
         upNextSeason: upNext?.seasonNumber,
         upNextEpisode: upNext?.episodeNumber,
-        upNextTitle: undefined
+        upNextTitle: undefined,
+        plannedReleaseYear: intel?.releaseYear ?? null,
+        plannedReleaseWindow: intel?.releaseWindow
       });
     }
 
@@ -256,9 +270,30 @@ export class TvPage {
         upNextSeason: undefined,
         upNextEpisode: undefined,
         upNextTitle: undefined,
-        status: payload.status
+        status: payload.status,
+        lastWatchedAt: item.watchedAt ? Date.parse(item.watchedAt) : undefined
       });
     }
+
+    // Tier-based sorting: Active in-progress first, unstarted second, caught-up third, completed fourth
+    const getCardSortTier = (card: TvGridCardVm): number => {
+      if (!card.isCompleted && !card.isUnstarted) return 1; // Active in-progress (TOP)
+      if (card.isUnstarted) return 2; // Ready to start (MIDDLE)
+      if (card.isCaughtUp) return 3; // Season completed / caught up (LOWER)
+      return 4; // Fully finished series (BOTTOM)
+    };
+
+    cards.sort((a, b) => {
+      const tierA = getCardSortTier(a);
+      const tierB = getCardSortTier(b);
+      if (tierA !== tierB) return tierA - tierB;
+
+      const timeA = a.lastWatchedAt ?? a.updatedAt ?? 0;
+      const timeB = b.lastWatchedAt ?? b.updatedAt ?? 0;
+      if (timeA !== timeB) return timeB - timeA;
+
+      return a.title.localeCompare(b.title);
+    });
 
     return cards;
   });
@@ -388,6 +423,9 @@ export class TvPage {
         }
       });
     });
+
+    // 12-hour Gemini background release date authenticity check
+    void this.tvProgress.triggerReleaseVerification();
   }
 
   public isImageLoaded(url: string | null | undefined): boolean {
@@ -524,6 +562,8 @@ export class TvPage {
           }
         });
       }
+
+      await this.tvProgress.triggerReleaseVerification(true);
     } finally {
       this.isRefreshing.set(false);
       event.target.complete();
