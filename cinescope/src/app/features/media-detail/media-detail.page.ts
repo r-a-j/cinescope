@@ -1361,6 +1361,7 @@ export class MediaDetailPage implements OnInit {
     const currentId = this.tmdbId();
     const hideWatched = this.discoverPrefs.hideWatchedInDiscover();
     const watchedKeys = this.storage.watchedMediaKeys();
+    const allowAdult = this.storage.allowAdultContent();
     const seen = new Set<string | number>();
 
     const filtered = items.filter((item) => {
@@ -1368,6 +1369,12 @@ export class MediaDetailPage implements OnInit {
       if (excludeIds?.has(item.id)) return false;
       if (seen.has(item.id)) return false;
       if (hideWatched && watchedKeys.has(`${item.mediaType}_${item.id}`)) return false;
+      if (!allowAdult) {
+        const payload = item.payload as Record<string, unknown> | undefined;
+        if (payload?.['adult'] === true || (item as unknown as { adult?: boolean }).adult === true) {
+          return false;
+        }
+      }
       seen.add(item.id);
       return true;
     });
@@ -1388,6 +1395,7 @@ export class MediaDetailPage implements OnInit {
     tv: TmdbTvDetailDto | null
   ): Promise<void> {
     try {
+      const allowAdult = this.storage.allowAdultContent();
       if (type === 'movie' && movie) {
         const genreIds = (movie.genres || []).map((g) => g.id).slice(0, 2).join('|');
         const origLang = movie.original_language || 'en';
@@ -1401,15 +1409,15 @@ export class MediaDetailPage implements OnInit {
         this.fallbackMovieParams.set(params);
 
         const recCount = ((movie['recommendations'] as { results?: TmdbMovieListItemDto[] } | undefined)?.results || [])
-          .filter((r) => r.poster_path).length;
+          .filter((r) => r.poster_path && (allowAdult || !r.adult)).length;
         const simCount = ((movie['similar'] as { results?: TmdbMovieListItemDto[] } | undefined)?.results || [])
-          .filter((r) => r.poster_path).length;
+          .filter((r) => r.poster_path && (allowAdult || !r.adult)).length;
 
         if (recCount < 6 || simCount < 6) {
           const fbRes = await firstValueFrom(this.discoverService.discoverMovies(params));
           if (this.tmdbId() !== id || this.mediaType() !== type) return;
           const mapped: SwimlaneItem[] = (fbRes.results || [])
-            .filter((item) => item.poster_path && item.id !== id)
+            .filter((item) => item.poster_path && item.id !== id && (allowAdult || !item.adult))
             .map((item) => ({
               id: item.id,
               mediaType: 'movie' as const,
@@ -1432,15 +1440,15 @@ export class MediaDetailPage implements OnInit {
         this.fallbackTvParams.set(params);
 
         const recCount = ((tv['recommendations'] as { results?: TmdbTvListItemDto[] } | undefined)?.results || [])
-          .filter((r) => r.poster_path).length;
+          .filter((r) => r.poster_path && (allowAdult || !r.adult)).length;
         const simCount = ((tv['similar'] as { results?: TmdbTvListItemDto[] } | undefined)?.results || [])
-          .filter((r) => r.poster_path).length;
+          .filter((r) => r.poster_path && (allowAdult || !r.adult)).length;
 
         if (recCount < 6 || simCount < 6) {
           const fbRes = await firstValueFrom(this.discoverService.discoverTv(params));
           if (this.tmdbId() !== id || this.mediaType() !== type) return;
           const mapped: SwimlaneItem[] = (fbRes.results || [])
-            .filter((item) => item.poster_path && item.id !== id)
+            .filter((item) => item.poster_path && item.id !== id && (allowAdult || !item.adult))
             .map((item) => ({
               id: item.id,
               mediaType: 'tv' as const,
@@ -1457,11 +1465,12 @@ export class MediaDetailPage implements OnInit {
   }
 
   private extractSwimlaneList(key: 'recommendations' | 'similar'): SwimlaneItem[] {
+    const allowAdult = this.storage.allowAdultContent();
     const m = this.movieDetail();
     if (m) {
       const raw = m[key] as { results?: TmdbMovieListItemDto[] } | undefined;
       return (raw?.results || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .slice(0, 20)
         .map((item) => ({
           id: item.id,
@@ -1476,7 +1485,7 @@ export class MediaDetailPage implements OnInit {
     if (t) {
       const raw = t[key] as { results?: TmdbTvListItemDto[] } | undefined;
       return (raw?.results || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .slice(0, 20)
         .map((item) => ({
           id: item.id,

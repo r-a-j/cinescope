@@ -299,6 +299,7 @@ export class RecommendationEngineService {
   ): SwimlaneItem[] {
     const hideWatched = options?.hideWatched ?? this.discoverPrefs.hideWatchedInDiscover();
     const watchedKeys = this.storage.watchedMediaKeys();
+    const allowAdult = this.storage.allowAdultContent();
     const profile = this.tasteProfile.profile();
     const seen = new Set<string | number>();
     const allowUnreleased = options?.allowUnreleased ?? false;
@@ -316,6 +317,11 @@ export class RecommendationEngineService {
       if (profile.dismissedKeys.has(mediaKey) || profile.stalledKeys.has(mediaKey)) continue;
 
       const payload = (item.payload || {}) as Record<string, unknown>;
+
+      // Adult content guard: drop 18+ adult titles when family-safe filtering is active
+      if (!allowAdult && (payload['adult'] === true || (item as unknown as { adult?: boolean }).adult === true)) {
+        continue;
+      }
 
       // Release date guard: exclude unreleased future titles unless explicitly permitted
       if (!allowUnreleased) {
@@ -397,15 +403,6 @@ export class RecommendationEngineService {
   > {
     const profile = this.tasteProfile.profile();
     let cachedPayload = forceRefresh ? null : this.discoverPrefs.getValidAiTasteCache();
-
-    // Invalidate cache if the user's Taste DNA fingerprint changed significantly and cache is > 30 mins old
-    if (
-      cachedPayload &&
-      cachedPayload.seedSummary !== profile.fingerprint &&
-      Date.now() - cachedPayload.generatedAt > 30 * 60 * 1000
-    ) {
-      cachedPayload = null;
-    }
 
     if (!cachedPayload) {
       try {
@@ -695,6 +692,7 @@ export class RecommendationEngineService {
     defaultMediaType: 'movie' | 'tv'
   ): Promise<SwimlaneItem[]> {
     if (!Array.isArray(picks) || picks.length === 0) return [];
+    const allowAdult = this.storage.allowAdultContent();
 
     const resolved = await Promise.all(
       picks.slice(0, 6).map(async (pick) => {
@@ -704,7 +702,7 @@ export class RecommendationEngineService {
             const res = await firstValueFrom(
               this.searchService.searchTvShows(pick.title, 1, 'en-US', false, pick.year)
             );
-            const match = (res.results || []).find((r) => r.poster_path);
+            const match = (res.results || []).find((r) => r.poster_path && (allowAdult || !r.adult));
             if (!match) return null;
             return {
               id: match.id,
@@ -728,7 +726,7 @@ export class RecommendationEngineService {
                 pick.year ? String(pick.year) : undefined
               )
             );
-            const match = (res.results || []).find((r) => r.poster_path);
+            const match = (res.results || []).find((r) => r.poster_path && (allowAdult || !r.adult));
             if (!match) return null;
             return {
               id: match.id,
@@ -753,8 +751,9 @@ export class RecommendationEngineService {
   }
 
   private mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
+    const allowAdult = this.storage.allowAdultContent();
     return (items || [])
-      .filter((item) => item.poster_path)
+      .filter((item) => item.poster_path && (allowAdult || !item.adult))
       .map((item) => ({
         id: item.id,
         mediaType: 'movie' as const,
@@ -766,8 +765,9 @@ export class RecommendationEngineService {
   }
 
   private mapTvToSwimlane(items: TmdbTvListItemDto[]): SwimlaneItem[] {
+    const allowAdult = this.storage.allowAdultContent();
     return (items || [])
-      .filter((item) => item.poster_path)
+      .filter((item) => item.poster_path && (allowAdult || !item.adult))
       .map((item) => ({
         id: item.id,
         mediaType: 'tv' as const,

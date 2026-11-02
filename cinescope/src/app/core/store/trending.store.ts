@@ -10,13 +10,15 @@ import { StorageService, getLocalTodayIso, checkMediaReleaseStatus } from '../se
 import {
     DiscoverPreferencesService,
     DiscoverLanguageOption,
-    AiTasteCachedLane
+    AiTasteCachedLane,
+    DiscoverFeedCachePayload,
+    DiscoverSwimlaneSection,
+    STORAGE_KEY_DISCOVER_FEED_CACHE
 } from '../services/discover-preferences.service';
 import { SmartSearchService, SemanticIntentSection } from '../services/smart-search.service';
 import { TmdbSearchService } from '../services/tmdb-search.service';
 import { TasteProfileService } from '../services/taste-profile.service';
 import { RecommendationEngineService } from '../services/recommendation-engine.service';
-import { CollectionQueryContext } from '../services/collection-loader.service';
 import { TmdbTrendingMixedItemDto } from '../dtos/trending/trending-mixed-item.dto';
 import { TmdbMovieListItemDto } from '../dtos/movies/movie-list-item.dto';
 import { TmdbTvListItemDto } from '../dtos/tv/tv-list-item.dto';
@@ -28,12 +30,7 @@ import { HeroBannerItem } from '../../shared/models/hero-banner-item.interface';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
 import { resolveMediaImageUrl } from '../constants/api.constants';
 
-export interface DiscoverSwimlaneSection {
-    id: string;
-    title: string;
-    items: SwimlaneItem[];
-    queryContext: CollectionQueryContext;
-}
+export { DiscoverSwimlaneSection } from '../services/discover-preferences.service';
 
 interface TrendingState {
     heroItems: HeroBannerItem[];
@@ -88,52 +85,89 @@ interface TrendingState {
     error: string | null;
 }
 
-const initialState: TrendingState = {
-    heroItems: [],
-    movies: [],
-    nowPlayingMovies: [],
-    tvShows: [],
-    airingTvShows: [],
-    trendingPersonalizedSections: [],
-    forYouSections: [],
-    isForYouLoading: false,
-    isAiTasteSyncing: false,
-    languageHubSections: [],
-    lastLoadedLanguageKey: '',
-    desiWebSeries: [],
-    teluguBlockbusters: [],
-    tamilCinema: [],
-    malayalamGems: [],
-    isDesiLoading: false,
-    bollywoodSections: [],
-    bollywoodPopular: [],
-    bollywoodRecent: [],
-    bollywoodTopRated: [],
-    isBollywoodLoading: false,
-    ottStreamingSections: [],
-    isOttStreamingLoading: false,
-    topRatedMovies: [],
-    modernMasterpieces: [],
-    topRatedTvShows: [],
-    topRatedIndianMovies: [],
-    isTopRatedLoading: false,
-    trendingActors: [],
-    indianActors: [],
-    popularActors: [],
-    worldActors: [],
-    visionaryDirectors: [],
-    breakoutActors: [],
-    favoriteStarMovies: [],
-    spotlightStarId: null,
-    spotlightStarCriticalMovies: [],
-    spotlightStarPopularMovies: [],
-    isSpotlightStarLoading: false,
-    isActorsLoading: false,
+export function getInitialTrendingState(): TrendingState {
+    const defaultState: TrendingState = {
+        heroItems: [],
+        movies: [],
+        nowPlayingMovies: [],
+        tvShows: [],
+        airingTvShows: [],
+        trendingPersonalizedSections: [],
+        forYouSections: [],
+        isForYouLoading: false,
+        isAiTasteSyncing: false,
+        languageHubSections: [],
+        lastLoadedLanguageKey: '',
+        desiWebSeries: [],
+        teluguBlockbusters: [],
+        tamilCinema: [],
+        malayalamGems: [],
+        isDesiLoading: false,
+        bollywoodSections: [],
+        bollywoodPopular: [],
+        bollywoodRecent: [],
+        bollywoodTopRated: [],
+        isBollywoodLoading: false,
+        ottStreamingSections: [],
+        isOttStreamingLoading: false,
+        topRatedMovies: [],
+        modernMasterpieces: [],
+        topRatedTvShows: [],
+        topRatedIndianMovies: [],
+        isTopRatedLoading: false,
+        trendingActors: [],
+        indianActors: [],
+        popularActors: [],
+        worldActors: [],
+        visionaryDirectors: [],
+        breakoutActors: [],
+        favoriteStarMovies: [],
+        spotlightStarId: null,
+        spotlightStarCriticalMovies: [],
+        spotlightStarPopularMovies: [],
+        isSpotlightStarLoading: false,
+        isActorsLoading: false,
 
-    hasLoadedTrendingData: false,
-    isLoading: false,
-    error: null,
-};
+        hasLoadedTrendingData: false,
+        isLoading: false,
+        error: null,
+    };
+
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY_DISCOVER_FEED_CACHE);
+        if (raw) {
+            const parsed = JSON.parse(raw) as DiscoverFeedCachePayload;
+            if (
+                typeof parsed?.generatedAt === 'number' &&
+                typeof parsed?.expiresAt === 'number' &&
+                Date.now() < parsed.expiresAt
+            ) {
+                const hasData = (parsed.forYouSections?.length || 0) > 0 || (parsed.movies?.length || 0) > 0;
+                return {
+                    ...defaultState,
+                    heroItems: parsed.heroItems || [],
+                    movies: parsed.movies || [],
+                    nowPlayingMovies: parsed.nowPlayingMovies || [],
+                    tvShows: parsed.tvShows || [],
+                    airingTvShows: parsed.airingTvShows || [],
+                    trendingPersonalizedSections: parsed.trendingPersonalizedSections || [],
+                    forYouSections: parsed.forYouSections || [],
+                    languageHubSections: parsed.languageHubSections || [],
+                    lastLoadedLanguageKey: parsed.lastLoadedLanguageKey || '',
+                    bollywoodSections: parsed.bollywoodSections || [],
+                    ottStreamingSections: parsed.ottStreamingSections || [],
+                    topRatedMovies: parsed.topRatedMovies || [],
+                    topRatedTvShows: parsed.topRatedTvShows || [],
+                    hasLoadedTrendingData: hasData
+                };
+            }
+        }
+    } catch {
+        // Fallback to empty default state
+    }
+
+    return defaultState;
+}
 
 function mapToHeroItems(items: TmdbTrendingMixedItemDto[]): HeroBannerItem[] {
     const heroItems: HeroBannerItem[] = [];
@@ -160,9 +194,9 @@ function mapToHeroItems(items: TmdbTrendingMixedItemDto[]): HeroBannerItem[] {
     return heroItems;
 }
 
-function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
+function mapMoviesToSwimlane(items: TmdbMovieListItemDto[], allowAdult = false): SwimlaneItem[] {
     return (items || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .map((item) => ({
             id: item.id,
             mediaType: 'movie' as const,
@@ -173,9 +207,9 @@ function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
         }));
 }
 
-function mapTvToSwimlane(items: TmdbTvListItemDto[]): SwimlaneItem[] {
+function mapTvToSwimlane(items: TmdbTvListItemDto[], allowAdult = false): SwimlaneItem[] {
     return (items || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .map((item) => ({
             id: item.id,
             mediaType: 'tv' as const,
@@ -333,7 +367,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
 
 export const TrendingStore = signalStore(
     { providedIn: 'root' },
-    withState(initialState),
+    withState(() => getInitialTrendingState()),
     withMethods((
         store,
         trendingService = inject(TmdbTrendingService),
@@ -351,14 +385,21 @@ export const TrendingStore = signalStore(
         let trendingDataPromise: Promise<void> | null = null;
 
         const filterWatched = (items: SwimlaneItem[]): SwimlaneItem[] => {
-            if (!discoverPrefs.hideWatchedInDiscover()) {
-                return items;
-            }
+            const allowAdult = storage.allowAdultContent();
+            const hideWatched = discoverPrefs.hideWatchedInDiscover();
             const watchedKeys = storage.watchedMediaKeys();
-            if (!watchedKeys || watchedKeys.size === 0) {
-                return items;
-            }
-            return items.filter((it) => !watchedKeys.has(`${it.mediaType}_${it.id}`));
+            return items.filter((it) => {
+                if (!allowAdult) {
+                    const payload = it.payload as Record<string, unknown> | undefined;
+                    if (payload?.['adult'] === true || (it as unknown as { adult?: boolean }).adult === true) {
+                        return false;
+                    }
+                }
+                if (hideWatched && watchedKeys && watchedKeys.size > 0) {
+                    if (watchedKeys.has(`${it.mediaType}_${it.id}`)) return false;
+                }
+                return true;
+            });
         };
 
         const rankAndFilter = (items: SwimlaneItem[], attachMatchSubtitle = false): SwimlaneItem[] => {
@@ -872,15 +913,36 @@ export const TrendingStore = signalStore(
             return deduplicatedSections;
         };
 
-        return {
-
-        loadTrendingData(force = false): Promise<void> {
+        const loadTrendingData = (force = false): Promise<void> => {
             if (trendingDataPromise) {
                 return trendingDataPromise;
             }
             if (!force && store.hasLoadedTrendingData()) {
                 return Promise.resolve();
             }
+
+            const validCache = !force ? discoverPrefs.getValidDiscoverFeedCache() : null;
+            if (validCache && ((validCache.forYouSections?.length || 0) > 0 || (validCache.movies?.length || 0) > 0)) {
+                patchState(store, {
+                    heroItems: validCache.heroItems || [],
+                    movies: validCache.movies || [],
+                    nowPlayingMovies: validCache.nowPlayingMovies || [],
+                    tvShows: validCache.tvShows || [],
+                    airingTvShows: validCache.airingTvShows || [],
+                    trendingPersonalizedSections: validCache.trendingPersonalizedSections || [],
+                    forYouSections: validCache.forYouSections || [],
+                    languageHubSections: validCache.languageHubSections || [],
+                    lastLoadedLanguageKey: validCache.lastLoadedLanguageKey || '',
+                    bollywoodSections: validCache.bollywoodSections || [],
+                    ottStreamingSections: validCache.ottStreamingSections || [],
+                    topRatedMovies: validCache.topRatedMovies || [],
+                    topRatedTvShows: validCache.topRatedTvShows || [],
+                    hasLoadedTrendingData: true,
+                    isLoading: false
+                });
+                return Promise.resolve();
+            }
+
             patchState(store, { isLoading: true, error: null });
 
             trendingDataPromise = (async (): Promise<void> => {
@@ -897,18 +959,40 @@ export const TrendingStore = signalStore(
                         firstValueFrom(moviesService.getNowPlayingMovies('en-US', 1, region)),
                         firstValueFrom(trendingService.getTrendingTvShows(pulseWindow)),
                         firstValueFrom(tvService.getTvOnTheAir('en-US', 1)),
-                        buildPersonalizedTopLanes().catch(() => [] as DiscoverSwimlaneSection[])
+                        buildPersonalizedTopLanes(false).catch(() => [] as DiscoverSwimlaneSection[])
                     ]);
 
+                    const mappedHero = mapToHeroItems(allRes.results);
+                    const mappedMovies = filterWatched(mapMoviesToSwimlane(moviesRes.results));
+                    const mappedNowPlaying = filterWatched(mapMoviesToSwimlane(nowPlayingRes.results || []));
+                    const mappedTv = filterWatched(mapTvToSwimlane(tvRes.results));
+                    const mappedAiring = filterWatched(mapTvToSwimlane(onTheAirRes.results || []));
+
                     patchState(store, {
-                        heroItems: mapToHeroItems(allRes.results),
-                        movies: filterWatched(mapMoviesToSwimlane(moviesRes.results)),
-                        nowPlayingMovies: filterWatched(mapMoviesToSwimlane(nowPlayingRes.results || [])),
-                        tvShows: filterWatched(mapTvToSwimlane(tvRes.results)),
-                        airingTvShows: filterWatched(mapTvToSwimlane(onTheAirRes.results || [])),
+                        heroItems: mappedHero,
+                        movies: mappedMovies,
+                        nowPlayingMovies: mappedNowPlaying,
+                        tvShows: mappedTv,
+                        airingTvShows: mappedAiring,
                         trendingPersonalizedSections: personalizedLanes.slice(0, 3),
                         forYouSections: personalizedLanes,
                         hasLoadedTrendingData: true
+                    });
+
+                    discoverPrefs.saveDiscoverFeedCache({
+                        heroItems: mappedHero,
+                        movies: mappedMovies,
+                        nowPlayingMovies: mappedNowPlaying,
+                        tvShows: mappedTv,
+                        airingTvShows: mappedAiring,
+                        trendingPersonalizedSections: personalizedLanes.slice(0, 3),
+                        forYouSections: personalizedLanes,
+                        languageHubSections: store.languageHubSections(),
+                        lastLoadedLanguageKey: store.lastLoadedLanguageKey(),
+                        bollywoodSections: store.bollywoodSections(),
+                        ottStreamingSections: store.ottStreamingSections(),
+                        topRatedMovies: store.topRatedMovies(),
+                        topRatedTvShows: store.topRatedTvShows()
                     });
                 } catch (error) {
                     console.error('Failed to load trending data', error);
@@ -920,23 +1004,71 @@ export const TrendingStore = signalStore(
             })();
 
             return trendingDataPromise;
-        },
+        };
 
-        async loadForYouData(force = false): Promise<void> {
+        const loadForYouData = async (force = false, forceAiRefresh = false): Promise<void> => {
             if (!force && (store.forYouSections().length > 0 || store.isForYouLoading())) return;
+
+            const validCache = !force ? discoverPrefs.getValidDiscoverFeedCache() : null;
+            if (validCache && (validCache.forYouSections?.length || 0) > 0) {
+                patchState(store, {
+                    forYouSections: validCache.forYouSections,
+                    trendingPersonalizedSections: validCache.trendingPersonalizedSections || validCache.forYouSections.slice(0, 3),
+                    isForYouLoading: false
+                });
+                return;
+            }
+
             patchState(store, { isForYouLoading: true });
             try {
-                const sections = await buildPersonalizedTopLanes();
+                const sections = await buildPersonalizedTopLanes(forceAiRefresh);
                 patchState(store, {
                     forYouSections: sections,
                     trendingPersonalizedSections: sections.slice(0, 3),
                     isForYouLoading: false
                 });
+
+                discoverPrefs.saveDiscoverFeedCache({
+                    heroItems: store.heroItems(),
+                    movies: store.movies(),
+                    nowPlayingMovies: store.nowPlayingMovies(),
+                    tvShows: store.tvShows(),
+                    airingTvShows: store.airingTvShows(),
+                    trendingPersonalizedSections: sections.slice(0, 3),
+                    forYouSections: sections,
+                    languageHubSections: store.languageHubSections(),
+                    lastLoadedLanguageKey: store.lastLoadedLanguageKey(),
+                    bollywoodSections: store.bollywoodSections(),
+                    ottStreamingSections: store.ottStreamingSections(),
+                    topRatedMovies: store.topRatedMovies(),
+                    topRatedTvShows: store.topRatedTvShows()
+                });
             } catch (error) {
                 console.error('Failed to load For You data', error);
                 patchState(store, { isForYouLoading: false });
             }
-        },
+        };
+
+        const checkAndRefreshExpiredDiscoverFeed = async (silent = true): Promise<void> => {
+            const validCache = discoverPrefs.getValidDiscoverFeedCache();
+            if (validCache) {
+                return;
+            }
+            try {
+                if (!silent) {
+                    patchState(store, { isLoading: true });
+                }
+                await loadTrendingData(true);
+            } catch (err) {
+                console.warn('[TrendingStore] Background 12h feed refresh failed', err);
+            }
+        };
+
+        return {
+
+        loadTrendingData,
+        loadForYouData,
+        checkAndRefreshExpiredDiscoverFeed,
 
         async refreshAiTasteNow(): Promise<void> {
             if (store.isAiTasteSyncing()) return;
@@ -966,6 +1098,22 @@ export const TrendingStore = signalStore(
                 return;
             }
             if (store.isDesiLoading()) return;
+
+            const validCache = !force ? discoverPrefs.getValidDiscoverFeedCache() : null;
+            if (
+                validCache &&
+                validCache.languageHubSections &&
+                validCache.languageHubSections.length > 0 &&
+                validCache.lastLoadedLanguageKey === currentLangKey
+            ) {
+                patchState(store, {
+                    languageHubSections: validCache.languageHubSections,
+                    lastLoadedLanguageKey: currentLangKey,
+                    desiWebSeries: validCache.languageHubSections[0]?.items || [],
+                    isDesiLoading: false
+                });
+                return;
+            }
 
             patchState(store, { isDesiLoading: true });
             try {
@@ -1047,6 +1195,22 @@ export const TrendingStore = signalStore(
                     lastLoadedLanguageKey: currentLangKey,
                     desiWebSeries: builtSections[0]?.items || [],
                     isDesiLoading: false
+                });
+
+                discoverPrefs.saveDiscoverFeedCache({
+                    heroItems: store.heroItems(),
+                    movies: store.movies(),
+                    nowPlayingMovies: store.nowPlayingMovies(),
+                    tvShows: store.tvShows(),
+                    airingTvShows: store.airingTvShows(),
+                    trendingPersonalizedSections: store.trendingPersonalizedSections(),
+                    forYouSections: store.forYouSections(),
+                    languageHubSections: builtSections,
+                    lastLoadedLanguageKey: currentLangKey,
+                    bollywoodSections: store.bollywoodSections(),
+                    ottStreamingSections: store.ottStreamingSections(),
+                    topRatedMovies: store.topRatedMovies(),
+                    topRatedTvShows: store.topRatedTvShows()
                 });
             } catch (error) {
                 console.error('Failed to load Language Hub data', error);

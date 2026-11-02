@@ -492,14 +492,16 @@ export class DiscoverPage implements OnInit, AfterViewInit {
     ngOnInit(): void {
         void this.discoverPrefs.ensureApiCatalogsLoaded();
         this.store.loadTrendingData();
+        void this.store.checkAndRefreshExpiredDiscoverFeed(true);
     }
 
     public ionViewWillEnter(): void {
         const section = this.activeSection();
+        void this.store.checkAndRefreshExpiredDiscoverFeed(true);
         if (section === 'desi-hub') {
-            void this.store.loadDesiHubData();
+            void this.store.loadDesiHubData(false);
         } else if (section === 'for-you') {
-            void this.store.loadForYouData(true);
+            void this.store.loadForYouData(false);
         }
     }
 
@@ -509,11 +511,11 @@ export class DiscoverPage implements OnInit, AfterViewInit {
 
     private triggerSectionLoad(section: string): void {
         if (section === 'for-you') {
-            void this.store.loadForYouData();
+            void this.store.loadForYouData(false);
         } else if (section === 'trending') {
-            void this.store.loadTrendingData();
+            void this.store.loadTrendingData(false);
         } else if (section === 'desi-hub') {
-            void this.store.loadDesiHubData();
+            void this.store.loadDesiHubData(false);
         } else if (section === 'bollywood') {
             void this.store.loadBollywoodData();
         } else if (section === 'ott-streaming') {
@@ -532,7 +534,7 @@ export class DiscoverPage implements OnInit, AfterViewInit {
         try {
             const section = this.activeSection();
             if (section === 'for-you') {
-                await this.store.loadForYouData(true);
+                await this.store.loadForYouData(true, false);
             } else if (section === 'trending') {
                 await this.store.loadTrendingData(true);
             } else if (section === 'desi-hub') {

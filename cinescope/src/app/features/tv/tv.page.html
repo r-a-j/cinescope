@@ -143,7 +143,7 @@
             </div>
 
             <!-- Upcoming Next Season Spotlight (when user reaches season finale) -->
-            @if (hero.isCaughtUp && (hero.nextSeasonNumber || hero.nextSeasonAirDate)) {
+            @if (hero.isCaughtUp && (hero.nextSeasonNumber || hero.nextSeasonAirDate || hero.plannedReleaseYear)) {
               <div class="upcoming-season-card">
                 <div class="upcoming-icon-wrap">
                   <ion-icon name="calendar-outline"></ion-icon>
@@ -154,6 +154,8 @@
                     <strong>Season {{ hero.nextSeasonNumber || 'Next' }}</strong>
                     @if (hero.nextSeasonAirDate) {
                       <span class="upcoming-date">• Premieres {{ hero.nextSeasonAirDate }}</span>
+                    } @else if (hero.plannedReleaseYear) {
+                      <span class="planned-pill">PLANNED {{ hero.plannedReleaseYear }}</span>
                     } @else {
                       <span class="upcoming-date">• Release Date TBA</span>
                     }
@@ -237,6 +239,66 @@
         </section>
       }
 
+      <!-- 2b. Upcoming Seasons / Soon Releasing Strip -->
+      @if (tvProgress.upcomingSeasons().length > 0) {
+        <section class="tv-section upcoming-seasons-section">
+          <div class="section-header">
+            <div class="header-titles">
+              <span class="section-kicker">
+                <span class="kicker-bar"></span>
+                RETURNING SOON
+              </span>
+              <h3 class="section-heading">UPCOMING SEASONS</h3>
+            </div>
+            <span class="radar-badge upcoming">{{ tvProgress.upcomingSeasons().length }} SHOWS</span>
+          </div>
+
+          <div class="upcoming-seasons-scroller">
+            @for (item of tvProgress.upcomingSeasons(); track item.tmdbId) {
+              <div
+                class="upcoming-season-card-item"
+                tabindex="0"
+                role="button"
+                (click)="openShowDetail(item.tmdbId)"
+                (keyup.enter)="openShowDetail(item.tmdbId)">
+                <div class="upcoming-media" [class.is-loaded]="isImageLoaded(resolveRadarPoster(item.posterPath))">
+                  <img
+                    [src]="resolveRadarPoster(item.posterPath)"
+                    [alt]="item.seriesTitle"
+                    loading="lazy"
+                    decoding="async"
+                    [class.is-loaded]="isImageLoaded(resolveRadarPoster(item.posterPath))"
+                    (load)="onImageLoad($event, resolveRadarPoster(item.posterPath))"
+                    (error)="onImageError($event, item.tmdbId)" />
+                  <div class="upcoming-media-scrim"></div>
+                  <span class="upcoming-season-badge">
+                    Season {{ item.seasonNumber }}
+                  </span>
+                </div>
+                <div class="upcoming-card-info">
+                  <h4 class="upcoming-title">{{ item.seriesTitle }}</h4>
+                  @if (item.seasonAirDate) {
+                    <span class="upcoming-release-date">Premieres {{ item.seasonAirDate }}</span>
+                  } @else if (item.plannedReleaseYear) {
+                    <span class="planned-pill">PLANNED {{ item.plannedReleaseYear }}</span>
+                  } @else {
+                    <span class="upcoming-release-date">Release Date TBA</span>
+                  }
+                  @if (item.daysUntil !== null && item.daysUntil !== undefined && item.daysUntil >= 0) {
+                    <span class="upcoming-countdown-tag">{{ item.daysUntil === 0 ? 'Airs Today' : (item.daysUntil === 1 ? 'Tomorrow' : 'In ' + item.daysUntil + ' days') }}</span>
+                  } @else if (item.isCaughtUp) {
+                    <span class="upcoming-caught-up-tag">
+                      <ion-icon name="checkmark-done-outline"></ion-icon>
+                      Season Finished
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
       <!-- 3. Continue Watching Horizontal Queue -->
       @if (allDisplayCards().length > 1) {
         <section class="tv-section queue-section">
@@ -271,7 +333,7 @@
                 <div class="queue-meta">
                   <span class="queue-name">{{ card.title }}</span>
                   <span class="queue-sub">
-                    {{ card.isCompleted ? 'Done' : (card.isUnstarted ? 'Start' : (card.upNextSeason && card.upNextEpisode ? 'S' + card.upNextSeason + ' E' + card.upNextEpisode : 'Up Next unavailable')) }}
+                    {{ card.isCompleted ? (card.isCaughtUp ? 'Season Done' : 'Done') : (card.isUnstarted ? 'Start' : (card.upNextSeason && card.upNextEpisode ? 'S' + card.upNextSeason + ' E' + card.upNextEpisode : 'Up Next unavailable')) }}
                     • {{ card.percentage }}%
                   </span>
                 </div>
@@ -382,15 +444,18 @@
 
                   <div class="poster-bottom-scrim"></div>
 
-                  @if (card.isCompleted) {
+                  @if (card.isCaughtUp) {
+                    <span class="card-status-badge caught-up">
+                      <ion-icon name="checkmark-done-outline"></ion-icon>
+                      Season Complete
+                    </span>
+                    @if (card.plannedReleaseYear && !card.nextSeasonAirDate) {
+                      <span class="card-planned-pill">PLANNED {{ card.plannedReleaseYear }}</span>
+                    }
+                  } @else if (card.isCompleted) {
                     <span class="card-status-badge completed">
                       <ion-icon name="checkmark-circle"></ion-icon>
                       Done
-                    </span>
-                  } @else if (card.isCaughtUp) {
-                    <span class="card-status-badge caught-up">
-                      <ion-icon name="checkmark-done-outline"></ion-icon>
-                      Caught Up
                     </span>
                   } @else if (card.isUnstarted) {
                     <span class="card-status-badge unstarted">
