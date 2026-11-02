@@ -80,7 +80,7 @@ export class PosterCardComponent {
         this.erroredUrl.set(this.imageUrl());
         const id = this.tmdbId();
         const type = this.mediaType();
-        if (id && Number.isFinite(id) && id > 0 && (type === 'movie' || type === 'tv')) {
+        if (id && id > 0 && (type === 'movie' || type === 'tv')) {
             void this.mediaMetadata.healMediaMetadata(id, type);
         }
     }

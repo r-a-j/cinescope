@@ -699,15 +699,6 @@ export class FranchiseAggregatorService {
   }
 
   private async resolveMovieFranchise(tmdbId: number, docId: string): Promise<void> {
-    if (!Number.isFinite(tmdbId) || tmdbId <= 0) {
-      try {
-        await this.storage.updateMediaPayload(docId, { belongs_to_collection: null });
-      } catch {
-        // Safe ignore
-      }
-      return;
-    }
-
     try {
       const details = await firstValueFrom(this.tmdbMovies.getMovieDetails(tmdbId));
       const belongs = details?.belongs_to_collection || null;
@@ -719,12 +710,7 @@ export class FranchiseAggregatorService {
         await this.fetchAndCacheCollection(belongs.id);
       }
     } catch {
-      // Graceful fallback: mark belongs_to_collection as null so failed/404 lookups are not repeatedly retried
-      try {
-        await this.storage.updateMediaPayload(docId, { belongs_to_collection: null });
-      } catch {
-        // Safe ignore
-      }
+      // Graceful fallback
     } finally {
       this.inFlightMovieLookups.delete(tmdbId);
     }
