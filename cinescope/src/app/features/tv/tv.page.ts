@@ -545,7 +545,8 @@ export class TvPage {
   public async onPullRefresh(event: RefresherCustomEvent): Promise<void> {
     this.isRefreshing.set(true);
     try {
-      const tracked = [...this.tvProgress.currentlyWatching(), ...this.tvProgress.completedSeries()];
+      const tracked = [...this.tvProgress.currentlyWatching(), ...this.tvProgress.completedSeries()]
+        .filter((series) => Number.isFinite(series.tmdbId) && series.tmdbId > 0);
       const uniqueSeries = Array.from(new Map(tracked.map((series) => [series.tmdbId, series])).values());
 
       for (let index = 0; index < uniqueSeries.length; index += 3) {
