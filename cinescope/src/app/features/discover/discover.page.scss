@@ -81,7 +81,7 @@ ion-segment-button {
 
     &::part(indicator-background) {
         border-radius: 999px 999px 0 0;
-        background: linear-gradient(90deg, #e50914 0%, #f5c518 100%);
+        background: var(--ion-color-primary, #e50914);
         box-shadow: 0 -2px 10px rgba(229, 9, 20, 0.55);
     }
 }

@@ -19,7 +19,7 @@
     width: 3px;
     height: 18px;
     border-radius: 999px;
-    background: linear-gradient(180deg, #e50914 0%, #f5c518 100%);
+    background: var(--ion-color-primary, #e50914);
     box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
 }
 
