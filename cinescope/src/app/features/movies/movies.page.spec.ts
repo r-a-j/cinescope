@@ -1,3 +1,5 @@
+import { RecommendationEngineService } from '../../core/services/recommendation-engine.service';
+import { TasteProfileService } from '../../core/services/taste-profile.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -137,7 +139,7 @@ describe('MoviesPage', () => {
         { provide: FranchiseAggregatorService, useValue: mockFranchiseAggregatorService },
         { provide: ToastService, useValue: mockToastService },
         { provide: MoviesPreferencesService, useValue: mockMoviesPreferencesService },
-        { provide: TmdbMoviesService, useValue: mockTmdbMoviesService }
+        { provide: RecommendationEngineService, useValue: null }, { provide: TasteProfileService, useValue: null }, { provide: TmdbMoviesService, useValue: mockTmdbMoviesService }
       ]
     }).compileComponents();
 

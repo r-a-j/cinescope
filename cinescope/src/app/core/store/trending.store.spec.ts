@@ -1,3 +1,5 @@
+import { RecommendationEngineService } from '../services/recommendation-engine.service';
+import { TasteProfileService } from '../services/taste-profile.service';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { TrendingStore } from './trending.store';
@@ -30,7 +32,7 @@ describe('TrendingStore', () => {
                 TrendingStore,
                 { provide: TmdbTrendingService, useValue: trendingService },
                 { provide: TmdbDiscoverService, useValue: {} },
-                { provide: TmdbMoviesService, useValue: { getNowPlayingMovies: jasmine.createSpy().and.returnValue(observable) } },
+                { provide: RecommendationEngineService, useValue: null }, { provide: TasteProfileService, useValue: null }, { provide: TmdbMoviesService, useValue: { getNowPlayingMovies: jasmine.createSpy().and.returnValue(observable) } },
                 { provide: TmdbTvService, useValue: { getTvOnTheAir: jasmine.createSpy().and.returnValue(observable) } },
                 { provide: TmdbPeopleService, useValue: {} }
             ]
@@ -61,5 +63,23 @@ describe('TrendingStore', () => {
 
         await store.loadTrendingData();
         expect(trendingService.getTrendingAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('initializes store with empty personalized sections and no duplicates', () => {
+        const sections = store.forYouSections();
+        const seenKeys = new Set<string>();
+        let duplicatesCount = 0;
+
+        for (const sec of sections) {
+            for (const item of sec.items) {
+                const key = `${item.mediaType}_${item.id}`;
+                if (seenKeys.has(key)) {
+                    duplicatesCount++;
+                }
+                seenKeys.add(key);
+            }
+        }
+
+        expect(duplicatesCount).toBe(0);
     });
 });

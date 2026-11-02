@@ -1,3 +1,5 @@
+import { RecommendationEngineService } from '../../../../core/services/recommendation-engine.service';
+import { TasteProfileService } from '../../../../core/services/taste-profile.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { CinematchHeroComponent } from './cinematch-hero.component';
@@ -63,7 +65,7 @@ describe('CinematchHeroComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CinematchHeroComponent],
       providers: [
-        { provide: TmdbMoviesService, useValue: mockTmdbMoviesService },
+        { provide: RecommendationEngineService, useValue: null }, { provide: TasteProfileService, useValue: null }, { provide: TmdbMoviesService, useValue: mockTmdbMoviesService },
         { provide: StorageService, useValue: mockStorageService }
       ]
     }).compileComponents();

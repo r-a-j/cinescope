@@ -36,6 +36,7 @@ import { ContentDocType } from '../../../../core/database/schemas/content.schema
 import { TmdbMoviesService } from '../../../../core/services/tmdb-movies.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { TimeContextService, TimeOfDayContext } from '../../../../core/services/time-context.service';
+import { RecommendationEngineService } from '../../../../core/services/recommendation-engine.service';
 import { resolveMediaImageUrl } from '../../../../core/constants/api.constants';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
@@ -69,6 +70,7 @@ export class CinematchHeroComponent {
   private tmdbMovies = inject(TmdbMoviesService);
   private storage = inject(StorageService);
   private timeContext = inject(TimeContextService);
+  private recEngine = inject(RecommendationEngineService, { optional: true });
 
   public watchlistMovies = input.required<ContentDocType[]>();
 
@@ -171,7 +173,7 @@ export class CinematchHeroComponent {
     const mood = this.activeMood();
     if (mood === 'all') return list;
 
-    return list.filter(item => {
+    const filtered = list.filter(item => {
       const payload = item.payload as Record<string, unknown> | undefined;
       if (!payload) return false;
 
@@ -204,6 +206,12 @@ export class CinematchHeroComponent {
           return true;
       }
     });
+
+    if (this.recEngine) {
+      const preferQuick = mood === 'quick' || this.greeting().period === 'late_night';
+      return this.recEngine.rankWatchlistDocs(filtered, mood, preferQuick);
+    }
+    return filtered;
   });
 
   // Current index in the active pool
@@ -215,9 +223,21 @@ export class CinematchHeroComponent {
     return idx >= 0 ? idx : 0;
   });
 
-  // Contextual "Why This Pick?" Hook
+  // Contextual "Why This Pick?" Hook powered by Stage 3 CineMatch Scorer
   public readonly currentWhyThisPick = computed<ContextualHook>(() => {
-    return getContextualHook(this.selectedMovie());
+    const doc = this.selectedMovie();
+    if (this.recEngine && doc?.payload) {
+      return this.recEngine.scoreMediaPayload(
+        doc.payload as Record<string, unknown>,
+        'movie',
+        {
+          addedAt: doc.addedAt,
+          activeMood: this.activeMood(),
+          preferQuickRuntime: this.activeMood() === 'quick' || this.greeting().period === 'late_night'
+        }
+      ).hook;
+    }
+    return getContextualHook(doc);
   });
 
   private providerCache = new Map<string, StreamingAvailability>();
