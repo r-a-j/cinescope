@@ -6,7 +6,7 @@ import { TmdbDiscoverService } from '../services/tmdb-discover.service';
 import { TmdbMoviesService } from '../services/tmdb-movies.service';
 import { TmdbTvService } from '../services/tmdb-tv.service';
 import { TmdbPeopleService } from '../services/tmdb-people.service';
-import { StorageService, getLocalTodayIso } from '../services/storage.service';
+import { StorageService, getLocalTodayIso, checkMediaReleaseStatus } from '../services/storage.service';
 import {
     DiscoverPreferencesService,
     DiscoverLanguageOption,
@@ -561,7 +561,7 @@ export const TrendingStore = signalStore(
         };
 
         const buildPersonalizedTopLanes = async (forceAiRefresh = false): Promise<DiscoverSwimlaneSection[]> => {
-            const sections: DiscoverSwimlaneSection[] = [];
+            const rawSections: DiscoverSwimlaneSection[] = [];
             const todayIso = getLocalTodayIso();
             const preferredLangs = discoverPrefs.preferredLanguages();
             const langPipe = preferredLangs.join('|');
@@ -574,18 +574,30 @@ export const TrendingStore = signalStore(
             // 1. Multi-Seed Collaborative Synthesis + Top Weighted Seeds ("BECAUSE YOU WATCHED...")
             const watchedDocs = storage.watchedItems();
             const watchlistDocs = storage.watchlistItems();
-            const seedSource = watchedDocs.length > 0 ? watchedDocs : watchlistDocs;
             const actionPrefix = watchedDocs.length > 0 ? 'BECAUSE YOU WATCHED' : 'BECAUSE YOU SAVED';
 
-            // Use weighted diverse seeds from TasteProfileService when available
-            const topSeeds = [...seedSource]
-                .sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''))
-                .slice(0, 3);
+            // Select top diverse seeds from TasteProfileService when available
+            const topSeeds = (dnaProfile?.topSeeds && dnaProfile.topSeeds.length > 0)
+                ? dnaProfile.topSeeds.slice(0, 3)
+                : [...(watchedDocs.length > 0 ? watchedDocs : watchlistDocs)]
+                    .filter((d) => {
+                        const p = (d.payload || {}) as Record<string, unknown>;
+                        const v = Number(p['vote_average'] || 0);
+                        return v === 0 || v >= 5.5;
+                    })
+                    .sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''))
+                    .slice(0, 3)
+                    .map((d) => ({
+                        tmdbId: d.tmdbId,
+                        title: String((d.payload as Record<string, unknown> | undefined)?.['title'] || (d.payload as Record<string, unknown> | undefined)?.['name'] || '').trim(),
+                        mediaType: (d.mediaType === 'tv' ? 'tv' : 'movie') as 'movie' | 'tv',
+                        genreIds: [] as number[],
+                        originalLanguage: String((d.payload as Record<string, unknown> | undefined)?.['original_language'] || 'en')
+                    }));
 
             for (const seed of topSeeds.slice(0, 2)) {
-                const seedPayload = (seed.payload || {}) as Record<string, unknown>;
-                const seedTitle = String(seedPayload['title'] || seedPayload['name'] || '').trim();
-                const seedId = Number(seed.tmdbId || seedPayload['id']);
+                const seedTitle = seed.title.trim();
+                const seedId = seed.tmdbId;
                 const seedType: 'movie' | 'tv' = seed.mediaType === 'tv' ? 'tv' : 'movie';
                 if (!seedId || !seedTitle) continue;
 
@@ -599,18 +611,18 @@ export const TrendingStore = signalStore(
                         recItems = rankAndFilter(mapMoviesToSwimlane(res.results || []), true);
                     }
 
-                    // Fallback to Discover matching seed's original_language + strict AND genres if TMDB /recommendations is empty
-                    if (recItems.length < 4) {
-                        const origLang = String(seedPayload['original_language'] || preferredLangs[0] || 'hi');
-                        const rawGenres = (seedPayload['genre_ids'] as number[] | undefined)
-                            || ((seedPayload['genres'] as { id: number }[] | undefined)?.map((g) => g.id))
-                            || [];
-                        const genreFilter = rawGenres.slice(0, 2).join(',');
+                    // Fallback to Discover matching seed's originalLanguage + strict AND genres if TMDB /recommendations is empty
+                    if (recItems.length < 4 && seed.genreIds.length > 0) {
+                        const origLang = seed.originalLanguage || preferredLangs[0] || 'en';
+                        const genreFilter = seed.genreIds.slice(0, 2).join(',');
 
                         if (seedType === 'tv') {
                             const fallbackParams: TmdbDiscoverTvParamsDto = {
                                 with_original_language: origLang,
-                                ...(genreFilter ? { with_genres: genreFilter } : {}),
+                                with_genres: genreFilter,
+                                'first_air_date.lte': todayIso,
+                                'vote_average.gte': 6.5,
+                                'vote_count.gte': 25,
                                 sort_by: 'popularity.desc'
                             };
                             const fbRes = await firstValueFrom(discoverService.discoverTv(fallbackParams));
@@ -618,7 +630,10 @@ export const TrendingStore = signalStore(
                         } else {
                             const fallbackParams: TmdbDiscoverMovieParamsDto = {
                                 with_original_language: origLang,
-                                ...(genreFilter ? { with_genres: genreFilter } : {}),
+                                with_genres: genreFilter,
+                                'primary_release_date.lte': todayIso,
+                                'vote_average.gte': 6.5,
+                                'vote_count.gte': 35,
                                 sort_by: 'popularity.desc'
                             };
                             const fbRes = await firstValueFrom(discoverService.discoverMovies(fallbackParams));
@@ -626,8 +641,8 @@ export const TrendingStore = signalStore(
                         }
                     }
 
-                    if (recItems.length > 0) {
-                        sections.push({
+                    if (recItems.length >= 3) {
+                        rawSections.push({
                             id: `seed-${seedType}-${seedId}`,
                             title: `${actionPrefix} ${seedTitle.toUpperCase()}`,
                             items: recItems,
@@ -647,14 +662,14 @@ export const TrendingStore = signalStore(
             if (recEngine) {
                 const multiSeedLane = await recEngine.buildMultiSeedCollaborativeSection();
                 if (multiSeedLane) {
-                    sections.push(multiSeedLane);
+                    rawSections.push(multiSeedLane);
                 }
             }
 
             // 2. 12-Hour Gemini AI Taste Curation (Hybrid Curated Picks + TMDB Discover Execution Graph)
             const aiSections = await hydrateAiTasteSections(langPipe || 'hi|en', forceAiRefresh);
             for (const aiSec of aiSections) {
-                sections.push(aiSec);
+                rawSections.push(aiSec);
             }
 
             // 2b. Genre-Pair Co-occurrence Intersection Lane (Strict AND Query from Taste DNA)
@@ -664,14 +679,15 @@ export const TrendingStore = signalStore(
                     const pairParams: TmdbDiscoverMovieParamsDto = {
                         with_original_language: langPipe || 'hi|en',
                         with_genres: topPair.pairKey, // Comma-separated AND query!
-                        'vote_average.gte': 7.0,
+                        'primary_release_date.lte': todayIso,
+                        'vote_average.gte': 6.8,
                         'vote_count.gte': 35,
                         sort_by: 'vote_average.desc'
                     };
                     const pairRes = await firstValueFrom(discoverService.discoverMovies(pairParams));
                     const pairItems = rankAndFilter(mapMoviesToSwimlane(pairRes.results || []), true);
                     if (pairItems.length >= 4) {
-                        sections.push({
+                        rawSections.push({
                             id: `dna-pair-${topPair.pairKey.replace(',', '-')}`,
                             title: `YOUR TASTE DNA: ${topPair.label.toUpperCase()}`,
                             items: pairItems,
@@ -687,16 +703,18 @@ export const TrendingStore = signalStore(
             const curatedMoviesParams: TmdbDiscoverMovieParamsDto = {
                 with_original_language: langPipe || 'hi|en',
                 ...(movieGenrePipe ? { with_genres: movieGenrePipe } : {}),
-                'vote_average.gte': 7.0,
-                'vote_count.gte': 30,
+                'primary_release_date.lte': todayIso,
+                'vote_average.gte': 6.8,
+                'vote_count.gte': 35,
                 sort_by: 'popularity.desc'
             };
 
             const curatedTvParams: TmdbDiscoverTvParamsDto = {
                 with_original_language: langPipe || 'hi|en',
                 ...(tvGenrePipe ? { with_genres: tvGenrePipe } : {}),
-                'vote_average.gte': 7.2,
-                'vote_count.gte': 20,
+                'first_air_date.lte': todayIso,
+                'vote_average.gte': 7.0,
+                'vote_count.gte': 25,
                 sort_by: 'popularity.desc'
             };
 
@@ -714,7 +732,7 @@ export const TrendingStore = signalStore(
 
             const curatedMovies = rankAndFilter(mapMoviesToSwimlane(curatedMoviesRes.results || []), true);
             if (curatedMovies.length > 0) {
-                sections.push({
+                rawSections.push({
                     id: 'curated-taste-movies',
                     title: 'CURATED FOR YOUR TASTE',
                     items: curatedMovies,
@@ -724,7 +742,7 @@ export const TrendingStore = signalStore(
 
             const upcomingItems = filterWatched(mapMoviesToSwimlane(upcomingRes.results || []));
             if (upcomingItems.length > 0) {
-                sections.push({
+                rawSections.push({
                     id: 'upcoming-preferred-languages',
                     title: 'UPCOMING IN YOUR LANGUAGES',
                     items: upcomingItems,
@@ -734,7 +752,7 @@ export const TrendingStore = signalStore(
 
             const curatedTv = rankAndFilter(mapTvToSwimlane(curatedTvRes.results || []), true);
             if (curatedTv.length > 0) {
-                sections.push({
+                rawSections.push({
                     id: 'curated-taste-tv',
                     title: 'SERIES FOR YOUR TASTE',
                     items: curatedTv,
@@ -747,7 +765,9 @@ export const TrendingStore = signalStore(
                 try {
                     const vibeParams: TmdbDiscoverMovieParamsDto = {
                         ...vibe.movieParams,
-                        with_original_language: langPipe || 'hi|en'
+                        with_original_language: langPipe || 'hi|en',
+                        'primary_release_date.lte': todayIso,
+                        'vote_count.gte': 25
                     };
                     const res = await firstValueFrom(discoverService.discoverMovies(vibeParams));
                     const items = rankAndFilter(mapMoviesToSwimlane(res.results || []), true);
@@ -771,8 +791,9 @@ export const TrendingStore = signalStore(
                     const genreParams: TmdbDiscoverMovieParamsDto = {
                         with_original_language: langPipe || 'hi|en',
                         with_genres: genre.movieGenreIds,
+                        'primary_release_date.lte': todayIso,
                         'vote_average.gte': 6.7,
-                        'vote_count.gte': 25,
+                        'vote_count.gte': 30,
                         sort_by: 'popularity.desc'
                     };
                     const res = await firstValueFrom(discoverService.discoverMovies(genreParams));
@@ -797,13 +818,58 @@ export const TrendingStore = signalStore(
             ]);
 
             for (const vSec of resolvedVibes) {
-                if (vSec) sections.push(vSec);
+                if (vSec) rawSections.push(vSec);
             }
             for (const gSec of resolvedGenres) {
-                if (gSec) sections.push(gSec);
+                if (gSec) rawSections.push(gSec);
             }
 
-            return sections;
+            // 6. Global Cross-Swimlane Deduplication & Minimum Richness Enforcement
+            const globalSeenKeys = new Set<string>();
+
+            // Seed with watched keys and user's seed IDs so they are never recommended
+            for (const key of storage.watchedMediaKeys()) {
+                globalSeenKeys.add(key);
+            }
+            for (const s of topSeeds) {
+                globalSeenKeys.add(`${s.mediaType}_${s.tmdbId}`);
+            }
+
+            const deduplicatedSections: DiscoverSwimlaneSection[] = [];
+
+            for (const sec of rawSections) {
+                const isUpcoming = sec.id === 'upcoming-preferred-languages';
+                const freshItems: SwimlaneItem[] = [];
+
+                for (const item of sec.items) {
+                    const itemKey = `${item.mediaType}_${item.id}`;
+                    if (globalSeenKeys.has(itemKey)) {
+                        continue;
+                    }
+
+                    if (!isUpcoming) {
+                        const relCheck = checkMediaReleaseStatus(item.payload as Record<string, unknown> | null);
+                        if (!relCheck.isReleased) {
+                            continue;
+                        }
+                    }
+
+                    freshItems.push(item);
+                }
+
+                // Only include swimlanes with at least 3 fresh, non-duplicate titles
+                if (freshItems.length >= 3) {
+                    for (const item of freshItems) {
+                        globalSeenKeys.add(`${item.mediaType}_${item.id}`);
+                    }
+                    deduplicatedSections.push({
+                        ...sec,
+                        items: freshItems
+                    });
+                }
+            }
+
+            return deduplicatedSections;
         };
 
         return {

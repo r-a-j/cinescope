@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TasteProfileService, MOVIE_GENRE_LABELS } from './taste-profile.service';
-import { StorageService } from './storage.service';
+import { StorageService, checkMediaReleaseStatus, getLocalTodayIso } from './storage.service';
 import {
   DiscoverPreferencesService,
   AiTasteCachedLane
@@ -293,12 +293,15 @@ export class RecommendationEngineService {
       hideWatched?: boolean;
       attachMatchSubtitle?: boolean;
       excludeIds?: Set<string | number>;
+      seenKeys?: Set<string>;
+      allowUnreleased?: boolean;
     }
   ): SwimlaneItem[] {
     const hideWatched = options?.hideWatched ?? this.discoverPrefs.hideWatchedInDiscover();
     const watchedKeys = this.storage.watchedMediaKeys();
     const profile = this.tasteProfile.profile();
     const seen = new Set<string | number>();
+    const allowUnreleased = options?.allowUnreleased ?? false;
 
     const scored: { item: SwimlaneItem; score: number }[] = [];
 
@@ -308,12 +311,20 @@ export class RecommendationEngineService {
 
       const mediaType: 'movie' | 'tv' = item.mediaType === 'tv' ? 'tv' : 'movie';
       const mediaKey = `${mediaType}_${item.id}`;
+      if (options?.seenKeys?.has(mediaKey)) continue;
       if (hideWatched && watchedKeys.has(mediaKey)) continue;
       if (profile.dismissedKeys.has(mediaKey) || profile.stalledKeys.has(mediaKey)) continue;
 
+      const payload = (item.payload || {}) as Record<string, unknown>;
+
+      // Release date guard: exclude unreleased future titles unless explicitly permitted
+      if (!allowUnreleased) {
+        const releaseCheck = checkMediaReleaseStatus(payload);
+        if (!releaseCheck.isReleased) continue;
+      }
+
       seen.add(item.id);
 
-      const payload = (item.payload || {}) as Record<string, unknown>;
       const aiReason = payload['aiReason'] as string | undefined;
       const evalResult = this.scoreMediaPayload(payload, mediaType, { aiReason });
 
@@ -462,6 +473,10 @@ export class RecommendationEngineService {
               ...(graph.with_genres ? { with_genres: graph.with_genres } : {}),
               ...(graph.without_genres ? { without_genres: graph.without_genres } : {}),
               ...(keywordPipe ? { with_keywords: keywordPipe } : {}),
+              'first_air_date.lte': graph.release_year_lte
+                ? `${graph.release_year_lte}-12-31`
+                : getLocalTodayIso(),
+              include_adult: false,
               'vote_average.gte': graph.vote_average_gte ?? 7.0,
               'vote_count.gte': graph.vote_count_gte ?? 20,
               sort_by: graph.sort_by === 'vote_average.desc' ? 'vote_average.desc' : 'popularity.desc'
@@ -484,9 +499,10 @@ export class RecommendationEngineService {
               ...(graph.release_year_gte
                 ? { 'primary_release_date.gte': `${graph.release_year_gte}-01-01` }
                 : {}),
-              ...(graph.release_year_lte
-                ? { 'primary_release_date.lte': `${graph.release_year_lte}-12-31` }
-                : {}),
+              'primary_release_date.lte': graph.release_year_lte
+                ? `${graph.release_year_lte}-12-31`
+                : getLocalTodayIso(),
+              include_adult: false,
               ...(graph.runtime_lte ? { 'with_runtime.lte': graph.runtime_lte } : {}),
               'vote_average.gte': graph.vote_average_gte ?? 6.8,
               'vote_count.gte': graph.vote_count_gte ?? 25,
@@ -522,44 +538,45 @@ export class RecommendationEngineService {
       queryContext: CollectionQueryContext;
     }[] = [];
 
-    await Promise.all(
-      cachedPayload.lanes.map(async (lane) => {
-        try {
-          const seededCurated = lane.curatedItems || [];
-          if (lane.mediaType === 'tv' && lane.tvParams) {
-            const res = await firstValueFrom(this.discoverService.discoverTv(lane.tvParams));
-            const discoverMapped = this.mapTvToSwimlane(res.results || []);
-            const ranked = this.rankSwimlaneItems([...seededCurated, ...discoverMapped], {
-              attachMatchSubtitle: true
-            });
-            if (ranked.length > 0) {
-              hydratedSections.push({
-                id: lane.id,
-                title: lane.title,
-                items: ranked,
-                queryContext: { type: 'discover_tv', tvParams: lane.tvParams }
-              });
-            }
-          } else if (lane.movieParams) {
-            const res = await firstValueFrom(this.discoverService.discoverMovies(lane.movieParams));
-            const discoverMapped = this.mapMoviesToSwimlane(res.results || []);
-            const ranked = this.rankSwimlaneItems([...seededCurated, ...discoverMapped], {
-              attachMatchSubtitle: true
-            });
-            if (ranked.length > 0) {
-              hydratedSections.push({
-                id: lane.id,
-                title: lane.title,
-                items: ranked,
-                queryContext: { type: 'discover_movies', movieParams: lane.movieParams }
-              });
-            }
-          }
-        } catch {
-          // Skip failed lane
+    const aiLaneSeenKeys = new Set<string>();
+
+    for (const lane of cachedPayload.lanes) {
+      try {
+        const seededCurated = lane.curatedItems || [];
+        let discoverMapped: SwimlaneItem[] = [];
+        if (lane.mediaType === 'tv' && lane.tvParams) {
+          const res = await firstValueFrom(this.discoverService.discoverTv(lane.tvParams));
+          discoverMapped = this.mapTvToSwimlane(res.results || []);
+        } else if (lane.movieParams) {
+          const res = await firstValueFrom(this.discoverService.discoverMovies(lane.movieParams));
+          discoverMapped = this.mapMoviesToSwimlane(res.results || []);
         }
-      })
-    );
+
+        const ranked = this.rankSwimlaneItems([...seededCurated, ...discoverMapped], {
+          attachMatchSubtitle: true,
+          seenKeys: aiLaneSeenKeys
+        });
+
+        if (ranked.length >= 3) {
+          for (const it of ranked) {
+            aiLaneSeenKeys.add(`${it.mediaType}_${it.id}`);
+          }
+          const queryContext: CollectionQueryContext =
+            lane.mediaType === 'tv' && lane.tvParams
+              ? { type: 'discover_tv', tvParams: lane.tvParams }
+              : { type: 'discover_movies', movieParams: lane.movieParams || {} };
+
+          hydratedSections.push({
+            id: lane.id,
+            title: lane.title,
+            items: ranked,
+            queryContext
+          });
+        }
+      } catch {
+        // Skip failed lane
+      }
+    }
 
     return hydratedSections;
   }
@@ -579,6 +596,7 @@ export class RecommendationEngineService {
     if (seeds.length < 2) return null;
 
     try {
+      const seedTmdbIds = new Set(seeds.map((s) => s.tmdbId));
       const resultsBySeed = await Promise.all(
         seeds.map(async (seed) => {
           try {
@@ -599,10 +617,17 @@ export class RecommendationEngineService {
         })
       );
 
+      // Verify at least 2 distinct seeds yielded recommendations
+      const nonZeroSeeds = resultsBySeed.filter((r) => r.length > 0);
+      if (nonZeroSeeds.length < 2) {
+        return null;
+      }
+
       // Boost items that are co-recommended by multiple seeds
       const freqMap = new Map<string, { item: SwimlaneItem; count: number }>();
       for (const list of resultsBySeed) {
         for (const item of list) {
+          if (seedTmdbIds.has(Number(item.id))) continue;
           const key = `${item.mediaType}_${item.id}`;
           const existing = freqMap.get(key);
           if (existing) {

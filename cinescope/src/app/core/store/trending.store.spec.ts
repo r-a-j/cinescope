@@ -64,4 +64,22 @@ describe('TrendingStore', () => {
         await store.loadTrendingData();
         expect(trendingService.getTrendingAll).toHaveBeenCalledTimes(1);
     });
+
+    it('initializes store with empty personalized sections and no duplicates', () => {
+        const sections = store.forYouSections();
+        const seenKeys = new Set<string>();
+        let duplicatesCount = 0;
+
+        for (const sec of sections) {
+            for (const item of sec.items) {
+                const key = `${item.mediaType}_${item.id}`;
+                if (seenKeys.has(key)) {
+                    duplicatesCount++;
+                }
+                seenKeys.add(key);
+            }
+        }
+
+        expect(duplicatesCount).toBe(0);
+    });
 });

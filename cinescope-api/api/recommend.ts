@@ -98,7 +98,7 @@ Your mission: Synthesize 4 distinct, deeply personalized recommendation lanes (m
 Use deep film-theory connections: narrative pacing, directorial tone, psychological tropes, cultural movements, and thematic intersections.
 
 CRITICAL RULES:
-1. NEVER recommend any title listed in "excludeTitles", "topSeeds", or "watchlistSeeds".
+1. NEVER recommend any title listed in "excludeTitles", "topSeeds", or "watchlistSeeds". All recommended titles must already be officially released to public audiences (never suggest unreleased, announced, or in-production projects).
 2. Respect the user's "preferredLanguages" (ISO 639-1 codes like 'hi', 'en', 'ko', 'ml', 'ta', 'ja', 'es'). Ensure lanes reflect their linguistic palate.
 3. For each lane, return BOTH:
    - "curatedPicks": 5 to 6 real, existing movies or TV shows that match the lane's micro-theme, with release year and a sharp 1-line "reason" (< 75 chars) explaining WHY it fits their specific seeds.

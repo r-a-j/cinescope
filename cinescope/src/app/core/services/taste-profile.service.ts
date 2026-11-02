@@ -184,11 +184,46 @@ export class TasteProfileService {
         doc.mediaType === 'tv' ? (tvCompletionBonus.get(doc.tmdbId) ?? 1.0) : 1.0;
 
       const voteAverage = Number(payload['vote_average'] || 7.0);
+      // Skip poor-quality seeds (voteAverage < 5.5 and > 0) from anchoring recommendations
+      if (voteAverage > 0 && voteAverage < 5.5 && source !== 'completed_tv') {
+        return null;
+      }
       const qualityMult = voteAverage >= 8.0 ? 1.25 : voteAverage >= 7.2 ? 1.1 : 1.0;
 
       const finalWeight = Number((baseWeight * recencyMultiplier * tvMult * qualityMult).toFixed(2));
       const genreIds = extractDocGenres(payload);
-      const origLang = String(payload['original_language'] || '').trim().toLowerCase();
+
+      let origLang = String(payload['original_language'] || '').trim().toLowerCase();
+      if (!origLang) {
+        // Try spoken_languages
+        const spoken = payload['spoken_languages'] as { iso_639_1?: string }[] | undefined;
+        if (Array.isArray(spoken) && spoken[0]?.iso_639_1) {
+          origLang = spoken[0].iso_639_1.toLowerCase();
+        } else {
+          // Check script detection
+          const hasIndicScript = /[\u0900-\u0D7F]/.test(title);
+          const hasCjkScript = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\uac00-\ud7af]/.test(title);
+          if (hasIndicScript) {
+            origLang = 'hi';
+          } else if (hasCjkScript) {
+            origLang = /[\uac00-\ud7af]/.test(title) ? 'ko' : 'ja';
+          } else {
+            // Check origin country
+            const countries = payload['origin_country'] as string[] | undefined;
+            if (Array.isArray(countries) && countries.includes('IN')) {
+              origLang = prefLangs.find((l) => ['hi', 'ta', 'te', 'ml', 'bn', 'mr'].includes(l)) || 'hi';
+            } else if (Array.isArray(countries) && countries.includes('KR')) {
+              origLang = 'ko';
+            } else if (Array.isArray(countries) && countries.includes('JP')) {
+              origLang = 'ja';
+            } else {
+              // Default for Latin script titles: English
+              origLang = 'en';
+            }
+          }
+        }
+      }
+
       const rawDate = String(payload['release_date'] || payload['first_air_date'] || '');
       const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : undefined;
       const yearNum = year ? Number(year) : 0;
@@ -236,7 +271,7 @@ export class TasteProfileService {
         mediaType: doc.mediaType === 'tv' ? 'tv' : 'movie',
         genreIds,
         genres: genreIds.map((id) => MOVIE_GENRE_LABELS[id] || '').filter(Boolean),
-        originalLanguage: origLang || prefLangs[0] || 'en',
+        originalLanguage: origLang,
         voteAverage,
         weight: finalWeight,
         source
@@ -401,6 +436,16 @@ export class TasteProfileService {
   private selectDiverseSeeds(seeds: TasteSeed[], limit: number): TasteSeed[] {
     const selected: TasteSeed[] = [];
     const langCounts: Record<string, number> = {};
+    const seenRoots = new Set<string>();
+
+    const getRootTitle = (t: string): string => {
+      return t
+        .toLowerCase()
+        .replace(/^(the|a|an)\s+/i, '')
+        .split(/[-:(]/)[0]
+        .replace(/part\s+\d+|chapter\s+\d+|\d+$/i, '')
+        .trim();
+    };
 
     for (const seed of seeds) {
       if (selected.length >= limit) break;
@@ -408,7 +453,15 @@ export class TasteProfileService {
       if (langCount >= Math.ceil(limit * 0.65) && seeds.length > limit) {
         continue;
       }
+
+      // Avoid redundant sequels from the exact same franchise in top seed slots
+      const root = getRootTitle(seed.title);
+      if (root.length > 3 && seenRoots.has(root) && seeds.length > limit) {
+        continue;
+      }
+
       selected.push(seed);
+      seenRoots.add(root);
       langCounts[seed.originalLanguage] = langCount + 1;
     }
 
