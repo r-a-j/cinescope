@@ -51,9 +51,9 @@ export interface CollectionPageResult {
 type MovieSortBy = NonNullable<TmdbDiscoverMovieParamsDto['sort_by']>;
 type TvSortBy = NonNullable<TmdbDiscoverTvParamsDto['sort_by']>;
 
-function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
+function mapMoviesToSwimlane(items: TmdbMovieListItemDto[], allowAdult = false): SwimlaneItem[] {
   return (items || [])
-    .filter((item) => item.poster_path)
+    .filter((item) => item.poster_path && (allowAdult || !item.adult))
     .map((item) => ({
       id: item.id,
       mediaType: 'movie' as const,
@@ -64,9 +64,9 @@ function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
     }));
 }
 
-function mapTvToSwimlane(items: TmdbTvListItemDto[]): SwimlaneItem[] {
+function mapTvToSwimlane(items: TmdbTvListItemDto[], allowAdult = false): SwimlaneItem[] {
   return (items || [])
-    .filter((item) => item.poster_path)
+    .filter((item) => item.poster_path && (allowAdult || !item.adult))
     .map((item) => ({
       id: item.id,
       mediaType: 'tv' as const,
@@ -168,12 +168,19 @@ export class CollectionLoaderService {
   private discoverPrefs = inject(DiscoverPreferencesService);
 
   private filterWatched(items: SwimlaneItem[], skipFilter = false): SwimlaneItem[] {
-    if (skipFilter || !this.discoverPrefs.hideWatchedInDiscover()) {
-      return items;
-    }
+    const allowAdult = this.storageService.allowAdultContent();
+    const hideWatched = !skipFilter && this.discoverPrefs.hideWatchedInDiscover();
     return items.filter((item) => {
-      if (item.mediaType !== 'movie' && item.mediaType !== 'tv') return true;
-      return this.storageService.getBookmarkState(item.id, item.mediaType) !== 'watched';
+      if (!allowAdult) {
+        const payload = item.payload as Record<string, unknown> | undefined;
+        if (payload?.['adult'] === true || (item as unknown as { adult?: boolean }).adult === true) {
+          return false;
+        }
+      }
+      if (hideWatched && (item.mediaType === 'movie' || item.mediaType === 'tv')) {
+        return this.storageService.getBookmarkState(item.id, item.mediaType) !== 'watched';
+      }
+      return true;
     });
   }
 

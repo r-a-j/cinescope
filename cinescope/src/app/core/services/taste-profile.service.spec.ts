@@ -15,6 +15,7 @@ describe('TasteProfileService', () => {
   const mockTvProgress = signal<TvProgressDocType[]>([]);
   const mockPrefLangs = signal<string[]>(['hi', 'en']);
   const mockPrefGenres = signal<DiscoverGenreOption[]>([]);
+  const mockAllowAdult = signal<boolean>(false);
 
   beforeEach(() => {
     mockWatched.set([]);
@@ -23,6 +24,7 @@ describe('TasteProfileService', () => {
     mockTvProgress.set([]);
     mockPrefLangs.set(['hi', 'en']);
     mockPrefGenres.set([]);
+    mockAllowAdult.set(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -32,7 +34,8 @@ describe('TasteProfileService', () => {
           useValue: {
             watchedItems: mockWatched,
             watchlistItems: mockWatchlist,
-            favoritePeople: mockFavPeople
+            favoritePeople: mockFavPeople,
+            allowAdultContent: mockAllowAdult
           }
         },
         {
@@ -137,5 +140,28 @@ describe('TasteProfileService', () => {
 
     expect(dangalSeed).toBeDefined();
     expect(dangalSeed?.originalLanguage).toBe('hi');
+  });
+
+  it('excludes adult items from topSeeds when allowAdultContent is false', () => {
+    mockWatched.set([
+      {
+        id: 'movie_1818',
+        tmdbId: 1818,
+        mediaType: 'movie',
+        lists: ['watched'],
+        addedAt: '2026-11-01T20:00:00Z',
+        payload: {
+          id: 1818,
+          title: 'Adult Feature',
+          vote_average: 8.5,
+          adult: true,
+          release_date: '2020-01-01'
+        }
+      }
+    ]);
+
+    const profile = service.profile();
+    const adultSeed = profile.topSeeds.find((s) => s.tmdbId === 1818);
+    expect(adultSeed).toBeUndefined();
   });
 });

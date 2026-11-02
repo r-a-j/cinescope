@@ -183,6 +183,12 @@ export class TasteProfileService {
       const tvMult =
         doc.mediaType === 'tv' ? (tvCompletionBonus.get(doc.tmdbId) ?? 1.0) : 1.0;
 
+      // Skip adult content from anchoring recommendation seeds when family-safe filter is active
+      const allowAdult = this.storage.allowAdultContent ? this.storage.allowAdultContent() : false;
+      if (!allowAdult && (payload['adult'] === true || (doc as unknown as { adult?: boolean }).adult === true)) {
+        return null;
+      }
+
       const voteAverage = Number(payload['vote_average'] || 7.0);
       // Skip poor-quality seeds (voteAverage < 5.5 and > 0) from anchoring recommendations
       if (voteAverage > 0 && voteAverage < 5.5 && source !== 'completed_tv') {

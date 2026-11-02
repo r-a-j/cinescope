@@ -194,9 +194,9 @@ function mapToHeroItems(items: TmdbTrendingMixedItemDto[]): HeroBannerItem[] {
     return heroItems;
 }
 
-function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
+function mapMoviesToSwimlane(items: TmdbMovieListItemDto[], allowAdult = false): SwimlaneItem[] {
     return (items || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .map((item) => ({
             id: item.id,
             mediaType: 'movie' as const,
@@ -207,9 +207,9 @@ function mapMoviesToSwimlane(items: TmdbMovieListItemDto[]): SwimlaneItem[] {
         }));
 }
 
-function mapTvToSwimlane(items: TmdbTvListItemDto[]): SwimlaneItem[] {
+function mapTvToSwimlane(items: TmdbTvListItemDto[], allowAdult = false): SwimlaneItem[] {
     return (items || [])
-        .filter((item) => item.poster_path)
+        .filter((item) => item.poster_path && (allowAdult || !item.adult))
         .map((item) => ({
             id: item.id,
             mediaType: 'tv' as const,
@@ -385,14 +385,21 @@ export const TrendingStore = signalStore(
         let trendingDataPromise: Promise<void> | null = null;
 
         const filterWatched = (items: SwimlaneItem[]): SwimlaneItem[] => {
-            if (!discoverPrefs.hideWatchedInDiscover()) {
-                return items;
-            }
+            const allowAdult = storage.allowAdultContent();
+            const hideWatched = discoverPrefs.hideWatchedInDiscover();
             const watchedKeys = storage.watchedMediaKeys();
-            if (!watchedKeys || watchedKeys.size === 0) {
-                return items;
-            }
-            return items.filter((it) => !watchedKeys.has(`${it.mediaType}_${it.id}`));
+            return items.filter((it) => {
+                if (!allowAdult) {
+                    const payload = it.payload as Record<string, unknown> | undefined;
+                    if (payload?.['adult'] === true || (it as unknown as { adult?: boolean }).adult === true) {
+                        return false;
+                    }
+                }
+                if (hideWatched && watchedKeys && watchedKeys.size > 0) {
+                    if (watchedKeys.has(`${it.mediaType}_${it.id}`)) return false;
+                }
+                return true;
+            });
         };
 
         const rankAndFilter = (items: SwimlaneItem[], attachMatchSubtitle = false): SwimlaneItem[] => {

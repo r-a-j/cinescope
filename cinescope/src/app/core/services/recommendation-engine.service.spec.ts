@@ -78,7 +78,8 @@ describe('RecommendationEngineService', () => {
         {
           provide: StorageService,
           useValue: {
-            watchedMediaKeys: mockWatchedKeys
+            watchedMediaKeys: mockWatchedKeys,
+            allowAdultContent: signal(false)
           }
         },
         {
@@ -134,6 +135,47 @@ describe('RecommendationEngineService', () => {
 
       expect(rankedIds).toContain(1);
       expect(rankedIds).not.toContain(2);
+    });
+
+    it('filters out adult content when allowAdultContent is false', () => {
+      const items: SwimlaneItem[] = [
+        {
+          id: 1,
+          mediaType: 'movie',
+          title: 'Family Safe Movie',
+          posterUrl: '/poster1.jpg',
+          bookmarkState: 'none',
+          payload: {
+            id: 1,
+            title: 'Family Safe Movie',
+            adult: false,
+            release_date: '2023-01-01',
+            vote_average: 8.0,
+            vote_count: 500
+          }
+        },
+        {
+          id: 99,
+          mediaType: 'movie',
+          title: 'Adult 18+ Movie',
+          posterUrl: '/adult.jpg',
+          bookmarkState: 'none',
+          payload: {
+            id: 99,
+            title: 'Adult 18+ Movie',
+            adult: true,
+            release_date: '2023-01-01',
+            vote_average: 7.0,
+            vote_count: 100
+          }
+        }
+      ];
+
+      const ranked = service.rankSwimlaneItems(items);
+      const rankedIds = ranked.map((i) => i.id);
+
+      expect(rankedIds).toContain(1);
+      expect(rankedIds).not.toContain(99);
     });
 
     it('allows unreleased titles when allowUnreleased is true', () => {
