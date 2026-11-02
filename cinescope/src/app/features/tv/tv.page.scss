@@ -12,6 +12,21 @@
   }
 }
 
+@mixin tv-shimmer {
+  background: linear-gradient(110deg, #111115 25%, #1c1c24 50%, #111115 75%);
+  background-size: 200% 100%;
+  animation: tvShimmerSweep 1.6s ease-in-out infinite;
+}
+
+@mixin hide-scroller {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 // =============================================================================
 // MAIN TV HUB CONTAINER
 // =============================================================================
@@ -107,14 +122,7 @@
       aspect-ratio: 2 / 3;
       border-radius: 10px;
       overflow: hidden;
-      background: linear-gradient(
-        110deg,
-        #111115 25%,
-        #1c1c24 50%,
-        #111115 75%
-      );
-      background-size: 200% 100%;
-      animation: tvShimmerSweep 1.6s ease-in-out infinite;
+      @include tv-shimmer;
       border: 1px solid rgba(255, 255, 255, 0.14);
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.78);
       cursor: pointer;
@@ -616,13 +624,7 @@
   .radar-scroller {
     display: flex;
     gap: 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hide-scroller;
 
     .radar-card {
       flex: 0 0 206px;
@@ -647,14 +649,7 @@
       .radar-card-media {
         position: relative;
         height: 114px;
-        background: linear-gradient(
-          110deg,
-          #111115 25%,
-          #1c1c24 50%,
-          #111115 75%
-        );
-        background-size: 200% 100%;
-        animation: tvShimmerSweep 1.6s ease-in-out infinite;
+        @include tv-shimmer;
         overflow: hidden;
 
         &.is-loaded {
@@ -765,13 +760,7 @@
   .upcoming-seasons-scroller {
     display: flex;
     gap: 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hide-scroller;
 
     .upcoming-season-card-item {
       flex: 0 0 170px;
@@ -887,13 +876,7 @@
   .queue-scroller {
     display: flex;
     gap: 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hide-scroller;
 
     .queue-chip {
       flex: 0 0 auto;
@@ -932,14 +915,7 @@
         border-radius: 8px;
         overflow: hidden;
         flex-shrink: 0;
-        background: linear-gradient(
-          110deg,
-          #14141a 25%,
-          #20202a 50%,
-          #14141a 75%
-        );
-        background-size: 200% 100%;
-        animation: tvShimmerSweep 1.6s ease-in-out infinite;
+        @include tv-shimmer;
         border: 1px solid rgba(255, 255, 255, 0.1);
 
         &.is-loaded {
@@ -993,13 +969,7 @@
   .binge-filter-bar {
     display: flex;
     gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    @include hide-scroller;
 
     .filter-pill {
       flex: 0 0 auto;
@@ -1075,14 +1045,7 @@
         aspect-ratio: 2 / 3;
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(
-          110deg,
-          #111115 25%,
-          #1c1c24 50%,
-          #111115 75%
-        );
-        background-size: 200% 100%;
-        animation: tvShimmerSweep 1.6s ease-in-out infinite;
+        @include tv-shimmer;
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 
