@@ -62,10 +62,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     try {
-        const rawPath = req.headers['x-tmdb-path'];
+        const rawPath =
+            (req.headers['x-tmdb-path'] as string | undefined) ||
+            (typeof req.query['path'] === 'string' ? req.query['path'] : undefined) ||
+            (typeof req.query['tmdb_path'] === 'string' ? req.query['tmdb_path'] : undefined);
 
         if (!rawPath || typeof rawPath !== 'string') {
-            return res.status(400).json({ error: 'X-TMDB-Path header is required.' });
+            return res.status(400).json({ error: 'X-TMDB-Path header or path query parameter is required.' });
         }
 
         // Sanitize and normalize path
@@ -99,8 +102,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             return res.status(400).json({ error: 'Invalid destination URL.' });
         }
 
-        // 6. Safely append sanitized query parameters
+        // 6. Safely append sanitized query parameters (excluding internal routing parameters)
         for (const [key, value] of Object.entries(req.query)) {
+            if (key === 'path' || key === 'tmdb_path') continue;
             if (value !== undefined && value !== null && key.length <= 64) {
                 if (Array.isArray(value)) {
                     for (const v of value) {
