@@ -398,15 +398,6 @@ export class RecommendationEngineService {
     const profile = this.tasteProfile.profile();
     let cachedPayload = forceRefresh ? null : this.discoverPrefs.getValidAiTasteCache();
 
-    // Invalidate cache if the user's Taste DNA fingerprint changed significantly and cache is > 30 mins old
-    if (
-      cachedPayload &&
-      cachedPayload.seedSummary !== profile.fingerprint &&
-      Date.now() - cachedPayload.generatedAt > 30 * 60 * 1000
-    ) {
-      cachedPayload = null;
-    }
-
     if (!cachedPayload) {
       try {
         const excludeTitles = [

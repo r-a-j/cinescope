@@ -7,6 +7,7 @@ import { TmdbLanguageDto } from '../dtos/configuration/language.dto';
 import { TmdbDiscoverMovieParamsDto } from '../dtos/discover/discover-movie-params.dto';
 import { TmdbDiscoverTvParamsDto } from '../dtos/discover/discover-tv-params.dto';
 import { SwimlaneItem } from '../../shared/models/swimlane-item.interface';
+import { HeroBannerItem } from '../../shared/models/hero-banner-item.interface';
 
 export type DiscoverLanguageCode = string;
 
@@ -491,6 +492,43 @@ export const DISCOVER_TABS_CATALOG: readonly DiscoverTabMeta[] = [
   }
 ];
 
+export interface DiscoverSwimlaneQueryContext {
+  type?: string;
+  id?: number;
+  mediaType?: 'movie' | 'tv';
+  movieParams?: TmdbDiscoverMovieParamsDto;
+  tvParams?: TmdbDiscoverTvParamsDto;
+  region?: string;
+}
+
+export interface DiscoverSwimlaneSection {
+  id: string;
+  title: string;
+  items: SwimlaneItem[];
+  queryContext: DiscoverSwimlaneQueryContext;
+}
+
+export interface DiscoverFeedCachePayload {
+  generatedAt: number;
+  expiresAt: number;
+  heroItems: HeroBannerItem[];
+  movies: SwimlaneItem[];
+  nowPlayingMovies: SwimlaneItem[];
+  tvShows: SwimlaneItem[];
+  airingTvShows: SwimlaneItem[];
+  trendingPersonalizedSections: DiscoverSwimlaneSection[];
+  forYouSections: DiscoverSwimlaneSection[];
+  languageHubSections?: DiscoverSwimlaneSection[];
+  lastLoadedLanguageKey?: string;
+  bollywoodSections?: DiscoverSwimlaneSection[];
+  ottStreamingSections?: DiscoverSwimlaneSection[];
+  topRatedMovies?: SwimlaneItem[];
+  topRatedTvShows?: SwimlaneItem[];
+}
+
+export const DISCOVER_FEED_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Strictly 12 hours
+export const STORAGE_KEY_DISCOVER_FEED_CACHE = 'cinescope_discover_feed_cache_v2';
+
 export interface AiTasteCachedLane {
   id: string;
   title: string;
@@ -557,6 +595,7 @@ export class DiscoverPreferencesService {
   public readonly allAvailableLanguages = signal<DiscoverLanguageOption[]>(this.loadCachedLanguagesCatalog());
   public readonly isSyncingLanguages = signal<boolean>(false);
   public readonly aiTasteCache = signal<AiTasteCachePayload | null>(this.loadStoredAiTasteCache());
+  public readonly discoverFeedCache = signal<DiscoverFeedCachePayload | null>(this.loadStoredDiscoverFeedCache());
 
   public readonly preferredLanguages = computed<DiscoverLanguageCode[]>(() => this.state().preferredLanguages);
   public readonly favoriteGenres = computed<DiscoverGenreKey[]>(() => this.state().favoriteGenres);
@@ -873,9 +912,16 @@ export class DiscoverPreferencesService {
   }
 
   public getValidAiTasteCache(): AiTasteCachePayload | null {
-    const cache = this.aiTasteCache();
+    let cache = this.aiTasteCache();
+    if (!cache) {
+      cache = this.loadStoredAiTasteCache();
+      if (cache) {
+        this.aiTasteCache.set(cache);
+      }
+    }
     if (!cache) return null;
     if (Date.now() >= cache.expiresAt) {
+      this.clearAiTasteCache();
       return null;
     }
     return cache;
@@ -902,6 +948,72 @@ export class DiscoverPreferencesService {
     this.aiTasteCache.set(null);
     try {
       localStorage.removeItem(STORAGE_KEY_AI_TASTE_CACHE);
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  private loadStoredDiscoverFeedCache(): DiscoverFeedCachePayload | null {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_DISCOVER_FEED_CACHE);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as DiscoverFeedCachePayload;
+      if (
+        typeof parsed?.generatedAt === 'number' &&
+        typeof parsed?.expiresAt === 'number' &&
+        Array.isArray(parsed?.forYouSections) &&
+        Array.isArray(parsed?.movies)
+      ) {
+        if (Date.now() >= parsed.expiresAt) {
+          localStorage.removeItem(STORAGE_KEY_DISCOVER_FEED_CACHE);
+          return null;
+        }
+        return parsed;
+      }
+    } catch {
+      // Ignore corrupt cache
+    }
+    return null;
+  }
+
+  public getValidDiscoverFeedCache(): DiscoverFeedCachePayload | null {
+    let cache = this.discoverFeedCache();
+    if (!cache) {
+      cache = this.loadStoredDiscoverFeedCache();
+      if (cache) {
+        this.discoverFeedCache.set(cache);
+      }
+    }
+    if (!cache) return null;
+    if (Date.now() >= cache.expiresAt) {
+      this.clearDiscoverFeedCache();
+      return null;
+    }
+    return cache;
+  }
+
+  public saveDiscoverFeedCache(
+    data: Omit<DiscoverFeedCachePayload, 'generatedAt' | 'expiresAt'>
+  ): DiscoverFeedCachePayload {
+    const now = Date.now();
+    const payload: DiscoverFeedCachePayload = {
+      ...data,
+      generatedAt: now,
+      expiresAt: now + DISCOVER_FEED_CACHE_TTL_MS
+    };
+    this.discoverFeedCache.set(payload);
+    try {
+      localStorage.setItem(STORAGE_KEY_DISCOVER_FEED_CACHE, JSON.stringify(payload));
+    } catch {
+      // Ignore quota errors
+    }
+    return payload;
+  }
+
+  public clearDiscoverFeedCache(): void {
+    this.discoverFeedCache.set(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY_DISCOVER_FEED_CACHE);
     } catch {
       // Ignore storage errors
     }
@@ -1007,6 +1119,8 @@ export class DiscoverPreferencesService {
   }
 
   public async resetToDefault(): Promise<void> {
+    this.clearAiTasteCache();
+    this.clearDiscoverFeedCache();
     const defaults: DiscoverPreferencesState = {
       preferredLanguages: [...DEFAULT_DISCOVER_PREFERENCES.preferredLanguages],
       favoriteGenres: [...DEFAULT_DISCOVER_PREFERENCES.favoriteGenres],
