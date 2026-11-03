@@ -118,7 +118,11 @@ const config: Config = {
           activeBaseRegex: `/users/`,
         },
         {
-          to: '/developers/', // Routes to the Dev Docs instance
+          to: '/developers/',
+            },
+            {
+              label: 'Privacy Policy',
+              to: '/users/privacy-policy', // Routes to the Dev Docs instance
           label: 'Developer Docs',
           position: 'left',
           activeBaseRegex: `/developers/`,
@@ -143,6 +147,10 @@ const config: Config = {
             {
               label: 'Developer Architecture',
               to: '/developers/',
+            },
+            {
+              label: 'Privacy Policy',
+              to: '/users/privacy-policy',
             },
           ],
         },
