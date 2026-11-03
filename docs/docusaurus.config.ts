@@ -144,6 +144,10 @@ const config: Config = {
               label: 'Developer Architecture',
               to: '/developers/',
             },
+            {
+              label: 'Privacy Policy',
+              to: '/users/privacy-policy',
+            },
           ],
         },
         {

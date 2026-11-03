@@ -25,3 +25,5 @@ static/frontend/
 # Compodoc Theme generated artifacts
 compodoc-theme/style.css
 compodoc-theme/style.css.map
+.vercel
+.env*

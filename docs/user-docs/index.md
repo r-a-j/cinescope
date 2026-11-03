@@ -46,6 +46,7 @@ Explore each section of the user guide:
 | **[Discover Hub & Curated Feeds](./discover-and-feeds)** | Explore dynamic trending hero backdrops, swimlanes, and dedicated Regional Indian Cinema hubs. |
 | **[Media Details & Streaming](./media-details-and-streaming)** | Inspect cast carousels, season-by-season episode guides, and real-time streaming provider availability. |
 | **[Watchlist & Offline Library](./watchlist-and-offline)** | Manage your collection with high-density 4-column poster grids, optimistic state controls, and RxDB offline storage. |
+| **[Privacy Policy](./privacy-policy)** | Overview of our zero-telemetry, local-first privacy architecture and data safety commitments. |
 
 ---
 
