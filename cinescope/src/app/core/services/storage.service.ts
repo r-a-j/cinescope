@@ -1783,6 +1783,20 @@ export class StorageService {
             }
         }
 
+        // Retrieve existing local content to perform an intelligent, safe merge instead of destructive replacement
+        const existingContentDocs = await this.dbService.db.content.find().exec();
+        const existingContentMap = new Map<string, ContentDocType>();
+        for (const d of existingContentDocs) {
+            existingContentMap.set(d.id, d.toJSON() as ContentDocType);
+        }
+
+        for (const [docId, incomingDoc] of docsById.entries()) {
+            const localDoc = existingContentMap.get(docId);
+            if (localDoc) {
+                docsById.set(docId, this.mergeContentDoc(localDoc, incomingDoc));
+            }
+        }
+
         const docsToUpsert = Array.from(docsById.values());
         if (docsToUpsert.length > 0) {
             // Batch into chunks of 250 to ensure zero memory exhaustion and IndexedDB transaction limits
@@ -1854,6 +1868,20 @@ export class StorageService {
                     );
                     progressBySeriesId.set(tvDocId, synthesized);
                 }
+            }
+        }
+
+        // Merge with existing local TV progress to preserve watched episodes logged on current device
+        const existingProgressDocs = await this.dbService.db.tvProgress.find().exec();
+        const existingProgressMap = new Map<string, TvProgressDocType>();
+        for (const p of existingProgressDocs) {
+            existingProgressMap.set(p.id, p.toJSON() as TvProgressDocType);
+        }
+
+        for (const [seriesId, incomingProgress] of progressBySeriesId.entries()) {
+            const localProgress = existingProgressMap.get(seriesId);
+            if (localProgress) {
+                progressBySeriesId.set(seriesId, this.mergeTvProgressDoc(localProgress, incomingProgress));
             }
         }
 
@@ -1995,5 +2023,165 @@ export class StorageService {
         }
 
         return synced as TmdbPayload;
+    }
+
+    /**
+     * Safely merges a local document with an incoming backup document.
+     * Preserves user progress:
+     * - 'watched' state is terminal and never downgraded back to 'watchlist' or 'inbox'.
+     * - 'watchlist' state takes precedence over 'inbox'.
+     * - Preserves orthogonal lists ('favorite', 'universe', 'franchise', custom tags).
+     * - Retains earliest addition timestamp (`addedAt`) and latest watch timestamp (`watchedAt`).
+     * - Synchronizes payload flags (`isWatched`, `isWatchlist`).
+     */
+    public mergeContentDoc(localDoc: ContentDocType, incomingDoc: ContentDocType): ContentDocType {
+        const localLists = Array.isArray(localDoc.lists) ? localDoc.lists : [];
+        const incomingLists = Array.isArray(incomingDoc.lists) ? incomingDoc.lists : [];
+
+        // Determine merged primary consumption state: watched > watchlist > inbox
+        const isWatched = localLists.includes('watched') || incomingLists.includes('watched');
+        const isWatchlist = !isWatched && (localLists.includes('watchlist') || incomingLists.includes('watchlist'));
+        const isInbox = !isWatched && !isWatchlist && (localLists.includes('inbox') || incomingLists.includes('inbox'));
+
+        const mergedListsSet = new Set<string>();
+        if (isWatched) mergedListsSet.add('watched');
+        if (isWatchlist) mergedListsSet.add('watchlist');
+        if (isInbox) mergedListsSet.add('inbox');
+
+        // Preserve all orthogonal tags from both local and backup
+        const orthogonalTags = new Set<string>([
+            ...localLists.filter((l) => l !== 'watched' && l !== 'watchlist' && l !== 'inbox'),
+            ...incomingLists.filter((l) => l !== 'watched' && l !== 'watchlist' && l !== 'inbox')
+        ]);
+        for (const tag of orthogonalTags) {
+            mergedListsSet.add(tag);
+        }
+        const mergedLists = Array.from(mergedListsSet);
+
+        // Retain earliest addedAt
+        const localAdded = Date.parse(localDoc.addedAt);
+        const incomingAdded = Date.parse(incomingDoc.addedAt);
+        let mergedAddedAt = localDoc.addedAt;
+        if (Number.isFinite(localAdded) && Number.isFinite(incomingAdded)) {
+            mergedAddedAt = localAdded <= incomingAdded ? localDoc.addedAt : incomingDoc.addedAt;
+        } else if (Number.isFinite(incomingAdded)) {
+            mergedAddedAt = incomingDoc.addedAt;
+        }
+
+        // Determine merged watchedAt if item is watched
+        let mergedWatchedAt: string | undefined = undefined;
+        if (isWatched) {
+            const localWatched = localDoc.watchedAt ? Date.parse(localDoc.watchedAt) : NaN;
+            const incomingWatched = incomingDoc.watchedAt ? Date.parse(incomingDoc.watchedAt) : NaN;
+            if (Number.isFinite(localWatched) && Number.isFinite(incomingWatched)) {
+                mergedWatchedAt = localWatched >= incomingWatched ? localDoc.watchedAt : incomingDoc.watchedAt;
+            } else if (Number.isFinite(localWatched)) {
+                mergedWatchedAt = localDoc.watchedAt;
+            } else if (Number.isFinite(incomingWatched)) {
+                mergedWatchedAt = incomingDoc.watchedAt;
+            } else {
+                mergedWatchedAt = mergedAddedAt;
+            }
+        }
+
+        // Combine payloads with local taking precedence, then sanitize with lists
+        const rawPayload = {
+            ...((incomingDoc.payload as Record<string, unknown>) || {}),
+            ...((localDoc.payload as Record<string, unknown>) || {})
+        };
+        const syncedPayload = this.syncPayloadWithLists(rawPayload, mergedLists, mergedWatchedAt);
+
+        // Ensure universe/franchise IDs remain intact in payload
+        if (mergedLists.includes('universe')) {
+            const cleanKey = localDoc.id.replace(/^(universe_)+/, '');
+            const canonicalId = `universe_${cleanKey}`;
+            (syncedPayload as Record<string, unknown>)['id'] = canonicalId;
+            (syncedPayload as Record<string, unknown>)['universeId'] = canonicalId;
+        } else if (mergedLists.includes('franchise')) {
+            if (!(syncedPayload as Record<string, unknown>)['id']) {
+                (syncedPayload as Record<string, unknown>)['id'] = localDoc.id;
+            }
+        }
+
+        const mergedDoc: ContentDocType = {
+            id: localDoc.id,
+            tmdbId: localDoc.tmdbId || incomingDoc.tmdbId,
+            mediaType: localDoc.mediaType || incomingDoc.mediaType,
+            lists: mergedLists,
+            addedAt: mergedAddedAt,
+            payload: syncedPayload
+        };
+
+        if (mergedWatchedAt) {
+            mergedDoc.watchedAt = mergedWatchedAt;
+        }
+
+        return mergedDoc;
+    }
+
+    /**
+     * Safely merges a local TV progress record with an incoming backup progress record.
+     * Performs a union of watched episodes so no logged progress is lost.
+     */
+    public mergeTvProgressDoc(localProgress: TvProgressDocType, incomingProgress: TvProgressDocType): TvProgressDocType {
+        const episodeSet = new Set<string>([
+            ...(Array.isArray(incomingProgress.watchedEpisodes) ? incomingProgress.watchedEpisodes : []),
+            ...(Array.isArray(localProgress.watchedEpisodes) ? localProgress.watchedEpisodes : [])
+        ]);
+        const mergedWatchedEpisodes = Array.from(episodeSet);
+
+        const isMarkedComplete = localProgress.isMarkedComplete === true || incomingProgress.isMarkedComplete === true;
+
+        let mergedUnwatchedEpisodes: string[] | undefined = undefined;
+        if (isMarkedComplete) {
+            const unwatchedSet = new Set<string>([
+                ...(Array.isArray(incomingProgress.unwatchedEpisodes) ? incomingProgress.unwatchedEpisodes : []),
+                ...(Array.isArray(localProgress.unwatchedEpisodes) ? localProgress.unwatchedEpisodes : [])
+            ]);
+            for (const ep of mergedWatchedEpisodes) {
+                unwatchedSet.delete(ep);
+            }
+            mergedUnwatchedEpisodes = Array.from(unwatchedSet);
+        }
+
+        const totalSeasons = Math.max(localProgress.totalSeasons || 0, incomingProgress.totalSeasons || 0) || 1;
+        const totalEpisodes = Math.max(localProgress.totalEpisodes || 0, incomingProgress.totalEpisodes || 0) || 0;
+        const totalReleasedEpisodes = Math.max(localProgress.totalReleasedEpisodes || 0, incomingProgress.totalReleasedEpisodes || 0);
+
+        const candidate: TvProgressDocType = {
+            id: localProgress.id,
+            tmdbId: localProgress.tmdbId || incomingProgress.tmdbId,
+            seriesTitle: localProgress.seriesTitle || incomingProgress.seriesTitle || 'TV Series',
+            totalSeasons,
+            totalEpisodes,
+            totalReleasedEpisodes,
+            watchedEpisodesCount: 0,
+            watchedEpisodes: mergedWatchedEpisodes,
+            updatedAt: Math.max(localProgress.updatedAt || 0, incomingProgress.updatedAt || 0, Date.now())
+        };
+
+        if (isMarkedComplete) {
+            candidate.isMarkedComplete = true;
+            if (mergedUnwatchedEpisodes) {
+                candidate.unwatchedEpisodes = mergedUnwatchedEpisodes;
+            }
+        }
+
+        const posterPath = localProgress.posterPath ?? incomingProgress.posterPath;
+        if (posterPath) candidate.posterPath = posterPath;
+
+        const backdropPath = localProgress.backdropPath ?? incomingProgress.backdropPath;
+        if (backdropPath) candidate.backdropPath = backdropPath;
+
+        const nextSeasonNumber = localProgress.nextSeasonNumber ?? incomingProgress.nextSeasonNumber;
+        if (nextSeasonNumber !== undefined) candidate.nextSeasonNumber = nextSeasonNumber;
+
+        const nextSeasonAirDate = localProgress.nextSeasonAirDate ?? incomingProgress.nextSeasonAirDate;
+        if (nextSeasonAirDate) candidate.nextSeasonAirDate = nextSeasonAirDate;
+
+        const nextSeasonTitle = localProgress.nextSeasonTitle ?? incomingProgress.nextSeasonTitle;
+        if (nextSeasonTitle) candidate.nextSeasonTitle = nextSeasonTitle;
+
+        return migrateTvProgressCounts(candidate);
     }
 }
