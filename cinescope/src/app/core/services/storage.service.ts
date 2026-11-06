@@ -596,6 +596,7 @@ export class StorageService {
     public async addToWatchlist(tmdbId: number, mediaType: 'movie' | 'tv' | 'person', payload: TmdbPayload): Promise<void> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
+        const syncedPayload = this.syncPayloadWithLists(payload as Record<string, unknown>, ['watchlist']);
 
         await this.dbService.db.content.upsert({
             id: docId,
@@ -603,7 +604,7 @@ export class StorageService {
             mediaType: mediaType,
             lists: ['watchlist'],
             addedAt: new Date().toISOString(),
-            payload: payload
+            payload: syncedPayload
         });
     }
 
@@ -625,15 +626,16 @@ export class StorageService {
 
         if (doc) {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                const now = new Date().toISOString();
                 docData.lists = ['watched']; // Overwrite lists to only be 'watched'
-                docData.watchedAt = new Date().toISOString();
-                if (effectivePayload) {
-                    docData.payload = effectivePayload;
-                }
+                docData.watchedAt = now;
+                const basePayload = (effectivePayload ?? docData.payload) as Record<string, unknown>;
+                docData.payload = this.syncPayloadWithLists(basePayload, ['watched'], now);
                 return docData;
             });
         } else if (effectivePayload) {
             const now = new Date().toISOString();
+            const syncedPayload = this.syncPayloadWithLists(effectivePayload as Record<string, unknown>, ['watched'], now);
             await this.dbService.db.content.upsert({
                 id: docId,
                 tmdbId,
@@ -641,7 +643,7 @@ export class StorageService {
                 lists: ['watched'],
                 addedAt: now,
                 watchedAt: now,
-                payload: effectivePayload
+                payload: syncedPayload
             });
         } else {
             return false;
@@ -805,6 +807,7 @@ export class StorageService {
         if (doc) {
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                 d.lists = ['watchlist'];
+                d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watchlist']);
                 return d;
             });
         }
@@ -823,13 +826,16 @@ export class StorageService {
             if (!releaseCheck.isReleased) {
                 await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                     d.lists = ['watchlist'];
+                    d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watchlist']);
                     return d;
                 });
                 return false;
             }
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                const now = new Date().toISOString();
                 d.lists = ['watched'];
-                d.watchedAt = new Date().toISOString();
+                d.watchedAt = now;
+                d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watched'], now);
                 return d;
             });
             return true;
@@ -1467,6 +1473,13 @@ export class StorageService {
                 delete (clean as Record<string, unknown>)['_deleted'];
                 delete (clean as Record<string, unknown>)['_meta'];
                 delete (clean as Record<string, unknown>)['_attachments'];
+                if (clean.payload && typeof clean.payload === 'object') {
+                    clean.payload = this.syncPayloadWithLists(
+                        clean.payload as Record<string, unknown>,
+                        clean.lists,
+                        clean.watchedAt
+                    );
+                }
                 return clean;
             }),
             searchHistory: historyDocs.map((d) => {
@@ -1577,9 +1590,15 @@ export class StorageService {
                     ? raw.addedAt
                     : new Date().toISOString();
 
-                const payload = raw.payload && typeof raw.payload === 'object'
-                    ? (raw.payload as TmdbPayload)
+                const watchedAt = (raw.watchedAt && typeof raw.watchedAt === 'string' && Number.isFinite(Date.parse(raw.watchedAt)))
+                    ? raw.watchedAt
+                    : (lists.includes('watched') ? addedAt : undefined);
+
+                const rawPayload = raw.payload && typeof raw.payload === 'object'
+                    ? (raw.payload as Record<string, unknown>)
                     : { id: tmdbId, media_type: mediaType };
+
+                const syncedPayload = this.syncPayloadWithLists(rawPayload, lists, watchedAt);
 
                 const cleanDoc: ContentDocType = {
                     id: docId,
@@ -1587,11 +1606,11 @@ export class StorageService {
                     mediaType,
                     lists,
                     addedAt,
-                    payload
+                    payload: syncedPayload
                 };
 
-                if (raw.watchedAt && typeof raw.watchedAt === 'string' && Number.isFinite(Date.parse(raw.watchedAt))) {
-                    cleanDoc.watchedAt = raw.watchedAt;
+                if (watchedAt) {
+                    cleanDoc.watchedAt = watchedAt;
                 }
 
                 docsById.set(docId, cleanDoc);
@@ -1704,7 +1723,7 @@ export class StorageService {
         const displayTitle = cleanTitle || cleanName || `#${tmdbId}`;
         const posterPath = item.poster_path ?? null;
 
-        const payload: TmdbPayload = {
+        const rawPayload: TmdbPayload = {
             ...item,
             id: tmdbId,
             contentId: tmdbId,
@@ -1718,6 +1737,7 @@ export class StorageService {
             first_air_date: item.first_air_date ?? item.release_date ?? '',
             genres: Array.isArray(item.genres) ? item.genres : []
         };
+        const payload = this.syncPayloadWithLists(rawPayload as Record<string, unknown>, [targetList], watchedAt);
 
         const doc: ContentDocType = {
             id: docId,
@@ -1756,5 +1776,38 @@ export class StorageService {
 
     public generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
         return `${mediaType}_${tmdbId}`;
+    }
+
+    /**
+     * Synchronizes internal payload flags (`isWatched`, `isWatchlist`, `watchedAt`) with document `lists` and `watchedAt`
+     * to eliminate contradictory metadata states between document properties and embedded payload objects.
+     */
+    public syncPayloadWithLists(
+        payload: Record<string, unknown> | undefined | null,
+        lists: string[],
+        watchedAt?: string
+    ): TmdbPayload {
+        const synced: Record<string, unknown> = { ...(payload || {}) };
+        const isWatched = lists.includes('watched');
+        const isWatchlist = lists.includes('watchlist');
+
+        if (isWatched) {
+            synced['isWatched'] = true;
+            synced['isWatchlist'] = false;
+            if (watchedAt) {
+                synced['watchedAt'] = watchedAt;
+            }
+        } else if (isWatchlist) {
+            synced['isWatched'] = false;
+            synced['isWatchlist'] = true;
+            delete synced['watchedAt'];
+        } else {
+            // Other lists e.g. 'inbox', 'favorite', 'universe', 'franchise'
+            delete synced['isWatched'];
+            delete synced['isWatchlist'];
+            delete synced['watchedAt'];
+        }
+
+        return synced as TmdbPayload;
     }
 }

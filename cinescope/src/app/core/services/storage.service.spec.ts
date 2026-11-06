@@ -427,4 +427,101 @@ describe('StorageService - Backup & Restore', () => {
         expect(tvChunk[0].nextSeasonTitle).toBe('Season 2');
         expect(tvChunk[0].watchedEpisodesCount).toBe(8);
     });
+
+    it('should sanitize and sync contradictory payload flags during importBackupJson', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'movie_19404',
+                    tmdbId: 19404,
+                    mediaType: 'movie',
+                    lists: ['watched'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    watchedAt: '2026-10-23T14:00:17.073Z',
+                    payload: {
+                        id: 19404,
+                        title: 'Dilwale Dulhania Le Jayenge',
+                        isWatched: false,
+                        isWatchlist: true
+                    }
+                },
+                {
+                    id: 'movie_550',
+                    tmdbId: 550,
+                    mediaType: 'movie',
+                    lists: ['watchlist'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: {
+                        id: 550,
+                        title: 'Fight Club',
+                        isWatched: true,
+                        isWatchlist: false,
+                        watchedAt: '2026-10-20T10:00:00.000Z'
+                    }
+                }
+            ],
+            tvProgress: []
+        };
+
+        await service.importBackupJson(JSON.stringify(payload));
+
+        expect(mockContentBulkUpsert).toHaveBeenCalled();
+        const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
+        expect(contentChunk.length).toBe(2);
+
+        const watchedDoc = contentChunk.find((d: { id: string }) => d.id === 'movie_19404');
+        expect(watchedDoc).toBeDefined();
+        expect(watchedDoc.payload.isWatched).toBeTrue();
+        expect(watchedDoc.payload.isWatchlist).toBeFalse();
+        expect(watchedDoc.payload.watchedAt).toBe('2026-10-23T14:00:17.073Z');
+
+        const watchlistDoc = contentChunk.find((d: { id: string }) => d.id === 'movie_550');
+        expect(watchlistDoc).toBeDefined();
+        expect(watchlistDoc.payload.isWatched).toBeFalse();
+        expect(watchlistDoc.payload.isWatchlist).toBeTrue();
+        expect(watchlistDoc.payload.watchedAt).toBeUndefined();
+    });
+
+    it('should synchronize payload isWatched and isWatchlist flags when moveToWatched is called', async () => {
+        const content = {
+            id: 'movie_550',
+            tmdbId: 550,
+            mediaType: 'movie',
+            lists: ['watchlist'],
+            addedAt: '2026-10-30T10:00:00Z',
+            payload: {
+                id: 550,
+                title: 'Fight Club',
+                release_date: '1999-10-15',
+                isWatched: false,
+                isWatchlist: true
+            }
+        };
+        const contentDoc = {
+            toJSON: (): typeof content => content,
+            incrementalModify: jasmine.createSpy('incrementalModify').and.callFake(
+                async (modify: (data: typeof content) => typeof content): Promise<void> => {
+                    modify(content);
+                }
+            ),
+            remove: jasmine.createSpy('remove').and.returnValue(Promise.resolve())
+        };
+        mockContentFindOne.and.returnValue({ exec: () => Promise.resolve(contentDoc) });
+
+        const moved = await service.moveToWatched(550, 'movie', {
+            id: 550,
+            title: 'Fight Club',
+            release_date: '1999-10-15',
+            isWatched: false,
+            isWatchlist: true
+        });
+
+        expect(moved).toBeTrue();
+        expect(content.lists).toEqual(['watched']);
+        expect((content.payload as Record<string, unknown>)['isWatched']).toBeTrue();
+        expect((content.payload as Record<string, unknown>)['isWatchlist']).toBeFalse();
+        expect((content.payload as Record<string, unknown>)['watchedAt']).toBeDefined();
+    });
 });
