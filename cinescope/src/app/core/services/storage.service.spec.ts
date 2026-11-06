@@ -346,6 +346,73 @@ describe('StorageService - Backup & Restore', () => {
         expect(result.format).toBe('unknown');
     });
 
+    it('should accurately inspect and count universes, franchises, and favorite people', () => {
+        const payload = {
+            version: 1,
+            appVersion: '2.0.1',
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'movie_550',
+                    tmdbId: 550,
+                    mediaType: 'movie',
+                    lists: ['watchlist'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'movie_19404',
+                    tmdbId: 19404,
+                    mediaType: 'movie',
+                    lists: ['watched'],
+                    addedAt: '2026-11-01T12:00:00Z',
+                    watchedAt: '2026-11-02T12:00:00Z'
+                },
+                {
+                    id: 'person_10297',
+                    tmdbId: 10297,
+                    mediaType: 'person',
+                    lists: ['favorite'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'universe_mcu',
+                    tmdbId: 1551266981,
+                    mediaType: 'movie',
+                    lists: ['universe', 'franchise'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'franchise_422834',
+                    tmdbId: 422834,
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                }
+            ],
+            tvProgress: [
+                {
+                    id: 'tv_1396',
+                    tmdbId: 1396,
+                    seriesTitle: 'Breaking Bad',
+                    totalSeasons: 5,
+                    totalEpisodes: 62,
+                    watchedEpisodesCount: 15,
+                    watchedEpisodes: ['s1e1'],
+                    updatedAt: Date.now()
+                }
+            ]
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.isValid).toBeTrue();
+        expect(inspection.totalTitles).toBe(5);
+        expect(inspection.watchlistCount).toBe(1);
+        expect(inspection.watchedCount).toBe(1);
+        expect(inspection.favoritePeopleCount).toBe(1);
+        expect(inspection.savedUniversesCount).toBe(2);
+        expect(inspection.tvProgressCount).toBe(1);
+    });
+
     it('should import backup JSON restoring both content and tvProgress records', async () => {
         const payload = {
             version: 1,
@@ -460,16 +527,37 @@ describe('StorageService - Backup & Restore', () => {
                         isWatchlist: false,
                         watchedAt: '2026-10-20T10:00:00.000Z'
                     }
+                },
+                {
+                    id: 'franchise_422834',
+                    tmdbId: 422834,
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: { id: 422834, name: 'Revenge Saga' }
+                },
+                {
+                    id: 'person_10297',
+                    tmdbId: 10297,
+                    mediaType: 'person',
+                    lists: ['favorite'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: { id: 10297, name: 'Matthew McConaughey' }
                 }
             ],
             tvProgress: []
         };
 
-        await service.importBackupJson(JSON.stringify(payload));
+        const result = await service.importBackupJson(JSON.stringify(payload));
 
         expect(mockContentBulkUpsert).toHaveBeenCalled();
         const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
-        expect(contentChunk.length).toBe(2);
+        expect(contentChunk.length).toBe(4);
+        expect(result.contentCount).toBe(4);
+        expect(result.watchlistCount).toBe(1);
+        expect(result.watchedCount).toBe(1);
+        expect(result.savedUniversesCount).toBe(1);
+        expect(result.favoritePeopleCount).toBe(1);
 
         const watchedDoc = contentChunk.find((d: { id: string }) => d.id === 'movie_19404');
         expect(watchedDoc).toBeDefined();

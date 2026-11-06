@@ -243,6 +243,7 @@ export interface BackupInspectionResult {
     watchedCount: number;
     inboxCount: number;
     favoritePeopleCount: number;
+    savedUniversesCount: number;
     historyCount: number;
     hasSettings: boolean;
     tvProgressCount?: number | undefined;
@@ -295,6 +296,7 @@ export interface BackupImportResult {
     watchedCount: number;
     inboxCount: number;
     favoritePeopleCount: number;
+    savedUniversesCount: number;
     historyCount: number;
     tvProgressCount?: number | undefined;
 }
@@ -1334,6 +1336,7 @@ export class StorageService {
                 watchedCount: 0,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings: false,
                 error: 'The selected file is not a valid JSON document.'
@@ -1350,6 +1353,7 @@ export class StorageService {
                 watchedCount: 0,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings: false,
                 error: 'Backup file root is not an object.'
@@ -1369,6 +1373,7 @@ export class StorageService {
             let watchedCount = 0;
             let inboxCount = 0;
             let favoritePeopleCount = 0;
+            let savedUniversesCount = 0;
 
             if (Array.isArray(parsed.content)) {
                 for (const item of parsed.content) {
@@ -1379,6 +1384,8 @@ export class StorageService {
                     const lists = Array.isArray(item.lists) ? item.lists : [];
                     if (item.mediaType === 'person' && lists.includes('favorite')) {
                         favoritePeopleCount++;
+                    } else if (lists.includes('universe') || lists.includes('franchise')) {
+                        savedUniversesCount++;
                     } else if (lists.includes('inbox')) {
                         inboxCount++;
                     } else if (lists.includes('watched')) {
@@ -1407,6 +1414,7 @@ export class StorageService {
                 watchedCount,
                 inboxCount,
                 favoritePeopleCount,
+                savedUniversesCount,
                 historyCount,
                 hasSettings,
                 tvProgressCount
@@ -1431,6 +1439,7 @@ export class StorageService {
                 watchedCount,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings
             };
@@ -1445,6 +1454,7 @@ export class StorageService {
             watchedCount: 0,
             inboxCount: 0,
             favoritePeopleCount: 0,
+            savedUniversesCount: 0,
             historyCount: 0,
             hasSettings: false,
             error: 'The file does not contain recognized CineScope library records.'
@@ -1516,6 +1526,7 @@ export class StorageService {
         let watchedCount = 0;
         let inboxCount = 0;
         let favoritePeopleCount = 0;
+        let savedUniversesCount = 0;
         let historyCount = 0;
 
         // 1. Restore Settings (supports both modern `parsed.settings` and Legacy v1 `parsed.data.settings`)
@@ -1629,6 +1640,8 @@ export class StorageService {
             for (const doc of docsToUpsert) {
                 if (doc.mediaType === 'person' && doc.lists.includes('favorite')) {
                     favoritePeopleCount++;
+                } else if (doc.lists.includes('universe') || doc.lists.includes('franchise')) {
+                    savedUniversesCount++;
                 } else if (doc.lists.includes('inbox')) {
                     inboxCount++;
                 } else if (doc.lists.includes('watched')) {
@@ -1688,6 +1701,7 @@ export class StorageService {
             watchedCount,
             inboxCount,
             favoritePeopleCount,
+            savedUniversesCount,
             historyCount,
             tvProgressCount
         };
