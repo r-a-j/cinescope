@@ -868,13 +868,91 @@ export class StorageService {
     // UNIVERSE & FRANCHISE ENGINE PERSISTENCE
     // ==========================================
 
-    private hashString(str: string): number {
+    public hashString(str: string): number {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             hash = ((hash << 5) - hash) + str.charCodeAt(i);
             hash |= 0;
         }
         return Math.abs(hash) || 1;
+    }
+
+    /**
+     * Resolves a valid numeric TMDB ID for a raw backup content document.
+     * Guarantees that AI-ascended universes, custom franchise collections,
+     * and string-prefixed media items (e.g. "movie_550") are never silently discarded.
+     */
+    public resolveBackupTmdbId(raw: Record<string, unknown> | null | undefined): number | null {
+        if (!raw || typeof raw !== 'object') {
+            return null;
+        }
+
+        // 1. Direct positive numeric tmdbId
+        if (typeof raw['tmdbId'] === 'number' && Number.isFinite(raw['tmdbId']) && raw['tmdbId'] > 0) {
+            return raw['tmdbId'];
+        }
+        if (typeof raw['tmdbId'] === 'string' && /^\d+$/.test(raw['tmdbId'].trim())) {
+            const parsed = Number(raw['tmdbId'].trim());
+            if (Number.isFinite(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        // 2. Direct positive numeric payload.id
+        const payload = raw['payload'] && typeof raw['payload'] === 'object'
+            ? (raw['payload'] as Record<string, unknown>)
+            : undefined;
+
+        if (payload && typeof payload['id'] === 'number' && Number.isFinite(payload['id']) && payload['id'] > 0) {
+            return payload['id'];
+        }
+        if (payload && typeof payload['id'] === 'string' && /^\d+$/.test(payload['id'].trim())) {
+            const parsed = Number(payload['id'].trim());
+            if (Number.isFinite(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        // 3. Extract candidate string ID
+        const rawIdStr = typeof raw['id'] === 'string'
+            ? raw['id'].trim()
+            : (typeof raw['id'] === 'number' && Number.isFinite(raw['id']) && raw['id'] > 0 ? String(raw['id']) : '');
+        const payloadIdStr = typeof payload?.['id'] === 'string' ? payload['id'].trim() : '';
+        const universePayloadId = typeof payload?.['universeId'] === 'string' ? payload['universeId'].trim() : '';
+
+        const lists = Array.isArray(raw['lists']) ? (raw['lists'] as unknown[]).map(String) : [];
+        const isUniverse = lists.includes('universe') || rawIdStr.startsWith('universe_') || universePayloadId.length > 0;
+        const isFranchise = lists.includes('franchise') || rawIdStr.startsWith('franchise_');
+
+        // 4. Universe resolution: deterministic hash matching saveUniverse()
+        if (isUniverse) {
+            const baseKey = (rawIdStr || payloadIdStr || universePayloadId).replace(/^(universe_)+/, '');
+            const canonicalUniverseId = `universe_${baseKey}`;
+            return this.hashString(canonicalUniverseId);
+        }
+
+        // 5. Franchise resolution: numeric TMDB collection ID or deterministic hash matching saveFranchise()
+        if (isFranchise) {
+            const baseKey = (rawIdStr || payloadIdStr).replace(/^(franchise_)+/, '');
+            const parsedNum = Number(baseKey);
+            if (Number.isFinite(parsedNum) && parsedNum > 0) {
+                return parsedNum;
+            }
+            return this.hashString(baseKey || 'franchise');
+        }
+
+        // 6. Standard movie / tv / person prefix stripping (e.g. "movie_550" -> 550)
+        if (rawIdStr) {
+            const stripped = rawIdStr.replace(/^(movie_|tv_|person_)+/, '');
+            if (/^\d+$/.test(stripped)) {
+                const parsed = Number(stripped);
+                if (Number.isFinite(parsed) && parsed > 0) {
+                    return parsed;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1390,8 +1468,8 @@ export class StorageService {
             if (Array.isArray(parsed.content)) {
                 for (const item of parsed.content) {
                     if (!item || typeof item !== 'object') continue;
-                    const tmdbId = Number(item.tmdbId ?? item.id);
-                    if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+                    const tmdbId = this.resolveBackupTmdbId(item as Record<string, unknown>);
+                    if (!tmdbId) continue;
 
                     const lists = Array.isArray(item.lists) ? item.lists : [];
                     if (item.mediaType === 'person' && lists.includes('favorite')) {
@@ -1428,8 +1506,8 @@ export class StorageService {
             if (Array.isArray(parsed.content)) {
                 for (const item of parsed.content) {
                     if (item && item.mediaType === 'tv' && Array.isArray(item.lists) && item.lists.includes('watched')) {
-                        const tmdbId = Number(item.tmdbId ?? item.id);
-                        if (Number.isFinite(tmdbId) && tmdbId > 0) {
+                        const tmdbId = this.resolveBackupTmdbId(item as Record<string, unknown>);
+                        if (tmdbId) {
                             const tvId = `tv_${tmdbId}`;
                             if (!seenTvIds.has(tvId)) {
                                 seenTvIds.add(tvId);
@@ -1638,20 +1716,30 @@ export class StorageService {
             for (const raw of parsed.content) {
                 if (!raw || typeof raw !== 'object') continue;
 
-                const tmdbId = Number(raw.tmdbId ?? raw.id);
-                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+                const tmdbId = this.resolveBackupTmdbId(raw as Record<string, unknown>);
+                if (!tmdbId) continue;
 
                 const mediaType = (raw.mediaType === 'tv' || raw.mediaType === 'person')
                     ? raw.mediaType
                     : 'movie';
 
-                const docId = typeof raw.id === 'string' && raw.id.trim().length > 0
-                    ? raw.id.trim()
-                    : this.generateId(tmdbId, mediaType);
-
                 const lists = Array.isArray(raw.lists) && raw.lists.length > 0
                     ? raw.lists.map(String)
                     : ['watchlist'];
+
+                const rawIdStr = typeof raw.id === 'string' ? raw.id.trim() : '';
+                let docId: string;
+                if (lists.includes('universe') || rawIdStr.startsWith('universe_')) {
+                    const cleanKey = (rawIdStr || String((raw.payload as Record<string, unknown> | undefined)?.['id'] ?? tmdbId)).replace(/^(universe_)+/, '');
+                    docId = `universe_${cleanKey}`;
+                } else if (lists.includes('franchise') || rawIdStr.startsWith('franchise_')) {
+                    const cleanKey = (rawIdStr || String((raw.payload as Record<string, unknown> | undefined)?.['id'] ?? tmdbId)).replace(/^(franchise_)+/, '');
+                    docId = `franchise_${cleanKey}`;
+                } else if (rawIdStr.length > 0) {
+                    docId = rawIdStr;
+                } else {
+                    docId = this.generateId(tmdbId, mediaType);
+                }
 
                 const addedAt = typeof raw.addedAt === 'string' && Number.isFinite(Date.parse(raw.addedAt))
                     ? raw.addedAt
@@ -1666,6 +1754,17 @@ export class StorageService {
                     : { id: tmdbId, media_type: mediaType };
 
                 const syncedPayload = this.syncPayloadWithLists(rawPayload, lists, watchedAt);
+
+                if (lists.includes('universe')) {
+                    const cleanKey = docId.replace(/^(universe_)+/, '');
+                    const canonicalId = `universe_${cleanKey}`;
+                    (syncedPayload as Record<string, unknown>)['id'] = canonicalId;
+                    (syncedPayload as Record<string, unknown>)['universeId'] = canonicalId;
+                } else if (lists.includes('franchise')) {
+                    if (!(syncedPayload as Record<string, unknown>)['id']) {
+                        (syncedPayload as Record<string, unknown>)['id'] = docId;
+                    }
+                }
 
                 const cleanDoc: ContentDocType = {
                     id: docId,

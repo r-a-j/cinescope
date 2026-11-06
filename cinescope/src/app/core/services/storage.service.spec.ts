@@ -658,6 +658,103 @@ describe('StorageService - Backup & Restore', () => {
         expect(tvChunk[0].watchedEpisodes).toContain('s2e6');
     });
 
+    describe('resolveBackupTmdbId', () => {
+        it('should resolve numeric and string-numeric tmdbId and payload.id', () => {
+            expect(service.resolveBackupTmdbId({ tmdbId: 550 })).toBe(550);
+            expect(service.resolveBackupTmdbId({ tmdbId: '550' })).toBe(550);
+            expect(service.resolveBackupTmdbId({ payload: { id: 700 } })).toBe(700);
+            expect(service.resolveBackupTmdbId({ payload: { id: '700' } })).toBe(700);
+        });
+
+        it('should resolve standard movie / tv / person prefix when tmdbId is missing', () => {
+            expect(service.resolveBackupTmdbId({ id: 'movie_550' })).toBe(550);
+            expect(service.resolveBackupTmdbId({ id: 'tv_1396' })).toBe(1396);
+            expect(service.resolveBackupTmdbId({ id: 'person_287' })).toBe(287);
+        });
+
+        it('should resolve universe items without tmdbId using deterministic hash', () => {
+            const expectedHash = service.hashString('universe_mcu');
+            expect(service.resolveBackupTmdbId({ id: 'universe_mcu', lists: ['universe', 'franchise'] })).toBe(expectedHash);
+            expect(service.resolveBackupTmdbId({ id: 'universe_universe_mcu', lists: ['universe'] })).toBe(expectedHash);
+            expect(service.resolveBackupTmdbId({ lists: ['universe'], payload: { universeId: 'universe_mcu' } })).toBe(expectedHash);
+        });
+
+        it('should resolve franchise items without tmdbId using numeric key or deterministic hash', () => {
+            expect(service.resolveBackupTmdbId({ id: 'franchise_84', lists: ['franchise'] })).toBe(84);
+            const expectedBatmanHash = service.hashString('batman');
+            expect(service.resolveBackupTmdbId({ id: 'franchise_batman', lists: ['franchise'] })).toBe(expectedBatmanHash);
+        });
+
+        it('should return null for malformed, non-numeric, or non-object items', () => {
+            expect(service.resolveBackupTmdbId(null)).toBeNull();
+            expect(service.resolveBackupTmdbId(undefined)).toBeNull();
+            expect(service.resolveBackupTmdbId({ id: 'unrecognized_key' })).toBeNull();
+        });
+    });
+
+    it('should inspect and import backup documents with universes and franchises lacking numeric tmdbId', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'universe_universe_mcu', // legacy double-prefix without tmdbId
+                    mediaType: 'movie',
+                    lists: ['universe', 'franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Marvel Cinematic Universe'
+                    }
+                },
+                {
+                    id: 'franchise_batman', // custom string franchise key without tmdbId
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Batman Collection'
+                    }
+                },
+                {
+                    id: 'franchise_84', // numeric TMDB collection key without tmdbId
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Indiana Jones Collection'
+                    }
+                }
+            ]
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.isValid).toBeTrue();
+        expect(inspection.savedUniversesCount).toBe(3);
+
+        const importResult = await service.importBackupJson(JSON.stringify(payload));
+        expect(importResult.contentCount).toBe(3);
+        expect(importResult.savedUniversesCount).toBe(3);
+
+        expect(mockContentBulkUpsert).toHaveBeenCalled();
+        const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
+        expect(contentChunk.length).toBe(3);
+
+        const mcuDoc = contentChunk.find((d: { id: string }) => d.id === 'universe_mcu');
+        expect(mcuDoc).toBeDefined();
+        expect(mcuDoc.tmdbId).toBe(service.hashString('universe_mcu'));
+        expect(mcuDoc.payload.id).toBe('universe_mcu');
+        expect(mcuDoc.payload.universeId).toBe('universe_mcu');
+
+        const batmanDoc = contentChunk.find((d: { id: string }) => d.id === 'franchise_batman');
+        expect(batmanDoc).toBeDefined();
+        expect(batmanDoc.tmdbId).toBe(service.hashString('batman'));
+        expect(batmanDoc.payload.id).toBe('franchise_batman');
+
+        const indianaDoc = contentChunk.find((d: { id: string }) => d.id === 'franchise_84');
+        expect(indianaDoc).toBeDefined();
+        expect(indianaDoc.tmdbId).toBe(84);
+    });
+
     it('creates tvProgress when moveInboxToWatched is called for a TV show', async () => {
         const content = {
             id: 'tv_256522',
