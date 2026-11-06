@@ -673,11 +673,13 @@ export class StorageService {
         }
     }
 
-    private async markTvProgressWatched(tmdbId: number, payload: TmdbPayload): Promise<void> {
-        const existingDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
-        const existing = existingDoc?.toJSON() as TvProgressDocType | undefined;
+    public buildTvProgressFromPayload(
+        tmdbId: number,
+        payload: TmdbPayload,
+        existing?: TvProgressDocType
+    ): TvProgressDocType {
         const seasons = Array.isArray(payload['seasons'])
-            ? payload['seasons'] as { season_number?: unknown; episode_count?: unknown }[]
+            ? payload['seasons'] as { season_number?: unknown; episode_count?: unknown; air_date?: string }[]
             : [];
         const seasonEpisodeCounts = seasons
             .filter((season) =>
@@ -694,7 +696,7 @@ export class StorageService {
             }))
             .sort((a, b) => a.seasonNumber - b.seasonNumber);
         const releasedSeasonEpisodeCounts = seasonEpisodeCounts.filter(({ seasonNumber }) => {
-            const sObj = seasons.find((s) => (s as { season_number?: unknown }).season_number === seasonNumber) as { air_date?: string } | undefined;
+            const sObj = seasons.find((s) => s.season_number === seasonNumber);
             if (sObj?.air_date) {
                 const releaseCheck = checkMediaReleaseStatus({ release_date: sObj.air_date });
                 return releaseCheck.isReleased;
@@ -755,6 +757,13 @@ export class StorageService {
         if (existing?.nextAirEpisode !== undefined) progress.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) progress.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
 
+        return progress;
+    }
+
+    private async markTvProgressWatched(tmdbId: number, payload: TmdbPayload): Promise<void> {
+        const existingDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
+        const existing = existingDoc?.toJSON() as TvProgressDocType | undefined;
+        const progress = this.buildTvProgressFromPayload(tmdbId, payload, existing);
         await this.dbService.db.tvProgress.upsert(progress);
     }
 
@@ -840,6 +849,9 @@ export class StorageService {
                 d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watched'], now);
                 return d;
             });
+            if (mediaType === 'tv') {
+                await this.markTvProgressWatched(tmdbId, (data.payload ?? {}) as TmdbPayload);
+            }
             return true;
         }
         return false;
@@ -1399,9 +1411,35 @@ export class StorageService {
             const totalTitles = Array.isArray(parsed.content) ? parsed.content.length : 0;
             const historyCount = Array.isArray(parsed.searchHistory) ? parsed.searchHistory.length : 0;
             const hasSettings = Boolean(parsed.settings && typeof parsed.settings === 'object');
-            const tvProgressCount = Array.isArray(parsed.tvProgress)
+            const explicitTvProgress = Array.isArray(parsed.tvProgress)
                 ? parsed.tvProgress.filter((p) => p && typeof p === 'object' && typeof p.id === 'string' && typeof p.tmdbId === 'number').length
                 : 0;
+
+            const seenTvIds = new Set<string>();
+            if (Array.isArray(parsed.tvProgress)) {
+                for (const p of parsed.tvProgress) {
+                    if (p && typeof p.id === 'string') {
+                        seenTvIds.add(p.id);
+                    }
+                }
+            }
+
+            let backfilledTvCount = 0;
+            if (Array.isArray(parsed.content)) {
+                for (const item of parsed.content) {
+                    if (item && item.mediaType === 'tv' && Array.isArray(item.lists) && item.lists.includes('watched')) {
+                        const tmdbId = Number(item.tmdbId ?? item.id);
+                        if (Number.isFinite(tmdbId) && tmdbId > 0) {
+                            const tvId = `tv_${tmdbId}`;
+                            if (!seenTvIds.has(tvId)) {
+                                seenTvIds.add(tvId);
+                                backfilledTvCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            const tvProgressCount = explicitTvProgress + backfilledTvCount;
 
             return {
                 isValid: totalTitles > 0 || historyCount > 0 || hasSettings || tvProgressCount > 0,
@@ -1470,6 +1508,31 @@ export class StorageService {
             this.dbService.db.tvProgress.find().exec()
         ]);
 
+        const progressMap = new Map<string, TvProgressDocType>();
+        for (const d of tvProgressDocs) {
+            const json = d.toJSON() as TvProgressDocType;
+            const clean = { ...json };
+            delete (clean as Record<string, unknown>)['_rev'];
+            delete (clean as Record<string, unknown>)['_deleted'];
+            delete (clean as Record<string, unknown>)['_meta'];
+            progressMap.set(clean.id, clean);
+        }
+
+        // Safety backfill: Ensure watched TV series always have a tvProgress record in exported backup
+        for (const d of contentDocs) {
+            const doc = d.toJSON() as ContentDocType;
+            if (doc.mediaType === 'tv' && doc.lists.includes('watched')) {
+                const tvId = `tv_${doc.tmdbId}`;
+                if (!progressMap.has(tvId)) {
+                    const synthesized = this.buildTvProgressFromPayload(
+                        doc.tmdbId,
+                        (doc.payload ?? {}) as TmdbPayload
+                    );
+                    progressMap.set(tvId, synthesized);
+                }
+            }
+        }
+
         const payload: CinescopeBackupPayload = {
             version: 1,
             appVersion: APP_VERSION,
@@ -1500,14 +1563,7 @@ export class StorageService {
                 delete (clean as Record<string, unknown>)['_meta'];
                 return clean;
             }),
-            tvProgress: tvProgressDocs.map((d) => {
-                const json = d.toJSON() as TvProgressDocType;
-                const clean = { ...json };
-                delete (clean as Record<string, unknown>)['_rev'];
-                delete (clean as Record<string, unknown>)['_deleted'];
-                delete (clean as Record<string, unknown>)['_meta'];
-                return clean;
-            })
+            tvProgress: Array.from(progressMap.values())
         };
 
         return JSON.stringify(payload, null, 2);
@@ -1676,23 +1732,40 @@ export class StorageService {
             }
         }
 
-        // 5. Restore TV Progress (if present) in chunks
+        // 5. Restore TV Progress (including backfilling for watched TV series) in chunks
         let tvProgressCount = 0;
+        const progressBySeriesId = new Map<string, TvProgressDocType>();
         if (Array.isArray(parsed.tvProgress)) {
-            const validProgress: TvProgressDocType[] = [];
             for (const p of parsed.tvProgress) {
                 if (p && typeof p.id === 'string' && typeof p.tmdbId === 'number' && Array.isArray(p.watchedEpisodes)) {
-                    validProgress.push(migrateTvProgressCounts(p));
+                    const migrated = migrateTvProgressCounts(p);
+                    progressBySeriesId.set(migrated.id, migrated);
                 }
             }
-            if (validProgress.length > 0) {
-                const CHUNK_SIZE = 100;
-                for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
-                    const chunk = validProgress.slice(i, i + CHUNK_SIZE);
-                    await this.dbService.db.tvProgress.bulkUpsert(chunk);
+        }
+
+        // Backfill missing tvProgress records for watched TV series in content
+        for (const doc of docsToUpsert) {
+            if (doc.mediaType === 'tv' && doc.lists.includes('watched')) {
+                const tvDocId = `tv_${doc.tmdbId}`;
+                if (!progressBySeriesId.has(tvDocId)) {
+                    const synthesized = this.buildTvProgressFromPayload(
+                        doc.tmdbId,
+                        (doc.payload ?? {}) as TmdbPayload
+                    );
+                    progressBySeriesId.set(tvDocId, synthesized);
                 }
-                tvProgressCount = validProgress.length;
             }
+        }
+
+        const validProgress = Array.from(progressBySeriesId.values());
+        if (validProgress.length > 0) {
+            const CHUNK_SIZE = 100;
+            for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
+                const chunk = validProgress.slice(i, i + CHUNK_SIZE);
+                await this.dbService.db.tvProgress.bulkUpsert(chunk);
+            }
+            tvProgressCount = validProgress.length;
         }
 
         return {

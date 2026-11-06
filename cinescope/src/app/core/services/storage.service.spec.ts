@@ -612,4 +612,89 @@ describe('StorageService - Backup & Restore', () => {
         expect((content.payload as Record<string, unknown>)['isWatchlist']).toBeFalse();
         expect((content.payload as Record<string, unknown>)['watchedAt']).toBeDefined();
     });
+
+    it('should backfill missing tvProgress records for watched TV series during importBackupJson', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'tv_93405',
+                    tmdbId: 93405,
+                    mediaType: 'tv',
+                    lists: ['watched'],
+                    addedAt: '2025-12-28T20:00:00.000Z',
+                    watchedAt: '2025-12-28T20:00:00.000Z',
+                    payload: {
+                        id: 93405,
+                        name: 'Squid Game',
+                        status: 'Ended',
+                        number_of_seasons: 2,
+                        number_of_episodes: 15,
+                        seasons: [
+                            { season_number: 1, episode_count: 9 },
+                            { season_number: 2, episode_count: 6 }
+                        ]
+                    }
+                }
+            ],
+            tvProgress: [] // Empty in backup!
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.tvProgressCount).toBe(1);
+
+        const importResult = await service.importBackupJson(JSON.stringify(payload));
+        expect(importResult.tvProgressCount).toBe(1);
+
+        expect(mockTvProgressBulkUpsert).toHaveBeenCalled();
+        const tvChunk = mockTvProgressBulkUpsert.calls.mostRecent().args[0];
+        expect(tvChunk.length).toBe(1);
+        expect(tvChunk[0].id).toBe('tv_93405');
+        expect(tvChunk[0].seriesTitle).toBe('Squid Game');
+        expect(tvChunk[0].watchedEpisodesCount).toBe(15);
+        expect(tvChunk[0].isMarkedComplete).toBeTrue();
+        expect(tvChunk[0].watchedEpisodes).toContain('s1e1');
+        expect(tvChunk[0].watchedEpisodes).toContain('s2e6');
+    });
+
+    it('creates tvProgress when moveInboxToWatched is called for a TV show', async () => {
+        const content = {
+            id: 'tv_256522',
+            tmdbId: 256522,
+            mediaType: 'tv',
+            lists: ['inbox'],
+            addedAt: '2026-10-30T10:00:00Z',
+            payload: {
+                id: 256522,
+                name: 'Bad Cop',
+                first_air_date: '2024-06-21',
+                number_of_seasons: 1,
+                number_of_episodes: 8,
+                seasons: [
+                    { season_number: 1, episode_count: 8 }
+                ]
+            }
+        };
+        const contentDoc = {
+            toJSON: (): typeof content => content,
+            incrementalModify: jasmine.createSpy('incrementalModify').and.callFake(
+                async (modify: (data: typeof content) => typeof content): Promise<void> => {
+                    modify(content);
+                }
+            ),
+            remove: jasmine.createSpy('remove').and.returnValue(Promise.resolve())
+        };
+        mockContentFindOne.and.returnValue({ exec: () => Promise.resolve(contentDoc) });
+        mockTvProgressFindOne.and.returnValue({ exec: () => Promise.resolve(null) });
+
+        const moved = await service.moveInboxToWatched(256522, 'tv');
+        expect(moved).toBeTrue();
+        expect(mockTvProgressUpsert).toHaveBeenCalled();
+        const progress = mockTvProgressUpsert.calls.mostRecent().args[0];
+        expect(progress.id).toBe('tv_256522');
+        expect(progress.seriesTitle).toBe('Bad Cop');
+        expect(progress.watchedEpisodesCount).toBe(8);
+        expect(progress.isMarkedComplete).toBeTrue();
+    });
 });
