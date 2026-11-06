@@ -21,6 +21,27 @@
     border-radius: 999px;
     background: var(--ion-color-primary, #e50914);
     box-shadow: 0 0 10px rgba(229, 9, 20, 0.55);
+
+    &.is-ai {
+        background: linear-gradient(180deg, #c084fc, #ec4899);
+        box-shadow: 0 0 10px rgba(192, 132, 252, 0.65);
+    }
+}
+
+.swimlane-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c084fc;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(236, 72, 153, 0.14));
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .swimlane-title {

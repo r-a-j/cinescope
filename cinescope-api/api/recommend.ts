@@ -111,7 +111,7 @@ CRITICAL RULES:
   "lanes": [
     {
       "id": "string-slug",
-      "title": "UPPERCASE LANE TITLE (e.g. CLAUSTROPHOBIC SCI-FI MINDBENDERS)",
+      "title": "Short, punchy 2-4 word theme in UPPERCASE without 'AI' or 'Pulse' prefix (e.g. GRITTY INDIAN NOIR, HIGH-STAKES PROCEDURALS, REVENGE SAGAS)",
       "subtitle": "Because you loved [Seed A] & [Seed B]",
       "mediaType": "movie" | "tv",
       "curatedPicks": [

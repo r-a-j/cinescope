@@ -9,6 +9,11 @@ dist/
 .pnpm-store/*
 *.keystore
 *.jks
+*.aab
+*.apk
+*.idsig
+*.bak
+*.orig
 cinescope-release.keystore
 keystore_base64.txt
 cinescope-keystore-secrets.txt

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -32,13 +32,41 @@ export class SwimlaneComponent {
     public items = input.required<SwimlaneItem[]>();
     public queryContext = input<CollectionQueryContext>();
 
+    public isAiPulse = computed<boolean>(() => {
+        const t = this.title().toUpperCase();
+        return t.startsWith('AI PULSE:') || t.startsWith('AI CURATED:');
+    });
+
+    public displayTitle = computed<string>(() => {
+        const t = this.title();
+        let clean = t.replace(/^AI\s*(PULSE|CURATED):\s*/i, '').trim();
+
+        // Strip leading redundant words
+        clean = clean.replace(/^(global|modern|all|best)\s+/i, (match, word) => {
+            return word.toLowerCase() === 'global' ? '' : match;
+        }).trim();
+
+        // Fix hyphenation
+        clean = clean.replace(/\bhigh\s+stakes\b/gi, 'High-Stakes');
+
+        // Shorten long compound titles with conjunctions if length > 22
+        if (clean.length > 22 && /\s+(&|and|\/)\s+/i.test(clean)) {
+            const parts = clean.split(/\s+(&|and|\/)\s+/i);
+            if (parts[0] && parts[0].trim().length >= 6) {
+                clean = parts[0].trim();
+            }
+        }
+
+        return clean;
+    });
+
     constructor() {
         addIcons({ chevronForwardOutline, heart, heartOutline });
     }
 
     public openViewAll(): void {
         const query = this.queryContext();
-        const baseSlug = (query?.type ? `${query.type}-${query.id ?? ''}` : this.title())
+        const baseSlug = (query?.type ? `${query.type}-${query.id ?? ''}` : this.displayTitle())
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '') || 'all';
@@ -46,7 +74,7 @@ export class SwimlaneComponent {
         const collectionId = `${baseSlug}-${Date.now()}`;
 
         const queryParams: Record<string, string | number> = {
-            title: this.title()
+            title: this.displayTitle()
         };
         if (query?.type) queryParams['type'] = query.type;
         if (query?.id !== undefined) queryParams['id'] = query.id;
@@ -58,7 +86,7 @@ export class SwimlaneComponent {
         void this.router.navigate(['/collection', collectionId], {
             queryParams,
             state: {
-                title: this.title(),
+                title: this.displayTitle(),
                 items: this.items(),
                 queryContext: this.queryContext()
             }

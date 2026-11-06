@@ -41,6 +41,8 @@ export interface CollectionQueryContext {
   movieParams?: TmdbDiscoverMovieParamsDto;
   tvParams?: TmdbDiscoverTvParamsDto;
   region?: string;
+  _tier1TotalPages?: number;
+  _tier1TvTotalPages?: number;
 }
 
 export interface CollectionPageResult {
@@ -206,6 +208,90 @@ export class CollectionLoaderService {
     ].includes(t);
   }
 
+  public getRelaxedMovieParams(original: TmdbDiscoverMovieParamsDto): TmdbDiscoverMovieParamsDto | null {
+    if (!original) return null;
+
+    let hasRelaxable = false;
+    const relaxed: TmdbDiscoverMovieParamsDto = { ...original };
+
+    // 1. Relax strict AND genres (comma) to OR (pipe)
+    if (typeof relaxed.with_genres === 'string' && relaxed.with_genres.includes(',')) {
+      relaxed.with_genres = relaxed.with_genres.replace(/,/g, '|');
+      hasRelaxable = true;
+    }
+
+    // 2. Remove narrow keywords that severely restrict catalog results
+    if (relaxed.with_keywords) {
+      delete relaxed.with_keywords;
+      hasRelaxable = true;
+    }
+
+    // 3. Remove narrow cast constraint
+    if (relaxed.with_cast) {
+      delete relaxed.with_cast;
+      hasRelaxable = true;
+    }
+
+    // 4. Relax strict vote thresholds
+    if (typeof relaxed['vote_average.gte'] === 'number' && relaxed['vote_average.gte'] > 5.5) {
+      relaxed['vote_average.gte'] = 5.5;
+      hasRelaxable = true;
+    }
+
+    if (typeof relaxed['vote_count.gte'] === 'number' && relaxed['vote_count.gte'] > 10) {
+      relaxed['vote_count.gte'] = 10;
+      hasRelaxable = true;
+    }
+
+    // 5. Relax narrow runtime cap
+    if (relaxed['with_runtime.lte']) {
+      delete relaxed['with_runtime.lte'];
+      hasRelaxable = true;
+    }
+
+    // 6. Widen release year if narrow
+    if (relaxed['primary_release_date.gte'] && relaxed['primary_release_date.lte']) {
+      delete relaxed['primary_release_date.gte'];
+      hasRelaxable = true;
+    }
+
+    return hasRelaxable ? relaxed : null;
+  }
+
+  public getRelaxedTvParams(original: TmdbDiscoverTvParamsDto): TmdbDiscoverTvParamsDto | null {
+    if (!original) return null;
+
+    let hasRelaxable = false;
+    const relaxed: TmdbDiscoverTvParamsDto = { ...original };
+
+    if (typeof relaxed.with_genres === 'string' && relaxed.with_genres.includes(',')) {
+      relaxed.with_genres = relaxed.with_genres.replace(/,/g, '|');
+      hasRelaxable = true;
+    }
+
+    if (relaxed.with_keywords) {
+      delete relaxed.with_keywords;
+      hasRelaxable = true;
+    }
+
+    if (typeof relaxed['vote_average.gte'] === 'number' && relaxed['vote_average.gte'] > 5.5) {
+      relaxed['vote_average.gte'] = 5.5;
+      hasRelaxable = true;
+    }
+
+    if (typeof relaxed['vote_count.gte'] === 'number' && relaxed['vote_count.gte'] > 10) {
+      relaxed['vote_count.gte'] = 10;
+      hasRelaxable = true;
+    }
+
+    if (relaxed['first_air_date.gte']) {
+      delete relaxed['first_air_date.gte'];
+      hasRelaxable = true;
+    }
+
+    return hasRelaxable ? relaxed : null;
+  }
+
   public async fetchPage(
     title: string,
     page: number,
@@ -220,38 +306,143 @@ export class CollectionLoaderService {
     const todayIso = new Date().toISOString().slice(0, 10);
     const activeRegion = context?.region || this.storageService.userRegion() || 'IN';
 
-    // Generic Discover Movies Context
+    // Generic Discover Movies Context with Cascading Query Relaxation
     if (context?.type === 'discover_movies' && context.movieParams) {
-      const baseSort = context.movieParams.sort_by || 'popularity.desc';
-      const sortBy = getDiscoverSortBy(sortMode, baseSort);
-      const movieParams: TmdbDiscoverMovieParamsDto = {
-        ...context.movieParams,
-        sort_by: sortBy,
-        page
-      };
-      applyFiltersToMovieParams(movieParams, filters);
-      const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-      return {
-        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
-        hasMore: res.page < res.total_pages
-      };
+      const relaxedParams = this.getRelaxedMovieParams(context.movieParams);
+      const isRelaxable = relaxedParams !== null;
+
+      // Tier 1: Try strict params while page <= tier 1 total pages
+      if (context._tier1TotalPages === undefined || page <= context._tier1TotalPages) {
+        const baseSort = context.movieParams.sort_by || 'popularity.desc';
+        const sortBy = getDiscoverSortBy(sortMode, baseSort);
+        const movieParams: TmdbDiscoverMovieParamsDto = {
+          ...context.movieParams,
+          sort_by: sortBy,
+          page
+        };
+        applyFiltersToMovieParams(movieParams, filters);
+        const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
+
+        if (context._tier1TotalPages === undefined) {
+          context._tier1TotalPages = res.total_pages;
+        }
+
+        const items = this.filterWatched(mapMoviesToSwimlane(res.results));
+
+        // If tier 1 returned 0 results (e.g. page was 2 and tier 1 only had 1 page):
+        if (items.length === 0 && isRelaxable && relaxedParams) {
+          context._tier1TotalPages = Math.min(context._tier1TotalPages ?? 1, page - 1);
+          const rBaseSort = relaxedParams.sort_by || 'popularity.desc';
+          const rSortBy = getDiscoverSortBy(sortMode, rBaseSort);
+          const rMovieParams: TmdbDiscoverMovieParamsDto = {
+            ...relaxedParams,
+            sort_by: rSortBy,
+            page: 1
+          };
+          applyFiltersToMovieParams(rMovieParams, filters);
+          const rRes = await firstValueFrom(this.discoverService.discoverMovies(rMovieParams));
+          return {
+            items: this.filterWatched(mapMoviesToSwimlane(rRes.results)),
+            hasMore: rRes.page < rRes.total_pages
+          };
+        }
+
+        if (page < res.total_pages) {
+          return { items, hasMore: true };
+        }
+
+        if (isRelaxable) {
+          return { items, hasMore: true };
+        }
+
+        return { items, hasMore: false };
+      }
+
+      // Tier 2: Paginate through relaxed query
+      if (isRelaxable && relaxedParams) {
+        const relaxedPage = page - context._tier1TotalPages;
+        const baseSort = relaxedParams.sort_by || 'popularity.desc';
+        const sortBy = getDiscoverSortBy(sortMode, baseSort);
+        const movieParams: TmdbDiscoverMovieParamsDto = {
+          ...relaxedParams,
+          sort_by: sortBy,
+          page: relaxedPage
+        };
+        applyFiltersToMovieParams(movieParams, filters);
+        const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
+        return {
+          items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+          hasMore: res.page < res.total_pages
+        };
+      }
     }
 
-    // Generic Discover TV Context
+    // Generic Discover TV Context with Cascading Query Relaxation
     if (context?.type === 'discover_tv' && context.tvParams) {
-      const baseSort = context.tvParams.sort_by || 'popularity.desc';
-      const sortBy = getDiscoverTvSortBy(sortMode, baseSort);
-      const tvParams: TmdbDiscoverTvParamsDto = {
-        ...context.tvParams,
-        sort_by: sortBy,
-        page
-      };
-      applyFiltersToTvParams(tvParams, filters);
-      const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
-      return {
-        items: this.filterWatched(mapTvToSwimlane(res.results)),
-        hasMore: res.page < res.total_pages
-      };
+      const relaxedParams = this.getRelaxedTvParams(context.tvParams);
+      const isRelaxable = relaxedParams !== null;
+
+      if (context._tier1TvTotalPages === undefined || page <= context._tier1TvTotalPages) {
+        const baseSort = context.tvParams.sort_by || 'popularity.desc';
+        const sortBy = getDiscoverTvSortBy(sortMode, baseSort);
+        const tvParams: TmdbDiscoverTvParamsDto = {
+          ...context.tvParams,
+          sort_by: sortBy,
+          page
+        };
+        applyFiltersToTvParams(tvParams, filters);
+        const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
+
+        if (context._tier1TvTotalPages === undefined) {
+          context._tier1TvTotalPages = res.total_pages;
+        }
+
+        const items = this.filterWatched(mapTvToSwimlane(res.results));
+
+        if (items.length === 0 && isRelaxable && relaxedParams) {
+          context._tier1TvTotalPages = Math.min(context._tier1TvTotalPages ?? 1, page - 1);
+          const rBaseSort = relaxedParams.sort_by || 'popularity.desc';
+          const rSortBy = getDiscoverTvSortBy(sortMode, rBaseSort);
+          const rTvParams: TmdbDiscoverTvParamsDto = {
+            ...relaxedParams,
+            sort_by: rSortBy,
+            page: 1
+          };
+          applyFiltersToTvParams(rTvParams, filters);
+          const rRes = await firstValueFrom(this.discoverService.discoverTv(rTvParams));
+          return {
+            items: this.filterWatched(mapTvToSwimlane(rRes.results)),
+            hasMore: rRes.page < rRes.total_pages
+          };
+        }
+
+        if (page < res.total_pages) {
+          return { items, hasMore: true };
+        }
+
+        if (isRelaxable) {
+          return { items, hasMore: true };
+        }
+
+        return { items, hasMore: false };
+      }
+
+      if (isRelaxable && relaxedParams) {
+        const relaxedPage = page - context._tier1TvTotalPages;
+        const baseSort = relaxedParams.sort_by || 'popularity.desc';
+        const sortBy = getDiscoverTvSortBy(sortMode, baseSort);
+        const tvParams: TmdbDiscoverTvParamsDto = {
+          ...relaxedParams,
+          sort_by: sortBy,
+          page: relaxedPage
+        };
+        applyFiltersToTvParams(tvParams, filters);
+        const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
+        return {
+          items: this.filterWatched(mapTvToSwimlane(res.results)),
+          hasMore: res.page < res.total_pages
+        };
+      }
     }
 
     // Structured Endpoint Contexts

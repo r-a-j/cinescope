@@ -1,10 +1,20 @@
 import { TestBed } from '@angular/core/testing';
-import { checkMediaReleaseStatus, StorageService } from './storage.service';
+import { checkMediaReleaseStatus, StorageService, TmdbPayload } from './storage.service';
 import { DatabaseService } from '../database/database.service';
 import { PosterCacheService } from './poster-cache.service';
 import { RegionService } from './region.service';
 import { APP_VERSION } from '../constants/app-version';
 import { ContentDocType } from '../database/schemas/content.schema';
+import { TvProgressDocType } from '../database/schemas/tv-progress.schema';
+
+const createQueryMock = (docs: unknown = []): { exec: jasmine.Spy; $: { subscribe: () => { unsubscribe: () => void } } } => ({
+    exec: jasmine.createSpy('exec').and.returnValue(Promise.resolve(docs)),
+    $: {
+        subscribe: (): { unsubscribe: () => void } => ({
+            unsubscribe: (): void => undefined
+        })
+    }
+});
 
 describe('StorageService - Backup & Restore', () => {
     let service: StorageService;
@@ -28,15 +38,6 @@ describe('StorageService - Backup & Restore', () => {
         mockContentFindOne = jasmine.createSpy('contentFindOne');
         mockTvProgressFindOne = jasmine.createSpy('tvProgressFindOne');
         mockTvProgressUpsert = jasmine.createSpy('tvProgressUpsert').and.returnValue(Promise.resolve());
-
-        const createQueryMock = (docs: unknown = []): { exec: jasmine.Spy; $: { subscribe: () => { unsubscribe: () => void } } } => ({
-            exec: jasmine.createSpy('exec').and.returnValue(Promise.resolve(docs)),
-            $: {
-                subscribe: (): { unsubscribe: () => void } => ({
-                    unsubscribe: (): void => undefined
-                })
-            }
-        });
 
         const mockDatabaseService = {
             isInitialized: (): boolean => true,
@@ -346,6 +347,73 @@ describe('StorageService - Backup & Restore', () => {
         expect(result.format).toBe('unknown');
     });
 
+    it('should accurately inspect and count universes, franchises, and favorite people', () => {
+        const payload = {
+            version: 1,
+            appVersion: '2.0.1',
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'movie_550',
+                    tmdbId: 550,
+                    mediaType: 'movie',
+                    lists: ['watchlist'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'movie_19404',
+                    tmdbId: 19404,
+                    mediaType: 'movie',
+                    lists: ['watched'],
+                    addedAt: '2026-11-01T12:00:00Z',
+                    watchedAt: '2026-11-02T12:00:00Z'
+                },
+                {
+                    id: 'person_10297',
+                    tmdbId: 10297,
+                    mediaType: 'person',
+                    lists: ['favorite'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'universe_mcu',
+                    tmdbId: 1551266981,
+                    mediaType: 'movie',
+                    lists: ['universe', 'franchise'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                },
+                {
+                    id: 'franchise_422834',
+                    tmdbId: 422834,
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-11-01T12:00:00Z'
+                }
+            ],
+            tvProgress: [
+                {
+                    id: 'tv_1396',
+                    tmdbId: 1396,
+                    seriesTitle: 'Breaking Bad',
+                    totalSeasons: 5,
+                    totalEpisodes: 62,
+                    watchedEpisodesCount: 15,
+                    watchedEpisodes: ['s1e1'],
+                    updatedAt: Date.now()
+                }
+            ]
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.isValid).toBeTrue();
+        expect(inspection.totalTitles).toBe(5);
+        expect(inspection.watchlistCount).toBe(1);
+        expect(inspection.watchedCount).toBe(1);
+        expect(inspection.favoritePeopleCount).toBe(1);
+        expect(inspection.savedUniversesCount).toBe(2);
+        expect(inspection.tvProgressCount).toBe(1);
+    });
+
     it('should import backup JSON restoring both content and tvProgress records', async () => {
         const payload = {
             version: 1,
@@ -426,5 +494,472 @@ describe('StorageService - Backup & Restore', () => {
         expect(tvChunk[0].nextSeasonAirDate).toBe('2027-01-01');
         expect(tvChunk[0].nextSeasonTitle).toBe('Season 2');
         expect(tvChunk[0].watchedEpisodesCount).toBe(8);
+    });
+
+    it('should sanitize and sync contradictory payload flags during importBackupJson', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'movie_19404',
+                    tmdbId: 19404,
+                    mediaType: 'movie',
+                    lists: ['watched'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    watchedAt: '2026-10-23T14:00:17.073Z',
+                    payload: {
+                        id: 19404,
+                        title: 'Dilwale Dulhania Le Jayenge',
+                        isWatched: false,
+                        isWatchlist: true
+                    }
+                },
+                {
+                    id: 'movie_550',
+                    tmdbId: 550,
+                    mediaType: 'movie',
+                    lists: ['watchlist'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: {
+                        id: 550,
+                        title: 'Fight Club',
+                        isWatched: true,
+                        isWatchlist: false,
+                        watchedAt: '2026-10-20T10:00:00.000Z'
+                    }
+                },
+                {
+                    id: 'franchise_422834',
+                    tmdbId: 422834,
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: { id: 422834, name: 'Revenge Saga' }
+                },
+                {
+                    id: 'person_10297',
+                    tmdbId: 10297,
+                    mediaType: 'person',
+                    lists: ['favorite'],
+                    addedAt: '2026-10-23T14:00:17.073Z',
+                    payload: { id: 10297, name: 'Matthew McConaughey' }
+                }
+            ],
+            tvProgress: []
+        };
+
+        const result = await service.importBackupJson(JSON.stringify(payload));
+
+        expect(mockContentBulkUpsert).toHaveBeenCalled();
+        const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
+        expect(contentChunk.length).toBe(4);
+        expect(result.contentCount).toBe(4);
+        expect(result.watchlistCount).toBe(1);
+        expect(result.watchedCount).toBe(1);
+        expect(result.savedUniversesCount).toBe(1);
+        expect(result.favoritePeopleCount).toBe(1);
+
+        const watchedDoc = contentChunk.find((d: { id: string }) => d.id === 'movie_19404');
+        expect(watchedDoc).toBeDefined();
+        expect(watchedDoc.payload.isWatched).toBeTrue();
+        expect(watchedDoc.payload.isWatchlist).toBeFalse();
+        expect(watchedDoc.payload.watchedAt).toBe('2026-10-23T14:00:17.073Z');
+
+        const watchlistDoc = contentChunk.find((d: { id: string }) => d.id === 'movie_550');
+        expect(watchlistDoc).toBeDefined();
+        expect(watchlistDoc.payload.isWatched).toBeFalse();
+        expect(watchlistDoc.payload.isWatchlist).toBeTrue();
+        expect(watchlistDoc.payload.watchedAt).toBeUndefined();
+    });
+
+    it('should synchronize payload isWatched and isWatchlist flags when moveToWatched is called', async () => {
+        const content = {
+            id: 'movie_550',
+            tmdbId: 550,
+            mediaType: 'movie',
+            lists: ['watchlist'],
+            addedAt: '2026-10-30T10:00:00Z',
+            payload: {
+                id: 550,
+                title: 'Fight Club',
+                release_date: '1999-10-15',
+                isWatched: false,
+                isWatchlist: true
+            }
+        };
+        const contentDoc = {
+            toJSON: (): typeof content => content,
+            incrementalModify: jasmine.createSpy('incrementalModify').and.callFake(
+                async (modify: (data: typeof content) => typeof content): Promise<void> => {
+                    modify(content);
+                }
+            ),
+            remove: jasmine.createSpy('remove').and.returnValue(Promise.resolve())
+        };
+        mockContentFindOne.and.returnValue({ exec: () => Promise.resolve(contentDoc) });
+
+        const moved = await service.moveToWatched(550, 'movie', {
+            id: 550,
+            title: 'Fight Club',
+            release_date: '1999-10-15',
+            isWatched: false,
+            isWatchlist: true
+        });
+
+        expect(moved).toBeTrue();
+        expect(content.lists).toEqual(['watched']);
+        expect((content.payload as Record<string, unknown>)['isWatched']).toBeTrue();
+        expect((content.payload as Record<string, unknown>)['isWatchlist']).toBeFalse();
+        expect((content.payload as Record<string, unknown>)['watchedAt']).toBeDefined();
+    });
+
+    it('should backfill missing tvProgress records for watched TV series during importBackupJson', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'tv_93405',
+                    tmdbId: 93405,
+                    mediaType: 'tv',
+                    lists: ['watched'],
+                    addedAt: '2025-12-28T20:00:00.000Z',
+                    watchedAt: '2025-12-28T20:00:00.000Z',
+                    payload: {
+                        id: 93405,
+                        name: 'Squid Game',
+                        status: 'Ended',
+                        number_of_seasons: 2,
+                        number_of_episodes: 15,
+                        seasons: [
+                            { season_number: 1, episode_count: 9 },
+                            { season_number: 2, episode_count: 6 }
+                        ]
+                    }
+                }
+            ],
+            tvProgress: [] // Empty in backup!
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.tvProgressCount).toBe(1);
+
+        const importResult = await service.importBackupJson(JSON.stringify(payload));
+        expect(importResult.tvProgressCount).toBe(1);
+
+        expect(mockTvProgressBulkUpsert).toHaveBeenCalled();
+        const tvChunk = mockTvProgressBulkUpsert.calls.mostRecent().args[0];
+        expect(tvChunk.length).toBe(1);
+        expect(tvChunk[0].id).toBe('tv_93405');
+        expect(tvChunk[0].seriesTitle).toBe('Squid Game');
+        expect(tvChunk[0].watchedEpisodesCount).toBe(15);
+        expect(tvChunk[0].isMarkedComplete).toBeTrue();
+        expect(tvChunk[0].watchedEpisodes).toContain('s1e1');
+        expect(tvChunk[0].watchedEpisodes).toContain('s2e6');
+    });
+
+    describe('resolveBackupTmdbId', () => {
+        it('should resolve numeric and string-numeric tmdbId and payload.id', () => {
+            expect(service.resolveBackupTmdbId({ tmdbId: 550 })).toBe(550);
+            expect(service.resolveBackupTmdbId({ tmdbId: '550' })).toBe(550);
+            expect(service.resolveBackupTmdbId({ payload: { id: 700 } })).toBe(700);
+            expect(service.resolveBackupTmdbId({ payload: { id: '700' } })).toBe(700);
+        });
+
+        it('should resolve standard movie / tv / person prefix when tmdbId is missing', () => {
+            expect(service.resolveBackupTmdbId({ id: 'movie_550' })).toBe(550);
+            expect(service.resolveBackupTmdbId({ id: 'tv_1396' })).toBe(1396);
+            expect(service.resolveBackupTmdbId({ id: 'person_287' })).toBe(287);
+        });
+
+        it('should resolve universe items without tmdbId using deterministic hash', () => {
+            const expectedHash = service.hashString('universe_mcu');
+            expect(service.resolveBackupTmdbId({ id: 'universe_mcu', lists: ['universe', 'franchise'] })).toBe(expectedHash);
+            expect(service.resolveBackupTmdbId({ id: 'universe_universe_mcu', lists: ['universe'] })).toBe(expectedHash);
+            expect(service.resolveBackupTmdbId({ lists: ['universe'], payload: { universeId: 'universe_mcu' } })).toBe(expectedHash);
+        });
+
+        it('should resolve franchise items without tmdbId using numeric key or deterministic hash', () => {
+            expect(service.resolveBackupTmdbId({ id: 'franchise_84', lists: ['franchise'] })).toBe(84);
+            const expectedBatmanHash = service.hashString('batman');
+            expect(service.resolveBackupTmdbId({ id: 'franchise_batman', lists: ['franchise'] })).toBe(expectedBatmanHash);
+        });
+
+        it('should return null for malformed, non-numeric, or non-object items', () => {
+            expect(service.resolveBackupTmdbId(null)).toBeNull();
+            expect(service.resolveBackupTmdbId(undefined)).toBeNull();
+            expect(service.resolveBackupTmdbId({ id: 'unrecognized_key' })).toBeNull();
+        });
+    });
+
+    it('should inspect and import backup documents with universes and franchises lacking numeric tmdbId', async () => {
+        const payload = {
+            version: 1,
+            exportedAt: '2026-11-06T12:00:00Z',
+            content: [
+                {
+                    id: 'universe_universe_mcu', // legacy double-prefix without tmdbId
+                    mediaType: 'movie',
+                    lists: ['universe', 'franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Marvel Cinematic Universe'
+                    }
+                },
+                {
+                    id: 'franchise_batman', // custom string franchise key without tmdbId
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Batman Collection'
+                    }
+                },
+                {
+                    id: 'franchise_84', // numeric TMDB collection key without tmdbId
+                    mediaType: 'movie',
+                    lists: ['franchise'],
+                    addedAt: '2026-10-30T10:00:00Z',
+                    payload: {
+                        name: 'Indiana Jones Collection'
+                    }
+                }
+            ]
+        };
+
+        const inspection = service.inspectBackupJson(JSON.stringify(payload));
+        expect(inspection.isValid).toBeTrue();
+        expect(inspection.savedUniversesCount).toBe(3);
+
+        const importResult = await service.importBackupJson(JSON.stringify(payload));
+        expect(importResult.contentCount).toBe(3);
+        expect(importResult.savedUniversesCount).toBe(3);
+
+        expect(mockContentBulkUpsert).toHaveBeenCalled();
+        const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
+        expect(contentChunk.length).toBe(3);
+
+        const mcuDoc = contentChunk.find((d: { id: string }) => d.id === 'universe_mcu');
+        expect(mcuDoc).toBeDefined();
+        expect(mcuDoc.tmdbId).toBe(service.hashString('universe_mcu'));
+        expect(mcuDoc.payload.id).toBe('universe_mcu');
+        expect(mcuDoc.payload.universeId).toBe('universe_mcu');
+
+        const batmanDoc = contentChunk.find((d: { id: string }) => d.id === 'franchise_batman');
+        expect(batmanDoc).toBeDefined();
+        expect(batmanDoc.tmdbId).toBe(service.hashString('batman'));
+        expect(batmanDoc.payload.id).toBe('franchise_batman');
+
+        const indianaDoc = contentChunk.find((d: { id: string }) => d.id === 'franchise_84');
+        expect(indianaDoc).toBeDefined();
+        expect(indianaDoc.tmdbId).toBe(84);
+    });
+
+    it('creates tvProgress when moveInboxToWatched is called for a TV show', async () => {
+        const content = {
+            id: 'tv_256522',
+            tmdbId: 256522,
+            mediaType: 'tv',
+            lists: ['inbox'],
+            addedAt: '2026-10-30T10:00:00Z',
+            payload: {
+                id: 256522,
+                name: 'Bad Cop',
+                first_air_date: '2024-06-21',
+                number_of_seasons: 1,
+                number_of_episodes: 8,
+                seasons: [
+                    { season_number: 1, episode_count: 8 }
+                ]
+            }
+        };
+        const contentDoc = {
+            toJSON: (): typeof content => content,
+            incrementalModify: jasmine.createSpy('incrementalModify').and.callFake(
+                async (modify: (data: typeof content) => typeof content): Promise<void> => {
+                    modify(content);
+                }
+            ),
+            remove: jasmine.createSpy('remove').and.returnValue(Promise.resolve())
+        };
+        mockContentFindOne.and.returnValue({ exec: () => Promise.resolve(contentDoc) });
+        mockTvProgressFindOne.and.returnValue({ exec: () => Promise.resolve(null) });
+
+        const moved = await service.moveInboxToWatched(256522, 'tv');
+        expect(moved).toBeTrue();
+        expect(mockTvProgressUpsert).toHaveBeenCalled();
+        const progress = mockTvProgressUpsert.calls.mostRecent().args[0];
+        expect(progress.id).toBe('tv_256522');
+        expect(progress.seriesTitle).toBe('Bad Cop');
+        expect(progress.watchedEpisodesCount).toBe(8);
+        expect(progress.isMarkedComplete).toBeTrue();
+    });
+
+    describe('mergeContentDoc', () => {
+        it('should preserve watched status when merging local watched with incoming watchlist', () => {
+            const localDoc: ContentDocType = {
+                id: 'movie_19404',
+                tmdbId: 19404,
+                mediaType: 'movie',
+                lists: ['watched'],
+                addedAt: '2026-10-23T14:00:17.073Z',
+                watchedAt: '2026-10-23T14:00:17.073Z',
+                payload: { id: 19404, isWatched: true, isWatchlist: false } as unknown as TmdbPayload
+            };
+            const incomingDoc: ContentDocType = {
+                id: 'movie_19404',
+                tmdbId: 19404,
+                mediaType: 'movie',
+                lists: ['watchlist'],
+                addedAt: '2026-09-01T10:00:00.000Z',
+                payload: { id: 19404, isWatched: false, isWatchlist: true } as unknown as TmdbPayload
+            };
+
+            const merged = service.mergeContentDoc(localDoc, incomingDoc);
+            expect(merged.lists).toEqual(['watched']);
+            expect(merged.watchedAt).toBe('2026-10-23T14:00:17.073Z');
+            expect(merged.addedAt).toBe('2026-09-01T10:00:00.000Z'); // Earliest addedAt retained
+            expect((merged.payload as Record<string, unknown>)['isWatched']).toBeTrue();
+            expect((merged.payload as Record<string, unknown>)['isWatchlist']).toBeFalse();
+        });
+
+        it('should combine orthogonal list tags like favorite and universe', () => {
+            const localDoc: ContentDocType = {
+                id: 'movie_550',
+                tmdbId: 550,
+                mediaType: 'movie',
+                lists: ['watchlist'],
+                addedAt: '2026-10-01T10:00:00.000Z',
+                payload: { id: 550 } as unknown as TmdbPayload
+            };
+            const incomingDoc: ContentDocType = {
+                id: 'movie_550',
+                tmdbId: 550,
+                mediaType: 'movie',
+                lists: ['watchlist', 'favorite'],
+                addedAt: '2026-10-02T10:00:00.000Z',
+                payload: { id: 550 } as unknown as TmdbPayload
+            };
+
+            const merged = service.mergeContentDoc(localDoc, incomingDoc);
+            expect(merged.lists).toContain('watchlist');
+            expect(merged.lists).toContain('favorite');
+        });
+    });
+
+    describe('mergeTvProgressDoc', () => {
+        it('should perform union of watched episodes across local and incoming records', () => {
+            const localProgress: TvProgressDocType = {
+                id: 'tv_1396',
+                tmdbId: 1396,
+                seriesTitle: 'Breaking Bad',
+                totalSeasons: 5,
+                totalEpisodes: 62,
+                totalReleasedEpisodes: 62,
+                watchedEpisodesCount: 2,
+                watchedEpisodes: ['s1e1', 's1e2'],
+                updatedAt: 1730000000000
+            };
+            const incomingProgress: TvProgressDocType = {
+                id: 'tv_1396',
+                tmdbId: 1396,
+                seriesTitle: 'Breaking Bad',
+                totalSeasons: 5,
+                totalEpisodes: 62,
+                totalReleasedEpisodes: 62,
+                watchedEpisodesCount: 2,
+                watchedEpisodes: ['s1e2', 's1e3'],
+                updatedAt: 1730000005000
+            };
+
+            const merged = service.mergeTvProgressDoc(localProgress, incomingProgress);
+            expect(merged.watchedEpisodes).toContain('s1e1');
+            expect(merged.watchedEpisodes).toContain('s1e2');
+            expect(merged.watchedEpisodes).toContain('s1e3');
+            expect(merged.watchedEpisodesCount).toBe(3);
+        });
+    });
+
+    it('should intelligently merge overlapping documents during importBackupJson', async () => {
+        // Setup existing local database content
+        const existingLocalContent = [
+            {
+                id: 'movie_19404',
+                tmdbId: 19404,
+                mediaType: 'movie',
+                lists: ['watched'],
+                addedAt: '2026-11-01T10:00:00.000Z',
+                watchedAt: '2026-11-06T15:00:00.000Z',
+                payload: { id: 19404, isWatched: true, isWatchlist: false }
+            }
+        ];
+        const existingLocalProgress = [
+            {
+                id: 'tv_1396',
+                tmdbId: 1396,
+                seriesTitle: 'Breaking Bad',
+                totalSeasons: 5,
+                totalEpisodes: 62,
+                totalReleasedEpisodes: 62,
+                watchedEpisodesCount: 1,
+                watchedEpisodes: ['s1e1'],
+                updatedAt: 1730000000000
+            }
+        ];
+
+        mockContentFind.and.returnValue(createQueryMock(existingLocalContent.map((c) => ({
+            toJSON: (): typeof c => c,
+            id: c.id
+        }))));
+        mockTvProgressFind.and.returnValue(createQueryMock(existingLocalProgress.map((p) => ({
+            toJSON: (): typeof p => p,
+            id: p.id
+        }))));
+
+        const payload = {
+            version: 1,
+            exportedAt: '2026-10-20T12:00:00Z',
+            content: [
+                {
+                    id: 'movie_19404', // Backup has it in watchlist
+                    tmdbId: 19404,
+                    mediaType: 'movie',
+                    lists: ['watchlist'],
+                    addedAt: '2026-10-01T10:00:00.000Z',
+                    payload: { id: 19404, title: 'DDLJ' }
+                }
+            ],
+            tvProgress: [
+                {
+                    id: 'tv_1396', // Backup has episode s1e2
+                    tmdbId: 1396,
+                    seriesTitle: 'Breaking Bad',
+                    totalSeasons: 5,
+                    totalEpisodes: 62,
+                    totalReleasedEpisodes: 62,
+                    watchedEpisodesCount: 1,
+                    watchedEpisodes: ['s1e2'],
+                    updatedAt: 1729000000000
+                }
+            ]
+        };
+
+        const result = await service.importBackupJson(JSON.stringify(payload));
+        expect(result.watchedCount).toBe(1);
+        expect(result.watchlistCount).toBe(0);
+
+        const contentChunk = mockContentBulkUpsert.calls.mostRecent().args[0];
+        const mergedDoc = contentChunk[0];
+        expect(mergedDoc.id).toBe('movie_19404');
+        expect(mergedDoc.lists).toEqual(['watched']); // Did not overwrite back to watchlist!
+        expect(mergedDoc.watchedAt).toBe('2026-11-06T15:00:00.000Z');
+        expect(mergedDoc.addedAt).toBe('2026-10-01T10:00:00.000Z'); // Historical addedAt kept
+
+        const tvChunk = mockTvProgressBulkUpsert.calls.mostRecent().args[0];
+        const mergedProgress = tvChunk[0];
+        expect(mergedProgress.watchedEpisodes).toContain('s1e1');
+        expect(mergedProgress.watchedEpisodes).toContain('s1e2');
+        expect(mergedProgress.watchedEpisodesCount).toBe(2);
     });
 });

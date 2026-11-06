@@ -1,7 +1,10 @@
 <div class="swimlane-header">
     <div class="swimlane-title-group">
-        <span class="swimlane-accent-bar" aria-hidden="true"></span>
-        <h2 class="swimlane-title">{{ title() }}</h2>
+        <span class="swimlane-accent-bar" [class.is-ai]="isAiPulse()" aria-hidden="true"></span>
+        @if (isAiPulse()) {
+        <span class="swimlane-ai-badge">AI PULSE</span>
+        }
+        <h2 class="swimlane-title">{{ displayTitle() }}</h2>
     </div>
     @if (items().length > 0) {
     <button type="button" class="swimlane-action" aria-label="See All" (click)="openViewAll()">

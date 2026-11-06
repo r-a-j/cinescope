@@ -243,6 +243,7 @@ export interface BackupInspectionResult {
     watchedCount: number;
     inboxCount: number;
     favoritePeopleCount: number;
+    savedUniversesCount: number;
     historyCount: number;
     hasSettings: boolean;
     tvProgressCount?: number | undefined;
@@ -295,6 +296,7 @@ export interface BackupImportResult {
     watchedCount: number;
     inboxCount: number;
     favoritePeopleCount: number;
+    savedUniversesCount: number;
     historyCount: number;
     tvProgressCount?: number | undefined;
 }
@@ -596,6 +598,7 @@ export class StorageService {
     public async addToWatchlist(tmdbId: number, mediaType: 'movie' | 'tv' | 'person', payload: TmdbPayload): Promise<void> {
         this.initReactiveStreams();
         const docId: string = this.generateId(tmdbId, mediaType);
+        const syncedPayload = this.syncPayloadWithLists(payload as Record<string, unknown>, ['watchlist']);
 
         await this.dbService.db.content.upsert({
             id: docId,
@@ -603,7 +606,7 @@ export class StorageService {
             mediaType: mediaType,
             lists: ['watchlist'],
             addedAt: new Date().toISOString(),
-            payload: payload
+            payload: syncedPayload
         });
     }
 
@@ -625,15 +628,16 @@ export class StorageService {
 
         if (doc) {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
+                const now = new Date().toISOString();
                 docData.lists = ['watched']; // Overwrite lists to only be 'watched'
-                docData.watchedAt = new Date().toISOString();
-                if (effectivePayload) {
-                    docData.payload = effectivePayload;
-                }
+                docData.watchedAt = now;
+                const basePayload = (effectivePayload ?? docData.payload) as Record<string, unknown>;
+                docData.payload = this.syncPayloadWithLists(basePayload, ['watched'], now);
                 return docData;
             });
         } else if (effectivePayload) {
             const now = new Date().toISOString();
+            const syncedPayload = this.syncPayloadWithLists(effectivePayload as Record<string, unknown>, ['watched'], now);
             await this.dbService.db.content.upsert({
                 id: docId,
                 tmdbId,
@@ -641,7 +645,7 @@ export class StorageService {
                 lists: ['watched'],
                 addedAt: now,
                 watchedAt: now,
-                payload: effectivePayload
+                payload: syncedPayload
             });
         } else {
             return false;
@@ -669,11 +673,13 @@ export class StorageService {
         }
     }
 
-    private async markTvProgressWatched(tmdbId: number, payload: TmdbPayload): Promise<void> {
-        const existingDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
-        const existing = existingDoc?.toJSON() as TvProgressDocType | undefined;
+    public buildTvProgressFromPayload(
+        tmdbId: number,
+        payload: TmdbPayload,
+        existing?: TvProgressDocType
+    ): TvProgressDocType {
         const seasons = Array.isArray(payload['seasons'])
-            ? payload['seasons'] as { season_number?: unknown; episode_count?: unknown }[]
+            ? payload['seasons'] as { season_number?: unknown; episode_count?: unknown; air_date?: string }[]
             : [];
         const seasonEpisodeCounts = seasons
             .filter((season) =>
@@ -690,7 +696,7 @@ export class StorageService {
             }))
             .sort((a, b) => a.seasonNumber - b.seasonNumber);
         const releasedSeasonEpisodeCounts = seasonEpisodeCounts.filter(({ seasonNumber }) => {
-            const sObj = seasons.find((s) => (s as { season_number?: unknown }).season_number === seasonNumber) as { air_date?: string } | undefined;
+            const sObj = seasons.find((s) => s.season_number === seasonNumber);
             if (sObj?.air_date) {
                 const releaseCheck = checkMediaReleaseStatus({ release_date: sObj.air_date });
                 return releaseCheck.isReleased;
@@ -751,6 +757,13 @@ export class StorageService {
         if (existing?.nextAirEpisode !== undefined) progress.nextAirEpisode = existing.nextAirEpisode;
         if (existing?.nextAirEpisodeTitle) progress.nextAirEpisodeTitle = existing.nextAirEpisodeTitle;
 
+        return progress;
+    }
+
+    private async markTvProgressWatched(tmdbId: number, payload: TmdbPayload): Promise<void> {
+        const existingDoc = await this.dbService.db.tvProgress.findOne(`tv_${tmdbId}`).exec();
+        const existing = existingDoc?.toJSON() as TvProgressDocType | undefined;
+        const progress = this.buildTvProgressFromPayload(tmdbId, payload, existing);
         await this.dbService.db.tvProgress.upsert(progress);
     }
 
@@ -805,6 +818,7 @@ export class StorageService {
         if (doc) {
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                 d.lists = ['watchlist'];
+                d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watchlist']);
                 return d;
             });
         }
@@ -823,15 +837,21 @@ export class StorageService {
             if (!releaseCheck.isReleased) {
                 await doc.incrementalModify((d: ContentDocType): ContentDocType => {
                     d.lists = ['watchlist'];
+                    d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watchlist']);
                     return d;
                 });
                 return false;
             }
             await doc.incrementalModify((d: ContentDocType): ContentDocType => {
+                const now = new Date().toISOString();
                 d.lists = ['watched'];
-                d.watchedAt = new Date().toISOString();
+                d.watchedAt = now;
+                d.payload = this.syncPayloadWithLists(d.payload as Record<string, unknown>, ['watched'], now);
                 return d;
             });
+            if (mediaType === 'tv') {
+                await this.markTvProgressWatched(tmdbId, (data.payload ?? {}) as TmdbPayload);
+            }
             return true;
         }
         return false;
@@ -848,13 +868,91 @@ export class StorageService {
     // UNIVERSE & FRANCHISE ENGINE PERSISTENCE
     // ==========================================
 
-    private hashString(str: string): number {
+    public hashString(str: string): number {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             hash = ((hash << 5) - hash) + str.charCodeAt(i);
             hash |= 0;
         }
         return Math.abs(hash) || 1;
+    }
+
+    /**
+     * Resolves a valid numeric TMDB ID for a raw backup content document.
+     * Guarantees that AI-ascended universes, custom franchise collections,
+     * and string-prefixed media items (e.g. "movie_550") are never silently discarded.
+     */
+    public resolveBackupTmdbId(raw: Record<string, unknown> | null | undefined): number | null {
+        if (!raw || typeof raw !== 'object') {
+            return null;
+        }
+
+        // 1. Direct positive numeric tmdbId
+        if (typeof raw['tmdbId'] === 'number' && Number.isFinite(raw['tmdbId']) && raw['tmdbId'] > 0) {
+            return raw['tmdbId'];
+        }
+        if (typeof raw['tmdbId'] === 'string' && /^\d+$/.test(raw['tmdbId'].trim())) {
+            const parsed = Number(raw['tmdbId'].trim());
+            if (Number.isFinite(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        // 2. Direct positive numeric payload.id
+        const payload = raw['payload'] && typeof raw['payload'] === 'object'
+            ? (raw['payload'] as Record<string, unknown>)
+            : undefined;
+
+        if (payload && typeof payload['id'] === 'number' && Number.isFinite(payload['id']) && payload['id'] > 0) {
+            return payload['id'];
+        }
+        if (payload && typeof payload['id'] === 'string' && /^\d+$/.test(payload['id'].trim())) {
+            const parsed = Number(payload['id'].trim());
+            if (Number.isFinite(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        // 3. Extract candidate string ID
+        const rawIdStr = typeof raw['id'] === 'string'
+            ? raw['id'].trim()
+            : (typeof raw['id'] === 'number' && Number.isFinite(raw['id']) && raw['id'] > 0 ? String(raw['id']) : '');
+        const payloadIdStr = typeof payload?.['id'] === 'string' ? payload['id'].trim() : '';
+        const universePayloadId = typeof payload?.['universeId'] === 'string' ? payload['universeId'].trim() : '';
+
+        const lists = Array.isArray(raw['lists']) ? (raw['lists'] as unknown[]).map(String) : [];
+        const isUniverse = lists.includes('universe') || rawIdStr.startsWith('universe_') || universePayloadId.length > 0;
+        const isFranchise = lists.includes('franchise') || rawIdStr.startsWith('franchise_');
+
+        // 4. Universe resolution: deterministic hash matching saveUniverse()
+        if (isUniverse) {
+            const baseKey = (rawIdStr || payloadIdStr || universePayloadId).replace(/^(universe_)+/, '');
+            const canonicalUniverseId = `universe_${baseKey}`;
+            return this.hashString(canonicalUniverseId);
+        }
+
+        // 5. Franchise resolution: numeric TMDB collection ID or deterministic hash matching saveFranchise()
+        if (isFranchise) {
+            const baseKey = (rawIdStr || payloadIdStr).replace(/^(franchise_)+/, '');
+            const parsedNum = Number(baseKey);
+            if (Number.isFinite(parsedNum) && parsedNum > 0) {
+                return parsedNum;
+            }
+            return this.hashString(baseKey || 'franchise');
+        }
+
+        // 6. Standard movie / tv / person prefix stripping (e.g. "movie_550" -> 550)
+        if (rawIdStr) {
+            const stripped = rawIdStr.replace(/^(movie_|tv_|person_)+/, '');
+            if (/^\d+$/.test(stripped)) {
+                const parsed = Number(stripped);
+                if (Number.isFinite(parsed) && parsed > 0) {
+                    return parsed;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1328,6 +1426,7 @@ export class StorageService {
                 watchedCount: 0,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings: false,
                 error: 'The selected file is not a valid JSON document.'
@@ -1344,6 +1443,7 @@ export class StorageService {
                 watchedCount: 0,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings: false,
                 error: 'Backup file root is not an object.'
@@ -1363,16 +1463,19 @@ export class StorageService {
             let watchedCount = 0;
             let inboxCount = 0;
             let favoritePeopleCount = 0;
+            let savedUniversesCount = 0;
 
             if (Array.isArray(parsed.content)) {
                 for (const item of parsed.content) {
                     if (!item || typeof item !== 'object') continue;
-                    const tmdbId = Number(item.tmdbId ?? item.id);
-                    if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+                    const tmdbId = this.resolveBackupTmdbId(item as Record<string, unknown>);
+                    if (!tmdbId) continue;
 
                     const lists = Array.isArray(item.lists) ? item.lists : [];
                     if (item.mediaType === 'person' && lists.includes('favorite')) {
                         favoritePeopleCount++;
+                    } else if (lists.includes('universe') || lists.includes('franchise')) {
+                        savedUniversesCount++;
                     } else if (lists.includes('inbox')) {
                         inboxCount++;
                     } else if (lists.includes('watched')) {
@@ -1386,9 +1489,35 @@ export class StorageService {
             const totalTitles = Array.isArray(parsed.content) ? parsed.content.length : 0;
             const historyCount = Array.isArray(parsed.searchHistory) ? parsed.searchHistory.length : 0;
             const hasSettings = Boolean(parsed.settings && typeof parsed.settings === 'object');
-            const tvProgressCount = Array.isArray(parsed.tvProgress)
+            const explicitTvProgress = Array.isArray(parsed.tvProgress)
                 ? parsed.tvProgress.filter((p) => p && typeof p === 'object' && typeof p.id === 'string' && typeof p.tmdbId === 'number').length
                 : 0;
+
+            const seenTvIds = new Set<string>();
+            if (Array.isArray(parsed.tvProgress)) {
+                for (const p of parsed.tvProgress) {
+                    if (p && typeof p.id === 'string') {
+                        seenTvIds.add(p.id);
+                    }
+                }
+            }
+
+            let backfilledTvCount = 0;
+            if (Array.isArray(parsed.content)) {
+                for (const item of parsed.content) {
+                    if (item && item.mediaType === 'tv' && Array.isArray(item.lists) && item.lists.includes('watched')) {
+                        const tmdbId = this.resolveBackupTmdbId(item as Record<string, unknown>);
+                        if (tmdbId) {
+                            const tvId = `tv_${tmdbId}`;
+                            if (!seenTvIds.has(tvId)) {
+                                seenTvIds.add(tvId);
+                                backfilledTvCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            const tvProgressCount = explicitTvProgress + backfilledTvCount;
 
             return {
                 isValid: totalTitles > 0 || historyCount > 0 || hasSettings || tvProgressCount > 0,
@@ -1401,6 +1530,7 @@ export class StorageService {
                 watchedCount,
                 inboxCount,
                 favoritePeopleCount,
+                savedUniversesCount,
                 historyCount,
                 hasSettings,
                 tvProgressCount
@@ -1425,6 +1555,7 @@ export class StorageService {
                 watchedCount,
                 inboxCount: 0,
                 favoritePeopleCount: 0,
+                savedUniversesCount: 0,
                 historyCount: 0,
                 hasSettings
             };
@@ -1439,6 +1570,7 @@ export class StorageService {
             watchedCount: 0,
             inboxCount: 0,
             favoritePeopleCount: 0,
+            savedUniversesCount: 0,
             historyCount: 0,
             hasSettings: false,
             error: 'The file does not contain recognized CineScope library records.'
@@ -1454,6 +1586,31 @@ export class StorageService {
             this.dbService.db.tvProgress.find().exec()
         ]);
 
+        const progressMap = new Map<string, TvProgressDocType>();
+        for (const d of tvProgressDocs) {
+            const json = d.toJSON() as TvProgressDocType;
+            const clean = { ...json };
+            delete (clean as Record<string, unknown>)['_rev'];
+            delete (clean as Record<string, unknown>)['_deleted'];
+            delete (clean as Record<string, unknown>)['_meta'];
+            progressMap.set(clean.id, clean);
+        }
+
+        // Safety backfill: Ensure watched TV series always have a tvProgress record in exported backup
+        for (const d of contentDocs) {
+            const doc = d.toJSON() as ContentDocType;
+            if (doc.mediaType === 'tv' && doc.lists.includes('watched')) {
+                const tvId = `tv_${doc.tmdbId}`;
+                if (!progressMap.has(tvId)) {
+                    const synthesized = this.buildTvProgressFromPayload(
+                        doc.tmdbId,
+                        (doc.payload ?? {}) as TmdbPayload
+                    );
+                    progressMap.set(tvId, synthesized);
+                }
+            }
+        }
+
         const payload: CinescopeBackupPayload = {
             version: 1,
             appVersion: APP_VERSION,
@@ -1467,6 +1624,13 @@ export class StorageService {
                 delete (clean as Record<string, unknown>)['_deleted'];
                 delete (clean as Record<string, unknown>)['_meta'];
                 delete (clean as Record<string, unknown>)['_attachments'];
+                if (clean.payload && typeof clean.payload === 'object') {
+                    clean.payload = this.syncPayloadWithLists(
+                        clean.payload as Record<string, unknown>,
+                        clean.lists,
+                        clean.watchedAt
+                    );
+                }
                 return clean;
             }),
             searchHistory: historyDocs.map((d) => {
@@ -1477,14 +1641,7 @@ export class StorageService {
                 delete (clean as Record<string, unknown>)['_meta'];
                 return clean;
             }),
-            tvProgress: tvProgressDocs.map((d) => {
-                const json = d.toJSON() as TvProgressDocType;
-                const clean = { ...json };
-                delete (clean as Record<string, unknown>)['_rev'];
-                delete (clean as Record<string, unknown>)['_deleted'];
-                delete (clean as Record<string, unknown>)['_meta'];
-                return clean;
-            })
+            tvProgress: Array.from(progressMap.values())
         };
 
         return JSON.stringify(payload, null, 2);
@@ -1503,6 +1660,7 @@ export class StorageService {
         let watchedCount = 0;
         let inboxCount = 0;
         let favoritePeopleCount = 0;
+        let savedUniversesCount = 0;
         let historyCount = 0;
 
         // 1. Restore Settings (supports both modern `parsed.settings` and Legacy v1 `parsed.data.settings`)
@@ -1558,28 +1716,55 @@ export class StorageService {
             for (const raw of parsed.content) {
                 if (!raw || typeof raw !== 'object') continue;
 
-                const tmdbId = Number(raw.tmdbId ?? raw.id);
-                if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+                const tmdbId = this.resolveBackupTmdbId(raw as Record<string, unknown>);
+                if (!tmdbId) continue;
 
                 const mediaType = (raw.mediaType === 'tv' || raw.mediaType === 'person')
                     ? raw.mediaType
                     : 'movie';
 
-                const docId = typeof raw.id === 'string' && raw.id.trim().length > 0
-                    ? raw.id.trim()
-                    : this.generateId(tmdbId, mediaType);
-
                 const lists = Array.isArray(raw.lists) && raw.lists.length > 0
                     ? raw.lists.map(String)
                     : ['watchlist'];
+
+                const rawIdStr = typeof raw.id === 'string' ? raw.id.trim() : '';
+                let docId: string;
+                if (lists.includes('universe') || rawIdStr.startsWith('universe_')) {
+                    const cleanKey = (rawIdStr || String((raw.payload as Record<string, unknown> | undefined)?.['id'] ?? tmdbId)).replace(/^(universe_)+/, '');
+                    docId = `universe_${cleanKey}`;
+                } else if (lists.includes('franchise') || rawIdStr.startsWith('franchise_')) {
+                    const cleanKey = (rawIdStr || String((raw.payload as Record<string, unknown> | undefined)?.['id'] ?? tmdbId)).replace(/^(franchise_)+/, '');
+                    docId = `franchise_${cleanKey}`;
+                } else if (rawIdStr.length > 0) {
+                    docId = rawIdStr;
+                } else {
+                    docId = this.generateId(tmdbId, mediaType);
+                }
 
                 const addedAt = typeof raw.addedAt === 'string' && Number.isFinite(Date.parse(raw.addedAt))
                     ? raw.addedAt
                     : new Date().toISOString();
 
-                const payload = raw.payload && typeof raw.payload === 'object'
-                    ? (raw.payload as TmdbPayload)
+                const watchedAt = (raw.watchedAt && typeof raw.watchedAt === 'string' && Number.isFinite(Date.parse(raw.watchedAt)))
+                    ? raw.watchedAt
+                    : (lists.includes('watched') ? addedAt : undefined);
+
+                const rawPayload = raw.payload && typeof raw.payload === 'object'
+                    ? (raw.payload as Record<string, unknown>)
                     : { id: tmdbId, media_type: mediaType };
+
+                const syncedPayload = this.syncPayloadWithLists(rawPayload, lists, watchedAt);
+
+                if (lists.includes('universe')) {
+                    const cleanKey = docId.replace(/^(universe_)+/, '');
+                    const canonicalId = `universe_${cleanKey}`;
+                    (syncedPayload as Record<string, unknown>)['id'] = canonicalId;
+                    (syncedPayload as Record<string, unknown>)['universeId'] = canonicalId;
+                } else if (lists.includes('franchise')) {
+                    if (!(syncedPayload as Record<string, unknown>)['id']) {
+                        (syncedPayload as Record<string, unknown>)['id'] = docId;
+                    }
+                }
 
                 const cleanDoc: ContentDocType = {
                     id: docId,
@@ -1587,14 +1772,28 @@ export class StorageService {
                     mediaType,
                     lists,
                     addedAt,
-                    payload
+                    payload: syncedPayload
                 };
 
-                if (raw.watchedAt && typeof raw.watchedAt === 'string' && Number.isFinite(Date.parse(raw.watchedAt))) {
-                    cleanDoc.watchedAt = raw.watchedAt;
+                if (watchedAt) {
+                    cleanDoc.watchedAt = watchedAt;
                 }
 
                 docsById.set(docId, cleanDoc);
+            }
+        }
+
+        // Retrieve existing local content to perform an intelligent, safe merge instead of destructive replacement
+        const existingContentDocs = await this.dbService.db.content.find().exec();
+        const existingContentMap = new Map<string, ContentDocType>();
+        for (const d of existingContentDocs) {
+            existingContentMap.set(d.id, d.toJSON() as ContentDocType);
+        }
+
+        for (const [docId, incomingDoc] of docsById.entries()) {
+            const localDoc = existingContentMap.get(docId);
+            if (localDoc) {
+                docsById.set(docId, this.mergeContentDoc(localDoc, incomingDoc));
             }
         }
 
@@ -1610,6 +1809,8 @@ export class StorageService {
             for (const doc of docsToUpsert) {
                 if (doc.mediaType === 'person' && doc.lists.includes('favorite')) {
                     favoritePeopleCount++;
+                } else if (doc.lists.includes('universe') || doc.lists.includes('franchise')) {
+                    savedUniversesCount++;
                 } else if (doc.lists.includes('inbox')) {
                     inboxCount++;
                 } else if (doc.lists.includes('watched')) {
@@ -1644,23 +1845,54 @@ export class StorageService {
             }
         }
 
-        // 5. Restore TV Progress (if present) in chunks
+        // 5. Restore TV Progress (including backfilling for watched TV series) in chunks
         let tvProgressCount = 0;
+        const progressBySeriesId = new Map<string, TvProgressDocType>();
         if (Array.isArray(parsed.tvProgress)) {
-            const validProgress: TvProgressDocType[] = [];
             for (const p of parsed.tvProgress) {
                 if (p && typeof p.id === 'string' && typeof p.tmdbId === 'number' && Array.isArray(p.watchedEpisodes)) {
-                    validProgress.push(migrateTvProgressCounts(p));
+                    const migrated = migrateTvProgressCounts(p);
+                    progressBySeriesId.set(migrated.id, migrated);
                 }
             }
-            if (validProgress.length > 0) {
-                const CHUNK_SIZE = 100;
-                for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
-                    const chunk = validProgress.slice(i, i + CHUNK_SIZE);
-                    await this.dbService.db.tvProgress.bulkUpsert(chunk);
+        }
+
+        // Backfill missing tvProgress records for watched TV series in content
+        for (const doc of docsToUpsert) {
+            if (doc.mediaType === 'tv' && doc.lists.includes('watched')) {
+                const tvDocId = `tv_${doc.tmdbId}`;
+                if (!progressBySeriesId.has(tvDocId)) {
+                    const synthesized = this.buildTvProgressFromPayload(
+                        doc.tmdbId,
+                        (doc.payload ?? {}) as TmdbPayload
+                    );
+                    progressBySeriesId.set(tvDocId, synthesized);
                 }
-                tvProgressCount = validProgress.length;
             }
+        }
+
+        // Merge with existing local TV progress to preserve watched episodes logged on current device
+        const existingProgressDocs = await this.dbService.db.tvProgress.find().exec();
+        const existingProgressMap = new Map<string, TvProgressDocType>();
+        for (const p of existingProgressDocs) {
+            existingProgressMap.set(p.id, p.toJSON() as TvProgressDocType);
+        }
+
+        for (const [seriesId, incomingProgress] of progressBySeriesId.entries()) {
+            const localProgress = existingProgressMap.get(seriesId);
+            if (localProgress) {
+                progressBySeriesId.set(seriesId, this.mergeTvProgressDoc(localProgress, incomingProgress));
+            }
+        }
+
+        const validProgress = Array.from(progressBySeriesId.values());
+        if (validProgress.length > 0) {
+            const CHUNK_SIZE = 100;
+            for (let i = 0; i < validProgress.length; i += CHUNK_SIZE) {
+                const chunk = validProgress.slice(i, i + CHUNK_SIZE);
+                await this.dbService.db.tvProgress.bulkUpsert(chunk);
+            }
+            tvProgressCount = validProgress.length;
         }
 
         return {
@@ -1669,6 +1901,7 @@ export class StorageService {
             watchedCount,
             inboxCount,
             favoritePeopleCount,
+            savedUniversesCount,
             historyCount,
             tvProgressCount
         };
@@ -1704,7 +1937,7 @@ export class StorageService {
         const displayTitle = cleanTitle || cleanName || `#${tmdbId}`;
         const posterPath = item.poster_path ?? null;
 
-        const payload: TmdbPayload = {
+        const rawPayload: TmdbPayload = {
             ...item,
             id: tmdbId,
             contentId: tmdbId,
@@ -1718,6 +1951,7 @@ export class StorageService {
             first_air_date: item.first_air_date ?? item.release_date ?? '',
             genres: Array.isArray(item.genres) ? item.genres : []
         };
+        const payload = this.syncPayloadWithLists(rawPayload as Record<string, unknown>, [targetList], watchedAt);
 
         const doc: ContentDocType = {
             id: docId,
@@ -1756,5 +1990,198 @@ export class StorageService {
 
     public generateId(tmdbId: number, mediaType: 'movie' | 'tv' | 'person'): string {
         return `${mediaType}_${tmdbId}`;
+    }
+
+    /**
+     * Synchronizes internal payload flags (`isWatched`, `isWatchlist`, `watchedAt`) with document `lists` and `watchedAt`
+     * to eliminate contradictory metadata states between document properties and embedded payload objects.
+     */
+    public syncPayloadWithLists(
+        payload: Record<string, unknown> | undefined | null,
+        lists: string[],
+        watchedAt?: string
+    ): TmdbPayload {
+        const synced: Record<string, unknown> = { ...(payload || {}) };
+        const isWatched = lists.includes('watched');
+        const isWatchlist = lists.includes('watchlist');
+
+        if (isWatched) {
+            synced['isWatched'] = true;
+            synced['isWatchlist'] = false;
+            if (watchedAt) {
+                synced['watchedAt'] = watchedAt;
+            }
+        } else if (isWatchlist) {
+            synced['isWatched'] = false;
+            synced['isWatchlist'] = true;
+            delete synced['watchedAt'];
+        } else {
+            // Other lists e.g. 'inbox', 'favorite', 'universe', 'franchise'
+            delete synced['isWatched'];
+            delete synced['isWatchlist'];
+            delete synced['watchedAt'];
+        }
+
+        return synced as TmdbPayload;
+    }
+
+    /**
+     * Safely merges a local document with an incoming backup document.
+     * Preserves user progress:
+     * - 'watched' state is terminal and never downgraded back to 'watchlist' or 'inbox'.
+     * - 'watchlist' state takes precedence over 'inbox'.
+     * - Preserves orthogonal lists ('favorite', 'universe', 'franchise', custom tags).
+     * - Retains earliest addition timestamp (`addedAt`) and latest watch timestamp (`watchedAt`).
+     * - Synchronizes payload flags (`isWatched`, `isWatchlist`).
+     */
+    public mergeContentDoc(localDoc: ContentDocType, incomingDoc: ContentDocType): ContentDocType {
+        const localLists = Array.isArray(localDoc.lists) ? localDoc.lists : [];
+        const incomingLists = Array.isArray(incomingDoc.lists) ? incomingDoc.lists : [];
+
+        // Determine merged primary consumption state: watched > watchlist > inbox
+        const isWatched = localLists.includes('watched') || incomingLists.includes('watched');
+        const isWatchlist = !isWatched && (localLists.includes('watchlist') || incomingLists.includes('watchlist'));
+        const isInbox = !isWatched && !isWatchlist && (localLists.includes('inbox') || incomingLists.includes('inbox'));
+
+        const mergedListsSet = new Set<string>();
+        if (isWatched) mergedListsSet.add('watched');
+        if (isWatchlist) mergedListsSet.add('watchlist');
+        if (isInbox) mergedListsSet.add('inbox');
+
+        // Preserve all orthogonal tags from both local and backup
+        const orthogonalTags = new Set<string>([
+            ...localLists.filter((l) => l !== 'watched' && l !== 'watchlist' && l !== 'inbox'),
+            ...incomingLists.filter((l) => l !== 'watched' && l !== 'watchlist' && l !== 'inbox')
+        ]);
+        for (const tag of orthogonalTags) {
+            mergedListsSet.add(tag);
+        }
+        const mergedLists = Array.from(mergedListsSet);
+
+        // Retain earliest addedAt
+        const localAdded = Date.parse(localDoc.addedAt);
+        const incomingAdded = Date.parse(incomingDoc.addedAt);
+        let mergedAddedAt = localDoc.addedAt;
+        if (Number.isFinite(localAdded) && Number.isFinite(incomingAdded)) {
+            mergedAddedAt = localAdded <= incomingAdded ? localDoc.addedAt : incomingDoc.addedAt;
+        } else if (Number.isFinite(incomingAdded)) {
+            mergedAddedAt = incomingDoc.addedAt;
+        }
+
+        // Determine merged watchedAt if item is watched
+        let mergedWatchedAt: string | undefined = undefined;
+        if (isWatched) {
+            const localWatched = localDoc.watchedAt ? Date.parse(localDoc.watchedAt) : NaN;
+            const incomingWatched = incomingDoc.watchedAt ? Date.parse(incomingDoc.watchedAt) : NaN;
+            if (Number.isFinite(localWatched) && Number.isFinite(incomingWatched)) {
+                mergedWatchedAt = localWatched >= incomingWatched ? localDoc.watchedAt : incomingDoc.watchedAt;
+            } else if (Number.isFinite(localWatched)) {
+                mergedWatchedAt = localDoc.watchedAt;
+            } else if (Number.isFinite(incomingWatched)) {
+                mergedWatchedAt = incomingDoc.watchedAt;
+            } else {
+                mergedWatchedAt = mergedAddedAt;
+            }
+        }
+
+        // Combine payloads with local taking precedence, then sanitize with lists
+        const rawPayload = {
+            ...((incomingDoc.payload as Record<string, unknown>) || {}),
+            ...((localDoc.payload as Record<string, unknown>) || {})
+        };
+        const syncedPayload = this.syncPayloadWithLists(rawPayload, mergedLists, mergedWatchedAt);
+
+        // Ensure universe/franchise IDs remain intact in payload
+        if (mergedLists.includes('universe')) {
+            const cleanKey = localDoc.id.replace(/^(universe_)+/, '');
+            const canonicalId = `universe_${cleanKey}`;
+            (syncedPayload as Record<string, unknown>)['id'] = canonicalId;
+            (syncedPayload as Record<string, unknown>)['universeId'] = canonicalId;
+        } else if (mergedLists.includes('franchise')) {
+            if (!(syncedPayload as Record<string, unknown>)['id']) {
+                (syncedPayload as Record<string, unknown>)['id'] = localDoc.id;
+            }
+        }
+
+        const mergedDoc: ContentDocType = {
+            id: localDoc.id,
+            tmdbId: localDoc.tmdbId || incomingDoc.tmdbId,
+            mediaType: localDoc.mediaType || incomingDoc.mediaType,
+            lists: mergedLists,
+            addedAt: mergedAddedAt,
+            payload: syncedPayload
+        };
+
+        if (mergedWatchedAt) {
+            mergedDoc.watchedAt = mergedWatchedAt;
+        }
+
+        return mergedDoc;
+    }
+
+    /**
+     * Safely merges a local TV progress record with an incoming backup progress record.
+     * Performs a union of watched episodes so no logged progress is lost.
+     */
+    public mergeTvProgressDoc(localProgress: TvProgressDocType, incomingProgress: TvProgressDocType): TvProgressDocType {
+        const episodeSet = new Set<string>([
+            ...(Array.isArray(incomingProgress.watchedEpisodes) ? incomingProgress.watchedEpisodes : []),
+            ...(Array.isArray(localProgress.watchedEpisodes) ? localProgress.watchedEpisodes : [])
+        ]);
+        const mergedWatchedEpisodes = Array.from(episodeSet);
+
+        const isMarkedComplete = localProgress.isMarkedComplete === true || incomingProgress.isMarkedComplete === true;
+
+        let mergedUnwatchedEpisodes: string[] | undefined = undefined;
+        if (isMarkedComplete) {
+            const unwatchedSet = new Set<string>([
+                ...(Array.isArray(incomingProgress.unwatchedEpisodes) ? incomingProgress.unwatchedEpisodes : []),
+                ...(Array.isArray(localProgress.unwatchedEpisodes) ? localProgress.unwatchedEpisodes : [])
+            ]);
+            for (const ep of mergedWatchedEpisodes) {
+                unwatchedSet.delete(ep);
+            }
+            mergedUnwatchedEpisodes = Array.from(unwatchedSet);
+        }
+
+        const totalSeasons = Math.max(localProgress.totalSeasons || 0, incomingProgress.totalSeasons || 0) || 1;
+        const totalEpisodes = Math.max(localProgress.totalEpisodes || 0, incomingProgress.totalEpisodes || 0) || 0;
+        const totalReleasedEpisodes = Math.max(localProgress.totalReleasedEpisodes || 0, incomingProgress.totalReleasedEpisodes || 0);
+
+        const candidate: TvProgressDocType = {
+            id: localProgress.id,
+            tmdbId: localProgress.tmdbId || incomingProgress.tmdbId,
+            seriesTitle: localProgress.seriesTitle || incomingProgress.seriesTitle || 'TV Series',
+            totalSeasons,
+            totalEpisodes,
+            totalReleasedEpisodes,
+            watchedEpisodesCount: 0,
+            watchedEpisodes: mergedWatchedEpisodes,
+            updatedAt: Math.max(localProgress.updatedAt || 0, incomingProgress.updatedAt || 0, Date.now())
+        };
+
+        if (isMarkedComplete) {
+            candidate.isMarkedComplete = true;
+            if (mergedUnwatchedEpisodes) {
+                candidate.unwatchedEpisodes = mergedUnwatchedEpisodes;
+            }
+        }
+
+        const posterPath = localProgress.posterPath ?? incomingProgress.posterPath;
+        if (posterPath) candidate.posterPath = posterPath;
+
+        const backdropPath = localProgress.backdropPath ?? incomingProgress.backdropPath;
+        if (backdropPath) candidate.backdropPath = backdropPath;
+
+        const nextSeasonNumber = localProgress.nextSeasonNumber ?? incomingProgress.nextSeasonNumber;
+        if (nextSeasonNumber !== undefined) candidate.nextSeasonNumber = nextSeasonNumber;
+
+        const nextSeasonAirDate = localProgress.nextSeasonAirDate ?? incomingProgress.nextSeasonAirDate;
+        if (nextSeasonAirDate) candidate.nextSeasonAirDate = nextSeasonAirDate;
+
+        const nextSeasonTitle = localProgress.nextSeasonTitle ?? incomingProgress.nextSeasonTitle;
+        if (nextSeasonTitle) candidate.nextSeasonTitle = nextSeasonTitle;
+
+        return migrateTvProgressCounts(candidate);
     }
 }

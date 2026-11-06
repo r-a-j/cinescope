@@ -528,7 +528,9 @@ export class SettingsPage implements OnInit {
             if (inspection.watchlistCount > 0) details.push(`• Watchlist: ${inspection.watchlistCount} title(s)`);
             if (inspection.watchedCount > 0) details.push(`• Watched: ${inspection.watchedCount} title(s)`);
             if (inspection.inboxCount > 0) details.push(`• Inbox Queue: ${inspection.inboxCount} title(s)`);
+            if (inspection.savedUniversesCount > 0) details.push(`• Franchises & Universes: ${inspection.savedUniversesCount}`);
             if (inspection.favoritePeopleCount > 0) details.push(`• Favorite People: ${inspection.favoritePeopleCount}`);
+            if (inspection.tvProgressCount && inspection.tvProgressCount > 0) details.push(`• TV Show Progress: ${inspection.tvProgressCount} series`);
             if (inspection.historyCount > 0) details.push(`• Search History: ${inspection.historyCount} queries`);
             if (inspection.hasSettings) details.push('• Preferences & Settings');
 
@@ -555,6 +557,9 @@ export class SettingsPage implements OnInit {
                                 if (result.watchlistCount > 0) summary.push(`${result.watchlistCount} Watchlist`);
                                 if (result.watchedCount > 0) summary.push(`${result.watchedCount} Watched`);
                                 if (result.inboxCount > 0) summary.push(`${result.inboxCount} Inbox`);
+                                if (result.savedUniversesCount > 0) summary.push(`${result.savedUniversesCount} Franchises`);
+                                if (result.favoritePeopleCount > 0) summary.push(`${result.favoritePeopleCount} People`);
+                                if (result.tvProgressCount && result.tvProgressCount > 0) summary.push(`${result.tvProgressCount} TV Progress`);
 
                                 const restoredText = summary.length > 0 ? summary.join(', ') : `${result.contentCount} titles`;
                                 await this.toast.presentSuccess(`Successfully restored ${restoredText}!`, 3500);
