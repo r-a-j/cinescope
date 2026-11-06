@@ -529,7 +529,7 @@ export const TrendingStore = signalStore(
                             };
                             builtLanes.push({
                                 id: `ai-taste-tv-${idx}`,
-                                title: `AI CURATED: ${rawTitle.toUpperCase()}`,
+                                title: `AI PULSE: ${rawTitle.toUpperCase()}`,
                                 mediaType: 'tv',
                                 tvParams
                             });
@@ -544,7 +544,7 @@ export const TrendingStore = signalStore(
                             };
                             builtLanes.push({
                                 id: `ai-taste-movie-${idx}`,
-                                title: `AI CURATED: ${rawTitle.toUpperCase()}`,
+                                title: `AI PULSE: ${rawTitle.toUpperCase()}`,
                                 mediaType: 'movie',
                                 movieParams
                             });
