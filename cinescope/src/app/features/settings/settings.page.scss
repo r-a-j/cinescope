@@ -1396,7 +1396,71 @@ ion-title {
     }
 }
 
+.safety-center-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(5, 5, 8, 0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: safetyOverlayFadeIn 0.16s ease-out;
+}
+
+@keyframes safetyOverlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes safetyCardPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 .safety-modal-container {
+    width: 100%;
+    max-width: 356px;
+    background: #121319;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(229, 9, 20, 0.12);
+    padding-bottom: 18px;
+    overflow: hidden;
+    animation: safetyCardPopIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+
+    .backup-modal-header {
+        padding: 16px 16px 12px;
+
+        .title-icon-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .modal-title {
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-subtitle {
+            font-size: 11px;
+        }
+    }
+
     .safety-badge {
         background: rgba(229, 9, 20, 0.15) !important;
         border-color: rgba(229, 9, 20, 0.38) !important;
@@ -1404,7 +1468,8 @@ ion-title {
     }
 
     .safety-modal-body {
-        gap: 16px;
+        padding: 14px 16px 0;
+        gap: 12px;
     }
 
     .safety-input-section {

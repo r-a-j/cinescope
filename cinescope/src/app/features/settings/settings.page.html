@@ -902,16 +902,18 @@
 </ion-modal>
 
 <!-- ==========================================
-     18+ ADULT CONTENT UNLOCK MODAL
+     18+ ADULT CONTENT UNLOCK MODAL (CENTERED)
      ========================================== -->
-<ion-modal
-    [isOpen]="isAdultUnlockModalOpen()"
-    (didDismiss)="closeAdultUnlockModal()"
-    [initialBreakpoint]="0.58"
-    [breakpoints]="[0, 0.58, 0.78]"
-    class="backup-modal-sheet safety-modal-sheet">
-    <ng-template>
-        <div class="backup-modal-container safety-modal-container">
+@if (isAdultUnlockModalOpen()) {
+    <div
+        class="safety-center-overlay"
+        (click)="closeAdultUnlockModal()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="safety-unlock-title">
+        <div
+            class="backup-modal-container safety-modal-container"
+            (click)="$event.stopPropagation()">
             <!-- Modal Header -->
             <div class="backup-modal-header">
                 <div class="modal-title-row">
@@ -920,7 +922,7 @@
                             <ion-icon name="lock-closed-outline"></ion-icon>
                         </div>
                         <div>
-                            <h3 class="modal-title">UNLOCK 18+ ADULT CONTENT</h3>
+                            <h3 id="safety-unlock-title" class="modal-title">UNLOCK 18+ ADULT CONTENT</h3>
                             <p class="modal-subtitle">Enter access password to disable family-safe filter</p>
                         </div>
                     </div>
@@ -935,7 +937,7 @@
                 <div class="safety-input-section">
                     <span class="destination-title">ACCESS PASSWORD</span>
                     <div class="safety-password-wrap" [class.has-error]="!!adultPasswordError()">
-                        <ion-icon name="finger-print-outline" class="password-lead-icon"></ion-icon>
+                        <ion-icon name="lock-closed-outline" class="password-lead-icon"></ion-icon>
                         <input
                             [type]="showAdultPassword() ? 'text' : 'password'"
                             class="safety-password-input"
@@ -964,8 +966,8 @@
                 <div class="privacy-note safety-policy-note">
                     <ion-icon name="shield-checkmark-outline"></ion-icon>
                     <span>
-                        Unlocking allows 18+ adult titles and collections in Search &amp; Library.
-                        <strong>AI Universe, Sync Canon &amp; AI Taste analysis remain strictly prohibited on adult content.</strong>
+                        Unlocking allows 18+ adult titles &amp; collections in Search.
+                        <strong>All AI features remain disabled on adult content.</strong>
                     </span>
                 </div>
 
@@ -982,10 +984,10 @@
                         class="safety-btn-unlock"
                         (click)="submitAdultUnlockPassword()">
                         <ion-icon name="lock-open-outline"></ion-icon>
-                        <span>Unlock 18+ Access</span>
+                        <span>Unlock 18+</span>
                     </button>
                 </div>
             </div>
         </div>
-    </ng-template>
-</ion-modal>
+    </div>
+}
