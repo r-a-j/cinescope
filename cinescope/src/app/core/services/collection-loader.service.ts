@@ -79,11 +79,12 @@ function mapTvToSwimlane(items: TmdbTvListItemDto[], allowAdult = false): Swimla
     }));
 }
 
-function mapPeopleToSwimlane(items: TmdbPersonListItemDto[]): SwimlaneItem[] {
+function mapPeopleToSwimlane(items: TmdbPersonListItemDto[], allowAdult = false): SwimlaneItem[] {
   return (items || [])
-    .filter((item) => item.profile_path)
+    .filter((item) => item.profile_path && (allowAdult || !item.adult))
     .map((item) => {
       const knownTitles = (item.known_for ?? [])
+        .filter((k) => allowAdult || !(k as { adult?: boolean }).adult)
         .map((k) => ('title' in k ? k.title : k.name))
         .filter(Boolean)
         .slice(0, 2);
@@ -305,6 +306,9 @@ export class CollectionLoaderService {
     const pulseWindow = isWeekend ? 'week' : 'day';
     const todayIso = new Date().toISOString().slice(0, 10);
     const activeRegion = context?.region || this.storageService.userRegion() || 'IN';
+    const allowAdult = typeof this.storageService.allowAdultContent === 'function'
+      ? this.storageService.allowAdultContent()
+      : false;
 
     // Generic Discover Movies Context with Cascading Query Relaxation
     if (context?.type === 'discover_movies' && context.movieParams) {
@@ -327,7 +331,7 @@ export class CollectionLoaderService {
           context._tier1TotalPages = res.total_pages;
         }
 
-        const items = this.filterWatched(mapMoviesToSwimlane(res.results));
+        const items = this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult));
 
         // If tier 1 returned 0 results (e.g. page was 2 and tier 1 only had 1 page):
         if (items.length === 0 && isRelaxable && relaxedParams) {
@@ -342,7 +346,7 @@ export class CollectionLoaderService {
           applyFiltersToMovieParams(rMovieParams, filters);
           const rRes = await firstValueFrom(this.discoverService.discoverMovies(rMovieParams));
           return {
-            items: this.filterWatched(mapMoviesToSwimlane(rRes.results)),
+            items: this.filterWatched(mapMoviesToSwimlane(rRes.results, allowAdult)),
             hasMore: rRes.page < rRes.total_pages
           };
         }
@@ -371,7 +375,7 @@ export class CollectionLoaderService {
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
         return {
-          items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+          items: this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult)),
           hasMore: res.page < res.total_pages
         };
       }
@@ -397,7 +401,7 @@ export class CollectionLoaderService {
           context._tier1TvTotalPages = res.total_pages;
         }
 
-        const items = this.filterWatched(mapTvToSwimlane(res.results));
+        const items = this.filterWatched(mapTvToSwimlane(res.results, allowAdult));
 
         if (items.length === 0 && isRelaxable && relaxedParams) {
           context._tier1TvTotalPages = Math.min(context._tier1TvTotalPages ?? 1, page - 1);
@@ -411,7 +415,7 @@ export class CollectionLoaderService {
           applyFiltersToTvParams(rTvParams, filters);
           const rRes = await firstValueFrom(this.discoverService.discoverTv(rTvParams));
           return {
-            items: this.filterWatched(mapTvToSwimlane(rRes.results)),
+            items: this.filterWatched(mapTvToSwimlane(rRes.results, allowAdult)),
             hasMore: rRes.page < rRes.total_pages
           };
         }
@@ -439,7 +443,7 @@ export class CollectionLoaderService {
         applyFiltersToTvParams(tvParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
         return {
-          items: this.filterWatched(mapTvToSwimlane(res.results)),
+          items: this.filterWatched(mapTvToSwimlane(res.results, allowAdult)),
           hasMore: res.page < res.total_pages
         };
       }
@@ -449,7 +453,7 @@ export class CollectionLoaderService {
     if (context?.type === 'trending_movies') {
       const res = await firstValueFrom(this.trendingService.getTrendingMovies(pulseWindow, 'en-US', page));
       return {
-        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        items: this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -457,7 +461,7 @@ export class CollectionLoaderService {
     if (context?.type === 'trending_tv') {
       const res = await firstValueFrom(this.trendingService.getTrendingTvShows(pulseWindow, 'en-US', page));
       return {
-        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        items: this.filterWatched(mapTvToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -465,7 +469,7 @@ export class CollectionLoaderService {
     if (context?.type === 'now_playing') {
       const res = await firstValueFrom(this.moviesService.getNowPlayingMovies('en-US', page, activeRegion));
       return {
-        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        items: this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -473,7 +477,7 @@ export class CollectionLoaderService {
     if (context?.type === 'upcoming') {
       const res = await firstValueFrom(this.moviesService.getUpcomingMovies('en-US', page, activeRegion));
       return {
-        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        items: this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -481,7 +485,7 @@ export class CollectionLoaderService {
     if (context?.type === 'on_the_air') {
       const res = await firstValueFrom(this.tvService.getTvOnTheAir('en-US', page));
       return {
-        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        items: this.filterWatched(mapTvToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -489,7 +493,7 @@ export class CollectionLoaderService {
     if (context?.type === 'top_rated_movies') {
       const res = await firstValueFrom(this.moviesService.getTopRatedMovies('en-US', page));
       return {
-        items: this.filterWatched(mapMoviesToSwimlane(res.results)),
+        items: this.filterWatched(mapMoviesToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
@@ -497,24 +501,24 @@ export class CollectionLoaderService {
     if (context?.type === 'top_rated_tv') {
       const res = await firstValueFrom(this.tvService.getTopRatedTvShows('en-US', page));
       return {
-        items: this.filterWatched(mapTvToSwimlane(res.results)),
+        items: this.filterWatched(mapTvToSwimlane(res.results, allowAdult)),
         hasMore: res.page < res.total_pages
       };
     }
 
     if (context?.type === 'trending_people') {
       const res = await firstValueFrom(this.trendingService.getTrendingPeople('week', 'en-US', page));
-      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+      return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
     }
 
     if (context?.type === 'popular_people') {
       const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page));
-      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+      return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
     }
 
     if (context?.type === 'breakout_people') {
       const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page + 2));
-      return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+      return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
     }
 
     if (context?.type === 'indian_people' || context?.type === 'world_people' || context?.type === 'director_people') {
@@ -596,13 +600,13 @@ export class CollectionLoaderService {
       };
       applyFiltersToMovieParams(movieParams, filters);
       const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-      return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+      return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
     }
 
     // Franchise Collection Handler
     if (context?.type === 'collection' && context.id) {
       const details = await firstValueFrom(this.collectionsService.getCollectionDetails(context.id));
-      const parts = details.parts || [];
+      const parts = (details.parts || []).filter((p) => allowAdult || !p.adult);
       const items: SwimlaneItem[] = parts.map((p) => ({
         id: p.id,
         mediaType: 'movie',
@@ -629,7 +633,7 @@ export class CollectionLoaderService {
             : this.tvService.getSimilarTvShows(context.id, 'en-US', page)
         );
         let mapped = this.filterWatched(
-          mapTvToSwimlane(res.results).filter((i) => i.id !== context.id)
+          mapTvToSwimlane(res.results, allowAdult).filter((i) => i.id !== context.id)
         );
         let hasMore = res.page < res.total_pages;
 
@@ -641,7 +645,7 @@ export class CollectionLoaderService {
           applyFiltersToTvParams(fallbackParams, filters);
           const fallbackRes = await firstValueFrom(this.discoverService.discoverTv(fallbackParams));
           const fallbackItems = this.filterWatched(
-            mapTvToSwimlane(fallbackRes.results).filter((i) => i.id !== context.id)
+            mapTvToSwimlane(fallbackRes.results, allowAdult).filter((i) => i.id !== context.id)
           );
           const seen = new Set(mapped.map((i) => i.id));
           mapped = [...mapped, ...fallbackItems.filter((i) => !seen.has(i.id))];
@@ -655,7 +659,7 @@ export class CollectionLoaderService {
             : this.moviesService.getSimilarMovies(context.id, 'en-US', page)
         );
         let mapped = this.filterWatched(
-          mapMoviesToSwimlane(res.results).filter((i) => i.id !== context.id)
+          mapMoviesToSwimlane(res.results, allowAdult).filter((i) => i.id !== context.id)
         );
         let hasMore = res.page < res.total_pages;
 
@@ -667,7 +671,7 @@ export class CollectionLoaderService {
           applyFiltersToMovieParams(fallbackParams, filters);
           const fallbackRes = await firstValueFrom(this.discoverService.discoverMovies(fallbackParams));
           const fallbackItems = this.filterWatched(
-            mapMoviesToSwimlane(fallbackRes.results).filter((i) => i.id !== context.id)
+            mapMoviesToSwimlane(fallbackRes.results, allowAdult).filter((i) => i.id !== context.id)
           );
           const seen = new Set(mapped.map((i) => i.id));
           mapped = [...mapped, ...fallbackItems.filter((i) => !seen.has(i.id))];
@@ -681,19 +685,19 @@ export class CollectionLoaderService {
     switch (t) {
       case 'VIRAL MOVIES TODAY': {
         const res = await firstValueFrom(this.trendingService.getTrendingMovies(pulseWindow, 'en-US', page));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'IN THEATERS NOW': {
         const res = await firstValueFrom(this.moviesService.getNowPlayingMovies('en-US', page, 'IN'));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'BINGE-WORTHY SHOWS': {
         const res = await firstValueFrom(this.trendingService.getTrendingTvShows(pulseWindow, 'en-US', page));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapTvToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'AIRING THIS WEEK': {
         const res = await firstValueFrom(this.tvService.getTvOnTheAir('en-US', page));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapTvToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'INDIAN OTT & WEB SERIES': {
         const sortBy = getDiscoverTvSortBy(sortMode, 'popularity.desc');
@@ -704,7 +708,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToTvParams(tvParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverTv(tvParams));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapTvToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'TELUGU BLOCKBUSTERS': {
         const sortBy = getDiscoverSortBy(sortMode, 'popularity.desc');
@@ -716,7 +720,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'TAMIL CINEMA PULSE': {
         const sortBy = getDiscoverSortBy(sortMode, 'popularity.desc');
@@ -728,7 +732,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'MALAYALAM CRITICS\' GEMS': {
         const sortBy = getDiscoverSortBy(sortMode, 'vote_average.desc');
@@ -740,7 +744,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'NEW IN BOLLYWOOD': {
         const sortBy = getDiscoverSortBy(sortMode, 'primary_release_date.desc');
@@ -753,7 +757,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'TRENDING IN BOLLYWOOD': {
         const sortBy = getDiscoverSortBy(sortMode, 'popularity.desc');
@@ -764,7 +768,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'CRITICS\' CHOICE HINDI CLASSICS': {
         const sortBy = getDiscoverSortBy(sortMode, 'vote_average.desc');
@@ -777,7 +781,7 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'MODERN MASTERPIECES (2020S)': {
         const sortBy = getDiscoverSortBy(sortMode, 'vote_average.desc');
@@ -789,15 +793,15 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'ALL-TIME HALL OF FAME MOVIES': {
         const res = await firstValueFrom(this.moviesService.getTopRatedMovies('en-US', page));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'PRESTIGE TV VAULT': {
         const res = await firstValueFrom(this.tvService.getTopRatedTvShows('en-US', page));
-        return { items: mapTvToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapTvToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'TOP RATED INDIAN CINEMA': {
         const sortBy = getDiscoverSortBy(sortMode, 'vote_average.desc');
@@ -809,20 +813,20 @@ export class CollectionLoaderService {
         };
         applyFiltersToMovieParams(movieParams, filters);
         const res = await firstValueFrom(this.discoverService.discoverMovies(movieParams));
-        return { items: mapMoviesToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapMoviesToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'TRENDING STARS THIS WEEK': {
         const res = await firstValueFrom(this.trendingService.getTrendingPeople('week', 'en-US', page));
-        return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'POPULAR GLOBAL ICONS': {
         const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page));
-        return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       case 'BREAKOUT & FAN FAVORITES': {
         // Starts with offset page + 2 to show distinct breakout actors
         const res = await firstValueFrom(this.peopleService.getPopularPeople('en-US', page + 2));
-        return { items: mapPeopleToSwimlane(res.results), hasMore: res.page < res.total_pages };
+        return { items: mapPeopleToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
       default: {
         return { items: [], hasMore: false };

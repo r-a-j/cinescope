@@ -12,7 +12,22 @@ import { TmdbTvService } from '../services/tmdb-tv.service';
 import { SmartSearchService, SemanticIntentSection } from '../services/smart-search.service';
 import { DatabaseService } from '../database/database.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
+import { StorageService } from '../services/storage.service';
+import { FranchiseAggregatorService } from '../services/franchise-aggregator.service';
 import { generateSearchTitleVariations } from '../utils/search-fuzzy.util';
+
+function isAdultSearchResult(item: TmdbMultiSearchResultDto): boolean {
+    if ((item as { adult?: boolean }).adult === true) {
+        return true;
+    }
+    if (item.media_type === 'person') {
+        const knownFor = (item as { known_for?: { adult?: boolean }[] }).known_for;
+        if (Array.isArray(knownFor) && knownFor.length > 0 && knownFor.every((k) => k.adult === true)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function getMinimumReleaseDate(query: string): string | null {
     const explicitRange = query.match(/\b(?:from|since)\s+(19\d{2}|20\d{2})\s+(?:onwards?|forward|and\s+(?:up|later)|or\s+(?:later|newer))\b/i);
@@ -86,31 +101,51 @@ const initialState: SearchState = {
 export const SearchStore = signalStore(
     { providedIn: 'root' },
     withState(initialState),
-    withComputed(({ smartResults, results, collectionResults, activeFilter }) => ({
-        smartResultGroups: computed(() => {
-            const groups = new Map<string, CategorizedSearchResult[]>();
-            smartResults().forEach(item => {
-                const category = item.smart_category || 'Top Results';
-                const items = groups.get(category) || [];
-                items.push(item);
-                groups.set(category, items);
-            });
-            // Re-map Map into iterable arrays for the Angular HTML loop
-            return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
-        }),
-        filteredResults: computed(() => {
-            const filter = activeFilter();
-            const list = results();
-            if (filter === 'all' || filter === 'collection') {
-                return list;
-            }
-            return list.filter(item => item.media_type === filter);
-        }),
-        topCollectionSpotlight: computed(() => {
-            const collections = collectionResults();
-            return collections.length > 0 ? collections[0] : null;
-        })
-    })),
+    withComputed((
+        { smartResults, results, collectionResults, activeFilter },
+        storageService = inject(StorageService, { optional: true })
+    ) => {
+        const isAdultAllowed = (): boolean =>
+            typeof storageService?.allowAdultContent === 'function'
+                ? storageService.allowAdultContent()
+                : false;
+
+        return {
+            smartResultGroups: computed(() => {
+                const allowAdult = isAdultAllowed();
+                const visible = allowAdult
+                    ? smartResults()
+                    : smartResults().filter((item) => !isAdultSearchResult(item));
+                const groups = new Map<string, CategorizedSearchResult[]>();
+                visible.forEach(item => {
+                    const category = item.smart_category || 'Top Results';
+                    const items = groups.get(category) || [];
+                    items.push(item);
+                    groups.set(category, items);
+                });
+                // Re-map Map into iterable arrays for the Angular HTML loop
+                return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+            }),
+            filteredResults: computed(() => {
+                const allowAdult = isAdultAllowed();
+                const filter = activeFilter();
+                const list = allowAdult
+                    ? results()
+                    : results().filter((item) => !isAdultSearchResult(item));
+                if (filter === 'all' || filter === 'collection') {
+                    return list;
+                }
+                return list.filter(item => item.media_type === filter);
+            }),
+            topCollectionSpotlight: computed(() => {
+                const allowAdult = isAdultAllowed();
+                const collections = allowAdult
+                    ? collectionResults()
+                    : collectionResults().filter((c) => !c.adult);
+                return collections.length > 0 ? collections[0] : null;
+            })
+        };
+    }),
     withMethods((
         store,
         searchService = inject(TmdbSearchService),
@@ -120,8 +155,63 @@ export const SearchStore = signalStore(
         discoverService = inject(TmdbDiscoverService),
         smartSearchService = inject(SmartSearchService),
         dbService = inject(DatabaseService),
-        destroyRef = inject(DestroyRef)
+        destroyRef = inject(DestroyRef),
+        storageService = inject(StorageService, { optional: true }),
+        franchiseAggregator = inject(FranchiseAggregatorService, { optional: true })
     ) => {
+        const isAdultAllowed = (): boolean =>
+            typeof storageService?.allowAdultContent === 'function'
+                ? storageService.allowAdultContent()
+                : false;
+
+        const resolveSafeCollections = async (
+            rawCollections: TmdbCollectionListItemDto[],
+            expectedQuery: string
+        ): Promise<void> => {
+            if (store.query() !== expectedQuery) return;
+            const allowAdult = isAdultAllowed();
+            if (allowAdult) {
+                patchState(store, {
+                    collectionResults: rawCollections || [],
+                    isSearchingCollections: false
+                });
+                return;
+            }
+
+            const nonAdultCandidates = (rawCollections || []).filter((c) => !c.adult);
+
+            if (
+                franchiseAggregator &&
+                typeof franchiseAggregator.getCollectionMetadata === 'function' &&
+                nonAdultCandidates.length > 0
+            ) {
+                const verified = await Promise.all(
+                    nonAdultCandidates.slice(0, 8).map(async (col) => {
+                        try {
+                            const meta = await franchiseAggregator.getCollectionMetadata(col.id);
+                            if (!meta) return col;
+                            if (meta.adult === true || meta.parts.length === 0) {
+                                return null;
+                            }
+                            return col;
+                        } catch {
+                            return col;
+                        }
+                    })
+                );
+                if (store.query() !== expectedQuery) return;
+                patchState(store, {
+                    collectionResults: verified.filter((c): c is TmdbCollectionListItemDto => c !== null),
+                    isSearchingCollections: false
+                });
+                return;
+            }
+
+            patchState(store, {
+                collectionResults: nonAdultCandidates,
+                isSearchingCollections: false
+            });
+        };
 
         const saveRecentSearch = async (query: string): Promise<void> => {
             if (!query.trim()) return;
@@ -331,42 +421,41 @@ export const SearchStore = signalStore(
                             catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
                         ).subscribe({
                             next: (colRes) => {
-                                // Guard against stale responses if user changed or cleared query
-                                if (store.query() !== query) return;
-                                patchState(store, {
-                                    collectionResults: colRes.results || [],
-                                    isSearchingCollections: false
-                                });
+                                void resolveSafeCollections(colRes.results || [], query);
                             }
                         });
 
                         return searchService.searchMulti(cleanQuery, 1).pipe(
                             switchMap((res) => {
-                                const items = res.results || [];
+                                const allowAdult = isAdultAllowed();
+                                const items = (res.results || []).filter((item) => allowAdult || !isAdultSearchResult(item));
                                 if (items.length > 0 || cleanQuery.length < 3) {
-                                    return of({ res, matchedQuery: null as string | null });
+                                    return of({ res: { ...res, results: items }, matchedQuery: null as string | null });
                                 }
 
                                 // Stage 1: Algorithmic typo & phonetic variations (dropped vowels, swaps, Hinglish, German)
                                 const variations = generateSearchTitleVariations(cleanQuery).slice(0, 4);
                                 const trySpellService = (): Observable<{ res: typeof res; matchedQuery: string | null }> => {
                                     if (typeof searchService.getSpellingSuggestion !== 'function') {
-                                        return of({ res, matchedQuery: null as string | null });
+                                        return of({ res: { ...res, results: items }, matchedQuery: null as string | null });
                                     }
                                     return searchService.getSpellingSuggestion(cleanQuery).pipe(
                                         switchMap((suggestion) => {
                                             if (!suggestion || suggestion.toLowerCase() === cleanQuery.toLowerCase()) {
-                                                return of({ res, matchedQuery: null as string | null });
+                                                return of({ res: { ...res, results: items }, matchedQuery: null as string | null });
                                             }
                                             return searchService.searchMulti(suggestion, 1).pipe(
-                                                map((sugRes) => ({
-                                                    res: (sugRes.results?.length ?? 0) > 0 ? sugRes : res,
-                                                    matchedQuery: (sugRes.results?.length ?? 0) > 0 ? suggestion : null
-                                                })),
-                                                catchError(() => of({ res, matchedQuery: null as string | null }))
+                                                map((sugRes) => {
+                                                    const sugItems = (sugRes.results || []).filter((it) => allowAdult || !isAdultSearchResult(it));
+                                                    return {
+                                                        res: sugItems.length > 0 ? { ...sugRes, results: sugItems } : { ...res, results: items },
+                                                        matchedQuery: sugItems.length > 0 ? suggestion : null
+                                                    };
+                                                }),
+                                                catchError(() => of({ res: { ...res, results: items }, matchedQuery: null as string | null }))
                                             );
                                         }),
-                                        catchError(() => of({ res, matchedQuery: null as string | null }))
+                                        catchError(() => of({ res: { ...res, results: items }, matchedQuery: null as string | null }))
                                     );
                                 };
 
@@ -376,8 +465,14 @@ export const SearchStore = signalStore(
 
                                 const candidateCalls = variations.map((variant) =>
                                     searchService.searchMulti(variant, 1).pipe(
-                                        map((vRes) => ({ variant, vRes })),
-                                        catchError(() => of({ variant, vRes: res }))
+                                        map((vRes) => ({
+                                            variant,
+                                            vRes: {
+                                                ...vRes,
+                                                results: (vRes.results || []).filter((it) => allowAdult || !isAdultSearchResult(it))
+                                            }
+                                        })),
+                                        catchError(() => of({ variant, vRes: { ...res, results: items } }))
                                     )
                                 );
 
@@ -407,13 +502,16 @@ export const SearchStore = signalStore(
                                             ).subscribe((colRes) => {
                                                 if (store.query() !== query) return;
                                                 if ((colRes.results?.length ?? 0) > 0) {
-                                                    patchState(store, { collectionResults: colRes.results });
+                                                    void resolveSafeCollections(colRes.results, query);
                                                 }
                                             });
                                         }
                                     }
 
-                                    let finalResults = res.results || [];
+                                    const allowAdult = isAdultAllowed();
+                                    let finalResults = (res.results || []).filter(
+                                        (item) => allowAdult || !isAdultSearchResult(item)
+                                    );
 
                                     // If user specified an explicit year, boost matching release year to the top
                                     if (extractedYear && finalResults.length > 0) {
@@ -579,7 +677,9 @@ export const SearchStore = signalStore(
                     });
 
                     // Flatten the array of arrays because Discover returns multiple items per section
-                    const populatedEntities = (await Promise.all(fetches)).flat() as CategorizedSearchResult[];
+                    const allowAdult = isAdultAllowed();
+                    const populatedEntities = ((await Promise.all(fetches)).flat() as CategorizedSearchResult[])
+                        .filter((item) => allowAdult || !isAdultSearchResult(item));
                     const constrainedEntities = minimumReleaseDate
                         ? populatedEntities.filter((item) => {
                             if (item.media_type === 'person') return false;
@@ -640,6 +740,55 @@ export const SearchStore = signalStore(
                 }
             },
 
+            refreshAfterAdultToggle(): void {
+                const currentQuery = store.query().trim();
+                if (!currentQuery) {
+                    patchState(store, {
+                        results: [],
+                        collectionResults: [],
+                        smartResults: []
+                    });
+                    return;
+                }
+
+                patchState(store, {
+                    results: [],
+                    collectionResults: [],
+                    smartResults: [],
+                    lastSmartQuery: null,
+                    showSmartUI: false,
+                    page: 1,
+                    isLoading: true,
+                    isSearchingCollections: true
+                });
+
+                const clean = store.cleanQuery() || currentQuery.toLowerCase();
+                const collectionQuery = clean
+                    .replace(/\b(saga|franchise|series|trilogy|quadrilogy|duology)\b/gi, '')
+                    .replace(/\s+/g, ' ')
+                    .trim() || clean;
+
+                searchService.searchCollections(collectionQuery, 1).pipe(
+                    catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
+                ).subscribe((colRes) => {
+                    void resolveSafeCollections(colRes.results || [], store.query());
+                });
+
+                searchService.searchMulti(clean, 1).pipe(
+                    catchError(() => of({ results: [], page: 1, total_pages: 1, total_results: 0 }))
+                ).subscribe((res) => {
+                    if (store.query().trim() !== currentQuery) return;
+                    const allowAdult = isAdultAllowed();
+                    const items = (res.results || []).filter((item) => allowAdult || !isAdultSearchResult(item));
+                    patchState(store, {
+                        results: items,
+                        isLoading: false,
+                        hasMore: res.page < res.total_pages
+                    });
+                    void hydrateMissingImages(items);
+                });
+            },
+
             // Method intended for an Infinite Scroll trigger
             async loadNextPage(): Promise<void> {
                 if (store.isLoading() || store.isAppending() || !store.hasMore() || !store.query().trim()) {
@@ -652,7 +801,10 @@ export const SearchStore = signalStore(
                 try {
                     const res = await firstValueFrom(searchService.searchMulti(store.cleanQuery() || store.query(), nextPage));
                     if (res) {
-                        let newResults = res.results || [];
+                        const allowAdult = isAdultAllowed();
+                        let newResults = (res.results || []).filter(
+                            (item) => allowAdult || !isAdultSearchResult(item)
+                        );
                         const sortIntent = store.sortIntent();
 
                         if (sortIntent && newResults.length > 0) {

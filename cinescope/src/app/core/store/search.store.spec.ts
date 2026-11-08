@@ -1,6 +1,9 @@
+import { signal } from '@angular/core';
 import { TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DatabaseService } from '../database/database.service';
+import { FranchiseAggregatorService } from '../services/franchise-aggregator.service';
+import { StorageService } from '../services/storage.service';
 import { TmdbDiscoverService } from '../services/tmdb-discover.service';
 import { TmdbMoviesService } from '../services/tmdb-movies.service';
 import { SmartSearchService } from '../services/smart-search.service';
@@ -52,8 +55,16 @@ describe('SearchStore Smart Search', () => {
     let smartSearchService: {
         getSmartSuggestions: jasmine.Spy;
     };
+    let allowAdultSignal = signal<boolean>(false);
+    let franchiseAggregator: {
+        getCollectionMetadata: jasmine.Spy;
+    };
 
     beforeEach(() => {
+        allowAdultSignal = signal<boolean>(false);
+        franchiseAggregator = {
+            getCollectionMetadata: jasmine.createSpy('getCollectionMetadata').and.resolveTo(null)
+        };
         const emptyResponse = { page: 1, results: [], total_pages: 1, total_results: 0 };
         searchService = {
             searchMulti: jasmine.createSpy('searchMulti').and.returnValue(of(emptyResponse)),
@@ -91,7 +102,9 @@ describe('SearchStore Smart Search', () => {
                 { provide: TmdbTvService, useValue: { getTvExternalIds: jasmine.createSpy().and.returnValue(of({ wikidata_id: null })) } },
                 { provide: TmdbDiscoverService, useValue: discoverService },
                 { provide: SmartSearchService, useValue: smartSearchService },
-                { provide: DatabaseService, useValue: { getDatabase: jasmine.createSpy().and.resolveTo({ searchHistory: {} }) } }
+                { provide: DatabaseService, useValue: { getDatabase: jasmine.createSpy().and.resolveTo({ searchHistory: {} }) } },
+                { provide: StorageService, useValue: { allowAdultContent: allowAdultSignal } },
+                { provide: FranchiseAggregatorService, useValue: franchiseAggregator }
             ]
         });
         store = TestBed.inject(SearchStore);
@@ -168,5 +181,48 @@ describe('SearchStore Smart Search', () => {
         expect(store.results().length).toBe(1);
         const firstResult = store.results()[0];
         expect(firstResult && 'title' in firstResult ? firstResult.title : '').toBe('Crawlers');
+    }));
+
+    it('suppresses Trojan-horse adult collections (where collection.adult is false on TMDB but all parts are adult) when allowAdultContent is false, and allows them when true', fakeAsync(() => {
+        const blackedOutCollection = {
+            id: 1765802,
+            name: 'Blacked Out Collection',
+            original_name: 'Blacked Out Collection',
+            original_language: 'zh',
+            overview: '',
+            adult: false, // TMDB collection wrapper has adult: false
+            poster_path: '/g4il.jpg',
+            backdrop_path: '/cbiX.jpg'
+        };
+
+        searchService.searchCollections.and.returnValue(
+            of({ page: 1, results: [blackedOutCollection], total_pages: 1, total_results: 1 })
+        );
+
+        // When allowAdultContent is false, FranchiseAggregatorService filters out the 12 adult parts -> parts: []
+        franchiseAggregator.getCollectionMetadata.and.callFake(async () => ({
+            cachedAt: Date.now(),
+            name: 'Blacked Out Collection',
+            adult: true,
+            totalParts: allowAdultSignal() ? 12 : 0,
+            parts: allowAdultSignal()
+                ? [{ id: 1100573, title: 'Blacked Out', mediaType: 'movie' as const, adult: true }]
+                : []
+        }));
+
+        store.searchQuery('Blacked');
+        tick(350);
+        flushMicrotasks();
+
+        expect(store.collectionResults()).toEqual([]);
+        expect(store.topCollectionSpotlight()).toBeNull();
+
+        // Now unlock 18+ adult content in Settings
+        allowAdultSignal.set(true);
+        store.refreshAfterAdultToggle();
+        flushMicrotasks();
+
+        expect(store.collectionResults().length).toBe(1);
+        expect(store.topCollectionSpotlight()?.name).toBe('Blacked Out Collection');
     }));
 });

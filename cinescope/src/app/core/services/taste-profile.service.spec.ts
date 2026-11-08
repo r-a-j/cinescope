@@ -142,7 +142,8 @@ describe('TasteProfileService', () => {
     expect(dangalSeed?.originalLanguage).toBe('hi');
   });
 
-  it('excludes adult items from topSeeds when allowAdultContent is false', () => {
+  it('always excludes 18+ adult items from AI topSeeds even when allowAdultContent is true', () => {
+    mockAllowAdult.set(true);
     mockWatched.set([
       {
         id: 'movie_1818',

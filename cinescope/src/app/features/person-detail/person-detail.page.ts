@@ -521,7 +521,17 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   }
 
   private rawCombinedCredits = computed<TmdbPersonCombinedCreditsResponseDto | null>(() => {
-    return (this.person()?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+    const raw = (this.person()?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+    if (!raw) return null;
+    const allowAdult = typeof this.storage.allowAdultContent === 'function'
+      ? this.storage.allowAdultContent()
+      : false;
+    if (allowAdult) return raw;
+    return {
+      ...raw,
+      cast: (raw.cast || []).filter((c) => !c.adult),
+      crew: (raw.crew || []).filter((c) => !c.adult)
+    };
   });
 
   public knownForSwimlane = computed<SwimlaneItem[]>(() => {

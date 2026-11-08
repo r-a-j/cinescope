@@ -2,6 +2,7 @@ export interface FranchisePart {
   id: number;
   title: string;
   mediaType?: 'movie' | 'tv' | undefined;
+  adult?: boolean | undefined;
   overview?: string | undefined;
   poster_path?: string | null | undefined;
   backdrop_path?: string | null | undefined;
@@ -29,6 +30,7 @@ export interface FranchiseUniverseCanonItem {
 export interface FranchiseCollectionSummary {
   id: number | string;
   name: string;
+  adult?: boolean | undefined;
   overview?: string | undefined;
   poster_path?: string | null | undefined;
   backdrop_path?: string | null | undefined;

@@ -178,6 +178,32 @@ export class CollectionPage implements OnInit, AfterViewInit {
     return this.storageService.isCollectionMergedIntoUniverse(parentUni.id, colId);
   });
 
+  /**
+   * True when the current collection/universe or any of its movies/parts is 18+ adult content.
+   * When true, all AI features (AI Universe discovery & Sync Canon) are strictly disabled and greyed out
+   * even if the user has unlocked 18+ Adult Content in Settings.
+   */
+  public isAdultCollection = computed<boolean>(() => {
+    const summary = this.franchiseSummary();
+    if (summary?.adult === true) {
+      return true;
+    }
+    if (summary?.parts?.some((p) => Boolean(p?.adult))) {
+      return true;
+    }
+    const items = this.rawItems();
+    if (
+      items.some(
+        (item) =>
+          item.payload?.['adult'] === true ||
+          (item as unknown as { adult?: boolean }).adult === true
+      )
+    ) {
+      return true;
+    }
+    return false;
+  });
+
   public currentUniverseJob = computed(() => {
     const job = this.franchiseIntel.activeJob();
     if (!job || !this.isUniverseCollection()) return null;
@@ -322,7 +348,19 @@ export class CollectionPage implements OnInit, AfterViewInit {
   public displayedCards = computed<CollectionCardVm[]>(() => {
     const mode = this.sortMode();
     const isFranchise = this.isFranchiseCollection();
-    let vms = this.rawItems().map((item) => this.toCardVm(item));
+    const allowAdult = typeof this.storageService.allowAdultContent === 'function'
+      ? this.storageService.allowAdultContent()
+      : false;
+    const safeRawItems = allowAdult
+      ? this.rawItems()
+      : this.rawItems().filter(
+          (item) =>
+            !(
+              item.payload?.['adult'] === true ||
+              (item as unknown as { adult?: boolean }).adult === true
+            )
+        );
+    let vms = safeRawItems.map((item) => this.toCardVm(item));
 
     if (isFranchise) {
       const watchedKeys = this.storageService.watchedMediaKeys();
@@ -635,7 +673,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
           const needsSiblingVerification = (uni.siblingFranchises || []).some(
             (s) => !s.id || s.id <= 0 || (s.id >= 90000 && s.id <= 90100) || nonCollectionPattern.test(s.name) || /\b(saga|mcu|dceu)\b/i.test(s.name)
           );
-          if (!isAlreadyExpandedV2 || needsSiblingVerification) {
+          if ((!isAlreadyExpandedV2 || needsSiblingVerification) && !this.isAdultCollection()) {
             void this.syncUniverseCanon(true);
           }
           return;
@@ -650,28 +688,39 @@ export class CollectionPage implements OnInit, AfterViewInit {
         this.isUniverseCollection.set(false);
         this.isLoadingMore.set(true);
 
+        const allowAdult = typeof this.storageService.allowAdultContent === 'function'
+          ? this.storageService.allowAdultContent()
+          : false;
         const cached = await this.franchiseAggregator.getCollectionMetadata(numId);
         if (cached) {
+          const safeParts = (cached.parts || []).filter((p) => allowAdult || !p.adult);
           this.collectionTitle.set(cached.name);
           this.collectionOverview.set(cached.overview || null);
-          const fallbackBackdrop = cached.backdrop_path || cached.parts?.find((p) => p.backdrop_path)?.backdrop_path || null;
+          const fallbackBackdrop =
+            (!allowAdult && cached.adult ? null : cached.backdrop_path) ||
+            safeParts.find((p) => p.backdrop_path)?.backdrop_path ||
+            null;
           this.collectionBackdrop.set(fallbackBackdrop ? resolveMediaImageUrl(fallbackBackdrop, 'w1280') : null);
           this.franchiseSummary.set({
             id: numId,
             name: cached.name,
+            adult: cached.adult,
             overview: cached.overview,
-            poster_path: cached.poster_path ?? cached.parts?.find((p) => p.poster_path)?.poster_path ?? null,
+            poster_path:
+              (!allowAdult && cached.adult ? null : cached.poster_path) ??
+              safeParts.find((p) => p.poster_path)?.poster_path ??
+              null,
             backdrop_path: fallbackBackdrop,
-            totalParts: cached.totalParts,
+            totalParts: safeParts.length,
             collectedCount: 0,
             watchedCount: 0,
             watchlistCount: 0,
             completionPercentage: 0,
             isUniverse: false,
-            parts: cached.parts
+            parts: safeParts
           });
 
-          const items: SwimlaneItem[] = (cached.parts || []).map((p) => ({
+          const items: SwimlaneItem[] = safeParts.map((p) => ({
             id: p.id,
             mediaType: 'movie',
             title: p.title,
@@ -690,12 +739,17 @@ export class CollectionPage implements OnInit, AfterViewInit {
         const savedDoc = this.storageService.savedUniverses().find((d) => d.id === `franchise_${numId}` || d.tmdbId === numId);
         if (savedDoc) {
           const savedSummary = savedDoc.payload as unknown as FranchiseCollectionSummary;
+          const safeSavedParts = (savedSummary.parts || []).filter((p) => allowAdult || !p.adult);
           this.collectionTitle.set(savedSummary.name);
           this.collectionOverview.set(savedSummary.overview || null);
           this.collectionBackdrop.set(savedSummary.backdrop_path ? resolveMediaImageUrl(savedSummary.backdrop_path, 'w1280') : null);
-          this.franchiseSummary.set(savedSummary);
+          this.franchiseSummary.set({
+            ...savedSummary,
+            parts: safeSavedParts,
+            totalParts: safeSavedParts.length
+          });
 
-          const items: SwimlaneItem[] = (savedSummary.parts || []).map((p) => ({
+          const items: SwimlaneItem[] = safeSavedParts.map((p) => ({
             id: p.id,
             mediaType: p.mediaType || 'movie',
             title: p.title,
@@ -1063,7 +1117,13 @@ export class CollectionPage implements OnInit, AfterViewInit {
   }
 
   public async triggerDiscoverUniverse(): Promise<void> {
-    if (this.isAnalyzingUniverse()) {
+    if (this.isAnalyzingUniverse() || this.isAdultCollection()) {
+      if (this.isAdultCollection()) {
+        await this.toastService.presentWarning(
+          'AI Universe analysis is prohibited for 18+ adult content.',
+          2200
+        );
+      }
       return;
     }
     const colId = this.numericCollectionId();
@@ -1084,6 +1144,10 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const parts: FranchisePart[] = this.rawItems().map((it) => ({
         id: Number(it.id),
         title: it.title,
+        adult: Boolean(
+          it.payload?.['adult'] === true ||
+          (it as unknown as { adult?: boolean }).adult === true
+        ),
         mediaType: it.mediaType === 'tv' ? 'tv' : 'movie'
       }));
 
@@ -1247,6 +1311,15 @@ export class CollectionPage implements OnInit, AfterViewInit {
   }
 
   public async syncUniverseCanon(silent = false): Promise<void> {
+    if (this.isAdultCollection()) {
+      if (!silent) {
+        await this.toastService.presentWarning(
+          'AI Canon sync is prohibited for 18+ adult content.',
+          2200
+        );
+      }
+      return;
+    }
     const uni = this.franchiseSummary();
     if (!uni || !this.isUniverseCollection() || this.isSyncingUniverse()) return;
 
@@ -1505,6 +1578,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
       const summary: FranchiseCollectionSummary = {
         id: targetId,
         name: this.collectionTitle(),
+        adult: this.isAdultCollection(),
         overview: this.collectionOverview() || existingSummary?.overview || undefined,
         poster_path: firstPoster,
         backdrop_path: firstBackdrop,
@@ -1519,6 +1593,7 @@ export class CollectionPage implements OnInit, AfterViewInit {
           return {
             id: Number(it.id),
             title: it.title,
+            adult: Boolean(p?.['adult']),
             mediaType: (it.mediaType === 'tv' ? 'tv' : 'movie') as 'movie' | 'tv',
             poster_path: (p?.['poster_path'] || it.posterUrl) as string | undefined,
             backdrop_path: p?.['backdrop_path'] as string | undefined,

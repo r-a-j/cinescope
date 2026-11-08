@@ -183,9 +183,8 @@ export class TasteProfileService {
       const tvMult =
         doc.mediaType === 'tv' ? (tvCompletionBonus.get(doc.tmdbId) ?? 1.0) : 1.0;
 
-      // Skip adult content from anchoring recommendation seeds when family-safe filter is active
-      const allowAdult = this.storage.allowAdultContent ? this.storage.allowAdultContent() : false;
-      if (!allowAdult && (payload['adult'] === true || (doc as unknown as { adult?: boolean }).adult === true)) {
+      // Safety Policy: Strictly prohibit any AI analysis or recommendation seeding on 18+ adult content
+      if (payload['adult'] === true || (doc as unknown as { adult?: boolean }).adult === true) {
         return null;
       }
 
@@ -385,6 +384,10 @@ export class TasteProfileService {
       .slice(0, 6);
 
     const personAffinities: PersonAffinity[] = favPeopleDocs
+      .filter((doc) => {
+        const p = (doc.payload || {}) as Record<string, unknown>;
+        return p['adult'] !== true && (doc as unknown as { adult?: boolean }).adult !== true;
+      })
       .slice(0, 12)
       .map((doc, idx) => {
         const p = (doc.payload || {}) as Record<string, unknown>;
