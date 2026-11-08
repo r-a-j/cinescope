@@ -962,4 +962,75 @@ describe('StorageService - Backup & Restore', () => {
         expect(mergedProgress.watchedEpisodes).toContain('s1e2');
         expect(mergedProgress.watchedEpisodesCount).toBe(2);
     });
+
+    it('hides saved adult movies, franchises, and adult stars when safety lock is ON while preserving raw data, and reveals them when unlocked', () => {
+        service.settings.set({
+            id: 'user_preferences',
+            theme: 'dark',
+            region: 'IN',
+            appTourCompleted: true,
+            allowAdultContent: false
+        });
+
+        const safeMovie: ContentDocType = {
+            id: 'movie_550',
+            tmdbId: 550,
+            mediaType: 'movie',
+            lists: ['watchlist'],
+            addedAt: '2026-11-01T10:00:00Z',
+            payload: { id: 550, title: 'Fight Club', adult: false }
+        };
+        const adultMovie: ContentDocType = {
+            id: 'movie_1818',
+            tmdbId: 1818,
+            mediaType: 'movie',
+            lists: ['watchlist'],
+            addedAt: '2026-11-01T10:00:00Z',
+            payload: { id: 1818, title: 'Adult Feature', adult: true }
+        };
+        const adultStar: ContentDocType = {
+            id: 'person_9001',
+            tmdbId: 9001,
+            mediaType: 'person',
+            lists: ['favorite'],
+            addedAt: '2026-11-01T10:00:00Z',
+            payload: { id: 9001, name: 'Adult Performer', adult: true }
+        };
+        const adultFranchise: ContentDocType = {
+            id: 'franchise_1765802',
+            tmdbId: 1765802,
+            mediaType: 'movie',
+            lists: ['franchise'],
+            addedAt: '2026-11-01T10:00:00Z',
+            payload: {
+                id: 1765802,
+                name: 'Blacked Out Collection',
+                parts: [{ id: 839605, title: 'Blacked Out', adult: true }]
+            }
+        };
+
+        service.watchlistItems.set([safeMovie, adultMovie]);
+        service.favoritePeople.set([adultStar]);
+        service.savedUniverses.set([adultFranchise]);
+
+        // Safety lock ON (allowAdultContent = false): adult items are hidden, raw data is intact
+        expect(service.watchlistItems().map((d) => d.id)).toEqual(['movie_550']);
+        expect(service.favoritePeople().length).toBe(0);
+        expect(service.savedUniverses().length).toBe(0);
+        expect(service.allWatchlistRaw().length).toBe(2);
+        expect(service.allFavoritePeopleRaw().length).toBe(1);
+        expect(service.allSavedUniversesRaw().length).toBe(1);
+
+        // Safety lock UNLOCKED (allowAdultContent = true): all saved items become visible immediately
+        service.settings.set({
+            id: 'user_preferences',
+            theme: 'dark',
+            region: 'IN',
+            appTourCompleted: true,
+            allowAdultContent: true
+        });
+        expect(service.watchlistItems().map((d) => d.id)).toEqual(['movie_550', 'movie_1818']);
+        expect(service.favoritePeople().map((d) => d.id)).toEqual(['person_9001']);
+        expect(service.savedUniverses().map((d) => d.id)).toEqual(['franchise_1765802']);
+    });
 });

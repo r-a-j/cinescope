@@ -190,6 +190,9 @@ export class ArchivePage implements AfterViewInit {
 
   public favoritePeopleCards = computed<FavoritePersonCardVm[]>(() => {
     const docs = this.storage.favoritePeople();
+    const allowAdult = typeof this.storage.allowAdultContent === 'function'
+      ? this.storage.allowAdultContent()
+      : false;
     const watchedKeys = this.storage.watchedMediaKeys();
     const hydratingSet = this.hydratingPersonIds();
 
@@ -209,16 +212,17 @@ export class ArchivePage implements AfterViewInit {
             : 'ACTOR';
 
       const creditIds = Array.isArray(payload['credit_ids']) ? (payload['credit_ids'] as string[]) : [];
-      const topCredits = Array.isArray(payload['top_credits'])
+      const rawTopCredits = Array.isArray(payload['top_credits'])
         ? (payload['top_credits'] as PersonTopCreditSummary[])
         : [];
+      const topCredits = allowAdult ? rawTopCredits : rawTopCredits.filter((c) => !c?.adult);
       const rawKnownFor = String(payload['known_for_titles'] || '').trim();
       const fallbackKnownFor = topCredits
         .slice(0, 3)
         .map((c) => c.title)
         .filter(Boolean)
         .join(' • ');
-      const knownForSubtitle = rawKnownFor || fallbackKnownFor;
+      const knownForSubtitle = fallbackKnownFor || rawKnownFor;
 
       // Track progress against core filmography when available so percentages are motivating and accurate
       const topKeys = topCredits.map((c) => `${c.mediaType}_${c.id}`);
@@ -371,14 +375,17 @@ export class ArchivePage implements AfterViewInit {
       swapVerticalOutline, star, videocamOutline, personOutline
     });
 
-    // Automatically backfill filmography credits & top credits for any favorite artist missing them
+    // Automatically backfill filmography credits, top credits, and adult flag for any favorite artist missing them
     effect(() => {
-      const docs = this.storage.favoritePeople();
+      const docs = typeof this.storage.allFavoritePeopleRaw === 'function'
+        ? this.storage.allFavoritePeopleRaw()
+        : this.storage.favoritePeople();
       for (const doc of docs) {
         const p = (doc.payload ?? {}) as Record<string, unknown>;
         const creditIds = Array.isArray(p['credit_ids']) ? (p['credit_ids'] as string[]) : [];
         const topCredits = Array.isArray(p['top_credits']) ? (p['top_credits'] as unknown[]) : [];
-        if ((creditIds.length === 0 || topCredits.length === 0) && !this.attemptedHydrationIds.has(doc.tmdbId)) {
+        const missingAdultFlag = typeof p['adult'] !== 'boolean';
+        if ((creditIds.length === 0 || topCredits.length === 0 || missingAdultFlag) && !this.attemptedHydrationIds.has(doc.tmdbId)) {
           this.attemptedHydrationIds.add(doc.tmdbId);
           void this.hydratePersonCreditsInBackground(doc.tmdbId);
         }
@@ -398,11 +405,13 @@ export class ArchivePage implements AfterViewInit {
       const details = await firstValueFrom(
         this.peopleService.getPersonDetails(personId, 'combined_credits')
       );
-      if (!this.storage.isPersonFavorite(personId)) return;
+      if (!this.storage.isPersonFavorite(personId, true)) return;
       const combined = (details?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
       const extracted = extractPersonCreditMetadata(combined);
-      if (extracted.creditIds.length > 0) {
+      const isAdultPerson = Boolean(details?.adult) || extracted.isAdultPerson;
+      if (extracted.creditIds.length > 0 || typeof details?.adult === 'boolean') {
         await this.storage.updateFavoritePersonCredits(personId, extracted.creditIds, {
+          adult: isAdultPerson,
           topCredits: extracted.topCredits,
           knownForTitles: extracted.knownForTitles,
           department: details.known_for_department || undefined,

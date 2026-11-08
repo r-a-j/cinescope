@@ -643,11 +643,13 @@ export class PersonDetailPage implements OnInit, OnDestroy {
   public async toggleFavorite(): Promise<void> {
     const id = this.personId();
     if (!id) return;
-    const extracted = extractPersonCreditMetadata(this.rawCombinedCredits());
+    const rawUnfilteredCredits = (this.person()?.['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+    const extracted = extractPersonCreditMetadata(rawUnfilteredCredits);
     const creditIds = extracted.creditIds.length > 0 ? extracted.creditIds : this.collectCreditIds();
     const isNowFav = await this.storage.toggleFavoritePerson({
       id,
       name: this.name(),
+      adult: Boolean(this.person()?.adult) || extracted.isAdultPerson,
       profilePath: this.person()?.profile_path ?? null,
       department: this.department(),
       creditIds,
@@ -740,11 +742,13 @@ export class PersonDetailPage implements OnInit, OnDestroy {
       }
 
       // If person is already favorited, keep cached filmography credit IDs and top credits updated
-      if (this.storage.isPersonFavorite(id)) {
-        const extracted = extractPersonCreditMetadata(this.rawCombinedCredits());
+      if (this.storage.isPersonFavorite(id, true)) {
+        const rawUnfilteredCredits = (res['combined_credits'] as TmdbPersonCombinedCreditsResponseDto | undefined) ?? null;
+        const extracted = extractPersonCreditMetadata(rawUnfilteredCredits);
         const creditIds = extracted.creditIds.length > 0 ? extracted.creditIds : this.collectCreditIds();
-        if (creditIds.length > 0) {
+        if (creditIds.length > 0 || typeof res.adult === 'boolean') {
           void this.storage.updateFavoritePersonCredits(id, creditIds, {
+            adult: Boolean(res.adult) || extracted.isAdultPerson,
             topCredits: extracted.topCredits,
             knownForTitles: extracted.knownForTitles,
             department: res.known_for_department || undefined,
