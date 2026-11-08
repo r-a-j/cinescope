@@ -516,7 +516,18 @@ ion-title {
         letter-spacing: 0.05em;
         font-weight: 600;
         text-transform: uppercase;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
     }
+}
+
+.version-tap-row {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
 }
 
 /* ==========================================
@@ -1392,6 +1403,32 @@ ion-title {
         strong {
             color: #f8fafc;
             font-weight: 700;
+        }
+    }
+
+    .safety-hide-section-item {
+        --min-height: 60px;
+        --padding-start: 16px;
+        --inner-padding-end: 16px;
+    }
+
+    .safety-hide-icon-wrap {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-right: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.72);
+        transition: all 0.2s ease;
+
+        ion-icon {
+            font-size: 19px;
+            margin: 0;
         }
     }
 }

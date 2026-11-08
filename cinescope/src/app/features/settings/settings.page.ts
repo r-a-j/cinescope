@@ -157,7 +157,12 @@ export class SettingsPage implements OnInit {
     public isExporting = signal<boolean>(false);
     public exportingAction = signal<'downloads' | 'share' | null>(null);
 
-    // 18+ Adult Content Unlock Modal state
+    // 18+ Adult Content Unlock Modal & Secret Section Visibility state
+    private static readonly SAFETY_SECTION_VISIBLE_KEY = 'cinescope_safety_section_revealed_v1';
+    public isSafetySectionVisible = signal<boolean>(this.readInitialSafetySectionVisibility());
+    private versionTapCount = 0;
+    private versionTapResetTimer: ReturnType<typeof setTimeout> | null = null;
+
     public isAdultUnlockModalOpen = signal<boolean>(false);
     public adultUnlockPasswordInput = signal<string>('');
     public showAdultPassword = signal<boolean>(false);
@@ -415,6 +420,65 @@ export class SettingsPage implements OnInit {
         this.closeAdultUnlockModal();
         await this.toast.presentSuccess('18+ Adult content unlocked & enabled', 2200);
         return true;
+    }
+
+    public async onVersionTap(): Promise<void> {
+        if (this.isSafetySectionVisible()) {
+            return;
+        }
+
+        this.versionTapCount += 1;
+
+        if (this.versionTapResetTimer) {
+            clearTimeout(this.versionTapResetTimer);
+        }
+        this.versionTapResetTimer = setTimeout(() => {
+            this.versionTapCount = 0;
+            this.versionTapResetTimer = null;
+        }, 3500);
+
+        if (this.versionTapCount >= 10) {
+            this.versionTapCount = 0;
+            if (this.versionTapResetTimer) {
+                clearTimeout(this.versionTapResetTimer);
+                this.versionTapResetTimer = null;
+            }
+            this.isSafetySectionVisible.set(true);
+            this.persistSafetySectionVisibility(true);
+            await this.toast.presentSuccess('Content & Safety settings revealed', 2000);
+        }
+    }
+
+    public async hideSafetySection(): Promise<void> {
+        this.versionTapCount = 0;
+        if (this.versionTapResetTimer) {
+            clearTimeout(this.versionTapResetTimer);
+            this.versionTapResetTimer = null;
+        }
+        this.closeAdultUnlockModal();
+        this.isSafetySectionVisible.set(false);
+        this.persistSafetySectionVisibility(false);
+        await this.toast.presentInfo('Content & Safety section hidden', 2000);
+    }
+
+    private readInitialSafetySectionVisibility(): boolean {
+        try {
+            return localStorage.getItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    }
+
+    private persistSafetySectionVisibility(visible: boolean): void {
+        try {
+            if (visible) {
+                localStorage.setItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY, 'true');
+            } else {
+                localStorage.removeItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY);
+            }
+        } catch {
+            // Ignore storage errors in restricted environments
+        }
     }
 
     // --- DATA MANAGEMENT ---
