@@ -349,6 +349,16 @@ export class FranchiseIntelService {
     parts?: FranchisePart[],
     forceRefresh = false
   ): Promise<FranchiseIntelAnalysisResult> {
+    // 0. Safety Policy Guard: Prohibit any AI analysis on 18+ adult / pornographic content
+    if (parts?.some((p) => Boolean(p?.adult))) {
+      console.warn('[FranchiseIntel] Blocked AI analysis for 18+ adult collection:', collectionName);
+      return {
+        isCooldown: false,
+        message: 'AI analysis is prohibited for 18+ adult content.',
+        data: null
+      };
+    }
+
     // 1. Check 30-day local cache first (0 AI quota consumption)
     if (!forceRefresh) {
       const cached = this.getCachedIntel(collectionId);

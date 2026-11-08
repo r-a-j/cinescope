@@ -1,5 +1,5 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject, signal, computed, WritableSignal, Signal } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { DatabaseService } from '../database/database.service';
 import { ContentDocType } from '../database/schemas/content.schema';
 import { SettingsDocType } from '../database/schemas/settings.schema';
@@ -19,6 +19,7 @@ export interface PersonTopCreditSummary {
     id: number;
     mediaType: 'movie' | 'tv';
     title: string;
+    adult?: boolean | undefined;
     poster_path?: string | null | undefined;
     backdrop_path?: string | null | undefined;
     vote_average?: number | undefined;
@@ -32,8 +33,49 @@ export interface MediaReleaseCheckResult {
 }
 
 /**
+ * Determines whether a stored RxDB ContentDocType represents 18+ adult content
+ * (movie, TV series, franchise/universe, or adult star/person).
+ */
+export function isAdultContentDoc(doc: ContentDocType | null | undefined): boolean {
+    if (!doc) return false;
+    const payload = (doc.payload ?? {}) as Record<string, unknown>;
+    if (payload['adult'] === true || (doc as unknown as { adult?: boolean }).adult === true) {
+        return true;
+    }
+
+    const belongs = payload['belongs_to_collection'] as Record<string, unknown> | null | undefined;
+    if (belongs && belongs['adult'] === true) {
+        return true;
+    }
+
+    if (Array.isArray(payload['parts']) && payload['parts'].length > 0) {
+        const parts = payload['parts'] as Record<string, unknown>[];
+        if (parts.every((p) => p && p['adult'] === true)) {
+            return true;
+        }
+    }
+
+    if (doc.mediaType === 'person') {
+        const topCredits = Array.isArray(payload['top_credits'])
+            ? (payload['top_credits'] as Record<string, unknown>[])
+            : [];
+        if (topCredits.length > 0 && topCredits.every((c) => c && c['adult'] === true)) {
+            return true;
+        }
+        const knownFor = Array.isArray(payload['known_for'])
+            ? (payload['known_for'] as Record<string, unknown>[])
+            : [];
+        if (knownFor.length > 0 && knownFor.every((k) => k && k['adult'] === true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Deterministically extracts `creditIds`, `topCredits` (for "Up Next" artist marathon tracking),
- * and `knownForTitles` from a TMDB `combined_credits` payload without talk-show / archive noise.
+ * `knownForTitles`, and `isAdultPerson` from a TMDB `combined_credits` payload without talk-show / archive noise.
  */
 export function extractPersonCreditMetadata(
     combinedCredits?: { cast?: unknown[]; crew?: unknown[] } | null
@@ -41,9 +83,10 @@ export function extractPersonCreditMetadata(
     creditIds: string[];
     topCredits: PersonTopCreditSummary[];
     knownForTitles: string;
+    isAdultPerson: boolean;
 } {
     if (!combinedCredits) {
-        return { creditIds: [], topCredits: [], knownForTitles: '' };
+        return { creditIds: [], topCredits: [], knownForTitles: '', isAdultPerson: false };
     }
     const rawCast = Array.isArray(combinedCredits.cast)
         ? (combinedCredits.cast as Record<string, unknown>[])
@@ -52,6 +95,8 @@ export function extractPersonCreditMetadata(
         ? (combinedCredits.crew as Record<string, unknown>[])
         : [];
     const allRaw = [...rawCast, ...rawCrew];
+    let adultCreditCount = 0;
+    let validCreditCount = 0;
 
     const creditIdSet = new Set<string>();
     const candidateMap = new Map<
@@ -67,6 +112,12 @@ export function extractPersonCreditMetadata(
         const id = Number(item['id']);
         const mediaType = item['media_type'] === 'tv' ? 'tv' : item['media_type'] === 'movie' ? 'movie' : null;
         if (!id || !mediaType) continue;
+
+        validCreditCount++;
+        const isItemAdult = Boolean(item['adult']);
+        if (isItemAdult) {
+            adultCreditCount++;
+        }
 
         const key = `${mediaType}_${id}`;
         creditIdSet.add(key);
@@ -99,6 +150,7 @@ export function extractPersonCreditMetadata(
                     id,
                     mediaType,
                     title,
+                    adult: isItemAdult,
                     poster_path: posterPath,
                     backdrop_path: (item['backdrop_path'] as string | null | undefined) ?? null,
                     vote_average: voteAvg > 0 ? Number(voteAvg.toFixed(1)) : undefined,
@@ -125,10 +177,15 @@ export function extractPersonCreditMetadata(
         .map((c) => c.title)
         .join(' • ');
 
+    const isAdultPerson =
+        (validCreditCount > 0 && adultCreditCount / validCreditCount >= 0.6) ||
+        (sortedTop.length > 0 && sortedTop.every((c) => Boolean(c.adult)));
+
     return {
         creditIds: Array.from(creditIdSet),
         topCredits: sortedTop,
-        knownForTitles
+        knownForTitles,
+        isAdultPerson
     };
 }
 
@@ -314,19 +371,55 @@ export class StorageService {
     // ==========================================
     // ⚡ REACTIVE SIGNALS (Global App State Bridge)
     // ==========================================
-    public readonly watchlistItems = signal<ContentDocType[]>([]);
-    public readonly watchedItems = signal<ContentDocType[]>([]);
-    public readonly inboxItems = signal<ContentDocType[]>([]);
-    public readonly favoritePeople = signal<ContentDocType[]>([]);
-    public readonly savedUniverses = signal<ContentDocType[]>([]);
     public readonly settings = signal<SettingsDocType | null>(null);
     public readonly userRegion = computed<string>(() => this.settings()?.region || 'IN');
     public readonly isManualRegion = computed<boolean>(() => this.settings()?.isManualRegion ?? false);
 
-    public readonly inboxCount = computed<number>(() => this.inboxItems().length);
-
     public readonly allowAdultContent = computed<boolean>(() => {
         return this.settings()?.allowAdultContent ?? false;
+    });
+
+    // Raw unfiltered RxDB signals (preserves all user-saved data regardless of safety lock)
+    public readonly allWatchlistRaw = signal<ContentDocType[]>([]);
+    public readonly allWatchedRaw = signal<ContentDocType[]>([]);
+    public readonly allInboxRaw = signal<ContentDocType[]>([]);
+    public readonly allFavoritePeopleRaw = signal<ContentDocType[]>([]);
+    public readonly allSavedUniversesRaw = signal<ContentDocType[]>([]);
+
+    private createAdultFilteredSignal(rawSignal: WritableSignal<ContentDocType[]>): WritableSignal<ContentDocType[]> {
+        const filtered = computed<ContentDocType[]>(() => {
+            const items = rawSignal();
+            return this.allowAdultContent() ? items : items.filter((d) => !isAdultContentDoc(d));
+        }) as WritableSignal<ContentDocType[]>;
+        filtered.set = (value: ContentDocType[]): void => rawSignal.set(value);
+        filtered.update = (updateFn: (value: ContentDocType[]) => ContentDocType[]): void => rawSignal.update(updateFn);
+        filtered.asReadonly = (): Signal<ContentDocType[]> => filtered;
+        return filtered;
+    }
+
+    // Public safety-aware signals: automatically hide 18+ items when safety lock is ON, and reveal when unlocked
+    public readonly watchlistItems = this.createAdultFilteredSignal(this.allWatchlistRaw);
+    public readonly watchedItems = this.createAdultFilteredSignal(this.allWatchedRaw);
+    public readonly inboxItems = this.createAdultFilteredSignal(this.allInboxRaw);
+    public readonly favoritePeople = this.createAdultFilteredSignal(this.allFavoritePeopleRaw);
+    public readonly savedUniverses = this.createAdultFilteredSignal(this.allSavedUniversesRaw);
+
+    public readonly inboxCount = computed<number>(() => this.inboxItems().length);
+
+    /**
+     * Set of TMDB TV series IDs in the user's library that are currently hidden by the family-safe filter.
+     */
+    public readonly hiddenAdultTvIds = computed<Set<number>>(() => {
+        if (this.allowAdultContent()) {
+            return new Set<number>();
+        }
+        const ids = new Set<number>();
+        for (const doc of [...this.allWatchlistRaw(), ...this.allWatchedRaw(), ...this.allInboxRaw()]) {
+            if (doc.mediaType === 'tv' && isAdultContentDoc(doc)) {
+                ids.add(doc.tmdbId);
+            }
+        }
+        return ids;
     });
 
     /**
@@ -473,7 +566,11 @@ export class StorageService {
         return this.dbService.db.content.find({
             selector: { lists: { $in: ['watchlist'] } },
             sort: [{ addedAt: 'desc' }]
-        }).$;
+        }).$.pipe(
+            map((docs: ContentDocType[]) =>
+                this.allowAdultContent() ? docs : docs.filter((d) => !isAdultContentDoc(d))
+            )
+        );
     }
 
     public getWatched$(): Observable<ContentDocType[]> {
@@ -481,7 +578,11 @@ export class StorageService {
         return this.dbService.db.content.find({
             selector: { lists: { $in: ['watched'] } },
             sort: [{ addedAt: 'desc' }]
-        }).$;
+        }).$.pipe(
+            map((docs: ContentDocType[]) =>
+                this.allowAdultContent() ? docs : docs.filter((d) => !isAdultContentDoc(d))
+            )
+        );
     }
 
     public getInbox$(): Observable<ContentDocType[]> {
@@ -489,7 +590,11 @@ export class StorageService {
         return this.dbService.db.content.find({
             selector: { lists: { $in: ['inbox'] } },
             sort: [{ addedAt: 'desc' }]
-        }).$;
+        }).$.pipe(
+            map((docs: ContentDocType[]) =>
+                this.allowAdultContent() ? docs : docs.filter((d) => !isAdultContentDoc(d))
+            )
+        );
     }
 
     public async getSettings(): Promise<SettingsDocType | null> {
@@ -510,7 +615,8 @@ export class StorageService {
             selector: { lists: { $in: ['watchlist'] } },
             sort: [{ addedAt: 'desc' }]
         }).exec();
-        return docs.map((d) => d.toJSON() as ContentDocType);
+        const items = docs.map((d) => d.toJSON() as ContentDocType);
+        return this.allowAdultContent() ? items : items.filter((d) => !isAdultContentDoc(d));
     }
 
     public async getWatched(): Promise<ContentDocType[]> {
@@ -519,7 +625,8 @@ export class StorageService {
             selector: { lists: { $in: ['watched'] } },
             sort: [{ addedAt: 'desc' }]
         }).exec();
-        return docs.map((d) => d.toJSON() as ContentDocType);
+        const items = docs.map((d) => d.toJSON() as ContentDocType);
+        return this.allowAdultContent() ? items : items.filter((d) => !isAdultContentDoc(d));
     }
 
     public async getInbox(): Promise<ContentDocType[]> {
@@ -528,7 +635,8 @@ export class StorageService {
             selector: { lists: { $in: ['inbox'] } },
             sort: [{ addedAt: 'desc' }]
         }).exec();
-        return docs.map((d) => d.toJSON() as ContentDocType);
+        const items = docs.map((d) => d.toJSON() as ContentDocType);
+        return this.allowAdultContent() ? items : items.filter((d) => !isAdultContentDoc(d));
     }
 
     // ==========================================
@@ -1221,15 +1329,17 @@ export class StorageService {
     // 🌟 FAVORITE PEOPLE & PROGRESS TRACKING
     // ==========================================
 
-    public isPersonFavorite(personId: number): boolean {
+    public isPersonFavorite(personId: number, includeHidden = false): boolean {
         this.initReactiveStreams();
         const docId = this.generateId(personId, 'person');
-        return this.favoritePeople().some((p) => p.id === docId);
+        const source = includeHidden ? this.allFavoritePeopleRaw() : this.favoritePeople();
+        return source.some((p) => p.id === docId);
     }
 
     public async toggleFavoritePerson(person: {
         id: number;
         name: string;
+        adult?: boolean | undefined;
         profilePath?: string | null;
         department?: string;
         creditIds?: string[];
@@ -1237,7 +1347,7 @@ export class StorageService {
         knownForTitles?: string;
     }): Promise<boolean> {
         this.initReactiveStreams();
-        const isFav = this.isPersonFavorite(person.id);
+        const isFav = this.isPersonFavorite(person.id, true);
 
         if (isFav) {
             await this.removeFavoritePerson(person.id);
@@ -1254,6 +1364,7 @@ export class StorageService {
                 payload: {
                     id: person.id,
                     name: person.name,
+                    adult: Boolean(person.adult),
                     profile_path: person.profilePath ?? null,
                     known_for_department: person.department ?? 'Artist',
                     credit_ids: person.creditIds ?? [],
@@ -1273,6 +1384,7 @@ export class StorageService {
         personId: number,
         creditIds: string[],
         extra?: {
+            adult?: boolean | undefined;
             topCredits?: PersonTopCreditSummary[] | undefined;
             knownForTitles?: string | undefined;
             department?: string | undefined;
@@ -1286,6 +1398,9 @@ export class StorageService {
             await doc.incrementalModify((docData: ContentDocType): ContentDocType => {
                 const payload = { ...((docData.payload ?? {}) as Record<string, unknown>) };
                 payload['credit_ids'] = creditIds;
+                if (typeof extra?.adult === 'boolean') {
+                    payload['adult'] = extra.adult;
+                }
                 if (extra?.topCredits && extra.topCredits.length > 0) {
                     payload['top_credits'] = extra.topCredits;
                 }

@@ -49,7 +49,9 @@
             <button
               type="button"
               class="discover-universe-btn"
-              [disabled]="isSyncingUniverse()"
+              [class.adult-ai-disabled]="isAdultCollection()"
+              [disabled]="isSyncingUniverse() || isAdultCollection()"
+              [attr.title]="isAdultCollection() ? 'AI Canon Sync is prohibited on 18+ adult content' : null"
               (click)="syncUniverseCanon(false)">
               @if (isSyncingUniverse()) {
                 <ion-spinner name="crescent"></ion-spinner>
@@ -62,7 +64,7 @@
           }
 
           @if (numericCollectionId() && !isUniverseCollection()) {
-            @if (franchiseIntel.activeJob(); as bgJob) {
+            @if (!isAdultCollection() && franchiseIntel.activeJob(); as bgJob) {
               <button
                 type="button"
                 class="discover-universe-btn"
@@ -71,7 +73,7 @@
                 <ion-spinner name="crescent"></ion-spinner>
                 <span>{{ bgJob.universeTitle }} ({{ bgJob.resolvedCount }}/{{ bgJob.totalCount }})</span>
               </button>
-            } @else if (existingParentUniverse(); as parentUni) {
+            } @else if (!isAdultCollection() && existingParentUniverse(); as parentUni) {
               <button
                 type="button"
                 class="discover-universe-btn"
@@ -93,7 +95,9 @@
               <button
                 type="button"
                 class="discover-universe-btn"
-                [disabled]="isAnalyzingUniverse()"
+                [class.adult-ai-disabled]="isAdultCollection()"
+                [disabled]="isAnalyzingUniverse() || isAdultCollection()"
+                [attr.title]="isAdultCollection() ? 'AI Universe analysis is prohibited on 18+ adult content' : null"
                 (click)="triggerDiscoverUniverse()">
                 @if (isAnalyzingUniverse()) {
                   <ion-spinner name="crescent"></ion-spinner>

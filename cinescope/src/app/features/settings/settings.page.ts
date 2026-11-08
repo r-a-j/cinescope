@@ -22,7 +22,7 @@ import {
     flashOutline, eyeOutline, planetOutline, happyOutline, skullOutline, heartOutline, videocamOutline,
     eyeOffOutline, languageOutline, optionsOutline, checkmark,
     fingerPrintOutline, helpBuoyOutline, colorWandOutline, hourglassOutline, shieldOutline,
-    musicalNotesOutline, sunnyOutline, hardwareChipOutline
+    musicalNotesOutline, sunnyOutline, hardwareChipOutline, lockClosedOutline, lockOpenOutline
 } from 'ionicons/icons';
 import { TrendingStore } from 'src/app/core/store/trending.store';
 import { StorageService } from 'src/app/core/services/storage.service';
@@ -39,6 +39,12 @@ import { DiscoverPreferencesService } from 'src/app/core/services/discover-prefe
 import { AppTourService } from 'src/app/core/services/app-tour.service';
 import { APP_TOUR_CATEGORIES, AppTourId } from 'src/app/core/constants/app-tour.constants';
 import { APP_VERSION } from 'src/app/core/constants/app-version';
+
+/**
+ * Temporary hardcoded unlock password required to enable 18+ adult content in Settings.
+ * TODO(licensing): Replace with dynamic licensing verification when licensing integration lands.
+ */
+export const ADULT_CONTENT_UNLOCK_PASSWORD = 'cinescope18+';
 
 interface NativeBackupPlugin {
     saveToDownloads(options: { filename: string; content: string }): Promise<{ success: boolean; filePath: string }>;
@@ -151,6 +157,17 @@ export class SettingsPage implements OnInit {
     public isExporting = signal<boolean>(false);
     public exportingAction = signal<'downloads' | 'share' | null>(null);
 
+    // 18+ Adult Content Unlock Modal & Secret Section Visibility state
+    private static readonly SAFETY_SECTION_VISIBLE_KEY = 'cinescope_safety_section_revealed_v1';
+    public isSafetySectionVisible = signal<boolean>(this.readInitialSafetySectionVisibility());
+    private versionTapCount = 0;
+    private versionTapResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+    public isAdultUnlockModalOpen = signal<boolean>(false);
+    public adultUnlockPasswordInput = signal<string>('');
+    public showAdultPassword = signal<boolean>(false);
+    public adultPasswordError = signal<string>('');
+
     public backupFileName = computed<string>(() => {
         const dateStr = new Date().toISOString().slice(0, 10);
         return `cinescope-backup-${dateStr}.json`;
@@ -194,7 +211,7 @@ export class SettingsPage implements OnInit {
             flashOutline, eyeOutline, planetOutline, happyOutline, skullOutline, heartOutline, videocamOutline,
             eyeOffOutline, languageOutline, optionsOutline, checkmark,
             fingerPrintOutline, helpBuoyOutline, colorWandOutline, hourglassOutline, shieldOutline,
-            musicalNotesOutline, sunnyOutline, hardwareChipOutline
+            musicalNotesOutline, sunnyOutline, hardwareChipOutline, lockClosedOutline, lockOpenOutline
         });
     }
 
@@ -331,12 +348,137 @@ export class SettingsPage implements OnInit {
 
     // --- PREFERENCES ---
     public async onToggleAdultContent(event: CustomEvent): Promise<void> {
-        const allowAdultContent = Boolean(event.detail?.checked);
-        await this.storage.updateSettings({ allowAdultContent });
-        await this.toast.presentInfo(
-            allowAdultContent ? 'Adult content filter disabled' : 'Family-safe filter enabled',
-            2000
-        );
+        const toggleEl = event.target as HTMLIonToggleElement | null;
+        const wantsEnabled = Boolean(event.detail?.checked);
+        const currentlyAllowed = this.storage.allowAdultContent();
+
+        if (wantsEnabled === currentlyAllowed) {
+            return;
+        }
+
+        // Turning OFF 18+ Adult Content (re-enabling family safety) is immediate and requires no password
+        if (!wantsEnabled) {
+            await this.storage.updateSettings({ allowAdultContent: false });
+            this.apiCache.clearAll();
+            this.searchStore.refreshAfterAdultToggle();
+            await this.toast.presentInfo('Family-safe filter enabled', 2000);
+            return;
+        }
+
+        // Turning ON 18+ Adult Content requires the temporary unlock password via themed bottom-sheet modal
+        if (toggleEl) {
+            toggleEl.checked = false;
+        }
+        this.openAdultUnlockModal();
+    }
+
+    public openAdultUnlockModal(): void {
+        this.adultUnlockPasswordInput.set('');
+        this.adultPasswordError.set('');
+        this.showAdultPassword.set(false);
+        this.isAdultUnlockModalOpen.set(true);
+    }
+
+    public closeAdultUnlockModal(): void {
+        this.isAdultUnlockModalOpen.set(false);
+        this.adultUnlockPasswordInput.set('');
+        this.adultPasswordError.set('');
+        this.showAdultPassword.set(false);
+    }
+
+    public onAdultPasswordInput(event: Event): void {
+        const input = event.target as HTMLInputElement | null;
+        this.adultUnlockPasswordInput.set(input?.value || '');
+        if (this.adultPasswordError()) {
+            this.adultPasswordError.set('');
+        }
+    }
+
+    public toggleShowAdultPassword(): void {
+        this.showAdultPassword.update((v) => !v);
+    }
+
+    public async submitAdultUnlockPassword(): Promise<boolean> {
+        const entered = this.adultUnlockPasswordInput().trim();
+        if (!entered) {
+            this.adultPasswordError.set('Please enter the access password to continue.');
+            return false;
+        }
+
+        if (entered !== ADULT_CONTENT_UNLOCK_PASSWORD) {
+            this.adultPasswordError.set('Invalid access password. Family-safe filter remains active.');
+            await this.toast.presentWarning(
+                'Invalid access password. Family-safe filter remains active.',
+                2500
+            );
+            return false;
+        }
+
+        await this.storage.updateSettings({ allowAdultContent: true });
+        this.apiCache.clearAll();
+        this.searchStore.refreshAfterAdultToggle();
+        this.closeAdultUnlockModal();
+        await this.toast.presentSuccess('18+ Adult content unlocked & enabled', 2200);
+        return true;
+    }
+
+    public async onVersionTap(): Promise<void> {
+        if (this.isSafetySectionVisible()) {
+            return;
+        }
+
+        this.versionTapCount += 1;
+
+        if (this.versionTapResetTimer) {
+            clearTimeout(this.versionTapResetTimer);
+        }
+        this.versionTapResetTimer = setTimeout(() => {
+            this.versionTapCount = 0;
+            this.versionTapResetTimer = null;
+        }, 3500);
+
+        if (this.versionTapCount >= 10) {
+            this.versionTapCount = 0;
+            if (this.versionTapResetTimer) {
+                clearTimeout(this.versionTapResetTimer);
+                this.versionTapResetTimer = null;
+            }
+            this.isSafetySectionVisible.set(true);
+            this.persistSafetySectionVisibility(true);
+            await this.toast.presentSuccess('Content & Safety settings revealed', 2000);
+        }
+    }
+
+    public async hideSafetySection(): Promise<void> {
+        this.versionTapCount = 0;
+        if (this.versionTapResetTimer) {
+            clearTimeout(this.versionTapResetTimer);
+            this.versionTapResetTimer = null;
+        }
+        this.closeAdultUnlockModal();
+        this.isSafetySectionVisible.set(false);
+        this.persistSafetySectionVisibility(false);
+        await this.toast.presentInfo('Content & Safety section hidden', 2000);
+    }
+
+    private readInitialSafetySectionVisibility(): boolean {
+        try {
+            return localStorage.getItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    }
+
+    private persistSafetySectionVisibility(visible: boolean): void {
+        try {
+            if (visible) {
+                localStorage.setItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY, 'true');
+            } else {
+                localStorage.removeItem(SettingsPage.SAFETY_SECTION_VISIBLE_KEY);
+            }
+        } catch {
+            // Ignore storage errors in restricted environments
+        }
     }
 
     // --- DATA MANAGEMENT ---

@@ -11,21 +11,6 @@
 
 <ion-content color="background" class="ion-padding-bottom">
 
-    <!-- <ion-list inset="true" class="cinescope-list">
-        <ion-list-header>
-            <ion-label>Content & Family Safety</ion-label>
-        </ion-list-header>
-        <ion-item lines="none">
-            <ion-icon slot="start" name="shield-checkmark-outline"></ion-icon>
-            <ion-label>Include 18+ Adult Titles in Search</ion-label>
-            <ion-toggle
-                slot="end"
-                [checked]="storage.allowAdultContent()"
-                (ionChange)="onToggleAdultContent($event)">
-            </ion-toggle>
-        </ion-item>
-    </ion-list> -->
-
         <ion-list inset="true" class="cinescope-list">
         <ion-list-header>
             <ion-label>Content & Region</ion-label>
@@ -419,6 +404,55 @@
             (change)="onBackupFileSelected($event)" />
     </ion-list>
 
+    @if (isSafetySectionVisible()) {
+        <ion-list inset="true" class="cinescope-list safety-settings-card">
+            <ion-list-header>
+                <ion-label>Content &amp; Safety</ion-label>
+            </ion-list-header>
+            <ion-item lines="full" class="safety-setting-item">
+                <div slot="start" class="safety-shield-wrap" [class.unlocked]="storage.allowAdultContent()">
+                    <ion-icon [name]="storage.allowAdultContent() ? 'lock-open-outline' : 'shield-checkmark-outline'"></ion-icon>
+                </div>
+                <ion-label class="safety-item-label">
+                    <h3>Adult Titles</h3>
+                    <p>
+                        {{ storage.allowAdultContent()
+                            ? 'Showing adult search &amp; results'
+                            : 'Safety filter active • Password required' }}
+                    </p>
+                </ion-label>
+                <div slot="end" class="safety-control-group">
+                    <span class="safety-status-pill" [class.unlocked]="storage.allowAdultContent()">
+                        {{ storage.allowAdultContent() ? 'ON' : 'PROTECTED' }}
+                    </span>
+                    <ion-toggle
+                        [checked]="storage.allowAdultContent()"
+                        (ionChange)="onToggleAdultContent($event)">
+                    </ion-toggle>
+                </div>
+            </ion-item>
+
+            @if (storage.allowAdultContent()) {
+                <div class="safety-ai-guard-banner">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    <span>
+                        <strong>AI Universe</strong> &amp; <strong>Canon analysis</strong> remain strictly disabled on adult content.
+                    </span>
+                </div>
+            }
+
+            <ion-item button detail="false" lines="none" class="safety-hide-section-item" (click)="hideSafetySection()">
+                <div slot="start" class="safety-hide-icon-wrap">
+                    <ion-icon name="eye-off-outline"></ion-icon>
+                </div>
+                <ion-label class="safety-item-label">
+                    <h3>Hide Content &amp; Safety</h3>
+                    <p>Conceal this section from Settings</p>
+                </ion-label>
+            </ion-item>
+        </ion-list>
+    }
+
     <ion-list inset="true" class="cinescope-list">
         <ion-list-header>
             <ion-label>About & Support</ion-label>
@@ -435,7 +469,7 @@
             <ion-icon slot="start" name="information-circle-outline"></ion-icon>
             <ion-label>Developer Website</ion-label>
         </ion-item>
-        <ion-item lines="none">
+        <ion-item lines="none" class="version-tap-row" (click)="onVersionTap()">
             <ion-label>Version</ion-label>
             <ion-note slot="end">v{{ appVersion() }}</ion-note>
         </ion-item>
@@ -454,7 +488,15 @@
             <ion-button fill="clear" size="small" color="medium"
                 (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy</ion-button>
         </div>
-        <p class="app-version-footer">CineScope v{{ appVersion() }}</p>
+        <p
+            class="app-version-footer"
+            role="button"
+            tabindex="0"
+            (click)="onVersionTap()"
+            (keydown.enter)="onVersionTap()"
+            (keydown.space)="onVersionTap()">
+            CineScope v{{ appVersion() }}
+        </p>
     </div>
 
 </ion-content>
@@ -878,3 +920,98 @@
         </div>
     </ng-template>
 </ion-modal>
+
+<!-- ==========================================
+     18+ ADULT CONTENT UNLOCK MODAL (CENTERED)
+     ========================================== -->
+@if (isAdultUnlockModalOpen()) {
+    <div
+        class="safety-center-overlay"
+        (click)="closeAdultUnlockModal()"
+        (keydown.escape)="closeAdultUnlockModal()"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="safety-unlock-title">
+        <div
+            class="backup-modal-container safety-modal-container"
+            tabindex="0"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+            <!-- Modal Header -->
+            <div class="backup-modal-header">
+                <div class="modal-title-row">
+                    <div class="title-with-badge">
+                        <div class="title-icon-badge safety-badge">
+                            <ion-icon name="lock-closed-outline"></ion-icon>
+                        </div>
+                        <div>
+                            <h3 id="safety-unlock-title" class="modal-title">UNLOCK 18+ ADULT CONTENT</h3>
+                            <p class="modal-subtitle">Enter access password to disable family-safe filter</p>
+                        </div>
+                    </div>
+                    <button type="button" class="modal-close-btn" (click)="closeAdultUnlockModal()" aria-label="Close modal">
+                        <ion-icon name="close-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+
+            <div class="backup-modal-body safety-modal-body">
+                <!-- Password Input Box -->
+                <div class="safety-input-section">
+                    <span class="destination-title">ACCESS PASSWORD</span>
+                    <div class="safety-password-wrap" [class.has-error]="!!adultPasswordError()">
+                        <ion-icon name="lock-closed-outline" class="password-lead-icon"></ion-icon>
+                        <input
+                            [type]="showAdultPassword() ? 'text' : 'password'"
+                            class="safety-password-input"
+                            placeholder="Enter access password..."
+                            [value]="adultUnlockPasswordInput()"
+                            (input)="onAdultPasswordInput($event)"
+                            (keyup.enter)="submitAdultUnlockPassword()"
+                            autocomplete="off" />
+                        <button
+                            type="button"
+                            class="password-visibility-btn"
+                            (click)="toggleShowAdultPassword()"
+                            [attr.aria-label]="showAdultPassword() ? 'Hide password' : 'Show password'">
+                            <ion-icon [name]="showAdultPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                        </button>
+                    </div>
+                    @if (adultPasswordError()) {
+                        <div class="safety-error-msg">
+                            <ion-icon name="close-circle"></ion-icon>
+                            <span>{{ adultPasswordError() }}</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Safety & AI Policy Notice -->
+                <div class="privacy-note safety-policy-note">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    <span>
+                        Unlocking allows 18+ adult titles &amp; collections in Search.
+                        <strong>All AI features remain disabled on adult content.</strong>
+                    </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="safety-modal-actions">
+                    <button
+                        type="button"
+                        class="safety-btn-cancel"
+                        (click)="closeAdultUnlockModal()">
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        class="safety-btn-unlock"
+                        (click)="submitAdultUnlockPassword()">
+                        <ion-icon name="lock-open-outline"></ion-icon>
+                        <span>Unlock 18+</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

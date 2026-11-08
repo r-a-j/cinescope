@@ -692,6 +692,18 @@
         opacity: 0.6;
         cursor: not-allowed;
       }
+
+      &.adult-ai-disabled,
+      &.adult-ai-disabled:disabled {
+        opacity: 0.42;
+        border-color: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.36);
+        filter: grayscale(1);
+        cursor: not-allowed;
+        pointer-events: none;
+        transform: none;
+      }
     }
 
     .save-franchise-btn {

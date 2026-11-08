@@ -9,6 +9,7 @@ import { TmdbCollectionDetailDto } from '../dtos/collections/collection-detail.d
 interface CachedCollectionMeta {
   cachedAt: number;
   name: string;
+  adult?: boolean | undefined;
   overview?: string | undefined;
   poster_path?: string | null | undefined;
   backdrop_path?: string | null | undefined;
@@ -16,7 +17,7 @@ interface CachedCollectionMeta {
   parts: FranchisePart[];
 }
 
-const CACHE_PREFIX = 'cinescope_franchise_meta_';
+const CACHE_PREFIX = 'cinescope_franchise_meta_v2_';
 const DISMISSED_FRANCHISES_KEY = 'cinescope_dismissed_franchises_v1';
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_CONCURRENT_MOVIE_LOOKUPS = 4;
@@ -46,9 +47,16 @@ export class FranchiseAggregatorService {
 
     // Trigger hydration whenever user library items change
     effect(() => {
-      const watchlist = this.storage.watchlistItems();
-      const watched = this.storage.watchedItems();
-      this.syncMissingCollectionMetadata(watchlist, watched);
+      const watchlist = typeof this.storage.allWatchlistRaw === 'function'
+        ? this.storage.allWatchlistRaw()
+        : this.storage.watchlistItems();
+      const watched = typeof this.storage.allWatchedRaw === 'function'
+        ? this.storage.allWatchedRaw()
+        : this.storage.watchedItems();
+      const savedUniverses = typeof this.storage.allSavedUniversesRaw === 'function'
+        ? this.storage.allSavedUniversesRaw()
+        : this.storage.savedUniverses();
+      this.syncMissingCollectionMetadata(watchlist, watched, savedUniverses);
     });
   }
 
@@ -268,6 +276,7 @@ export class FranchiseAggregatorService {
     // Read cacheRevision to recompute when new TMDB metadata finishes fetching
     this.cacheRevision();
 
+    const allowAdult = typeof this.storage.allowAdultContent === 'function' ? this.storage.allowAdultContent() : false;
     const watchlist = this.storage.watchlistItems();
     const watched = this.storage.watchedItems();
     const savedUniverses = this.storage.savedUniverses();
@@ -290,6 +299,7 @@ export class FranchiseAggregatorService {
     for (const item of watchlist) {
       if (item.mediaType !== 'movie') continue;
       const payload = item.payload as Record<string, unknown> | undefined;
+      if (!allowAdult && payload?.['adult'] === true) continue;
       const collection = payload?.['belongs_to_collection'] as {
         id: number;
         name: string;
@@ -319,6 +329,7 @@ export class FranchiseAggregatorService {
     for (const item of watched) {
       if (item.mediaType !== 'movie') continue;
       const payload = item.payload as Record<string, unknown> | undefined;
+      if (!allowAdult && payload?.['adult'] === true) continue;
       const collection = payload?.['belongs_to_collection'] as {
         id: number;
         name: string;
@@ -357,6 +368,17 @@ export class FranchiseAggregatorService {
       const isUniverse = Boolean(
         uniPayload.isUniverse ?? (uniDoc.lists ? uniDoc.lists.includes('universe') && !uniDoc.lists.includes('franchise') : false)
       );
+
+      // Hide adult saved franchises/universes when family-safe lock is ON
+      if (
+        !allowAdult &&
+        (uniPayload.adult === true ||
+          (Array.isArray(uniPayload.parts) &&
+            uniPayload.parts.length > 0 &&
+            uniPayload.parts.every((p) => Boolean(p?.adult))))
+      ) {
+        continue;
+      }
 
       if (!isUniverse) {
         // Directly saved numeric TMDB Franchise: merge with collectionMap so cold cache still has full parts & artwork
@@ -500,7 +522,19 @@ export class FranchiseAggregatorService {
       }
 
       const cached = this.metaCache.get(collectionId);
-      const effectiveParts = cached?.parts || group.savedParts;
+      const rawEffectiveParts = cached?.parts || group.savedParts;
+      const effectiveParts = allowAdult
+        ? rawEffectiveParts
+        : rawEffectiveParts?.filter((p) => !p.adult);
+
+      // Skip adult-only collections when family-safe filtering is active
+      if (
+        !allowAdult &&
+        (cached?.adult === true ||
+          (rawEffectiveParts && rawEffectiveParts.length > 0 && (!effectiveParts || effectiveParts.length === 0)))
+      ) {
+        continue;
+      }
 
       let totalParts: number;
       let releasedPartsCount: number | undefined;
@@ -516,7 +550,7 @@ export class FranchiseAggregatorService {
           effectiveParts,
           watchedMediaKeys,
           watchlistMediaKeys,
-          cached?.totalParts || effectiveParts.length
+          effectiveParts.length
         );
         totalParts = stats.totalParts;
         releasedPartsCount = stats.releasedPartsCount;
@@ -601,15 +635,32 @@ export class FranchiseAggregatorService {
   });
 
   /**
-   * Imperatively gets collection details, using cache if available.
+   * Imperatively gets collection details, using cache if available,
+   * and filters adult parts when family-safe mode is active.
    */
   public async getCollectionMetadata(collectionId: number): Promise<CachedCollectionMeta | null> {
     const cached = this.metaCache.get(collectionId);
-    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
-      return cached;
+    const raw =
+      cached && Date.now() - cached.cachedAt < CACHE_TTL_MS
+        ? cached
+        : await this.fetchAndCacheCollection(collectionId);
+
+    if (!raw) return null;
+
+    const allowAdult = typeof this.storage.allowAdultContent === 'function'
+      ? this.storage.allowAdultContent()
+      : false;
+
+    if (allowAdult) {
+      return raw;
     }
 
-    return this.fetchAndCacheCollection(collectionId);
+    const safeParts = (raw.parts || []).filter((p) => !p.adult);
+    return {
+      ...raw,
+      parts: safeParts,
+      totalParts: safeParts.length
+    };
   }
 
   private hydrateMemoryFromLocalStorage(): void {
@@ -646,7 +697,8 @@ export class FranchiseAggregatorService {
 
   private syncMissingCollectionMetadata(
     watchlist: { id?: string; tmdbId?: number; mediaType: string; payload?: unknown }[],
-    watched: { id?: string; tmdbId?: number; mediaType: string; payload?: unknown }[]
+    watched: { id?: string; tmdbId?: number; mediaType: string; payload?: unknown }[],
+    savedUniverses: { id?: string; tmdbId?: number; lists?: string[]; payload?: unknown }[] = []
   ): void {
     const all = [...watchlist, ...watched];
     for (const item of all) {
@@ -656,13 +708,18 @@ export class FranchiseAggregatorService {
       const docId = item.id || (tmdbId ? `movie_${tmdbId}` : undefined);
       if (!tmdbId || !docId) continue;
 
-      // 1. If belongs_to_collection is undefined, enqueue movie for throttled franchise membership lookup
-      if (payload && payload['belongs_to_collection'] === undefined) {
+      // 1. If belongs_to_collection or adult flag is missing, enqueue movie for throttled metadata lookup
+      if (
+        payload &&
+        (payload['belongs_to_collection'] === undefined || typeof payload['adult'] !== 'boolean')
+      ) {
         if (!this.inFlightMovieLookups.has(tmdbId)) {
           this.inFlightMovieLookups.add(tmdbId);
           this.pendingMovieQueue.push({ tmdbId, docId });
         }
-        continue;
+        if (payload['belongs_to_collection'] === undefined) {
+          continue;
+        }
       }
 
       // 2. If belongs_to_collection exists and has a collection ID, hydrate collection metadata
@@ -676,6 +733,37 @@ export class FranchiseAggregatorService {
         this.fetchAndCacheCollection(collection.id).catch(() => {
           // Graceful ignore: offline or network issue
         });
+      }
+    }
+
+    // 3. Also ensure directly saved numeric franchises in savedUniverses are hydrated in metaCache
+    for (const uniDoc of savedUniverses) {
+      const uniPayload = uniDoc.payload as Record<string, unknown> | undefined;
+      if (!uniPayload) continue;
+      const isUniverse = Boolean(
+        uniPayload['isUniverse'] ??
+          (uniDoc.lists ? uniDoc.lists.includes('universe') && !uniDoc.lists.includes('franchise') : false)
+      );
+      if (isUniverse) continue;
+
+      const numericId =
+        typeof uniPayload['id'] === 'number'
+          ? uniPayload['id']
+          : typeof uniDoc.tmdbId === 'number'
+          ? uniDoc.tmdbId
+          : parseInt(String(uniPayload['id'] || ''), 10);
+
+      if (numericId && !isNaN(numericId) && numericId > 0) {
+        const cached = this.metaCache.get(numericId);
+        const isExpired = cached ? Date.now() - cached.cachedAt >= CACHE_TTL_MS : true;
+        if (
+          (!cached || isExpired || typeof cached.adult !== 'boolean') &&
+          !this.inFlightPromises.has(numericId)
+        ) {
+          this.fetchAndCacheCollection(numericId).catch(() => {
+            // Graceful ignore
+          });
+        }
       }
     }
 
@@ -704,7 +792,10 @@ export class FranchiseAggregatorService {
       const belongs = details?.belongs_to_collection || null;
 
       // Patch the local RxDB document payload so we don't query TMDB again
-      await this.storage.updateMediaPayload(docId, { belongs_to_collection: belongs });
+      await this.storage.updateMediaPayload(docId, {
+        belongs_to_collection: belongs,
+        adult: Boolean(details?.adult)
+      });
 
       if (belongs && belongs.id) {
         await this.fetchAndCacheCollection(belongs.id);
@@ -732,6 +823,7 @@ export class FranchiseAggregatorService {
           id: p.id,
           title: p.title,
           mediaType: 'movie',
+          adult: Boolean(p.adult),
           overview: p.overview,
           poster_path: p.poster_path,
           backdrop_path: p.backdrop_path,
@@ -740,9 +832,14 @@ export class FranchiseAggregatorService {
           vote_count: p.vote_count
         }));
 
+        const isAdultCollection =
+          Boolean((details as { adult?: boolean }).adult) ||
+          (parts.length > 0 && parts.every((p) => Boolean(p.adult)));
+
         const cached: CachedCollectionMeta = {
           cachedAt: Date.now(),
           name: details.name,
+          adult: isAdultCollection,
           overview: details.overview,
           poster_path: details.poster_path,
           backdrop_path: details.backdrop_path,
@@ -751,6 +848,13 @@ export class FranchiseAggregatorService {
         };
 
         this.metaCache.set(collectionId, cached);
+
+        if (isAdultCollection && typeof this.storage.updateMediaPayload === 'function') {
+          void this.storage.updateMediaPayload(`franchise_${collectionId}`, {
+            adult: true,
+            parts
+          });
+        }
 
         if (typeof window !== 'undefined' && window.localStorage) {
           try {

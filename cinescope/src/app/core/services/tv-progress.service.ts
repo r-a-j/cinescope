@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, WritableSignal, Signal } from '@angular/core';
 import { DatabaseService } from '../database/database.service';
 import { StorageService, getLocalTodayIso } from './storage.service';
 import { TvReleaseIntelService } from './tv-release-intel.service';
@@ -171,7 +171,28 @@ export class TvProgressService {
     private readonly storage = inject(StorageService);
     public readonly releaseIntel = inject(TvReleaseIntelService);
 
-    public readonly allProgress = signal<TvProgressDocType[]>([]);
+    private readonly rawAllProgress = signal<TvProgressDocType[]>([]);
+    public readonly allProgress: WritableSignal<TvProgressDocType[]> = ((): WritableSignal<TvProgressDocType[]> => {
+        const filtered = computed<TvProgressDocType[]>(() => {
+            const list = this.rawAllProgress();
+            const allowAdult =
+                typeof this.storage.allowAdultContent === 'function'
+                    ? this.storage.allowAdultContent()
+                    : false;
+            if (allowAdult) return list;
+            const hiddenTvIds =
+                typeof this.storage.hiddenAdultTvIds === 'function'
+                    ? this.storage.hiddenAdultTvIds()
+                    : new Set<number>();
+            if (hiddenTvIds.size === 0) return list;
+            return list.filter((p) => !hiddenTvIds.has(p.tmdbId));
+        }) as WritableSignal<TvProgressDocType[]>;
+        filtered.set = (value: TvProgressDocType[]): void => this.rawAllProgress.set(value);
+        filtered.update = (updateFn: (value: TvProgressDocType[]) => TvProgressDocType[]): void =>
+            this.rawAllProgress.update(updateFn);
+        filtered.asReadonly = (): Signal<TvProgressDocType[]> => filtered;
+        return filtered;
+    })();
     private streamsInitialized = false;
 
     public readonly progressByTmdbId = computed<Map<number, TvProgressDocType>>(() => {
