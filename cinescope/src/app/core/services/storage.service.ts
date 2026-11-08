@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, WritableSignal } from '@angular/core';
+import { Injectable, inject, signal, computed, WritableSignal, Signal } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { DatabaseService } from '../database/database.service';
 import { ContentDocType } from '../database/schemas/content.schema';
@@ -393,7 +393,7 @@ export class StorageService {
         }) as WritableSignal<ContentDocType[]>;
         filtered.set = (value: ContentDocType[]): void => rawSignal.set(value);
         filtered.update = (updateFn: (value: ContentDocType[]) => ContentDocType[]): void => rawSignal.update(updateFn);
-        filtered.asReadonly = () => filtered;
+        filtered.asReadonly = (): Signal<ContentDocType[]> => filtered;
         return filtered;
     }
 

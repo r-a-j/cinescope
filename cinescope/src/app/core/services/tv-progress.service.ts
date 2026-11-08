@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, WritableSignal } from '@angular/core';
+import { Injectable, inject, signal, computed, WritableSignal, Signal } from '@angular/core';
 import { DatabaseService } from '../database/database.service';
 import { StorageService, getLocalTodayIso } from './storage.service';
 import { TvReleaseIntelService } from './tv-release-intel.service';
@@ -172,7 +172,7 @@ export class TvProgressService {
     public readonly releaseIntel = inject(TvReleaseIntelService);
 
     private readonly rawAllProgress = signal<TvProgressDocType[]>([]);
-    public readonly allProgress: WritableSignal<TvProgressDocType[]> = (() => {
+    public readonly allProgress: WritableSignal<TvProgressDocType[]> = ((): WritableSignal<TvProgressDocType[]> => {
         const filtered = computed<TvProgressDocType[]>(() => {
             const list = this.rawAllProgress();
             const allowAdult =
@@ -190,7 +190,7 @@ export class TvProgressService {
         filtered.set = (value: TvProgressDocType[]): void => this.rawAllProgress.set(value);
         filtered.update = (updateFn: (value: TvProgressDocType[]) => TvProgressDocType[]): void =>
             this.rawAllProgress.update(updateFn);
-        filtered.asReadonly = () => filtered;
+        filtered.asReadonly = (): Signal<TvProgressDocType[]> => filtered;
         return filtered;
     })();
     private streamsInitialized = false;

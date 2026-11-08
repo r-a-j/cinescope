@@ -488,7 +488,15 @@
             <ion-button fill="clear" size="small" color="medium"
                 (click)="openUrl('https://www.themoviedb.org/privacy-policy')">Privacy</ion-button>
         </div>
-        <p class="app-version-footer" (click)="onVersionTap()">CineScope v{{ appVersion() }}</p>
+        <p
+            class="app-version-footer"
+            role="button"
+            tabindex="0"
+            (click)="onVersionTap()"
+            (keydown.enter)="onVersionTap()"
+            (keydown.space)="onVersionTap()">
+            CineScope v{{ appVersion() }}
+        </p>
     </div>
 
 </ion-content>
@@ -920,12 +928,16 @@
     <div
         class="safety-center-overlay"
         (click)="closeAdultUnlockModal()"
+        (keydown.escape)="closeAdultUnlockModal()"
+        tabindex="-1"
         role="dialog"
         aria-modal="true"
         aria-labelledby="safety-unlock-title">
         <div
             class="backup-modal-container safety-modal-container"
-            (click)="$event.stopPropagation()">
+            tabindex="0"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
             <!-- Modal Header -->
             <div class="backup-modal-header">
                 <div class="modal-title-row">
