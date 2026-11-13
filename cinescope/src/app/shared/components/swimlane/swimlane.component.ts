@@ -1,13 +1,14 @@
-import { Component, ChangeDetectionStrategy, input, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, ActionSheetController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { chevronForwardOutline, heart, heartOutline } from 'ionicons/icons';
+import { chevronForwardOutline, heart, heartOutline, thumbsDownOutline, closeOutline } from 'ionicons/icons';
 import { PosterCardComponent, BookmarkState } from '../poster-card/poster-card.component';
 import { SwimlaneItem } from '../../models/swimlane-item.interface';
 import { StorageService, extractPersonCreditMetadata } from '../../../core/services/storage.service';
+import { TasteProfileService } from '../../../core/services/taste-profile.service';
 import { TmdbPeopleService } from '../../../core/services/tmdb-people.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
@@ -33,12 +34,25 @@ export interface SwimlaneHeaderInfo {
 export class SwimlaneComponent {
     private storageService = inject(StorageService);
     private peopleService = inject(TmdbPeopleService);
+    private tasteProfileService = inject(TasteProfileService);
     private toastService = inject(ToastService);
+    private actionSheetCtrl = inject(ActionSheetController);
     private router = inject(Router);
 
     public title = input.required<string>();
     public items = input.required<SwimlaneItem[]>();
     public queryContext = input<CollectionQueryContext>();
+
+    private locallyDismissedIds = signal<Set<string | number>>(new Set());
+    private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    private startX = 0;
+    private startY = 0;
+    private isLongPressTriggered = false;
+
+    public visibleItems = computed<SwimlaneItem[]>(() => {
+        const dismissed = this.locallyDismissedIds();
+        return this.items().filter((item) => !dismissed.has(item.id));
+    });
 
     public isAiPulse = computed<boolean>(() => {
         const t = this.title().toUpperCase();
@@ -110,7 +124,116 @@ export class SwimlaneComponent {
     });
 
     constructor() {
-        addIcons({ chevronForwardOutline, heart, heartOutline });
+        addIcons({ chevronForwardOutline, heart, heartOutline, thumbsDownOutline, closeOutline });
+    }
+
+    public onCardPointerDown(event: PointerEvent, item: SwimlaneItem): void {
+        if (item.mediaType === 'person') return;
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        this.isLongPressTriggered = false;
+        this.startX = event.clientX;
+        this.startY = event.clientY;
+        this.clearLongPressTimer();
+
+        this.longPressTimer = setTimeout(() => {
+            this.isLongPressTriggered = true;
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try {
+                    navigator.vibrate(40);
+                } catch {
+                    // Ignore vibration errors
+                }
+            }
+            void this.presentDislikeActionSheet(item);
+        }, 450);
+    }
+
+    public onCardPointerMove(event: PointerEvent): void {
+        if (!this.longPressTimer) return;
+        const dist = Math.hypot(event.clientX - this.startX, event.clientY - this.startY);
+        if (dist > 10) {
+            this.clearLongPressTimer();
+        }
+    }
+
+    public onCardPointerUp(): void {
+        this.clearLongPressTimer();
+    }
+
+    public onCardPointerCancel(): void {
+        this.clearLongPressTimer();
+    }
+
+    public onCardContextMenu(event: Event, item: SwimlaneItem): void {
+        if (item.mediaType === 'person') return;
+        event.preventDefault();
+        this.clearLongPressTimer();
+        this.isLongPressTriggered = true;
+        void this.presentDislikeActionSheet(item);
+    }
+
+    private clearLongPressTimer(): void {
+        if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+        }
+    }
+
+    public async presentDislikeActionSheet(item: SwimlaneItem): Promise<void> {
+        const actionSheet = await this.actionSheetCtrl.create({
+            header: item.title,
+            subHeader: 'Manage Recommendations',
+            mode: 'ios',
+            cssClass: 'cinescope-dislike-sheet',
+            buttons: [
+                {
+                    text: 'Not Interested / Dislike',
+                    role: 'destructive',
+                    icon: 'thumbs-down-outline',
+                    handler: () => {
+                        void this.executeDismiss(item);
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    role: 'cancel',
+                    icon: 'close-outline'
+                }
+            ]
+        });
+        await actionSheet.present();
+    }
+
+    private async executeDismiss(item: SwimlaneItem): Promise<void> {
+        const mediaType = item.mediaType === 'tv' ? 'tv' : 'movie';
+        const itemId = item.id;
+        const payload = (item.payload || {}) as Record<string, unknown>;
+        const genreIds = (payload['genre_ids'] as number[] | undefined) || [];
+
+        // Optimistically hide from local swimlane
+        this.locallyDismissedIds.update((set) => {
+            const next = new Set(set);
+            next.add(itemId);
+            return next;
+        });
+
+        // Record negative feedback in Taste Profile (blacklist + negative genre weight)
+        this.tasteProfileService.dismissRecommendation(mediaType, itemId, {
+            title: item.title,
+            genreIds
+        });
+
+        await this.toastService.presentActionWithUndo(
+            `Marked "${item.title}" as Not Interested`,
+            () => {
+                this.tasteProfileService.unDismissRecommendation(mediaType, itemId);
+                this.locallyDismissedIds.update((set) => {
+                    const next = new Set(set);
+                    next.delete(itemId);
+                    return next;
+                });
+            }
+        );
     }
 
     public openViewAll(): void {
@@ -136,7 +259,7 @@ export class SwimlaneComponent {
             queryParams,
             state: {
                 title: this.displayTitle(),
-                items: this.items(),
+                items: this.visibleItems(),
                 queryContext: this.queryContext()
             }
         });
@@ -218,6 +341,10 @@ export class SwimlaneComponent {
     }
 
     public onCardClick(item: SwimlaneItem): void {
+        if (this.isLongPressTriggered) {
+            this.isLongPressTriggered = false;
+            return;
+        }
         if (item.mediaType === 'person') {
             void this.router.navigate(['/person', item.id], {
                 state: {

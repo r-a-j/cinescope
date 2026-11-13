@@ -252,19 +252,24 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
     secondaryTvParams?: TmdbDiscoverTvParamsDto;
 } {
     const code = lang.code;
+    const todayIso = getLocalTodayIso();
     switch (code) {
         case 'hi':
             return {
                 primaryMovieTitle: 'HINDI BLOCKBUSTERS & TRENDING',
                 primaryMovieParams: {
                     with_original_language: 'hi',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 },
-                secondaryTitle: 'INDIAN OTT & HINDI WEB SERIES',
-                secondaryType: 'tv',
-                secondaryTvParams: {
+                secondaryTitle: "CRITICS' ACCLAIMED HINDI CINEMA",
+                secondaryType: 'movie',
+                secondaryMovieParams: {
                     with_original_language: 'hi',
-                    sort_by: 'popularity.desc'
+                    'primary_release_date.lte': todayIso,
+                    'vote_average.gte': 7.2,
+                    'vote_count.gte': 40,
+                    sort_by: 'vote_average.desc'
                 }
             };
         case 'en':
@@ -272,12 +277,14 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 primaryMovieTitle: 'HOLLYWOOD BLOCKBUSTERS',
                 primaryMovieParams: {
                     with_original_language: 'en',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 },
                 secondaryTitle: 'PRESTIGE ENGLISH SERIES',
                 secondaryType: 'tv',
                 secondaryTvParams: {
                     with_original_language: 'en',
+                    'first_air_date.lte': todayIso,
                     sort_by: 'vote_average.desc',
                     'vote_count.gte': 300
                 }
@@ -287,6 +294,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 primaryMovieTitle: 'KOREAN THRILLERS & CINEMA',
                 primaryMovieParams: {
                     with_original_language: 'ko',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc',
                     'vote_count.gte': 25
                 },
@@ -294,6 +302,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 secondaryType: 'tv',
                 secondaryTvParams: {
                     with_original_language: 'ko',
+                    'first_air_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 }
             };
@@ -302,6 +311,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 primaryMovieTitle: 'ANIME FILMS & JAPANESE CINEMA',
                 primaryMovieParams: {
                     with_original_language: 'ja',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc',
                     'vote_count.gte': 25
                 },
@@ -309,6 +319,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 secondaryType: 'tv',
                 secondaryTvParams: {
                     with_original_language: 'ja',
+                    'first_air_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 }
             };
@@ -319,6 +330,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 primaryMovieTitle: `${lang.label.toUpperCase()} CINEMA SPOTLIGHT`,
                 primaryMovieParams: {
                     with_original_language: code,
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc',
                     'vote_count.gte': 20
                 },
@@ -326,6 +338,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 secondaryType: 'tv',
                 secondaryTvParams: {
                     with_original_language: code,
+                    'first_air_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 }
             };
@@ -335,6 +348,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                     primaryMovieTitle: `${lang.label.toUpperCase()} CINEMA SPOTLIGHT`,
                     primaryMovieParams: {
                         with_original_language: code,
+                        'primary_release_date.lte': todayIso,
                         sort_by: 'popularity.desc',
                         'vote_count.gte': 10
                     },
@@ -342,6 +356,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                     secondaryType: 'tv',
                     secondaryTvParams: {
                         with_original_language: code,
+                        'first_air_date.lte': todayIso,
                         sort_by: 'popularity.desc'
                     }
                 };
@@ -351,6 +366,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 primaryMovieTitle: `${lang.label.toUpperCase()} BLOCKBUSTERS`,
                 primaryMovieParams: {
                     with_original_language: code,
+                    'primary_release_date.lte': todayIso,
                     region: 'IN',
                     sort_by: 'popularity.desc'
                 },
@@ -358,6 +374,7 @@ function buildLanguageSpecificConfigs(lang: DiscoverLanguageOption): {
                 secondaryType: 'movie',
                 secondaryMovieParams: {
                     with_original_language: code,
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'vote_average.desc',
                     'vote_count.gte': 10
                 }
@@ -388,6 +405,7 @@ export const TrendingStore = signalStore(
             const allowAdult = storage.allowAdultContent();
             const hideWatched = discoverPrefs.hideWatchedInDiscover();
             const watchedKeys = storage.watchedMediaKeys();
+            const dismissedKeys = tasteProfile?.profile()?.dismissedKeys;
             return items.filter((it) => {
                 if (!allowAdult) {
                     const payload = it.payload as Record<string, unknown> | undefined;
@@ -395,8 +413,10 @@ export const TrendingStore = signalStore(
                         return false;
                     }
                 }
+                const key = `${it.mediaType}_${it.id}`;
+                if (dismissedKeys && dismissedKeys.has(key)) return false;
                 if (hideWatched && watchedKeys && watchedKeys.size > 0) {
-                    if (watchedKeys.has(`${it.mediaType}_${it.id}`)) return false;
+                    if (watchedKeys.has(key)) return false;
                 }
                 return true;
             });
@@ -407,6 +427,63 @@ export const TrendingStore = signalStore(
                 return recEngine.rankSwimlaneItems(items, { attachMatchSubtitle });
             }
             return filterWatched(items);
+        };
+
+        const deduplicateSections = (
+            sections: DiscoverSwimlaneSection[],
+            initialSeenKeys: Set<string> = new Set()
+        ): DiscoverSwimlaneSection[] => {
+            const seen = new Set<string>(initialSeenKeys);
+            for (const k of storage.watchedMediaKeys()) seen.add(k);
+            if (tasteProfile) {
+                for (const k of tasteProfile.profile().dismissedKeys) seen.add(k);
+            }
+
+            const seenTitlesInLane = new Set<string>();
+            const result: DiscoverSwimlaneSection[] = [];
+
+            for (const sec of sections) {
+                const isUpcoming =
+                    sec.id?.includes('upcoming') ||
+                    sec.title?.includes('UPCOMING') ||
+                    sec.title?.includes('CALENDAR');
+                const freshItems: SwimlaneItem[] = [];
+                seenTitlesInLane.clear();
+
+                for (const item of sec.items) {
+                    const itemKey = `${item.mediaType}_${item.id}`;
+                    if (seen.has(itemKey)) continue;
+
+                    // Title deduplication within the same lane (e.g. Ramayana and Ramayana: Part 2 or duplicate entries)
+                    const normalizedTitle = item.title
+                        .toLowerCase()
+                        .replace(/[:\-_–—]/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    const baseTitle = normalizedTitle
+                        .replace(/\s*(part\s*\d+|chapter\s*\d+|season\s*\d+|\(\d+\))\s*$/i, '')
+                        .trim();
+                    if (seenTitlesInLane.has(baseTitle)) continue;
+
+                    if (!isUpcoming) {
+                        const relCheck = checkMediaReleaseStatus(item.payload as Record<string, unknown> | null);
+                        if (!relCheck.isReleased) continue;
+                    }
+
+                    seen.add(itemKey);
+                    seenTitlesInLane.add(baseTitle);
+                    freshItems.push(item);
+                }
+
+                if (freshItems.length >= 3) {
+                    result.push({
+                        ...sec,
+                        items: freshItems
+                    });
+                }
+            }
+
+            return result;
         };
 
         /**
@@ -922,52 +999,42 @@ export const TrendingStore = signalStore(
                 if (gSec) rawSections.push(gSec);
             }
 
-            // 6. Global Cross-Swimlane Deduplication & Minimum Richness Enforcement
-            const globalSeenKeys = new Set<string>();
+            // 5b. Serendipity Shelf: "CRITICS' HIDDEN GEMS" (Breaking the Echo Chamber)
+            // Surfaces critically acclaimed titles (>= 7.8 rating) in genres OUTSIDE user's dominant top genres
+            const dominantGenreIds = new Set([
+                ...(dnaProfile?.topMovieGenreIds?.slice(0, 3) || []),
+                ...selectedGenres.map((g) => Number(g.movieGenreIds.split(',')[0]))
+            ]);
+            const serendipityCandidates = [9648, 99, 36, 18, 12, 10752, 878] // Mystery, Doc, History, Drama, Adventure, War, Sci-Fi
+                .filter((g) => !dominantGenreIds.has(g));
+            const serendipityGenre = serendipityCandidates[0] || 9648;
 
-            // Seed with watched keys and user's seed IDs so they are never recommended
-            for (const key of storage.watchedMediaKeys()) {
-                globalSeenKeys.add(key);
-            }
-            for (const s of topSeeds) {
-                globalSeenKeys.add(`${s.mediaType}_${s.tmdbId}`);
-            }
-
-            const deduplicatedSections: DiscoverSwimlaneSection[] = [];
-
-            for (const sec of rawSections) {
-                const isUpcoming = sec.id === 'upcoming-preferred-languages';
-                const freshItems: SwimlaneItem[] = [];
-
-                for (const item of sec.items) {
-                    const itemKey = `${item.mediaType}_${item.id}`;
-                    if (globalSeenKeys.has(itemKey)) {
-                        continue;
-                    }
-
-                    if (!isUpcoming) {
-                        const relCheck = checkMediaReleaseStatus(item.payload as Record<string, unknown> | null);
-                        if (!relCheck.isReleased) {
-                            continue;
-                        }
-                    }
-
-                    freshItems.push(item);
-                }
-
-                // Only include swimlanes with at least 3 fresh, non-duplicate titles
-                if (freshItems.length >= 3) {
-                    for (const item of freshItems) {
-                        globalSeenKeys.add(`${item.mediaType}_${item.id}`);
-                    }
-                    deduplicatedSections.push({
-                        ...sec,
-                        items: freshItems
+            try {
+                const serendipityParams: TmdbDiscoverMovieParamsDto = {
+                    with_original_language: langPipe || 'hi|en',
+                    with_genres: String(serendipityGenre),
+                    'primary_release_date.lte': todayIso,
+                    'vote_average.gte': 7.8,
+                    'vote_count.gte': 60,
+                    sort_by: 'vote_average.desc'
+                };
+                const serendipityRes = await firstValueFrom(discoverService.discoverMovies(serendipityParams));
+                const serendipityItems = rankAndFilter(mapMoviesToSwimlane(serendipityRes.results || []), false);
+                if (serendipityItems.length >= 3) {
+                    rawSections.push({
+                        id: 'serendipity-hidden-gems',
+                        title: "CRITICS' HIDDEN GEMS",
+                        items: serendipityItems,
+                        queryContext: { type: 'discover_movies', movieParams: serendipityParams }
                     });
                 }
+            } catch {
+                // Ignore serendipity lane error
             }
 
-            return deduplicatedSections;
+            // 6. Global Cross-Swimlane Deduplication & Minimum Richness Enforcement
+            const seedKeys = new Set<string>(topSeeds.map((s) => `${s.mediaType}_${s.tmdbId}`));
+            return deduplicateSections(rawSections, seedKeys);
         };
 
         const loadTrendingData = (force = false): Promise<void> => {
@@ -1020,10 +1087,19 @@ export const TrendingStore = signalStore(
                     ]);
 
                     const mappedHero = mapToHeroItems(allRes.results);
+                    const heroKeys = new Set(mappedHero.map((h) => `${h.mediaType}_${h.id}`));
+
                     const mappedMovies = filterWatched(mapMoviesToSwimlane(moviesRes.results));
-                    const mappedNowPlaying = filterWatched(mapMoviesToSwimlane(nowPlayingRes.results || []));
+                    const movieKeys = new Set(mappedMovies.map((m) => `${m.mediaType}_${m.id}`));
+
+                    const mappedNowPlaying = filterWatched(mapMoviesToSwimlane(nowPlayingRes.results || []))
+                        .filter((it) => !heroKeys.has(`${it.mediaType}_${it.id}`) && !movieKeys.has(`${it.mediaType}_${it.id}`));
+
                     const mappedTv = filterWatched(mapTvToSwimlane(tvRes.results));
-                    const mappedAiring = filterWatched(mapTvToSwimlane(onTheAirRes.results || []));
+                    const tvKeys = new Set(mappedTv.map((t) => `${t.mediaType}_${t.id}`));
+
+                    const mappedAiring = filterWatched(mapTvToSwimlane(onTheAirRes.results || []))
+                        .filter((it) => !tvKeys.has(`${it.mediaType}_${it.id}`));
 
                     patchState(store, {
                         heroItems: mappedHero,
@@ -1176,19 +1252,25 @@ export const TrendingStore = signalStore(
             try {
                 const builtSections: DiscoverSwimlaneSection[] = [];
 
-                // If user selected any Indian language, surface Pan-Indian OTT & Web Series first
+                // If user selected any Indian language, surface Prestige Indian Web Series & OTT first
                 const hasIndianLang = selectedOptions.some((l) => l.group === 'indian');
                 if (hasIndianLang) {
+                    const todayIso = getLocalTodayIso();
                     const indianOttParams: TmdbDiscoverTvParamsDto = {
                         with_origin_country: 'IN',
-                        sort_by: 'popularity.desc'
+                        without_genres: '10763,10764,10766,10767',
+                        'first_air_date.gte': '2018-01-01',
+                        'first_air_date.lte': todayIso,
+                        'vote_average.gte': 7.4,
+                        'vote_count.gte': 30,
+                        sort_by: 'vote_average.desc'
                     };
                     const webSeriesRes = await firstValueFrom(discoverService.discoverTv(indianOttParams));
                     const webItems = filterWatched(mapTvToSwimlane(webSeriesRes.results || []));
                     if (webItems.length > 0) {
                         builtSections.push({
                             id: 'indian-ott-web-series',
-                            title: 'INDIAN OTT & WEB SERIES',
+                            title: 'PRESTIGE INDIAN WEB SERIES & OTT',
                             items: webItems,
                             queryContext: { type: 'discover_tv', tvParams: indianOttParams }
                         });
@@ -1247,10 +1329,13 @@ export const TrendingStore = signalStore(
                     }
                 }
 
+                // Deduplicate across swimlanes to guarantee zero repetitive titles in Language Hub
+                const deduplicatedSections = deduplicateSections(builtSections);
+
                 patchState(store, {
-                    languageHubSections: builtSections,
+                    languageHubSections: deduplicatedSections,
                     lastLoadedLanguageKey: currentLangKey,
-                    desiWebSeries: builtSections[0]?.items || [],
+                    desiWebSeries: deduplicatedSections[0]?.items || [],
                     isDesiLoading: false
                 });
 
@@ -1262,7 +1347,7 @@ export const TrendingStore = signalStore(
                     airingTvShows: store.airingTvShows(),
                     trendingPersonalizedSections: store.trendingPersonalizedSections(),
                     forYouSections: store.forYouSections(),
-                    languageHubSections: builtSections,
+                    languageHubSections: deduplicatedSections,
                     lastLoadedLanguageKey: currentLangKey,
                     bollywoodSections: store.bollywoodSections(),
                     ottStreamingSections: store.ottStreamingSections(),
@@ -1277,38 +1362,56 @@ export const TrendingStore = signalStore(
 
         async loadBollywoodData(force = false): Promise<void> {
             if (!force && (store.bollywoodSections().length > 0 || store.isBollywoodLoading())) return;
+
+            const validCache = !force ? discoverPrefs.getValidDiscoverFeedCache() : null;
+            if (validCache && validCache.bollywoodSections && validCache.bollywoodSections.length > 0) {
+                patchState(store, {
+                    bollywoodSections: validCache.bollywoodSections,
+                    isBollywoodLoading: false
+                });
+                return;
+            }
+
             patchState(store, { isBollywoodLoading: true });
             try {
                 const todayIso = getLocalTodayIso();
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                const sixMonthsAgoIso = sixMonthsAgo.toISOString().split('T')[0];
 
-                const recentParams: TmdbDiscoverMovieParamsDto = {
-                    with_original_language: 'hi',
-                    'primary_release_date.lte': todayIso,
-                    'vote_count.gte': 5,
-                    sort_by: 'primary_release_date.desc'
-                };
-                const upcomingParams: TmdbDiscoverMovieParamsDto = {
-                    with_original_language: 'hi',
-                    'primary_release_date.gte': todayIso,
-                    sort_by: 'popularity.desc'
-                };
                 const popularParams: TmdbDiscoverMovieParamsDto = {
                     with_original_language: 'hi',
+                    'primary_release_date.lte': todayIso,
+                    'vote_count.gte': 25,
                     sort_by: 'popularity.desc'
                 };
-                const actionCrimeParams: TmdbDiscoverMovieParamsDto = {
+                const recentParams: TmdbDiscoverMovieParamsDto = {
                     with_original_language: 'hi',
-                    with_genres: '28|53|80',
+                    'primary_release_date.gte': sixMonthsAgoIso,
+                    'primary_release_date.lte': todayIso,
                     'vote_count.gte': 15,
                     sort_by: 'popularity.desc'
                 };
                 const hindiSeriesParams: TmdbDiscoverTvParamsDto = {
                     with_original_language: 'hi',
+                    without_genres: '10763,10764,10766,10767',
+                    'first_air_date.gte': '2018-01-01',
+                    'first_air_date.lte': todayIso,
+                    'vote_average.gte': 7.4,
+                    'vote_count.gte': 30,
+                    sort_by: 'vote_average.desc'
+                };
+                const actionCrimeParams: TmdbDiscoverMovieParamsDto = {
+                    with_original_language: 'hi',
+                    with_genres: '28|53|80',
+                    'primary_release_date.lte': todayIso,
+                    'vote_count.gte': 20,
                     sort_by: 'popularity.desc'
                 };
                 const mysteryParams: TmdbDiscoverMovieParamsDto = {
                     with_original_language: 'hi',
                     with_genres: '9648|878|53',
+                    'primary_release_date.lte': todayIso,
                     'vote_average.gte': 7.0,
                     'vote_count.gte': 25,
                     sort_by: 'vote_average.desc'
@@ -1316,6 +1419,7 @@ export const TrendingStore = signalStore(
                 const comedyParams: TmdbDiscoverMovieParamsDto = {
                     with_original_language: 'hi',
                     with_genres: '35|10749',
+                    'primary_release_date.lte': todayIso,
                     'vote_count.gte': 20,
                     sort_by: 'popularity.desc'
                 };
@@ -1328,72 +1432,72 @@ export const TrendingStore = signalStore(
                 };
                 const classicsParams: TmdbDiscoverMovieParamsDto = {
                     with_original_language: 'hi',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'vote_average.desc',
-                    'vote_count.gte': 120
+                    'vote_count.gte': 100
+                };
+                const upcomingParams: TmdbDiscoverMovieParamsDto = {
+                    with_original_language: 'hi',
+                    'primary_release_date.gte': todayIso,
+                    sort_by: 'popularity.desc'
                 };
 
                 const [
-                    recentRes,
-                    upcomingRes,
                     popularRes,
-                    actionCrimeRes,
+                    recentRes,
                     hindiSeriesRes,
+                    actionCrimeRes,
                     mysteryRes,
                     comedyRes,
                     nostalgiaRes,
-                    classicsRes
+                    classicsRes,
+                    upcomingRes
                 ] = await Promise.all([
-                    firstValueFrom(discoverService.discoverMovies(recentParams)),
-                    firstValueFrom(discoverService.discoverMovies(upcomingParams)),
                     firstValueFrom(discoverService.discoverMovies(popularParams)),
-                    firstValueFrom(discoverService.discoverMovies(actionCrimeParams)),
+                    firstValueFrom(discoverService.discoverMovies(recentParams)),
                     firstValueFrom(discoverService.discoverTv(hindiSeriesParams)),
+                    firstValueFrom(discoverService.discoverMovies(actionCrimeParams)),
                     firstValueFrom(discoverService.discoverMovies(mysteryParams)),
                     firstValueFrom(discoverService.discoverMovies(comedyParams)),
                     firstValueFrom(discoverService.discoverMovies(nostalgiaParams)),
-                    firstValueFrom(discoverService.discoverMovies(classicsParams))
+                    firstValueFrom(discoverService.discoverMovies(classicsParams)),
+                    firstValueFrom(discoverService.discoverMovies(upcomingParams))
                 ]);
 
-                const bollywoodRecent = filterWatched(mapMoviesToSwimlane(recentRes.results || []));
-                const bollywoodUpcoming = filterWatched(mapMoviesToSwimlane(upcomingRes.results || []));
                 const bollywoodPopular = filterWatched(mapMoviesToSwimlane(popularRes.results || []));
-                const bollywoodActionCrime = filterWatched(mapMoviesToSwimlane(actionCrimeRes.results || []));
+                const bollywoodRecent = filterWatched(mapMoviesToSwimlane(recentRes.results || []));
                 const bollywoodSeries = filterWatched(mapTvToSwimlane(hindiSeriesRes.results || []));
+                const bollywoodActionCrime = filterWatched(mapMoviesToSwimlane(actionCrimeRes.results || []));
                 const bollywoodMystery = filterWatched(mapMoviesToSwimlane(mysteryRes.results || []));
                 const bollywoodComedy = filterWatched(mapMoviesToSwimlane(comedyRes.results || []));
                 const bollywoodNostalgia = filterWatched(mapMoviesToSwimlane(nostalgiaRes.results || []));
                 const bollywoodTopRated = filterWatched(mapMoviesToSwimlane(classicsRes.results || []));
+                const bollywoodUpcoming = filterWatched(mapMoviesToSwimlane(upcomingRes.results || []));
 
                 const candidateSections: DiscoverSwimlaneSection[] = [
                     {
+                        id: 'bollywood-trending',
+                        title: 'TRENDING BOLLYWOOD BLOCKBUSTERS',
+                        items: bollywoodPopular,
+                        queryContext: { type: 'discover_movies', movieParams: popularParams }
+                    },
+                    {
                         id: 'bollywood-recent',
-                        title: 'IN THEATERS & NEW HINDI RELEASES',
+                        title: 'IN THEATERS & RECENT HINDI HITS',
                         items: bollywoodRecent,
                         queryContext: { type: 'discover_movies', movieParams: recentParams }
                     },
                     {
-                        id: 'bollywood-upcoming',
-                        title: 'UPCOMING BOLLYWOOD CALENDAR',
-                        items: bollywoodUpcoming,
-                        queryContext: { type: 'discover_movies', movieParams: upcomingParams }
-                    },
-                    {
-                        id: 'bollywood-trending',
-                        title: 'TRENDING IN BOLLYWOOD',
-                        items: bollywoodPopular,
-                        queryContext: { type: 'discover_movies', movieParams: popularParams }
+                        id: 'bollywood-ott-series',
+                        title: 'PRESTIGE HINDI OTT & WEB SERIES',
+                        items: bollywoodSeries,
+                        queryContext: { type: 'discover_tv', tvParams: hindiSeriesParams }
                     },
                     {
                         id: 'bollywood-crime-action',
                         title: 'HINDI CRIME, ACTION & THRILLERS',
                         items: bollywoodActionCrime,
                         queryContext: { type: 'discover_movies', movieParams: actionCrimeParams }
-                    },
-                    {
-                        id: 'bollywood-ott-series',
-                        title: 'HINDI WEB SERIES & OTT ORIGINALS',
-                        items: bollywoodSeries,
-                        queryContext: { type: 'discover_tv', tvParams: hindiSeriesParams }
                     },
                     {
                         id: 'bollywood-mystery',
@@ -1418,15 +1522,39 @@ export const TrendingStore = signalStore(
                         title: "CRITICS' CHOICE HINDI CLASSICS",
                         items: bollywoodTopRated,
                         queryContext: { type: 'discover_movies', movieParams: classicsParams }
+                    },
+                    {
+                        id: 'bollywood-upcoming',
+                        title: 'UPCOMING BOLLYWOOD CALENDAR',
+                        items: bollywoodUpcoming,
+                        queryContext: { type: 'discover_movies', movieParams: upcomingParams }
                     }
                 ];
 
+                const deduplicatedSections = deduplicateSections(candidateSections);
+
                 patchState(store, {
-                    bollywoodSections: candidateSections.filter((s) => s.items.length > 0),
+                    bollywoodSections: deduplicatedSections,
                     bollywoodPopular,
                     bollywoodRecent,
                     bollywoodTopRated,
                     isBollywoodLoading: false
+                });
+
+                discoverPrefs.saveDiscoverFeedCache({
+                    heroItems: store.heroItems(),
+                    movies: store.movies(),
+                    nowPlayingMovies: store.nowPlayingMovies(),
+                    tvShows: store.tvShows(),
+                    airingTvShows: store.airingTvShows(),
+                    trendingPersonalizedSections: store.trendingPersonalizedSections(),
+                    forYouSections: store.forYouSections(),
+                    languageHubSections: store.languageHubSections(),
+                    lastLoadedLanguageKey: store.lastLoadedLanguageKey(),
+                    bollywoodSections: deduplicatedSections,
+                    ottStreamingSections: store.ottStreamingSections(),
+                    topRatedMovies: store.topRatedMovies(),
+                    topRatedTvShows: store.topRatedTvShows()
                 });
             } catch (error) {
                 console.error('Failed to load Bollywood data', error);
@@ -1440,12 +1568,14 @@ export const TrendingStore = signalStore(
             try {
                 const region = storage.userRegion() || 'IN';
                 const langPipe = discoverPrefs.preferredLanguages().join('|') || 'hi|en';
+                const todayIso = getLocalTodayIso();
 
                 const netflixMoviesParams: TmdbDiscoverMovieParamsDto = {
                     watch_region: region,
                     with_watch_providers: '8',
                     with_watch_monetization_types: 'flatrate',
                     with_original_language: langPipe,
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 };
                 const primeMoviesParams: TmdbDiscoverMovieParamsDto = {
@@ -1453,25 +1583,33 @@ export const TrendingStore = signalStore(
                     with_watch_providers: '9|119',
                     with_watch_monetization_types: 'flatrate',
                     with_original_language: langPipe,
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 };
                 const hotstarDisneyParams: TmdbDiscoverMovieParamsDto = {
                     watch_region: region,
                     with_watch_providers: '122|337',
                     with_watch_monetization_types: 'flatrate',
+                    'primary_release_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 };
                 const netflixSeriesParams: TmdbDiscoverTvParamsDto = {
                     watch_region: region,
                     with_watch_providers: '8',
                     with_watch_monetization_types: 'flatrate',
+                    without_genres: '10763,10767',
+                    'first_air_date.lte': todayIso,
                     sort_by: 'popularity.desc'
                 };
                 const indianOttSeriesParams: TmdbDiscoverTvParamsDto = {
                     watch_region: 'IN',
                     with_watch_providers: '237|232|122',
                     with_watch_monetization_types: 'flatrate',
-                    sort_by: 'popularity.desc'
+                    without_genres: '10763,10764,10766,10767',
+                    'first_air_date.gte': '2018-01-01',
+                    'first_air_date.lte': todayIso,
+                    'vote_average.gte': 7.0,
+                    sort_by: 'vote_average.desc'
                 };
 
                 const [netflixMovRes, primeMovRes, hotstarRes, netflixTvRes, indianOttRes] = await Promise.all([
@@ -1515,8 +1653,10 @@ export const TrendingStore = signalStore(
                     }
                 ];
 
+                const deduplicatedSections = deduplicateSections(candidateSections);
+
                 patchState(store, {
-                    ottStreamingSections: candidateSections.filter((s) => s.items.length > 0),
+                    ottStreamingSections: deduplicatedSections,
                     isOttStreamingLoading: false
                 });
             } catch (error) {
@@ -1543,11 +1683,25 @@ export const TrendingStore = signalStore(
                         'vote_count.gte': 150
                     }))
                 ]);
+                const mappedModern = filterWatched(mapMoviesToSwimlane(modernRes.results || []));
+                const modernKeys = new Set(mappedModern.map((m) => `${m.mediaType}_${m.id}`));
+
+                const mappedTopMovies = filterWatched(mapMoviesToSwimlane(moviesRes.results || []))
+                    .filter((m) => !modernKeys.has(`${m.mediaType}_${m.id}`));
+
+                const allMovieKeys = new Set([
+                    ...modernKeys,
+                    ...mappedTopMovies.map((m) => `${m.mediaType}_${m.id}`)
+                ]);
+
+                const mappedIndianTop = filterWatched(mapMoviesToSwimlane(indianTopRes.results || []))
+                    .filter((m) => !allMovieKeys.has(`${m.mediaType}_${m.id}`));
+
                 patchState(store, {
-                    topRatedMovies: filterWatched(mapMoviesToSwimlane(moviesRes.results || [])),
-                    modernMasterpieces: filterWatched(mapMoviesToSwimlane(modernRes.results || [])),
+                    modernMasterpieces: mappedModern,
+                    topRatedMovies: mappedTopMovies,
                     topRatedTvShows: filterWatched(mapTvToSwimlane(tvRes.results || [])),
-                    topRatedIndianMovies: filterWatched(mapMoviesToSwimlane(indianTopRes.results || [])),
+                    topRatedIndianMovies: mappedIndianTop,
                     isTopRatedLoading: false
                 });
             } catch (error) {

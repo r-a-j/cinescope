@@ -1,3 +1,4 @@
+@if (visibleItems().length > 0) {
 <div class="swimlane-header">
     <div class="swimlane-title-group">
         <span
@@ -21,7 +22,7 @@
             <span class="swimlane-title-text">{{ headerInfo().titleBody }}</span>
         </h2>
     </div>
-    @if (items().length > 0) {
+    @if (visibleItems().length > 0) {
     <button type="button" class="swimlane-action" aria-label="See All" (click)="openViewAll()">
         <span>See All</span>
         <ion-icon name="chevron-forward-outline"></ion-icon>
@@ -30,9 +31,15 @@
 </div>
 
 <div class="swimlane-scroll-container">
-    @for (item of items(); track item.id; let idx = $index) {
+    @for (item of visibleItems(); track item.id; let idx = $index) {
     <div class="swimlane-item" [class.is-person-item]="item.mediaType === 'person'">
-        <div class="swimlane-card-stage">
+        <div
+            class="swimlane-card-stage"
+            (pointerdown)="onCardPointerDown($event, item)"
+            (pointermove)="onCardPointerMove($event)"
+            (pointerup)="onCardPointerUp()"
+            (pointercancel)="onCardPointerCancel()"
+            (contextmenu)="onCardContextMenu($event, item)">
             <app-poster-card
                 [title]="item.title"
                 [imageUrl]="item.posterUrl || 'assets/placeholders/placeholder.webp'"
@@ -72,3 +79,4 @@
     </div>
     }
 </div>
+}

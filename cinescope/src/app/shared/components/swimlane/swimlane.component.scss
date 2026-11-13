@@ -181,6 +181,9 @@
 .swimlane-card-stage {
     position: relative;
     width: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-x pan-y;
 }
 
 .person-fav-btn {

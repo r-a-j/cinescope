@@ -32,11 +32,21 @@ export interface PersonAffinity {
   weight: number;
 }
 
+export interface DismissedRecommendationRecord {
+  key: string; // e.g. "movie_123"
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+  title?: string | undefined;
+  genreIds?: number[] | undefined;
+  dismissedAt: number;
+}
+
 export interface UserTasteProfile {
   fingerprint: string;
   totalInteractions: number;
   isColdStart: boolean;
   genreWeights: Record<number, number>;
+  negativeGenreWeights: Record<number, number>;
   topMovieGenreIds: number[];
   topTvGenreIds: number[];
   topGenrePairs: GenrePairAffinity[];
@@ -49,11 +59,13 @@ export interface UserTasteProfile {
   stalledTitles: string[];
   stalledKeys: Set<string>;
   dismissedKeys: Set<string>;
+  dismissedTitles: string[];
   personAffinities: PersonAffinity[];
   archetypes: string[];
 }
 
-const STORAGE_KEY_DISMISSED_RECS = 'cinescope_dismissed_recommendations_v1';
+const STORAGE_KEY_DISMISSED_RECS = 'cinescope_dismissed_recommendations_v2';
+const STORAGE_KEY_DISMISSED_RECS_LEGACY = 'cinescope_dismissed_recommendations_v1';
 
 export const MOVIE_GENRE_LABELS: Readonly<Record<number, string>> = {
   28: 'Action',
@@ -87,7 +99,7 @@ export class TasteProfileService {
   private readonly tvProgress = inject(TvProgressService);
   private readonly discoverPrefs = inject(DiscoverPreferencesService);
 
-  private readonly dismissedIdsSignal = signal<Set<string>>(this.loadDismissedKeys());
+  private readonly dismissedRecordsSignal = signal<DismissedRecommendationRecord[]>(this.loadDismissedRecords());
 
   /**
    * Stage 1: Reactive User Taste DNA Vector computed in 0ms from local RxDB signals.
@@ -101,7 +113,20 @@ export class TasteProfileService {
     const allTvProgress = this.tvProgress.allProgress();
     const prefLangs = this.discoverPrefs.preferredLanguages();
     const prefGenres = this.discoverPrefs.selectedGenreOptions();
-    const dismissedKeys = this.dismissedIdsSignal();
+    const dismissedRecords = this.dismissedRecordsSignal();
+    const dismissedKeys = new Set(dismissedRecords.map((r) => r.key));
+    const dismissedTitles = dismissedRecords
+      .map((r) => r.title)
+      .filter((t): t is string => !!t && t.trim().length > 0);
+
+    // Negative Taste DNA: Calculate penalty weights for genres of dismissed titles
+    const negativeGenreWeights: Record<number, number> = {};
+    for (const record of dismissedRecords) {
+      if (!record.genreIds) continue;
+      for (const gId of record.genreIds) {
+        negativeGenreWeights[gId] = (negativeGenreWeights[gId] || 0) + 1.25;
+      }
+    }
 
     const genreWeights: Record<number, number> = {};
     const moviePairCounts = new Map<string, { ids: [number, number]; score: number }>();
@@ -393,6 +418,14 @@ export class TasteProfileService {
       }
     }
 
+    // Apply negative genre penalties from dismissed recommendations to net genreWeights
+    for (const [gIdStr, penalty] of Object.entries(negativeGenreWeights)) {
+      const gId = Number(gIdStr);
+      if (genreWeights[gId] !== undefined) {
+        genreWeights[gId] = Math.max(0, Number((genreWeights[gId] - penalty).toFixed(2)));
+      }
+    }
+
     const sortedGenres = Object.entries(genreWeights)
       .map(([id, w]) => ({ id: Number(id), weight: w }))
       .sort((a, b) => b.weight - a.weight);
@@ -458,6 +491,7 @@ export class TasteProfileService {
       totalInteractions,
       isColdStart: watchedDocs.length === 0 && watchlistDocs.length === 0,
       genreWeights,
+      negativeGenreWeights,
       topMovieGenreIds,
       topTvGenreIds,
       topGenrePairs: topGenrePairs.slice(0, 6),
@@ -470,6 +504,7 @@ export class TasteProfileService {
       stalledTitles,
       stalledKeys,
       dismissedKeys,
+      dismissedTitles,
       personAffinities,
       archetypes
     };
@@ -559,38 +594,77 @@ export class TasteProfileService {
     return badges.length > 0 ? badges.slice(0, 4) : ['Eclectic Cinema Explorer'];
   }
 
-  public dismissRecommendation(mediaType: 'movie' | 'tv', tmdbId: number | string): void {
+  public dismissRecommendation(
+    mediaType: 'movie' | 'tv',
+    tmdbId: number | string,
+    metadata?: { title?: string; genreIds?: number[] }
+  ): void {
     const key = `${mediaType}_${tmdbId}`;
-    this.dismissedIdsSignal.update((prev) => {
-      const next = new Set(prev);
-      next.add(key);
-      this.persistDismissedKeys(next);
+    const record: DismissedRecommendationRecord = {
+      key,
+      tmdbId: Number(tmdbId),
+      mediaType,
+      ...(metadata?.title ? { title: metadata.title } : {}),
+      genreIds: metadata?.genreIds || [],
+      dismissedAt: Date.now()
+    };
+    this.dismissedRecordsSignal.update((prev) => {
+      const filtered = prev.filter((r) => r.key !== key);
+      const next = [record, ...filtered].slice(0, 300);
+      this.persistDismissedRecords(next);
+      return next;
+    });
+  }
+
+  public unDismissRecommendation(mediaType: 'movie' | 'tv', tmdbId: number | string): void {
+    const key = `${mediaType}_${tmdbId}`;
+    this.dismissedRecordsSignal.update((prev) => {
+      const next = prev.filter((r) => r.key !== key);
+      this.persistDismissedRecords(next);
       return next;
     });
   }
 
   public isDismissed(mediaType: 'movie' | 'tv', tmdbId: number | string): boolean {
-    return this.dismissedIdsSignal().has(`${mediaType}_${tmdbId}`);
+    return this.dismissedRecordsSignal().some((r) => r.key === `${mediaType}_${tmdbId}`);
   }
 
-  private loadDismissedKeys(): Set<string> {
+  private loadDismissedRecords(): DismissedRecommendationRecord[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_DISMISSED_RECS);
       if (raw) {
-        const parsed = JSON.parse(raw) as string[];
-        if (Array.isArray(parsed)) {
-          return new Set(parsed);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+          return parsed as DismissedRecommendationRecord[];
+        }
+      }
+      // Backward compatibility with v1 array of strings
+      const rawLegacy = localStorage.getItem(STORAGE_KEY_DISMISSED_RECS_LEGACY);
+      if (rawLegacy) {
+        const legacyParsed = JSON.parse(rawLegacy) as string[];
+        if (Array.isArray(legacyParsed)) {
+          return legacyParsed.map((key) => {
+            const parts = key.split('_');
+            const mediaType = parts[0] === 'tv' ? 'tv' : 'movie';
+            const tmdbId = Number(parts[1] || 0);
+            return {
+              key,
+              mediaType,
+              tmdbId,
+              dismissedAt: Date.now()
+            };
+          });
         }
       }
     } catch {
       // Ignore storage read errors
     }
-    return new Set<string>();
+    return [];
   }
 
-  private persistDismissedKeys(keys: Set<string>): void {
+  private persistDismissedRecords(records: DismissedRecommendationRecord[]): void {
     try {
-      localStorage.setItem(STORAGE_KEY_DISMISSED_RECS, JSON.stringify([...keys].slice(-300)));
+      localStorage.setItem(STORAGE_KEY_DISMISSED_RECS, JSON.stringify(records.slice(0, 300)));
     } catch {
       // Ignore storage quota errors
     }

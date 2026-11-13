@@ -527,7 +527,7 @@ export interface DiscoverFeedCachePayload {
 }
 
 export const DISCOVER_FEED_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Strictly 12 hours
-export const STORAGE_KEY_DISCOVER_FEED_CACHE = 'cinescope_discover_feed_cache_v2';
+export const STORAGE_KEY_DISCOVER_FEED_CACHE = 'cinescope_discover_feed_cache_v3';
 
 export interface AiTasteCachedLane {
   id: string;
@@ -955,6 +955,8 @@ export class DiscoverPreferencesService {
 
   private loadStoredDiscoverFeedCache(): DiscoverFeedCachePayload | null {
     try {
+      localStorage.removeItem('cinescope_discover_feed_cache_v1');
+      localStorage.removeItem('cinescope_discover_feed_cache_v2');
       const raw = localStorage.getItem(STORAGE_KEY_DISCOVER_FEED_CACHE);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as DiscoverFeedCachePayload;

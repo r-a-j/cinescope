@@ -30,6 +30,7 @@ describe('RecommendationEngineService', () => {
     totalInteractions: 10,
     isColdStart: false,
     genreWeights: { 28: 10, 878: 8 },
+    negativeGenreWeights: {},
     topMovieGenreIds: [28, 878],
     topTvGenreIds: [10759],
     topGenrePairs: [],
@@ -42,6 +43,7 @@ describe('RecommendationEngineService', () => {
     stalledTitles: [],
     stalledKeys: new Set(),
     dismissedKeys: new Set(),
+    dismissedTitles: [],
     personAffinities: [],
     archetypes: []
   };

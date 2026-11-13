@@ -198,11 +198,15 @@ export class CollectionLoaderService {
     const t = title.toUpperCase().trim();
     return [
       'INDIAN OTT & WEB SERIES',
+      'PRESTIGE INDIAN WEB SERIES & OTT',
+      'PRESTIGE HINDI OTT & WEB SERIES',
       'TELUGU BLOCKBUSTERS',
       'TAMIL CINEMA PULSE',
       'MALAYALAM CRITICS\' GEMS',
       'NEW IN BOLLYWOOD',
+      'IN THEATERS & RECENT HINDI HITS',
       'TRENDING IN BOLLYWOOD',
+      'TRENDING BOLLYWOOD BLOCKBUSTERS',
       'CRITICS\' CHOICE HINDI CLASSICS',
       'MODERN MASTERPIECES (2020S)',
       'TOP RATED INDIAN CINEMA'
@@ -699,10 +703,17 @@ export class CollectionLoaderService {
         const res = await firstValueFrom(this.tvService.getTvOnTheAir('en-US', page));
         return { items: mapTvToSwimlane(res.results, allowAdult), hasMore: res.page < res.total_pages };
       }
-      case 'INDIAN OTT & WEB SERIES': {
-        const sortBy = getDiscoverTvSortBy(sortMode, 'popularity.desc');
+      case 'INDIAN OTT & WEB SERIES':
+      case 'PRESTIGE INDIAN WEB SERIES & OTT':
+      case 'PRESTIGE HINDI OTT & WEB SERIES':
+      case 'HINDI WEB SERIES & OTT ORIGINALS': {
+        const sortBy = getDiscoverTvSortBy(sortMode, 'vote_average.desc');
         const tvParams: TmdbDiscoverTvParamsDto = {
           with_origin_country: 'IN',
+          without_genres: '10763,10764,10766,10767',
+          'first_air_date.gte': '2018-01-01',
+          'vote_average.gte': 7.4,
+          'vote_count.gte': 30,
           sort_by: sortBy,
           page
         };

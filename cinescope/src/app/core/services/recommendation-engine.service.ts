@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TasteProfileService, MOVIE_GENRE_LABELS } from './taste-profile.service';
+import { TasteProfileService, MOVIE_GENRE_LABELS, UserTasteProfile } from './taste-profile.service';
 import { StorageService, checkMediaReleaseStatus, getLocalTodayIso } from './storage.service';
 import {
   DiscoverPreferencesService,
@@ -183,16 +183,26 @@ export class RecommendationEngineService {
       contextBonus += 0.08;
     }
 
+    // 5. Negative Feedback Penalty: Penalize genres of titles the user actively dismissed
+    let negativePenalty = 0;
+    for (const gId of genreIds) {
+      const negW = profile.negativeGenreWeights?.[gId] || 0;
+      if (negW > 0) {
+        negativePenalty += Math.min(0.24, negW * 0.08);
+      }
+    }
+
     // Combine weighted multi-objective score
     const rawScore = Math.min(
       0.99,
       Math.max(
-        0.55,
+        0.30,
         0.38 * genreNorm +
           0.28 * qualityNorm +
           0.2 * langNorm +
           pairBonus +
-          contextBonus
+          contextBonus -
+          negativePenalty
       )
     );
     const matchPercent = Math.round(rawScore * 100);
@@ -409,8 +419,9 @@ export class RecommendationEngineService {
         const excludeTitles = [
           ...profile.topSeeds.map((s) => s.title),
           ...profile.watchlistSeeds.map((s) => s.title),
-          ...profile.stalledTitles
-        ].slice(0, 35);
+          ...profile.stalledTitles,
+          ...(profile.dismissedTitles || [])
+        ].slice(0, 45);
 
         const requestBody = {
           mode: 'for-you' as const,
@@ -525,7 +536,7 @@ export class RecommendationEngineService {
     }
 
     if (!cachedPayload || cachedPayload.lanes.length === 0) {
-      return [];
+      return this.synthesizeZeroLlmFallbackLanes(profile, langPipe);
     }
 
     const hydratedSections: {
@@ -776,5 +787,93 @@ export class RecommendationEngineService {
         bookmarkState: 'none' as const,
         payload: item as unknown as Record<string, unknown>
       }));
+  }
+
+  /**
+   * Stage 3 Zero-LLM Dynamic Fallback:
+   * Synthesizes deterministic high-fidelity discovery lanes from the user's Taste DNA vector
+   * when Gemini recommendations are unavailable, cold, or offline.
+   */
+  private async synthesizeZeroLlmFallbackLanes(
+    profile: UserTasteProfile,
+    langPipe: string
+  ): Promise<
+    {
+      id: string;
+      title: string;
+      items: SwimlaneItem[];
+      queryContext: CollectionQueryContext;
+    }[]
+  > {
+    const lanes: {
+      id: string;
+      title: string;
+      items: SwimlaneItem[];
+      queryContext: CollectionQueryContext;
+    }[] = [];
+
+    const effectiveLang = langPipe || 'hi|en';
+    const todayIso = getLocalTodayIso();
+
+    // 1. Top Genre Pair Fallback (if user has top genre pairs)
+    const topPair = profile.topGenrePairs?.[0];
+    if (topPair) {
+      try {
+        const pairParams: TmdbDiscoverMovieParamsDto = {
+          with_original_language: effectiveLang,
+          with_genres: topPair.pairKey,
+          'primary_release_date.lte': todayIso,
+          'vote_average.gte': 6.8,
+          'vote_count.gte': 35,
+          sort_by: 'vote_average.desc'
+        };
+        const pairRes = await firstValueFrom(this.discoverService.discoverMovies(pairParams));
+        const ranked = this.rankSwimlaneItems(this.mapMoviesToSwimlane(pairRes.results || []), {
+          attachMatchSubtitle: true
+        });
+        if (ranked.length >= 3) {
+          lanes.push({
+            id: `zero-llm-pair-${topPair.pairKey.replace(',', '-')}`,
+            title: `TASTE FUSION: ${topPair.label.toUpperCase()}`,
+            items: ranked,
+            queryContext: { type: 'discover_movies', movieParams: pairParams }
+          });
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
+    // 2. High-Rated Genre Showcase (Top user movie genre)
+    const topMovieGenreId = profile.topMovieGenreIds?.[0];
+    if (topMovieGenreId) {
+      try {
+        const genreLabel = MOVIE_GENRE_LABELS[topMovieGenreId] || 'Cinema';
+        const genreParams: TmdbDiscoverMovieParamsDto = {
+          with_original_language: effectiveLang,
+          with_genres: String(topMovieGenreId),
+          'primary_release_date.lte': todayIso,
+          'vote_average.gte': 7.2,
+          'vote_count.gte': 40,
+          sort_by: 'vote_average.desc'
+        };
+        const genreRes = await firstValueFrom(this.discoverService.discoverMovies(genreParams));
+        const ranked = this.rankSwimlaneItems(this.mapMoviesToSwimlane(genreRes.results || []), {
+          attachMatchSubtitle: true
+        });
+        if (ranked.length >= 3) {
+          lanes.push({
+            id: `zero-llm-genre-${topMovieGenreId}`,
+            title: `HIGH-RATED ${genreLabel.toUpperCase()}`,
+            items: ranked,
+            queryContext: { type: 'discover_movies', movieParams: genreParams }
+          });
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
+    return lanes;
   }
 }
