@@ -1,10 +1,25 @@
 <div class="swimlane-header">
     <div class="swimlane-title-group">
-        <span class="swimlane-accent-bar" [class.is-ai]="isAiPulse()" aria-hidden="true"></span>
-        @if (isAiPulse()) {
-        <span class="swimlane-ai-badge">AI PULSE</span>
-        }
-        <h2 class="swimlane-title">{{ displayTitle() }}</h2>
+        <span
+            class="swimlane-accent-bar"
+            [class.is-similar]="headerInfo().prefixType === 'similar'"
+            [class.is-saved]="headerInfo().prefixType === 'saved'"
+            [class.is-taste-mix]="headerInfo().prefixType === 'taste-mix'"
+            [class.is-ai]="isAiPulse() && headerInfo().prefixType === 'none'"
+            aria-hidden="true">
+        </span>
+        <h2 class="swimlane-title">
+            @if (headerInfo().prefixLabel) {
+                <span
+                    class="swimlane-prefix"
+                    [class.prefix-similar]="headerInfo().prefixType === 'similar'"
+                    [class.prefix-saved]="headerInfo().prefixType === 'saved'"
+                    [class.prefix-taste-mix]="headerInfo().prefixType === 'taste-mix'">
+                    {{ headerInfo().prefixLabel }}
+                </span>
+            }
+            <span class="swimlane-title-text">{{ headerInfo().titleBody }}</span>
+        </h2>
     </div>
     @if (items().length > 0) {
     <button type="button" class="swimlane-action" aria-label="See All" (click)="openViewAll()">

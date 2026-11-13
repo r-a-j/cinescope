@@ -685,14 +685,14 @@ export class DiscoverPreferencesService {
   public readonly aiTasteStatusLabel = computed<string>(() => {
     const cache = this.aiTasteCache();
     if (!cache || cache.lanes.length === 0) {
-      return 'Auto-curates every 12h from your Watched & Watchlist';
+      return 'Auto-curates from your library & preferences';
     }
     const now = Date.now();
     if (now >= cache.expiresAt) {
-      return `Ready to refresh (${cache.lanes.length} AI lanes cached)`;
+      return `Ready to refresh (${cache.lanes.length} lanes cached)`;
     }
     const hoursLeft = Math.max(1, Math.ceil((cache.expiresAt - now) / (60 * 60 * 1000)));
-    return `${cache.lanes.length} AI lanes active • Refreshes in ~${hoursLeft}h`;
+    return `${cache.lanes.length} curated lanes • Fresh for ~${hoursLeft}h`;
   });
 
   /**

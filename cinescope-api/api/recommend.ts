@@ -111,7 +111,7 @@ CRITICAL RULES:
   "lanes": [
     {
       "id": "string-slug",
-      "title": "Short, punchy 2-4 word theme in UPPERCASE without 'AI' or 'Pulse' prefix (e.g. GRITTY INDIAN NOIR, HIGH-STAKES PROCEDURALS, REVENGE SAGAS)",
+      "title": "Short, punchy 2-3 word theme in UPPERCASE under 18 characters without 'AI' or 'Pulse' prefix (e.g. NEO NOIR, TECH THRILLERS, CRIME SAGAS, DARK COMEDY)",
       "subtitle": "Because you loved [Seed A] & [Seed B]",
       "mediaType": "movie" | "tv",
       "curatedPicks": [
@@ -281,7 +281,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             const fallbackLanes: AiRecommendationLaneDto[] = [
                 {
                     id: 'fallback-mindbenders',
-                    title: 'HIGH-STAKES SCI-FI & MYSTERY THRILLERS',
+                    title: 'SCI-FI THRILLERS',
                     subtitle: 'Fallback taste profile curation',
                     mediaType: 'movie',
                     curatedPicks: [],
@@ -295,7 +295,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
                 },
                 {
                     id: 'fallback-prestige-tv',
-                    title: 'ACCLAIMED CRIME & MYSTERY SERIES',
+                    title: 'CRIME & MYSTERY',
                     subtitle: 'Fallback series curation',
                     mediaType: 'tv',
                     curatedPicks: [],

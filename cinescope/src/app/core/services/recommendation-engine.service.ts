@@ -480,7 +480,7 @@ export class RecommendationEngineService {
             };
             builtLanes.push({
               id: lane.id || `ai-taste-tv-${idx}`,
-              title: `AI PULSE: ${lane.title.replace(/^AI (CURATED|PULSE):\s*/i, '')}`,
+              title: lane.title.replace(/^AI (CURATED|PULSE):\s*/i, '').trim().toUpperCase(),
               subtitle: lane.subtitle,
               mediaType: 'tv',
               tvParams,
@@ -507,7 +507,7 @@ export class RecommendationEngineService {
             };
             builtLanes.push({
               id: lane.id || `ai-taste-movie-${idx}`,
-              title: `AI PULSE: ${lane.title.replace(/^AI (CURATED|PULSE):\s*/i, '')}`,
+              title: lane.title.replace(/^AI (CURATED|PULSE):\s*/i, '').trim().toUpperCase(),
               subtitle: lane.subtitle,
               mediaType: 'movie',
               movieParams,
@@ -645,7 +645,7 @@ export class RecommendationEngineService {
       const leadSeed = seeds[0];
       return {
         id: 'taste-dna-multi-seed-synthesis',
-        title: `TASTE DNA SYNTHESIS (${seeds.slice(0, 2).map((s) => s.title.toUpperCase()).join(' × ')})`,
+        title: `TASTE MIX: ${seeds.slice(0, 2).map((s) => s.title.toUpperCase()).join(' × ')}`,
         items: ranked,
         queryContext: {
           type: 'recommendations',

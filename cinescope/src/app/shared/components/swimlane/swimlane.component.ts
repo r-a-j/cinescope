@@ -14,6 +14,14 @@ import { resolveMediaImageUrl } from '../../../core/constants/api.constants';
 import { CollectionQueryContext } from '../../../core/services/collection-loader.service';
 import { TmdbPersonCombinedCreditsResponseDto } from '../../../core/dtos/people/person-combined-credits.dto';
 
+export type SwimlanePrefixType = 'similar' | 'saved' | 'taste-mix' | 'none';
+
+export interface SwimlaneHeaderInfo {
+    prefixType: SwimlanePrefixType;
+    prefixLabel: string | null;
+    titleBody: string;
+}
+
 @Component({
     selector: 'app-swimlane',
     standalone: true,
@@ -34,7 +42,13 @@ export class SwimlaneComponent {
 
     public isAiPulse = computed<boolean>(() => {
         const t = this.title().toUpperCase();
-        return t.startsWith('AI PULSE:') || t.startsWith('AI CURATED:');
+        return (
+            t.startsWith('AI PULSE:') ||
+            t.startsWith('AI CURATED:') ||
+            t.startsWith('TASTE DNA') ||
+            this.queryContext()?.type === 'ai_curated' ||
+            this.queryContext()?.type === 'taste_dna'
+        );
     });
 
     public displayTitle = computed<string>(() => {
@@ -46,18 +60,53 @@ export class SwimlaneComponent {
             return word.toLowerCase() === 'global' ? '' : match;
         }).trim();
 
+        // Strip "YOUR TASTE DNA: " or "TASTE DNA: " prefix
+        clean = clean.replace(/^(YOUR\s+)?TASTE\s+DNA:\s*/i, '').trim();
+
         // Fix hyphenation
         clean = clean.replace(/\bhigh\s+stakes\b/gi, 'High-Stakes');
 
-        // Shorten long compound titles with conjunctions if length > 22
-        if (clean.length > 22 && /\s+(&|and|\/)\s+/i.test(clean)) {
-            const parts = clean.split(/\s+(&|and|\/)\s+/i);
-            if (parts[0] && parts[0].trim().length >= 6) {
-                clean = parts[0].trim();
-            }
+        return clean;
+    });
+
+    public headerInfo = computed<SwimlaneHeaderInfo>(() => {
+        const clean = this.displayTitle();
+
+        // 1. TASTE MIX (Multi-seed synthesis)
+        const tasteMixMatch = clean.match(/^TASTE\s+MIX[:\s-]\s*(.+)$/i);
+        if (tasteMixMatch) {
+            return {
+                prefixType: 'taste-mix',
+                prefixLabel: 'TASTE MIX',
+                titleBody: tasteMixMatch[1].trim()
+            };
         }
 
-        return clean;
+        // 2. SIMILAR (Seed watched match or legacy "BECAUSE YOU WATCHED")
+        const similarMatch = clean.match(/^(?:SIMILAR(?:\s+TO)?|BECAUSE\s+YOU\s+WATCHED)\s*[:\-]?\s*(.+)$/i);
+        if (similarMatch) {
+            return {
+                prefixType: 'similar',
+                prefixLabel: 'SIMILAR',
+                titleBody: similarMatch[1].trim()
+            };
+        }
+
+        // 3. SAVED (Seed watchlist match or legacy "FROM YOUR WATCHLIST")
+        const savedMatch = clean.match(/^(?:SAVED|FROM\s+YOUR\s+WATCHLIST)\s*[:\-]?\s*(.+)$/i);
+        if (savedMatch) {
+            return {
+                prefixType: 'saved',
+                prefixLabel: 'SAVED',
+                titleBody: savedMatch[1].trim()
+            };
+        }
+
+        return {
+            prefixType: 'none',
+            prefixLabel: null,
+            titleBody: clean
+        };
     });
 
     constructor() {

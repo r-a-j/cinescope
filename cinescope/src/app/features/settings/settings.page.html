@@ -202,7 +202,7 @@
                 </div>
             }
 
-            <!-- SUB-ACCORDION 3: AI TASTE CURATOR (12-HOUR GEMINI SYNC) -->
+            <!-- SUB-ACCORDION 3: TASTE CURATOR (GEMINI SYNC) -->
             <ion-item
                 button
                 class="discover-sub-accordion-header"
@@ -210,7 +210,7 @@
                 lines="inset">
                 <ion-icon slot="start" name="hardware-chip-outline"></ion-icon>
                 <ion-label>
-                    <h3>AI Taste Curator (12h Gemini Sync)</h3>
+                    <h3>Taste Curator (Gemini Sync)</h3>
                     <p>{{ discoverPrefs.aiTasteStatusLabel() }}</p>
                 </ion-label>
                 <ion-icon slot="end" [name]="isDiscoverAiExpanded() ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
@@ -219,7 +219,7 @@
             @if (isDiscoverAiExpanded()) {
                 <div class="discover-pref-block">
                     <p class="pref-block-desc">
-                        Every 12 hours, Gemini analyzes your Watched &amp; Watchlist history and translates your taste into verified TMDB Discover shelves (zero hallucinated titles).
+                        Gemini analyzes your library and taste patterns into verified, dynamic cinema shelves.
                     </p>
 
                     @if (discoverPrefs.aiTasteCache(); as aiCache) {
@@ -241,7 +241,7 @@
                         [disabled]="trendingStore.isAiTasteSyncing()"
                         (click)="refreshAiTasteFromSettings()">
                         <ion-icon name="refresh-outline"></ion-icon>
-                        <span>{{ trendingStore.isAiTasteSyncing() ? 'Syncing with Gemini...' : 'Refresh AI Taste Lanes Now' }}</span>
+                        <span>{{ trendingStore.isAiTasteSyncing() ? 'Syncing...' : 'Refresh Taste Lanes Now' }}</span>
                     </button>
                 </div>
             }

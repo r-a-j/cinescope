@@ -529,7 +529,7 @@ export const TrendingStore = signalStore(
                             };
                             builtLanes.push({
                                 id: `ai-taste-tv-${idx}`,
-                                title: `AI PULSE: ${rawTitle.toUpperCase()}`,
+                                title: rawTitle.replace(/^AI (CURATED|PULSE):\s*/i, '').trim().toUpperCase(),
                                 mediaType: 'tv',
                                 tvParams
                             });
@@ -544,7 +544,7 @@ export const TrendingStore = signalStore(
                             };
                             builtLanes.push({
                                 id: `ai-taste-movie-${idx}`,
-                                title: `AI PULSE: ${rawTitle.toUpperCase()}`,
+                                title: rawTitle.replace(/^AI (CURATED|PULSE):\s*/i, '').trim().toUpperCase(),
                                 mediaType: 'movie',
                                 movieParams
                             });
@@ -615,7 +615,7 @@ export const TrendingStore = signalStore(
             // 1. Multi-Seed Collaborative Synthesis + Top Weighted Seeds ("BECAUSE YOU WATCHED...")
             const watchedDocs = storage.watchedItems();
             const watchlistDocs = storage.watchlistItems();
-            const actionPrefix = watchedDocs.length > 0 ? 'BECAUSE YOU WATCHED' : 'BECAUSE YOU SAVED';
+            const actionPrefix = watchedDocs.length > 0 ? 'SIMILAR' : 'SAVED';
 
             // Select top diverse seeds from TasteProfileService when available
             const topSeeds = (dnaProfile?.topSeeds && dnaProfile.topSeeds.length > 0)
@@ -683,9 +683,11 @@ export const TrendingStore = signalStore(
                     }
 
                     if (recItems.length >= 3) {
+                        const isWatchlistSeed = storage.getBookmarkState(seedId, seedType) === 'watchlist';
+                        const prefix = isWatchlistSeed ? 'SAVED' : actionPrefix;
                         rawSections.push({
                             id: `seed-${seedType}-${seedId}`,
-                            title: `${actionPrefix} ${seedTitle.toUpperCase()}`,
+                            title: `${prefix} ${seedTitle.toUpperCase()}`,
                             items: recItems,
                             queryContext: {
                                 type: 'recommendations',
@@ -730,7 +732,7 @@ export const TrendingStore = signalStore(
                     if (pairItems.length >= 4) {
                         rawSections.push({
                             id: `dna-pair-${topPair.pairKey.replace(',', '-')}`,
-                            title: `YOUR TASTE DNA: ${topPair.label.toUpperCase()}`,
+                            title: topPair.label.toUpperCase(),
                             items: pairItems,
                             queryContext: { type: 'discover_movies', movieParams: pairParams }
                         });
@@ -775,7 +777,7 @@ export const TrendingStore = signalStore(
             if (curatedMovies.length > 0) {
                 rawSections.push({
                     id: 'curated-taste-movies',
-                    title: 'CURATED FOR YOUR TASTE',
+                    title: 'CURATED FOR YOU',
                     items: curatedMovies,
                     queryContext: { type: 'discover_movies', movieParams: curatedMoviesParams }
                 });
@@ -785,7 +787,7 @@ export const TrendingStore = signalStore(
             if (upcomingItems.length > 0) {
                 rawSections.push({
                     id: 'upcoming-preferred-languages',
-                    title: 'UPCOMING IN YOUR LANGUAGES',
+                    title: 'UPCOMING RELEASES',
                     items: upcomingItems,
                     queryContext: { type: 'discover_movies', movieParams: upcomingLangParams }
                 });
@@ -795,7 +797,7 @@ export const TrendingStore = signalStore(
             if (curatedTv.length > 0) {
                 rawSections.push({
                     id: 'curated-taste-tv',
-                    title: 'SERIES FOR YOUR TASTE',
+                    title: 'SERIES FOR YOU',
                     items: curatedTv,
                     queryContext: { type: 'discover_tv', tvParams: curatedTvParams }
                 });
@@ -842,7 +844,7 @@ export const TrendingStore = signalStore(
                     if (items.length > 0) {
                         return {
                             id: `genre-${genre.key}`,
-                            title: `TOP ${genre.label.toUpperCase()} IN YOUR LANGUAGES`,
+                            title: `TOP ${genre.label.toUpperCase()}`,
                             items,
                             queryContext: { type: 'discover_movies', movieParams: genreParams }
                         } as DiscoverSwimlaneSection;
