@@ -14,6 +14,7 @@ import {
     IonCardContent,
     IonButton,
     IonIcon,
+    IonSpinner,
     IonRefresher,
     IonRefresherContent
 } from '@ionic/angular/standalone';
@@ -78,6 +79,7 @@ export type ActorsHubCategory = 'all' | 'favorites' | 'indian' | 'global' | 'wor
         IonCardContent,
         IonButton,
         IonIcon,
+        IonSpinner,
         IonRefresher,
         IonRefresherContent,
         HeaderComponent,

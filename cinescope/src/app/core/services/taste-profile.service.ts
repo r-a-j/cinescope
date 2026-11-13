@@ -135,6 +135,32 @@ export class TasteProfileService {
     const stalledKeys = new Set<string>();
     const nowMs = Date.now();
 
+    // Group items into 2-hour sliding burst clusters to detect historical bulk cataloging dumps.
+    // If a user logs > 3 items in a short burst, sub-linear damping prevents the dump from drowning active taste.
+    const allLibraryDocs = [...watchedDocs, ...watchlistDocs];
+    const burstMultipliers = new Map<string, number>();
+    const timestamps = allLibraryDocs
+      .map((d) => ({
+        id: d.id,
+        time: new Date(d.watchedAt || d.addedAt || 0).getTime()
+      }))
+      .filter((t) => t.time > 0);
+
+    const twoHoursMs = 2 * 60 * 60 * 1000;
+    for (let i = 0; i < timestamps.length; i++) {
+      const cur = timestamps[i];
+      let clusterCount = 0;
+      for (let j = 0; j < timestamps.length; j++) {
+        if (Math.abs(timestamps[j].time - cur.time) <= twoHoursMs) {
+          clusterCount++;
+        }
+      }
+      const burstMult = clusterCount > 3
+        ? Math.max(0.40, Number((1 / Math.sqrt(clusterCount / 3.0)).toFixed(2)))
+        : 1.0;
+      burstMultipliers.set(cur.id, burstMult);
+    }
+
     for (const prog of allTvProgress) {
       const ratio =
         prog.totalEpisodes > 0 ? prog.watchedEpisodesCount / prog.totalEpisodes : 0;
@@ -195,7 +221,20 @@ export class TasteProfileService {
       }
       const qualityMult = voteAverage >= 8.0 ? 1.25 : voteAverage >= 7.2 ? 1.1 : 1.0;
 
-      const finalWeight = Number((baseWeight * recencyMultiplier * tvMult * qualityMult).toFixed(2));
+      const rawDate = String(payload['release_date'] || payload['first_air_date'] || '');
+      const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : undefined;
+      const yearNum = year ? Number(year) : 0;
+      const addedYear = timestampStr ? new Date(timestampStr).getFullYear() : new Date().getFullYear();
+
+      let vintageDampener = 1.0;
+      // If the title was released > 3 years before it was logged into Cinescope and no explicit watch date was given:
+      if (yearNum > 0 && addedYear - yearNum > 3 && !doc.watchedAt) {
+        const yearGap = addedYear - yearNum;
+        vintageDampener = Math.max(0.65, Number((1.0 - (yearGap - 3) * 0.02).toFixed(2)));
+      }
+
+      const burstMult = burstMultipliers.get(doc.id) ?? 1.0;
+      const finalWeight = Number((baseWeight * recencyMultiplier * tvMult * qualityMult * burstMult * vintageDampener).toFixed(2));
       const genreIds = extractDocGenres(payload);
 
       let origLang = String(payload['original_language'] || '').trim().toLowerCase();
@@ -228,10 +267,6 @@ export class TasteProfileService {
           }
         }
       }
-
-      const rawDate = String(payload['release_date'] || payload['first_air_date'] || '');
-      const year = rawDate.length >= 4 ? rawDate.slice(0, 4) : undefined;
-      const yearNum = year ? Number(year) : 0;
 
       if (origLang && origLang.length >= 2) {
         languageWeights[origLang] = (languageWeights[origLang] || 0) + finalWeight;
@@ -410,11 +445,12 @@ export class TasteProfileService {
     );
 
     const totalInteractions = watchedDocs.length + watchlistDocs.length + favPeopleDocs.length;
+    // Stable semantic fingerprint: Depends on top seeds, languages, and genres.
+    // Does NOT invalidate on every isolated bookmark increment, preserving 12h AI cache stability.
     const fingerprint = [
       topSeeds.slice(0, 5).map((s) => s.tmdbId).join('.'),
       topLanguages.slice(0, 3).join('.'),
-      topMovieGenreIds.slice(0, 3).join('.'),
-      totalInteractions
+      topMovieGenreIds.slice(0, 3).join('.')
     ].join('|');
 
     return {
@@ -440,11 +476,13 @@ export class TasteProfileService {
   });
 
   /**
-   * Selects a diverse set of top seeds so a single franchise or language doesn't monopolize recommendations.
+   * Selects a diverse set of top seeds so a single franchise, language, or single genre backlog dump
+   * cannot monopolize the user's top recommendation slots.
    */
   private selectDiverseSeeds(seeds: TasteSeed[], limit: number): TasteSeed[] {
     const selected: TasteSeed[] = [];
     const langCounts: Record<string, number> = {};
+    const genreCounts: Record<number, number> = {};
     const seenRoots = new Set<string>();
 
     const getRootTitle = (t: string): string => {
@@ -455,6 +493,9 @@ export class TasteProfileService {
         .replace(/part\s+\d+|chapter\s+\d+|\d+$/i, '')
         .trim();
     };
+
+    // Cap any single primary genre to at most 35% of top seeds (or max 2 seeds for limit <= 6)
+    const maxPerGenre = Math.max(2, Math.ceil(limit * 0.35));
 
     for (const seed of seeds) {
       if (selected.length >= limit) break;
@@ -469,9 +510,18 @@ export class TasteProfileService {
         continue;
       }
 
+      // Cap genre saturation: Prevents a 15-movie comedy or animation backlog dump from dominating top slots
+      const primaryGenre = seed.genreIds[0];
+      if (primaryGenre && (genreCounts[primaryGenre] || 0) >= maxPerGenre && seeds.length > limit) {
+        continue;
+      }
+
       selected.push(seed);
       seenRoots.add(root);
       langCounts[seed.originalLanguage] = langCount + 1;
+      if (primaryGenre) {
+        genreCounts[primaryGenre] = (genreCounts[primaryGenre] || 0) + 1;
+      }
     }
 
     return selected.length > 0 ? selected : seeds.slice(0, limit);

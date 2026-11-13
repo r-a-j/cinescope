@@ -23,16 +23,28 @@
 
     @case ('for-you') {
     <div class="fade-in tab-section-pad">
-        @if (store.isForYouLoading()) {
-        <div class="skeleton-swimlane">
-            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
-            <div class="skeleton-cards-row">
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+        @if (store.isForYouLoading() && store.forYouSections().length === 0) {
+        <div class="recommendations-loading-stage">
+            <div class="recommendations-spinner-pill">
+                <ion-spinner name="crescent" color="primary"></ion-spinner>
+                <span>Curating your personal recommendations...</span>
+            </div>
+            <div class="skeleton-swimlane">
+                <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+                <div class="skeleton-cards-row">
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                </div>
             </div>
         </div>
         } @else {
+        @if (store.isAiTasteSyncing()) {
+        <div class="ai-sync-pill">
+            <ion-spinner name="dots" color="tertiary"></ion-spinner>
+            <span>Refining AI taste picks in background...</span>
+        </div>
+        }
         <div class="tab-lanes-stack">
             @for (section of store.forYouSections(); track section.id) {
             <app-swimlane
@@ -48,20 +60,25 @@
 
     @case ('trending') {
     <div class="fade-in">
-        @if (store.isLoading()) {
+        @if (store.isLoading() && store.heroItems().length === 0) {
+        <div class="recommendations-loading-stage">
+            <div class="recommendations-spinner-pill">
+                <ion-spinner name="crescent" color="primary"></ion-spinner>
+                <span>Loading trending pulse...</span>
+            </div>
+            <ion-skeleton-text animated style="width: 100%; aspect-ratio: 16 / 9; border-radius: 0; margin: 0;"></ion-skeleton-text>
 
-        <ion-skeleton-text animated style="width: 100%; aspect-ratio: 16 / 9; border-radius: 0; margin: 0;"></ion-skeleton-text>
-
-        <div class="skeleton-swimlane">
-            <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
-            <div class="skeleton-cards-row">
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
-                <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+            <div class="skeleton-swimlane">
+                <ion-skeleton-text animated class="skeleton-heading"></ion-skeleton-text>
+                <div class="skeleton-cards-row">
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                    <ion-skeleton-text animated class="skeleton-card"></ion-skeleton-text>
+                </div>
             </div>
         </div>
 
-        } @else if (store.error()) {
+        } @else if (store.error() && store.heroItems().length === 0) {
         <div class="feed-error" role="alert">
             <h2>Discover could not load</h2>
             <p>Check your connection, then try loading the catalog again.</p>
@@ -74,14 +91,6 @@
         }
 
         <div class="tab-lanes-stack">
-            @for (section of store.trendingPersonalizedSections(); track section.id) {
-            <app-swimlane
-                [title]="section.title"
-                [items]="section.items"
-                [queryContext]="section.queryContext">
-            </app-swimlane>
-            }
-
             <app-swimlane
                 title="VIRAL MOVIES TODAY"
                 [items]="store.movies()"

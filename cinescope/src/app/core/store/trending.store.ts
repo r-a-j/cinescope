@@ -601,7 +601,50 @@ export const TrendingStore = signalStore(
             return hydratedSections;
         };
 
-        const buildPersonalizedTopLanes = async (forceAiRefresh = false): Promise<DiscoverSwimlaneSection[]> => {
+        const syncBackgroundAiLanes = async (langPipe: string, forceAiRefresh = false): Promise<void> => {
+            try {
+                const aiSections = await hydrateAiTasteSections(langPipe, forceAiRefresh);
+                if (aiSections.length === 0) return;
+
+                const currentForYou = store.forYouSections();
+                const existingIds = new Set(currentForYou.map((s) => s.id));
+                const newLanesToAdd = aiSections.filter((s) => !existingIds.has(s.id));
+
+                if (newLanesToAdd.length > 0) {
+                    const updatedForYou = [...currentForYou];
+                    const insertIdx = Math.min(2, updatedForYou.length);
+                    updatedForYou.splice(insertIdx, 0, ...newLanesToAdd);
+
+                    patchState(store, {
+                        forYouSections: updatedForYou,
+                        trendingPersonalizedSections: updatedForYou.slice(0, 3)
+                    });
+
+                    discoverPrefs.saveDiscoverFeedCache({
+                        heroItems: store.heroItems(),
+                        movies: store.movies(),
+                        nowPlayingMovies: store.nowPlayingMovies(),
+                        tvShows: store.tvShows(),
+                        airingTvShows: store.airingTvShows(),
+                        trendingPersonalizedSections: updatedForYou.slice(0, 3),
+                        forYouSections: updatedForYou,
+                        languageHubSections: store.languageHubSections(),
+                        lastLoadedLanguageKey: store.lastLoadedLanguageKey(),
+                        bollywoodSections: store.bollywoodSections(),
+                        ottStreamingSections: store.ottStreamingSections(),
+                        topRatedMovies: store.topRatedMovies(),
+                        topRatedTvShows: store.topRatedTvShows()
+                    });
+                }
+            } catch (err) {
+                console.warn('[TrendingStore] Background AI lane sync failed silently:', err);
+            }
+        };
+
+        const buildPersonalizedTopLanes = async (
+            forceAiRefresh = false,
+            waitForAi = false
+        ): Promise<DiscoverSwimlaneSection[]> => {
             const rawSections: DiscoverSwimlaneSection[] = [];
             const todayIso = getLocalTodayIso();
             const preferredLangs = discoverPrefs.preferredLanguages();
@@ -710,9 +753,21 @@ export const TrendingStore = signalStore(
             }
 
             // 2. 12-Hour Gemini AI Taste Curation (Hybrid Curated Picks + TMDB Discover Execution Graph)
-            const aiSections = await hydrateAiTasteSections(langPipe || 'hi|en', forceAiRefresh);
-            for (const aiSec of aiSections) {
-                rawSections.push(aiSec);
+            // If cached AI lanes exist, include them instantly (0ms).
+            // If not cached or refreshing, launch non-blocking background sync so the fast lanes render immediately!
+            const cachedAi = !forceAiRefresh ? discoverPrefs.getValidAiTasteCache() : null;
+            if (cachedAi && cachedAi.lanes.length > 0) {
+                const aiSections = await hydrateAiTasteSections(langPipe || 'hi|en', false);
+                for (const aiSec of aiSections) {
+                    rawSections.push(aiSec);
+                }
+            } else if (waitForAi) {
+                const aiSections = await hydrateAiTasteSections(langPipe || 'hi|en', forceAiRefresh);
+                for (const aiSec of aiSections) {
+                    rawSections.push(aiSec);
+                }
+            } else {
+                void syncBackgroundAiLanes(langPipe || 'hi|en', forceAiRefresh);
             }
 
             // 2b. Genre-Pair Co-occurrence Intersection Lane (Strict AND Query from Taste DNA)
@@ -961,7 +1016,7 @@ export const TrendingStore = signalStore(
                         firstValueFrom(moviesService.getNowPlayingMovies('en-US', 1, region)),
                         firstValueFrom(trendingService.getTrendingTvShows(pulseWindow)),
                         firstValueFrom(tvService.getTvOnTheAir('en-US', 1)),
-                        buildPersonalizedTopLanes(false).catch(() => [] as DiscoverSwimlaneSection[])
+                        buildPersonalizedTopLanes(false, false).catch(() => [] as DiscoverSwimlaneSection[])
                     ]);
 
                     const mappedHero = mapToHeroItems(allRes.results);
@@ -1023,7 +1078,7 @@ export const TrendingStore = signalStore(
 
             patchState(store, { isForYouLoading: true });
             try {
-                const sections = await buildPersonalizedTopLanes(forceAiRefresh);
+                const sections = await buildPersonalizedTopLanes(forceAiRefresh, force);
                 patchState(store, {
                     forYouSections: sections,
                     trendingPersonalizedSections: sections.slice(0, 3),
@@ -1076,7 +1131,7 @@ export const TrendingStore = signalStore(
             if (store.isAiTasteSyncing()) return;
             patchState(store, { isForYouLoading: true });
             try {
-                const sections = await buildPersonalizedTopLanes(true);
+                const sections = await buildPersonalizedTopLanes(true, true);
                 patchState(store, {
                     forYouSections: sections,
                     trendingPersonalizedSections: sections.slice(0, 3),
